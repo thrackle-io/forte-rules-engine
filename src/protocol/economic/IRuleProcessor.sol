@@ -72,6 +72,14 @@ interface IRuleProcessor {
     function checkAccountApproveDenyOracles(Rule[] memory _rules, address _address) external view;
 
     /**
+     * @dev This function receives an array of rule ids, which it uses to get the oracle details, then calls the oracle to determine permissions.
+     * @param _rules Rule Id Array
+     * @param _toAddress receiver address to be checked
+     * @param _fromAddress sender address to be checked
+     */
+    function checkAccountApproveDenyOraclesFlexible(Rule[] memory _rules, address _toAddress, address _fromAddress) external view;
+
+    /**
      * @dev Check if transaction passes Balance by AccessLevel rule.
      * @param _ruleId Rule Identifier for rule arguments
      * @param _accessLevel the Access Level of the account
@@ -286,6 +294,12 @@ interface IRuleProcessor {
      * @param _ruleId Rule Identifier
      */
     function validateAccountApproveDenyOracle(ActionTypes[] memory _actions, uint32 _ruleId) external view;
+
+    /**
+     * @dev Validate the existence of the rule
+     * @param _ruleId Rule Identifier
+     */
+    function validateAccountApproveDenyOracleFlexible(ActionTypes[] memory _actions, uint32 _ruleId) external view;
 
     /**
      * @dev Validate the existence of the rule

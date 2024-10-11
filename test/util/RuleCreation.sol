@@ -14,6 +14,7 @@ abstract contract RuleCreation is TestCommonFoundry {
     /** 
     Rule List: 
     AccountApproveDenyOracle
+    AccountApproveDenyOracleFlexible
     AccountDenyForNoAccessLevel 
     AccountMaxTradeSize
     AccountMaxTxValueByRisk
@@ -55,6 +56,28 @@ abstract contract RuleCreation is TestCommonFoundry {
             ruleId = RuleDataFacet(address(ruleProcessor)).addAccountApproveDenyOracle(address(applicationAppManager), oracleType, address(oracleApproved));
         }
         NonTaggedRules.AccountApproveDenyOracle memory rule = ERC20RuleProcessorFacet(address(ruleProcessor)).getAccountApproveDenyOracle(ruleId);
+        assertEq(rule.oracleType, oracleType);
+        vm.stopPrank();
+        return ruleId;
+    }
+
+    function createAccountApproveDenyOracleFlexibleRule(uint8 oracleType, uint8 addressToggle) public returns (uint32) {
+        if (oracleType > 1) revert("Oracle Type Invalid");
+        // This is set one higher than contract check to validate that check within unit and fuzz testing 
+        if (addressToggle > 4) revert("Invalid Address Toggle");
+        switchToRuleAdmin();
+        uint32 ruleId;
+
+        // check event emission
+        vm.expectEmit(true, false, true, true);
+        emit AD1467_ProtocolRuleCreated(ACCOUNT_APPROVE_DENY_ORACLE_FLEXIBLE, 0, new bytes32[](0));
+
+        if (oracleType == 0) {
+            ruleId = RuleDataFacet(address(ruleProcessor)).addAccountApproveDenyOracleFlexible(address(applicationAppManager), oracleType, addressToggle, address(oracleDenied));
+        } else {
+            ruleId = RuleDataFacet(address(ruleProcessor)).addAccountApproveDenyOracleFlexible(address(applicationAppManager), oracleType, addressToggle, address(oracleApproved));
+        }
+        NonTaggedRules.AccountApproveDenyOracleFlexible memory rule = ERC20RuleProcessorFacet(address(ruleProcessor)).getAccountApproveDenyOracleFlexible(ruleId);
         assertEq(rule.oracleType, oracleType);
         vm.stopPrank();
         return ruleId;

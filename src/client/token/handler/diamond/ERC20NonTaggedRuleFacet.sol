@@ -7,11 +7,20 @@ import "src/client/token/handler/common/AppAdministratorOrOwnerOnlyDiamondVersio
 import "src/client/token/handler/diamond/RuleStorage.sol";
 import "src/client/token/ITokenInterface.sol";
 import "src/client/token/handler/ruleContracts/HandlerAccountApproveDenyOracle.sol";
+import "src/client/token/handler/ruleContracts/HandlerAccountApproveDenyOracleFlexible.sol";
 import "src/client/token/handler/ruleContracts/HandlerTokenMaxSupplyVolatility.sol";
 import "src/client/token/handler/ruleContracts/HandlerTokenMaxTradingVolume.sol";
 import "src/client/token/handler/ruleContracts/HandlerTokenMinTxSize.sol";
 
-contract ERC20NonTaggedRuleFacet is AppAdministratorOrOwnerOnlyDiamondVersion, HandlerUtils, HandlerAccountApproveDenyOracle, HandlerTokenMaxSupplyVolatility, HandlerTokenMaxTradingVolume, HandlerTokenMinTxSize {
+contract ERC20NonTaggedRuleFacet is 
+    AppAdministratorOrOwnerOnlyDiamondVersion, 
+    HandlerUtils, 
+    HandlerAccountApproveDenyOracle, 
+    HandlerAccountApproveDenyOracleFlexible, 
+    HandlerTokenMaxSupplyVolatility, 
+    HandlerTokenMaxTradingVolume, 
+    HandlerTokenMinTxSize 
+{
     /**
      * @dev This function uses the protocol's ruleProcessorto perform the actual rule checks.
      * @param _from address of the from account
@@ -24,6 +33,7 @@ contract ERC20NonTaggedRuleFacet is AppAdministratorOrOwnerOnlyDiamondVersion, H
         HandlerBaseS storage handlerBaseStorage = lib.handlerBaseStorage();
         address handlerBase = handlerBaseStorage.ruleProcessor;
         _checkAccountApproveDenyOraclesRule(_from, _to, _sender, action, handlerBase);
+        _checkAccountApproveDenyOraclesFlexibleRule(_from, _to, action, handlerBase);
 
         if (action == ActionTypes.BURN){
             /// tokenMaxTradingVolume Burn 
@@ -137,6 +147,18 @@ contract ERC20NonTaggedRuleFacet is AppAdministratorOrOwnerOnlyDiamondVersion, H
                 IRuleProcessor(handlerBase).checkAccountApproveDenyOracles(accountApproveDenyOracle[action], _to);
             }
         }
+    }
+
+    /**
+     * @dev Internal function to check the Account Approve Deny Oracle Flexible Rules
+     * @param _from address of the from account
+     * @param _to address of the to account
+     * @param action if selling or buying (of ActionTypes type)
+     * @param handlerBase address of the handler proxy
+     */
+    function _checkAccountApproveDenyOraclesFlexibleRule(address _from, address _to, ActionTypes action, address handlerBase) internal view {
+        mapping(ActionTypes => Rule[]) storage accountApproveDenyOracleFlexible = lib.accountApproveDenyOracleFlexibleStorage().accountApproveDenyOracleFlexible;
+        IRuleProcessor(handlerBase).checkAccountApproveDenyOraclesFlexible(accountApproveDenyOracleFlexible[action], _to, _from);
     }
 
     /**

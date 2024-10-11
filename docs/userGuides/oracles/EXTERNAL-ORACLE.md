@@ -24,15 +24,19 @@ Sample implementations for each of the above functions can be found in the examp
 
 ## Process for using an external oracle
 
-External oracles are used in conjunction with [Account Approve Deny Oracle Rule](../rules/ACCOUNT-APPROVE-DENY-ORACLE.md). The external oracle is created and its deployed address is noted. When the [Account Approve Deny Oracle Rule](../rules/ACCOUNT-APPROVE-DENY-ORACLE.md) is created, this address is used in the **_oracleAddress** parameter whereas **_oracleType** corresponds to approved or denied type(0 for denied, 1 for approved).
+External oracles are used in conjunction with the [Account Approve Deny Oracle Rule](../rules/ACCOUNT-APPROVE-DENY-ORACLE.md) or the [Account Approve Deny Oracle Flexible Rule](../rules/ACCOUNT-APPROVE-DENY-ORACLE-FLEXIBLE.md). The external oracle is created and its deployed address is noted. When the oracle rule is created, this address is used in the **_oracleAddress** parameter whereas **_oracleType** corresponds to approved or denied type(0 for denied, 1 for approved).
 
-###### *see [Account Approve Deny Oracle Rule](../rules/ACCOUNT-APPROVE-DENY-ORACLE.md)*
+###### *see [Account Approve Deny Oracle Rule](../rules/ACCOUNT-APPROVE-DENY-ORACLE.md) or [Account Approve Deny Oracle Flexible Rule](../rules/ACCOUNT-APPROVE-DENY-ORACLE-FLEXIBLE.md)*
 
 Once the this rule is created, it can then be applied like any other rule. The process is as follows:
 
 - 1. Deploy the external oracle.
-- 2. Create the rule specifying the _oracleAddress and _oracleType. See [Account Approve Deny Oracle Rule](../rules/ACCOUNT-APPROVE-DENY-ORACLE.md) for details. 
-- 3. Apply the rule to the desired token's handler. See [Account Approve Deny Oracle Rule](../rules/ACCOUNT-APPROVE-DENY-ORACLE.md) for details. 
+- 2. Create the rule specifying the _oracleAddress and _oracleType. 
+    - See [Account Approve Deny Oracle Rule](../rules/ACCOUNT-APPROVE-DENY-ORACLE.md).
+    - See [Account Approve Deny Oracle Flexible Rule](../rules/ACCOUNT-APPROVE-DENY-ORACLE-FLEXIBLE.md).
+- 3. Apply the rule to the desired token's handler. 
+    - See [Account Approve Deny Oracle Rule](../rules/ACCOUNT-APPROVE-DENY-ORACLE.md). 
+    - See [Account Approve Deny Oracle Flexbile Rule](../rules/ACCOUNT-APPROVE-DENY-ORACLE-FLEXIBLE.md).
     
 
 <!-- These are the header links -->

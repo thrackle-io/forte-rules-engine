@@ -712,6 +712,257 @@ abstract contract ERC20CommonTests is TestCommonFoundry, DummyAMM, ERC20Util {
         assertEq(oracleDenied.isDenied(address(69)), true);
     }
 
+
+    /// Account Approve Deny Oracle Flexible Tests
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_DeniedList_Transfer_Positive() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountApproveDenyOracleFlexible_Setup(ActionTypes.P2P_TRANSFER, true, 0);
+        ///perform transfer that checks rule
+        vm.startPrank(user1, user1);
+        testCaseToken.transfer(user2, 10);
+        assertEq(testCaseToken.balanceOf(user2), 10);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_DeniedList_Transfer_Negative() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountApproveDenyOracleFlexible_Setup(ActionTypes.P2P_TRANSFER, true, 3);
+        vm.startPrank(user1, user1);
+        ///perform transfer that checks rule
+        // This one should fail
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        testCaseToken.transfer(address(69), 10);
+        assertEq(testCaseToken.balanceOf(address(69)), 1000);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_ApprovedList_Transfer_Positive() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountApproveDenyOracleFlexible_Setup(ActionTypes.P2P_TRANSFER, false, 0);
+        ///perform transfer that checks rule
+        vm.startPrank(user1, user1);
+        testCaseToken.transfer(address(59), 10);
+        assertEq(testCaseToken.balanceOf(address(59)), 10);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_ApprovedList_Transfer_Negative() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountApproveDenyOracleFlexible_Setup(ActionTypes.P2P_TRANSFER, false, 0);
+        vm.startPrank(user1, user1);
+        ///perform transfer that checks rule
+        // This one should fail
+        vm.expectRevert(abi.encodeWithSignature("AddressNotApproved()"));
+        testCaseToken.transfer(address(69), 10);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_DeniedList_Buy_Positive() public endWithStopPrank ifDeploymentTestsEnabled {
+        DummyAMM amm = _accountApproveDenyOracleFlexible_Setup(ActionTypes.BUY, true, 0);
+        vm.startPrank(user1, user1);
+        testCaseToken.approve(address(amm), 50000);
+        applicationCoin2.approve(address(amm), 50000);
+        amm.dummyTrade(address(applicationCoin2), address(testCaseToken), 10, 10, true);
+        assertEq(testCaseToken.balanceOf(user1), 100010);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_DeniedList_Buy_Negative() public endWithStopPrank ifDeploymentTestsEnabled {
+        DummyAMM amm = _accountApproveDenyOracleFlexible_Setup(ActionTypes.BUY, true, 3);
+        vm.startPrank(address(69), address(69));
+        testCaseToken.approve(address(amm), 50000);
+        applicationCoin2.approve(address(amm), 50000);
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        amm.dummyTrade(address(applicationCoin2), address(testCaseToken), 10, 10, true);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_ApprovedList_Buy_Positive() public endWithStopPrank ifDeploymentTestsEnabled {
+        DummyAMM amm = _accountApproveDenyOracleFlexible_Setup(ActionTypes.BUY, false, 0);
+        vm.startPrank(user1, user1);
+        testCaseToken.approve(address(amm), 50000);
+        applicationCoin2.approve(address(amm), 50000);
+        amm.dummyTrade(address(applicationCoin2), address(testCaseToken), 10, 10, true);
+        assertEq(testCaseToken.balanceOf(user1), 100010);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_ApprovedList_Buy_Negative() public endWithStopPrank ifDeploymentTestsEnabled {
+        DummyAMM amm = _accountApproveDenyOracleFlexible_Setup(ActionTypes.BUY, false, 0);
+        vm.startPrank(address(69), address(69));
+        testCaseToken.approve(address(amm), 50000);
+        applicationCoin2.approve(address(amm), 50000);
+        vm.expectRevert(abi.encodeWithSignature("AddressNotApproved()"));
+        amm.dummyTrade(address(applicationCoin2), address(testCaseToken), 10, 10, true);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_DeniedList_Sell_Positive() public endWithStopPrank ifDeploymentTestsEnabled {
+        DummyAMM amm = _accountApproveDenyOracleFlexible_Setup(ActionTypes.SELL, true, 0);
+        vm.startPrank(user1, user1);
+        testCaseToken.approve(address(amm), 50000);
+        applicationCoin2.approve(address(amm), 50000);
+        amm.dummyTrade(address(testCaseToken), address(applicationCoin2), 10, 10, true);
+        assertEq(testCaseToken.balanceOf(user1), 99990);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_DeniedList_Sell_Negative() public endWithStopPrank ifDeploymentTestsEnabled {
+        DummyAMM amm = _accountApproveDenyOracleFlexible_Setup(ActionTypes.SELL, true, 3);
+        vm.startPrank(address(69), address(69));
+        testCaseToken.approve(address(amm), 50000);
+        applicationCoin2.approve(address(amm), 50000);
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        amm.dummyTrade(address(testCaseToken), address(applicationCoin2), 10, 10, true);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_ApprovedList_Sell_Positive() public endWithStopPrank ifDeploymentTestsEnabled {
+        DummyAMM amm = _accountApproveDenyOracleFlexible_Setup(ActionTypes.SELL, false, 0);
+        vm.startPrank(user1, user1);
+        testCaseToken.approve(address(amm), 50000);
+        applicationCoin2.approve(address(amm), 50000);
+        amm.dummyTrade(address(testCaseToken), address(applicationCoin2), 10, 10, true);
+        assertEq(testCaseToken.balanceOf(user1), 99990);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_ApprovedList_Sell_Negative() public endWithStopPrank ifDeploymentTestsEnabled {
+        DummyAMM amm = _accountApproveDenyOracleFlexible_Setup(ActionTypes.SELL, false, 0);
+        vm.startPrank(address(69), address(69));
+        testCaseToken.approve(address(amm), 50000);
+        applicationCoin2.approve(address(amm), 50000);
+        vm.expectRevert(abi.encodeWithSignature("AddressNotApproved()"));
+        amm.dummyTrade(address(testCaseToken), address(applicationCoin2), 10, 10, true);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_DeniedList_Burn_Positive() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountApproveDenyOracleFlexible_Setup(ActionTypes.BURN, true, 0);
+        vm.startPrank(user1, user1);
+        ERC20Burnable(address(testCaseToken)).burn(100);
+        assertEq(testCaseToken.balanceOf(user1), 99900);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_DeniedList_Burn_Negative() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountApproveDenyOracleFlexible_Setup(ActionTypes.BURN, true, 3);
+        vm.startPrank(address(69), address(69));
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        ERC20Burnable(address(testCaseToken)).burn(100);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_ApprovedList_Burn_Positive() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountApproveDenyOracleFlexible_Setup(ActionTypes.BURN, false, 2);
+        vm.startPrank(user1, user1);
+        ERC20Burnable(address(testCaseToken)).burn(100);
+        assertEq(testCaseToken.balanceOf(user1), 99900);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_ApprovedList_Burn_Negative() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountApproveDenyOracleFlexible_Setup(ActionTypes.BURN, false, 0);
+        vm.startPrank(address(69), address(69));
+        vm.expectRevert(abi.encodeWithSignature("AddressNotApproved()"));
+        ERC20Burnable(address(testCaseToken)).burn(100);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_DeniedList_Mint_Positive() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountApproveDenyOracleFlexible_Setup(ActionTypes.MINT, true, 0);
+        vm.startPrank(user1, user1);
+        UtilApplicationERC20(address(testCaseToken)).mint(user1, 100);
+        assertEq(testCaseToken.balanceOf(user1), 100100);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_DeniedList_Mint_Negative() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountApproveDenyOracleFlexible_Setup(ActionTypes.MINT, true, 3);
+        vm.startPrank(address(user1));
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        UtilApplicationERC20(address(testCaseToken)).mint(address(69), 100);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_ApprovedList_Mint_Positive() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountApproveDenyOracleFlexible_Setup(ActionTypes.MINT, false, 1);
+        vm.startPrank(user1, user1);
+        UtilApplicationERC20(address(testCaseToken)).mint(user1, 100);
+        assertEq(testCaseToken.balanceOf(user1), 100100);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_ApprovedList_Mint_Negative() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountApproveDenyOracleFlexible_Setup(ActionTypes.MINT, false, 0);
+        vm.startPrank(address(user1));
+        vm.expectRevert(abi.encodeWithSignature("AddressNotApproved()"));
+        UtilApplicationERC20(address(testCaseToken)).mint(address(69), 100);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_AllActionsEnabled_DeniedList() public endWithStopPrank ifDeploymentTestsEnabled {
+        switchToAppAdministrator();
+        /// set up a non admin user with tokens
+        testCaseToken.transfer(user1, 100000);
+        assertEq(testCaseToken.balanceOf(user1), 100000);
+
+        // add the rule.
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(0, 3);
+        setAccountApproveDenyOracleFlexibleRule(address(applicationCoinHandler), ruleId);
+        switchToAppAdministrator();
+        // add a blocked address
+        badBoys.push(address(69));
+        oracleDenied.addToDeniedList(badBoys);
+        ///perform transfer that checks rule
+        vm.startPrank(user1, user1);
+        testCaseToken.transfer(user2, 10);
+        assertEq(testCaseToken.balanceOf(user2), 10);
+        ///perform transfer that checks rule
+        // This one should fail
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        testCaseToken.transfer(address(69), 10);
+        assertEq(testCaseToken.balanceOf(address(69)), 0);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_AllActionsEnabled_ApprovedList() public endWithStopPrank ifDeploymentTestsEnabled {
+        switchToAppAdministrator();
+        /// set up a non admin user with tokens
+        testCaseToken.transfer(user1, 100000);
+        assertEq(testCaseToken.balanceOf(user1), 100000);
+
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(1, 0);
+        setAccountApproveDenyOracleFlexibleRule(address(applicationCoinHandler), ruleId);
+        switchToAppAdministrator();
+
+        // add approved addresses
+        goodBoys.push(address(59));
+        goodBoys.push(address(user5));
+        goodBoys.push(address(user1));
+        oracleApproved.addToApprovedList(goodBoys);
+        vm.startPrank(user1, user1);
+        // This one should pass
+        testCaseToken.transfer(address(59), 10);
+        // This one should fail
+        vm.expectRevert(abi.encodeWithSignature("AddressNotApproved()"));
+        testCaseToken.transfer(address(88), 10);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_AllActionsEnabled_InvalidOracleType() public endWithStopPrank ifDeploymentTestsEnabled {
+        // Finally, check the invalid type
+        switchToRuleAdmin();
+        vm.expectRevert("Oracle Type Invalid");
+        createAccountApproveDenyOracleFlexibleRule(2, 3);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_AllActionsEnabled_Burning() public endWithStopPrank ifDeploymentTestsEnabled {
+        /// test burning while oracle rule is active (allow list active)
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(1, 2);
+        setAccountApproveDenyOracleFlexibleRule(address(applicationCoinHandler), ruleId);
+        /// first mint to user
+        switchToAppAdministrator();
+        goodBoys.push(address(user5));
+        goodBoys.push(appAdministrator);
+        oracleApproved.addToApprovedList(goodBoys);
+        switchToAppAdministrator();
+        testCaseToken.transfer(user5, 10000);
+        /// burn some tokens as user
+        /// burns do not check for the recipient address as it is address(0)
+        vm.startPrank(user5, user5);
+        ERC20Burnable(address(testCaseToken)).burn(5000);
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexible_AllActionsEnabled_ZeroAddress() public endWithStopPrank ifDeploymentTestsEnabled {
+        /// add address(0) to deny list and switch oracle rule to deny list
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(0, 3);
+        setAccountApproveDenyOracleFlexibleRule(address(applicationCoinHandler), ruleId);
+        switchToAppAdministrator();
+        testCaseToken.transfer(user5, 10000);
+        badBoys.push(address(user5));
+        oracleDenied.addToDeniedList(badBoys);
+        /// attempt to burn (should fail)
+        vm.startPrank(user5, user5);
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        ERC20Burnable(address(testCaseToken)).burn(5000);
+    }
+
     /// Account Max Value By Access Level Tests
     function testERC20_ERC20CommonTests_AccountMaxValueByAccessLevel_Transfer_Positive() public endWithStopPrank ifDeploymentTestsEnabled {
         _accountMaxValueByAccessLevelSetup(ActionTypes.P2P_TRANSFER);
@@ -2147,7 +2398,7 @@ abstract contract ERC20CommonTests is TestCommonFoundry, DummyAMM, ERC20Util {
         }
 
         // Apply the rules to all actions
-        setAccountApproveDenyOracleRuleFull(address(applicationNFTHandler), actions, ruleIds);
+        setAccountApproveDenyOracleRuleFull(address(applicationCoinHandler), actions, ruleIds);
         // Verify that all the rule id's were set correctly and are active(Had to go old school with control break logic)
         mainIndex = 0;
         uint256 internalIndex;
@@ -2157,8 +2408,8 @@ abstract contract ERC20CommonTests is TestCommonFoundry, DummyAMM, ERC20Util {
                 internalIndex = 0;
             }
             for (uint j; j < 5; j++) {
-                assertEq(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).getAccountApproveDenyOracleIds(actions[mainIndex])[internalIndex], ruleIds[mainIndex]);
-                assertTrue(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).isAccountApproveDenyOracleActive(actions[mainIndex], ruleIds[mainIndex]));
+                assertEq(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getAccountApproveDenyOracleIds(actions[mainIndex])[internalIndex], ruleIds[mainIndex]);
+                assertTrue(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).isAccountApproveDenyOracleActive(actions[mainIndex], ruleIds[mainIndex]));
                 lastAction = actions[mainIndex];
                 internalIndex++;
                 mainIndex++;
@@ -2182,7 +2433,7 @@ abstract contract ERC20CommonTests is TestCommonFoundry, DummyAMM, ERC20Util {
         }
 
         // Apply the rules to all actions
-        setAccountApproveDenyOracleRuleFull(address(applicationNFTHandler), actions, ruleIds);
+        setAccountApproveDenyOracleRuleFull(address(applicationCoinHandler), actions, ruleIds);
         // Reset with a partial list of rules and insure that the changes are saved correctly
         uint32[] memory ruleIds2 = new uint32[](24);
         ActionTypes[] memory actions2 = new ActionTypes[](24);
@@ -2197,7 +2448,7 @@ abstract contract ERC20CommonTests is TestCommonFoundry, DummyAMM, ERC20Util {
             actionIndex++;
         }
         // Apply the new set of rules
-        setAccountApproveDenyOracleRuleFull(address(applicationNFTHandler), actions2, ruleIds2);
+        setAccountApproveDenyOracleRuleFull(address(applicationCoinHandler), actions2, ruleIds2);
         // Verify that all the rule id's were set correctly and are active(Had to go old school with control break logic)
         mainIndex = 0;
         uint256 internalIndex;
@@ -2207,8 +2458,8 @@ abstract contract ERC20CommonTests is TestCommonFoundry, DummyAMM, ERC20Util {
                 internalIndex = 0;
             }
             for (uint j; j < 8; j++) {
-                assertEq(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).getAccountApproveDenyOracleIds(actions2[mainIndex])[internalIndex], ruleIds2[mainIndex]);
-                assertTrue(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).isAccountApproveDenyOracleActive(actions2[mainIndex], ruleIds2[mainIndex]));
+                assertEq(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getAccountApproveDenyOracleIds(actions2[mainIndex])[internalIndex], ruleIds2[mainIndex]);
+                assertTrue(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).isAccountApproveDenyOracleActive(actions2[mainIndex], ruleIds2[mainIndex]));
                 lastAction = actions2[mainIndex];
                 internalIndex++;
                 mainIndex++;
@@ -2224,12 +2475,12 @@ abstract contract ERC20CommonTests is TestCommonFoundry, DummyAMM, ERC20Util {
                 internalIndex = 0;
             }
             for (uint j; j < 5; j++) {
-                uint32[] memory ruleIds3 = ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).getAccountApproveDenyOracleIds(actions[mainIndex]);
+                uint32[] memory ruleIds3 = ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getAccountApproveDenyOracleIds(actions[mainIndex]);
                 // If a value was returned it must not match a previous rule
                 if (ruleIds3.length > 0) {
                     assertFalse(ruleIds3[internalIndex] == ruleIds[mainIndex]);
                 }
-                assertFalse(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).isAccountApproveDenyOracleActive(actions[mainIndex], ruleIds[mainIndex]));
+                assertFalse(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).isAccountApproveDenyOracleActive(actions[mainIndex], ruleIds[mainIndex]));
                 lastAction = actions[mainIndex];
                 internalIndex++;
                 mainIndex++;
@@ -2254,27 +2505,171 @@ abstract contract ERC20CommonTests is TestCommonFoundry, DummyAMM, ERC20Util {
         }
 
         // Apply the rules to all actions
-        setAccountApproveDenyOracleRuleFull(address(applicationNFTHandler), actions, ruleIds);
+        setAccountApproveDenyOracleRuleFull(address(applicationCoinHandler), actions, ruleIds);
         
         // Verify that all the rule id's were set correctly and are active
         for (uint i; i < 5; i++) {
-            assertEq(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).getAccountApproveDenyOracleIds(actions[i])[i], ruleIds[i]);
-            assertTrue(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).isAccountApproveDenyOracleActive(actions[i], ruleIds[i]));
+            assertEq(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getAccountApproveDenyOracleIds(actions[i])[i], ruleIds[i]);
+            assertTrue(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).isAccountApproveDenyOracleActive(actions[i], ruleIds[i]));
         }
         // Create zero length arrays
         uint32[] memory ruleIdsZero = new uint32[](0);
         ActionTypes[] memory actionsZero = new ActionTypes[](0);
 
         // Apply zero length arrays
-        setAccountApproveDenyOracleRuleFull(address(applicationNFTHandler), actionsZero, ruleIdsZero);
+        setAccountApproveDenyOracleRuleFull(address(applicationCoinHandler), actionsZero, ruleIdsZero);
 
         // Verify that all the rule ids were cleared and not active
         for (uint i; i < 5; i++) {
-            assertEq(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).getAccountApproveDenyOracleIds(actions[i]).length, 0);
-            assertFalse(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).isAccountApproveDenyOracleActive(actions[i], ruleIds[i]));
+            assertEq(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getAccountApproveDenyOracleIds(actions[i]).length, 0);
+            assertFalse(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).isAccountApproveDenyOracleActive(actions[i], ruleIds[i]));
         }
     }
 
+    /* AccountApproveDenyOracleFlexible */
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexibleAtomicFullSet() public endWithStopPrank ifDeploymentTestsEnabled {
+        uint32[] memory ruleIds = new uint32[](25);
+        ActionTypes[] memory actions = new ActionTypes[](25);
+        // Set up rule
+        uint256 actionIndex;
+        uint256 mainIndex;
+        for (uint i; i < 5; i++) {
+            for (uint j; j < 5; j++) {
+                actions[mainIndex] = ActionTypes(actionIndex);
+                ruleIds[mainIndex] = createAccountApproveDenyOracleFlexibleRule(0, 0);
+                mainIndex++;
+            }
+            actionIndex++;
+        }
+
+        // Apply the rules to all actions
+        setAccountApproveDenyOracleFlexibleRuleFull(address(applicationCoinHandler), actions, ruleIds);
+        // Verify that all the rule id's were set correctly and are active(Had to go old school with control break logic)
+        mainIndex = 0;
+        uint256 internalIndex;
+        ActionTypes lastAction;
+        for (uint i; i < 5; i++) {
+            if (actions[mainIndex] != lastAction) {
+                internalIndex = 0;
+            }
+            for (uint j; j < 5; j++) {
+                assertEq(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getAccountApproveDenyOracleFlexibleIds(actions[mainIndex])[internalIndex], ruleIds[mainIndex]);
+                assertTrue(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).isAccountApproveDenyOracleFlexibleActive(actions[mainIndex], ruleIds[mainIndex]));
+                lastAction = actions[mainIndex];
+                internalIndex++;
+                mainIndex++;
+            }
+        }
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexibleAtomicFullReSet() public endWithStopPrank ifDeploymentTestsEnabled {
+        uint32[] memory ruleIds = new uint32[](25);
+        ActionTypes[] memory actions = new ActionTypes[](25);
+        // Set up rule
+        uint256 actionIndex;
+        uint256 mainIndex;
+        for (uint i; i < 5; i++) {
+            for (uint j; j < 5; j++) {
+                actions[mainIndex] = ActionTypes(actionIndex);
+                ruleIds[mainIndex] = createAccountApproveDenyOracleFlexibleRule(0, 0);
+                mainIndex++;
+            }
+            actionIndex++;
+        }
+
+        // Apply the rules to all actions
+        setAccountApproveDenyOracleFlexibleRuleFull(address(applicationCoinHandler), actions, ruleIds);
+        // Reset with a partial list of rules and insure that the changes are saved correctly
+        uint32[] memory ruleIds2 = new uint32[](24);
+        ActionTypes[] memory actions2 = new ActionTypes[](24);
+        actionIndex = 0;
+        mainIndex = 0;
+        for (uint i; i < 3; i++) {
+            for (uint j; j < 8; j++) {
+                actions2[mainIndex] = ActionTypes(actionIndex);
+                ruleIds2[mainIndex] = createAccountApproveDenyOracleFlexibleRule(0, 0);
+                mainIndex++;
+            }
+            actionIndex++;
+        }
+        // Apply the new set of rules
+        setAccountApproveDenyOracleFlexibleRuleFull(address(applicationCoinHandler), actions2, ruleIds2);
+        // Verify that all the rule id's were set correctly and are active(Had to go old school with control break logic)
+        mainIndex = 0;
+        uint256 internalIndex;
+        ActionTypes lastAction;
+        for (uint i; i < 3; i++) {
+            if (actions2[mainIndex] != lastAction) {
+                internalIndex = 0;
+            }
+            for (uint j; j < 8; j++) {
+                assertEq(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getAccountApproveDenyOracleFlexibleIds(actions2[mainIndex])[internalIndex], ruleIds2[mainIndex]);
+                assertTrue(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).isAccountApproveDenyOracleFlexibleActive(actions2[mainIndex], ruleIds2[mainIndex]));
+                lastAction = actions2[mainIndex];
+                internalIndex++;
+                mainIndex++;
+            }
+        }
+
+        // Verify that all the rule id's were cleared for the previous set of rules(Had to go old school with control break logic)
+        mainIndex = 0;
+        internalIndex = 0;
+        lastAction = ActionTypes(0);
+        for (uint i; i < 5; i++) {
+            if (actions[mainIndex] != lastAction) {
+                internalIndex = 0;
+            }
+            for (uint j; j < 5; j++) {
+                uint32[] memory ruleIds3 = ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getAccountApproveDenyOracleFlexibleIds(actions[mainIndex]);
+                // If a value was returned it must not match a previous rule
+                if (ruleIds3.length > 0) {
+                    assertFalse(ruleIds3[internalIndex] == ruleIds[mainIndex]);
+                }
+                assertFalse(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).isAccountApproveDenyOracleFlexibleActive(actions[mainIndex], ruleIds[mainIndex]));
+                lastAction = actions[mainIndex];
+                internalIndex++;
+                mainIndex++;
+            }
+        }
+    }
+
+    function testERC20_ERC20CommonTests_AccountApproveDenyOracleFlexibleAtomicFull_ZeroLengthActions() public endWithStopPrank ifDeploymentTestsEnabled {
+        uint32[] memory ruleIds = new uint32[](25);
+        ActionTypes[] memory actions = new ActionTypes[](25);
+
+        // Set up rules
+        uint256 actionIndex;
+        uint256 mainIndex;
+        for (uint i; i < 5; i++) {
+            for (uint j; j < 5; j++) {
+                actions[mainIndex] = ActionTypes(actionIndex);
+                ruleIds[mainIndex] = createAccountApproveDenyOracleFlexibleRule(0, 0);
+                mainIndex++;
+            }
+            actionIndex++;
+        }
+
+        // Apply the rules to all actions
+        setAccountApproveDenyOracleFlexibleRuleFull(address(applicationCoinHandler), actions, ruleIds);
+        
+        // Verify that all the rule id's were set correctly and are active
+        for (uint i; i < 5; i++) {
+            assertEq(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getAccountApproveDenyOracleFlexibleIds(actions[i])[i], ruleIds[i]);
+            assertTrue(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).isAccountApproveDenyOracleFlexibleActive(actions[i], ruleIds[i]));
+        }
+        // Create zero length arrays
+        uint32[] memory ruleIdsZero = new uint32[](0);
+        ActionTypes[] memory actionsZero = new ActionTypes[](0);
+
+        // Apply zero length arrays
+        setAccountApproveDenyOracleFlexibleRuleFull(address(applicationCoinHandler), actionsZero, ruleIdsZero);
+
+        // Verify that all the rule ids were cleared and not active
+        for (uint i; i < 5; i++) {
+            assertEq(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getAccountApproveDenyOracleFlexibleIds(actions[i]).length, 0);
+            assertFalse(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).isAccountApproveDenyOracleFlexibleActive(actions[i], ruleIds[i]));
+        }
+    }
     
     /* TokenMinimumTransaction */
     function testERC20_ERC20CommonTests_TokenMinimumTransactionAtomicFullSet() public endWithStopPrank ifDeploymentTestsEnabled {
@@ -2283,15 +2678,15 @@ abstract contract ERC20CommonTests is TestCommonFoundry, DummyAMM, ERC20Util {
         for (uint i; i < 5; i++) ruleIds[i] = createTokenMinimumTransactionRule(i + 1);
         ActionTypes[] memory actions = createActionTypeArray(ActionTypes.P2P_TRANSFER, ActionTypes.SELL, ActionTypes.BUY, ActionTypes.MINT, ActionTypes.BURN);
         // Apply the rules to all actions
-        setTokenMinimumTransactionRuleFull(address(applicationNFTHandler), actions, ruleIds);
+        setTokenMinimumTransactionRuleFull(address(applicationCoinHandler), actions, ruleIds);
         // Verify that all the rule id's were set correctly
-        assertEq(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).getTokenMinTxSizeId(ActionTypes.P2P_TRANSFER), ruleIds[0]);
-        assertEq(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).getTokenMinTxSizeId(ActionTypes.SELL), ruleIds[1]);
-        assertEq(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).getTokenMinTxSizeId(ActionTypes.BUY), ruleIds[2]);
-        assertEq(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).getTokenMinTxSizeId(ActionTypes.MINT), ruleIds[3]);
-        assertEq(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).getTokenMinTxSizeId(ActionTypes.BURN), ruleIds[4]);
+        assertEq(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getTokenMinTxSizeId(ActionTypes.P2P_TRANSFER), ruleIds[0]);
+        assertEq(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getTokenMinTxSizeId(ActionTypes.SELL), ruleIds[1]);
+        assertEq(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getTokenMinTxSizeId(ActionTypes.BUY), ruleIds[2]);
+        assertEq(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getTokenMinTxSizeId(ActionTypes.MINT), ruleIds[3]);
+        assertEq(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getTokenMinTxSizeId(ActionTypes.BURN), ruleIds[4]);
         // Verify that all the rules were activated
-        for (uint i; i < 5; i++) assertTrue(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).isTokenMinTxSizeActive(ActionTypes(i)));
+        for (uint i; i < 5; i++) assertTrue(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).isTokenMinTxSizeActive(ActionTypes(i)));
     }
 
     function testERC20_ERC20CommonTests_TokenMinimumTransactionAtomicFullReSet() public endWithStopPrank ifDeploymentTestsEnabled {
@@ -2300,28 +2695,28 @@ abstract contract ERC20CommonTests is TestCommonFoundry, DummyAMM, ERC20Util {
         for (uint i; i < 5; i++) ruleIds[i] = createTokenMinimumTransactionRule(i + 1);
         ActionTypes[] memory actions = createActionTypeArray(ActionTypes.P2P_TRANSFER, ActionTypes.SELL, ActionTypes.BUY, ActionTypes.MINT, ActionTypes.BURN);
         // Apply the rules to all actions
-        setTokenMinimumTransactionRuleFull(address(applicationNFTHandler), actions, ruleIds);
+        setTokenMinimumTransactionRuleFull(address(applicationCoinHandler), actions, ruleIds);
         // Reset with a partial list of rules and insure that the changes are saved correctly
         ruleIds = new uint32[](2);
         ruleIds[0] = createTokenMinimumTransactionRule(6);
         ruleIds[1] = createTokenMinimumTransactionRule(7);
         actions = createActionTypeArray(ActionTypes.SELL, ActionTypes.BUY);
         // Apply the new set of rules
-        setTokenMinimumTransactionRuleFull(address(applicationNFTHandler), actions, ruleIds);
+        setTokenMinimumTransactionRuleFull(address(applicationCoinHandler), actions, ruleIds);
         // Verify that all the rule id's were set correctly
-        assertEq(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).getTokenMinTxSizeId(ActionTypes.SELL), ruleIds[0]);
-        assertEq(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).getTokenMinTxSizeId(ActionTypes.BUY), ruleIds[1]);
+        assertEq(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getTokenMinTxSizeId(ActionTypes.SELL), ruleIds[0]);
+        assertEq(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getTokenMinTxSizeId(ActionTypes.BUY), ruleIds[1]);
         // Verify that the old ones were cleared
-        assertEq(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).getTokenMinTxSizeId(ActionTypes.P2P_TRANSFER), 0);
-        assertEq(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).getTokenMinTxSizeId(ActionTypes.MINT), 0);
-        assertEq(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).getTokenMinTxSizeId(ActionTypes.BURN), 0);
+        assertEq(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getTokenMinTxSizeId(ActionTypes.P2P_TRANSFER), 0);
+        assertEq(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getTokenMinTxSizeId(ActionTypes.MINT), 0);
+        assertEq(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getTokenMinTxSizeId(ActionTypes.BURN), 0);
         // Verify that the new rules were activated
-        assertTrue(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).isTokenMinTxSizeActive(ActionTypes.SELL));
-        assertTrue(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).isTokenMinTxSizeActive(ActionTypes.BUY));
+        assertTrue(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).isTokenMinTxSizeActive(ActionTypes.SELL));
+        assertTrue(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).isTokenMinTxSizeActive(ActionTypes.BUY));
         // Verify that the old rules are not activated
-        assertFalse(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).isTokenMinTxSizeActive(ActionTypes.P2P_TRANSFER));
-        assertFalse(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).isTokenMinTxSizeActive(ActionTypes.MINT));
-        assertFalse(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).isTokenMinTxSizeActive(ActionTypes.BURN));
+        assertFalse(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).isTokenMinTxSizeActive(ActionTypes.P2P_TRANSFER));
+        assertFalse(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).isTokenMinTxSizeActive(ActionTypes.MINT));
+        assertFalse(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).isTokenMinTxSizeActive(ActionTypes.BURN));
     }
 
     function testERC20_ERC20CommonTests_TokenMinimumTransactionAtomicFull_ZeroLengthActions() public endWithStopPrank ifDeploymentTestsEnabled {
@@ -2331,12 +2726,12 @@ abstract contract ERC20CommonTests is TestCommonFoundry, DummyAMM, ERC20Util {
         ActionTypes[] memory actions = createActionTypeArray(ActionTypes.P2P_TRANSFER, ActionTypes.SELL, ActionTypes.BUY, ActionTypes.MINT, ActionTypes.BURN);
 
         // Apply the rules to all actions
-        setTokenMinimumTransactionRuleFull(address(applicationNFTHandler), actions, ruleIds);
+        setTokenMinimumTransactionRuleFull(address(applicationCoinHandler), actions, ruleIds);
 
         // Verify that all the rule id's were set correctly and actions activated
         for (uint i; i < ruleIds.length; ++i) {
-            assertEq(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).getTokenMinTxSizeId(actions[i]), ruleIds[i]);
-            assertTrue(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).isTokenMinTxSizeActive(actions[i]));
+            assertEq(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getTokenMinTxSizeId(actions[i]), ruleIds[i]);
+            assertTrue(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).isTokenMinTxSizeActive(actions[i]));
         }
         
         // Create zero length arrays
@@ -2344,12 +2739,12 @@ abstract contract ERC20CommonTests is TestCommonFoundry, DummyAMM, ERC20Util {
         ActionTypes[] memory actionsZero = new ActionTypes[](0);
 
         // Apply the new zero length rules
-        setTokenMinimumTransactionRuleFull(address(applicationNFTHandler), actionsZero, ruleIdsZero);
+        setTokenMinimumTransactionRuleFull(address(applicationCoinHandler), actionsZero, ruleIdsZero);
 
         // Verify that all the rule id's were cleared correctly and actions deacivated
         for (uint i; i < ruleIds.length; ++i) {
-            assertEq(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).getTokenMinTxSizeId(actions[i]), 0);
-            assertFalse(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).isTokenMinTxSizeActive(actions[i]));
+            assertEq(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).getTokenMinTxSizeId(actions[i]), 0);
+            assertFalse(ERC20NonTaggedRuleFacet(address(applicationCoinHandler)).isTokenMinTxSizeActive(actions[i]));
         }
     }
 
@@ -2529,6 +2924,54 @@ abstract contract ERC20CommonTests is TestCommonFoundry, DummyAMM, ERC20Util {
         }
 
         UtilApplicationERC20(address(testCaseToken)).mint(rich_user, 10000);
+        ///perform buy that checks rule
+        testCaseToken.approve(address(amm), 50);
+        applicationCoin2.approve(address(amm), 50);
+        vm.startPrank(rich_user, rich_user);
+        testCaseToken.transfer(address(amm), 900);
+        applicationCoin2.transfer(address(amm), 900);
+        applicationCoin2.transfer(user1, 900);
+        applicationCoin2.transfer(address(69), 900);
+        return amm;
+    }
+
+    function _accountApproveDenyOracleFlexible_Setup(ActionTypes action, bool deny, uint8 addressToggle) public endWithStopPrank returns (DummyAMM) {
+        switchToAppAdministrator();
+        /// set up a non admin user with tokens
+        testCaseToken.transfer(user1, 100000);
+        assertEq(testCaseToken.balanceOf(user1), 100000);
+        testCaseToken.transfer(address(69), 1000);
+        // add the rule.
+        uint32[] memory ruleIds = new uint32[](1);
+        if(deny) {
+            ruleIds[0] = createAccountApproveDenyOracleFlexibleRule(0, addressToggle);
+        } else {
+            ruleIds[0] = createAccountApproveDenyOracleFlexibleRule(1, addressToggle);
+        }
+        
+        switchToAppAdministrator();
+        applicationCoin2.mint(appAdministrator, 10000000000000000000000 * ATTO);
+        applicationCoin2.mint(rich_user, 10000);
+        DummyAMM amm = new DummyAMM();
+        UtilApplicationERC20(address(testCaseToken)).mint(rich_user, 10000);
+        setAccountApproveDenyOracleFlexibleRuleFull(address(applicationCoinHandler), createActionTypeArray(action), ruleIds);
+        switchToAppAdministrator();
+        
+
+        if(deny) {
+            // add a blocked address
+            badBoys.push(address(69));
+            oracleDenied.addToDeniedList(badBoys);
+        } else {
+            // add approved addresses
+            goodBoys.push(address(59));
+            goodBoys.push(address(user1));
+            goodBoys.push(address(rich_user));
+            goodBoys.push(address(amm));
+            oracleApproved.addToApprovedList(goodBoys);
+        }
+
+        
         ///perform buy that checks rule
         testCaseToken.approve(address(amm), 50);
         applicationCoin2.approve(address(amm), 50);

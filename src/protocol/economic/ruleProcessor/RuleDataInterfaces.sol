@@ -58,6 +58,13 @@ interface INonTaggedRules {
         address oracleAddress;
     }
 
+    /// ******** Account Approve/Deny Oracle ********
+    struct AccountApproveDenyOracleFlexible {
+        uint8 oracleType; /// enum value --> 0 = restricted; 1 = allowed
+        uint8 addressToggle;
+        address oracleAddress;
+    }
+
     /// ******** Token Min Hold Time ********
     struct TokenMinHoldTime {
         uint32 minHoldTime; /// from 0000 to 43830

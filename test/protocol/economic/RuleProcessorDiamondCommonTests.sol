@@ -522,6 +522,46 @@ abstract contract RuleProcessorDiamondCommonTests is Test, TestCommonFoundry, ER
         assertEq(ERC20RuleProcessorFacet(address(ruleProcessor)).getTotalAccountApproveDenyOracle(), _indexes.length);
     }
 
+    /*********************** AccountApproveDenyOracleFlexible ************************/
+    /// Simple setting and getting
+    function testProtocol_RuleProcessorDiamond_AccountApproveDenyOracleFlexibleDeny() public endWithStopPrank ifDeploymentTestsEnabled {
+        switchToRuleAdmin();
+        uint32 _index = RuleDataFacet(address(ruleProcessor)).addAccountApproveDenyOracleFlexible(address(applicationAppManager), 0, 0, address(59));
+        assertEq(_index, 0);
+        NonTaggedRules.AccountApproveDenyOracleFlexible memory rule = ERC20RuleProcessorFacet(address(ruleProcessor)).getAccountApproveDenyOracleFlexible(_index);
+        assertEq(rule.oracleType, 0);
+        assertEq(rule.oracleAddress, address(59));
+        _index = RuleDataFacet(address(ruleProcessor)).addAccountApproveDenyOracleFlexible(address(applicationAppManager), 1, 0, address(79));
+        assertEq(_index, 1);
+        rule = ERC20RuleProcessorFacet(address(ruleProcessor)).getAccountApproveDenyOracleFlexible(_index);
+        assertEq(rule.oracleType, 1);
+    }
+
+    function testProtocol_RuleProcessorDiamond_AccountApproveDenyOracleFlexibleApprove() public endWithStopPrank ifDeploymentTestsEnabled {
+        switchToRuleAdmin();
+        uint32 _index = RuleDataFacet(address(ruleProcessor)).addAccountApproveDenyOracleFlexible(address(applicationAppManager), 1, 0, address(79));
+        assertEq(_index, 0);
+        NonTaggedRules.AccountApproveDenyOracleFlexible memory rule = ERC20RuleProcessorFacet(address(ruleProcessor)).getAccountApproveDenyOracleFlexible(_index);
+        assertEq(rule.oracleType, 1);
+    }
+
+    /// Test only ruleAdministrators can add AccountApproveDenyOracle Rule
+    function testProtocol_RuleProcessorDiamond_AccountApproveDenyOracleFlexibleSettingWithoutAppAdministratorAccount() public endWithStopPrank ifDeploymentTestsEnabled {
+        vm.startPrank(address(0xC0FFEE)); //interact as a different user
+        vm.expectRevert(0xd66c3008);
+        RuleDataFacet(address(ruleProcessor)).addAccountApproveDenyOracle(address(applicationAppManager), 0, address(59));
+    }
+
+    /// Test total rules
+    function testProtocol_RuleProcessorDiamond_AccountApproveDenyOracleFlexibleTotalRules() public endWithStopPrank ifDeploymentTestsEnabled {
+        switchToRuleAdmin();
+        uint256[101] memory _indexes;
+        for (uint8 i = 0; i < 101; i++) {
+            _indexes[i] = RuleDataFacet(address(ruleProcessor)).addAccountApproveDenyOracleFlexible(address(applicationAppManager), 0, 1, address(59));
+        }
+        assertEq(ERC20RuleProcessorFacet(address(ruleProcessor)).getTotalAccountApproveDenyOracleFlexible(), _indexes.length);
+    }
+
     /*********************** TokenMaxDailyTrades ************************/
     function testProtocol_RuleProcessorDiamond_TokenMaxDailyTrades() public endWithStopPrank ifDeploymentTestsEnabled {
         switchToRuleAdmin();

@@ -29,6 +29,23 @@ abstract contract ERC20Util is TokenUtils, DummyAMM {
         ERC20NonTaggedRuleFacet(address(assetHandler)).setAccountApproveDenyOracleIdFull(actions, ruleIds);
     }
 
+    function setAccountApproveDenyOracleFlexibleRuleSingleAction(ActionTypes _action, address assetHandler, uint32 ruleId) public endWithStopPrank {
+        switchToRuleAdmin();
+        ActionTypes[] memory actionTypes = createActionTypeArray(_action);
+        ERC20NonTaggedRuleFacet(address(assetHandler)).setAccountApproveDenyOracleFlexibleId(actionTypes, ruleId);
+    }
+
+    function setAccountApproveDenyOracleFlexibleRule(address assetHandler, uint32 ruleId) public endWithStopPrank {
+        switchToRuleAdmin();
+        ActionTypes[] memory actionTypes = createActionTypeArray(ActionTypes.P2P_TRANSFER, ActionTypes.BUY, ActionTypes.SELL, ActionTypes.MINT, ActionTypes.BURN);
+        ERC20NonTaggedRuleFacet(address(assetHandler)).setAccountApproveDenyOracleFlexibleId(actionTypes, ruleId);
+    }
+
+    function setAccountApproveDenyOracleFlexibleRuleFull(address assetHandler, ActionTypes[] memory actions, uint32[] memory ruleIds) public endWithStopPrank {
+        switchToRuleAdmin();
+        ERC20NonTaggedRuleFacet(address(assetHandler)).setAccountApproveDenyOracleFlexibleIdFull(actions, ruleIds);
+    }
+
     function setAccountMinMaxTokenBalanceRule(address assetHandler, uint32 ruleId) public endWithStopPrank {
         switchToRuleAdmin();
         ActionTypes[] memory actionTypes = createActionTypeArray(ActionTypes.P2P_TRANSFER, ActionTypes.SELL, ActionTypes.MINT, ActionTypes.BUY, ActionTypes.BURN);

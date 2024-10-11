@@ -573,6 +573,291 @@ contract ApplicationERC721FuzzTest is TestCommonFoundry, ERC721Util {
     }
 
     /******************************************************
+     ************ ACCOUNT APPROVE DENY ORACLE FLEXIBLE ************
+     ******************************************************/
+
+    function _buildAccountApproveDenyOracleFlexible(uint8 _addressIndex) internal endWithStopPrank returns (address randomUser, address richGuy, address _user1, address _user2, address _user3) {
+        (randomUser, richGuy, _user1, _user2, _user3) = _get5RandomAddresses(_addressIndex);
+        /// set up a non admin user an nft
+
+        _mintAmount(_user1, 5);
+        assertEq(applicationNFT.balanceOf(_user1), 5);
+        // add a blacklist address
+        badBoys.push(_user3);
+        switchToAppAdministrator();
+        oracleDenied.addToDeniedList(badBoys);
+        // add an allowed address
+        goodBoys.push(randomUser);
+        oracleApproved.addToApprovedList(goodBoys);
+    }
+
+    /******* ACCOUNT APPROVE DENY ORACLE FLEXIBLE : DENY *******/
+
+    function _buildAccountApproveDenyOracleFlexibleDeny(
+        uint8 _addressIndex,
+        ActionTypes action
+    ) internal endWithStopPrank returns (address randomUser, address richGuy, address _user1, address _user2, address _user3) {
+        (randomUser, richGuy, _user1, _user2, _user3) = _buildAccountApproveDenyOracleFlexible(_addressIndex);
+        /// connect the rule to this handler
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(0, 3);
+        setAccountApproveDenyOracleFlexibleRuleSingleAction(action, address(applicationNFTHandler), ruleId);
+    }
+
+    /** ACCOUNT APPROVE DENY ORACLE FLEXIBLE: DENY TRANSFER */
+
+    function testERC721_ApplicationERC721Fuzz_AccountApproveDenyOracleFlexible_Transfer_DenyPositive(uint8 _addressIndex) public endWithStopPrank {
+        (address randomUser, address richGuy, address _user1, address _user2, address _user3) = _buildAccountApproveDenyOracleFlexibleDeny(_addressIndex, ActionTypes.P2P_TRANSFER);
+        vm.startPrank(_user1, _user1);
+        applicationNFT.transferFrom(_user1, _user2, 0);
+        assertEq(applicationNFT.balanceOf(_user2), 1);
+        console.log(randomUser, richGuy, _user3);
+    }
+
+    function testERC721_ApplicationERC721Fuzz_AccountApproveDenyOracleFlexible_Transfer_DenyNegative(uint8 _addressIndex) public endWithStopPrank {
+        (address randomUser, address richGuy, address _user1, address _user2, address _user3) = _buildAccountApproveDenyOracleFlexibleDeny(_addressIndex, ActionTypes.P2P_TRANSFER);
+        vm.startPrank(_user1, _user1);
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        applicationNFT.transferFrom(_user1, _user3, 1);
+        assertEq(applicationNFT.balanceOf(_user3), 0);
+        console.log(randomUser, richGuy, _user2);
+    }
+
+    /** ACCOUNT APPROVE DENY ORACLE FLEXIBLE: DENY MINT */
+
+    function testERC721_ApplicationERC721Fuzz_AccountApproveDenyOracleFlexible_Mint_DenyPositive(uint8 _addressIndex) public endWithStopPrank {
+        (address randomUser, address richGuy, address _user1, address _user2, address _user3) = _buildAccountApproveDenyOracleFlexibleDeny(_addressIndex, ActionTypes.MINT);
+        switchToAppAdministrator();
+        applicationNFT.safeMint(_user1);
+        assertEq(applicationNFT.balanceOf(_user1), 6);
+        (randomUser, richGuy, _user3, _user2);
+    }
+
+    function testERC721_ApplicationERC721Fuzz_AccountApproveDenyOracleFlexible_Mint_DenyNegative(uint8 _addressIndex) public endWithStopPrank {
+        (address randomUser, address richGuy, address _user1, address _user2, address _user3) = _buildAccountApproveDenyOracleFlexibleDeny(_addressIndex, ActionTypes.MINT);
+        switchToAppAdministrator();
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        applicationNFT.safeMint(_user3);
+        assertEq(applicationNFT.balanceOf(_user3), 0);
+        (randomUser, richGuy, _user2, _user1);
+    }
+
+    /** ACCOUNT APPROVE DENY ORACLE FLEXIBLE: DENY BURN */
+
+    function testERC721_ApplicationERC721Fuzz_AccountApproveDenyOracleFlexible_Burn_DenyPositive(uint8 _addressIndex) public endWithStopPrank {
+        (address randomUser, address richGuy, address _user1, address _user2, address _user3) = _buildAccountApproveDenyOracleFlexibleDeny(_addressIndex, ActionTypes.BURN);
+        uint initialBalance = applicationNFT.balanceOf(_user1);
+        vm.startPrank(_user1, _user1);
+        applicationNFT.burn(0);
+        assertEq(applicationNFT.balanceOf(_user1), initialBalance - 1);
+        (randomUser, richGuy, _user3, _user2);
+    }
+
+    function testERC721_ApplicationERC721Fuzz_AccountApproveDenyOracleFlexible_Burn_DenyNegative(uint8 _addressIndex) public endWithStopPrank {
+        (address randomUser, address richGuy, address _user1, address _user2, address _user3) = _buildAccountApproveDenyOracleFlexibleDeny(_addressIndex, ActionTypes.BURN);
+        vm.startPrank(_user1, _user1);
+        applicationNFT.safeTransferFrom(_user1, _user3, 0);
+        vm.startPrank(_user3, _user3);
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        applicationNFT.burn(0);
+        (randomUser, richGuy, _user2, _user1);
+    }
+
+    /** ACCOUNT APPROVE DENY ORACLE FLEXIBLE : DENY SELL */
+
+    function testERC721_ApplicationERC721Fuzz_AccountApproveDenyOracleFlexible_Sell_DenyPositive(uint8 _addressIndex) public endWithStopPrank {
+        (address randomUser, address richGuy, address _user1, address _user2, address _user3) = _buildAccountApproveDenyOracleFlexibleDeny(_addressIndex, ActionTypes.SELL);
+        DummyNFTAMM _amm = _setupAMM();
+        uint initialBalance = applicationNFT.balanceOf(_user1);
+        vm.startPrank(_user1, _user1);
+        applicationNFT.setApprovalForAll(address(_amm), true);
+        _amm.dummyTrade(address(applicationCoin), address(applicationNFT), 0, 0, false);
+        assertEq(applicationNFT.balanceOf(_user1), initialBalance - 1);
+        (randomUser, richGuy, _user3, _user2);
+    }
+
+    function testERC721_ApplicationERC721Fuzz_AccountApproveDenyOracleFlexible_Sell_DenyNegative(uint8 _addressIndex) public endWithStopPrank {
+        (address randomUser, address richGuy, address _user1, address _user2, address _user3) = _buildAccountApproveDenyOracleFlexibleDeny(_addressIndex, ActionTypes.SELL);
+        DummyNFTAMM _amm = _setupAMM();
+        uint initialBalance = applicationNFT.balanceOf(_user1);
+        vm.startPrank(_user1, _user1);
+        applicationNFT.safeTransferFrom(_user1, _user3, 0);
+        vm.startPrank(_user3, _user3);
+        applicationNFT.setApprovalForAll(address(_amm), true);
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        _amm.dummyTrade(address(applicationCoin), address(applicationNFT), 0, 0, false);
+        assertEq(applicationNFT.balanceOf(_user1), initialBalance - 1);
+        (randomUser, richGuy, _user3, _user2);
+    }
+
+    /** ACCOUNT APPROVE DENY ORACLE FLEXIBLE : DENY BUY */
+
+    function testERC721_ApplicationERC721Fuzz_AccountApproveDenyOracleFlexible_Buy_DenyPositive(uint8 _addressIndex) public endWithStopPrank {
+        (address randomUser, address richGuy, address _user1, address _user2, address _user3) = _buildAccountApproveDenyOracleFlexibleDeny(_addressIndex, ActionTypes.BUY);
+        DummyNFTAMM _amm = _setupAMM();
+        uint initialBalance = applicationNFT.balanceOf(_user1);
+        uint nft = applicationNFT.tokenOfOwnerByIndex(address(_amm), 0);
+        vm.startPrank(_user1, _user1);
+        _amm.dummyTrade(address(applicationCoin), address(applicationNFT), 0, nft, true);
+        assertEq(applicationNFT.balanceOf(_user1), initialBalance + 1);
+        (randomUser, richGuy, _user3, _user2);
+    }
+
+    function testERC721_ApplicationERC721Fuzz_AccountApproveDenyOracleFlexible_Buy_DenyNegative(uint8 _addressIndex) public endWithStopPrank {
+        (address randomUser, address richGuy, address _user1, address _user2, address _user3) = _buildAccountApproveDenyOracleFlexibleDeny(_addressIndex, ActionTypes.BUY);
+        DummyNFTAMM _amm = _setupAMM();
+        uint nft = applicationNFT.tokenOfOwnerByIndex(address(_amm), 0);
+        vm.startPrank(_user3, _user3);
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        _amm.dummyTrade(address(applicationCoin), address(applicationNFT), 0, nft, true);
+        (randomUser, richGuy, _user1, _user2);
+    }
+
+    /******* ACCOUNT APPROVE DENY ORACLE FLEXIBLE : APPROVE *******/
+
+    function _buildAccountApproveDenyOracleFlexibleApprove(
+        uint8 _addressIndex,
+        ActionTypes action
+    ) internal endWithStopPrank returns (address randomUser, address richGuy, address _user1, address _user2, address _user3) {
+        (randomUser, richGuy, _user1, _user2, _user3) = _buildAccountApproveDenyOracleFlexible(_addressIndex);
+        /// connect the rule to this handler
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(1, 0);
+        setAccountApproveDenyOracleFlexibleRuleSingleAction(action, address(applicationNFTHandler), ruleId);
+    }
+   
+    function _buildAccountApproveDenyOracleFlexibleApproveBurn(
+        uint8 _addressIndex,
+        ActionTypes action
+    ) internal endWithStopPrank returns (address randomUser, address richGuy, address _user1, address _user2, address _user3) {
+        (randomUser, richGuy, _user1, _user2, _user3) = _buildAccountApproveDenyOracleFlexible(_addressIndex);
+        /// connect the rule to this handler
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(1, 2); // check only the from address for burns 
+        setAccountApproveDenyOracleFlexibleRuleSingleAction(action, address(applicationNFTHandler), ruleId);
+    }
+    
+    function _buildAccountApproveDenyOracleFlexibleApproveMint(
+        uint8 _addressIndex,
+        ActionTypes action
+    ) internal endWithStopPrank returns (address randomUser, address richGuy, address _user1, address _user2, address _user3) {
+        (randomUser, richGuy, _user1, _user2, _user3) = _buildAccountApproveDenyOracleFlexible(_addressIndex);
+        /// connect the rule to this handler
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(1, 1); // check only the to address for mints 
+        setAccountApproveDenyOracleFlexibleRuleSingleAction(action, address(applicationNFTHandler), ruleId);
+    }
+
+    /** ACCOUNT APPROVE DENY ORACLE FLEXIBLE : APPROVE TRANSFER */
+
+    function testERC721_ApplicationERC721Fuzz_AccountApproveDenyOracleFlexible_Transfer_ApprovePositive(uint8 _addressIndex) public endWithStopPrank {
+        (address randomUser, address richGuy, address _user1, address _user2, address _user3) = _buildAccountApproveDenyOracleFlexibleApprove(_addressIndex, ActionTypes.P2P_TRANSFER);
+        switchToAppAdministrator();
+        goodBoys.push(_user1);
+        oracleApproved.addToApprovedList(goodBoys);
+        vm.startPrank(_user1, _user1);
+        applicationNFT.transferFrom(_user1, randomUser, 2);
+        console.log(richGuy, _user2, _user3);
+    }
+
+    function testERC721_ApplicationERC721Fuzz_AccountApproveDenyOracleFlexible_Transfer_ApproveNegative(uint8 _addressIndex) public endWithStopPrank {
+        (address randomUser, address richGuy, address _user1, address _user2, address _user3) = _buildAccountApproveDenyOracleFlexibleApprove(_addressIndex, ActionTypes.P2P_TRANSFER);
+        vm.startPrank(_user1, _user1);
+        vm.expectRevert(abi.encodeWithSignature("AddressNotApproved()"));
+        applicationNFT.transferFrom(_user1, richGuy, 3);
+        console.log(randomUser, _user2, _user3);
+    }
+
+    /** ACCOUNT APPROVE DENY ORACLE FLEXIBLE : APPROVE MINT */
+
+    function testERC721_ApplicationERC721Fuzz_AccountApproveDenyOracleFlexible_Mint_ApprovePositive(uint8 _addressIndex) public endWithStopPrank {
+        (address randomUser, address richGuy, address _user1, address _user2, address _user3) = _buildAccountApproveDenyOracleFlexibleApproveMint(_addressIndex, ActionTypes.MINT);
+        switchToAppAdministrator();
+        applicationNFT.safeMint(randomUser);
+        console.log(richGuy, _user1, _user2, _user3);
+    }
+
+    function testERC721_ApplicationERC721Fuzz_AccountApproveDenyOracleFlexible_Mint_ApproveNegative(uint8 _addressIndex) public endWithStopPrank {
+        (address randomUser, address richGuy, address _user1, address _user2, address _user3) = _buildAccountApproveDenyOracleFlexibleApprove(_addressIndex, ActionTypes.MINT);
+        switchToAppAdministrator();
+        vm.expectRevert(abi.encodeWithSignature("AddressNotApproved()"));
+        applicationNFT.safeMint(richGuy);
+        (randomUser, _user1, _user2, _user3);
+    }
+
+    /** ACCOUNT APPROVE DENY ORACLE FLEXIBLE : APPROVE BURN */
+
+    function testERC721_ApplicationERC721Fuzz_AccountApproveDenyOracleFlexible_Burn_ApprovePositive(uint8 _addressIndex) public endWithStopPrank {
+        (address randomUser, address richGuy, address _user1, address _user2, address _user3) = _buildAccountApproveDenyOracleFlexibleApproveBurn(_addressIndex, ActionTypes.BURN);
+        uint initialBalance = applicationNFT.balanceOf(randomUser);
+        vm.startPrank(_user1, _user1);
+        applicationNFT.safeTransferFrom(_user1, randomUser, 0);
+        vm.startPrank(randomUser);
+        applicationNFT.burn(0);
+        assertEq(applicationNFT.balanceOf(randomUser), initialBalance);
+        (randomUser, richGuy, _user3, _user2);
+    }
+
+    function testERC721_ApplicationERC721Fuzz_AccountApproveDenyOracleFlexible_Burn_ApproveNegative(uint8 _addressIndex) public endWithStopPrank {
+        (address randomUser, address richGuy, address _user1, address _user2, address _user3) = _buildAccountApproveDenyOracleFlexibleApprove(_addressIndex, ActionTypes.BURN);
+        vm.startPrank(_user1, _user1);
+        vm.expectRevert(abi.encodeWithSignature("AddressNotApproved()"));
+        applicationNFT.burn(0);
+        (randomUser, richGuy, _user2, _user3);
+    }
+
+    /** ACCOUNT APPROVE DENY ORACLE FLEXIBLE : APPROVE SELL */
+
+    function testERC721_ApplicationERC721Fuzz_AccountApproveDenyOracleFlexible_Sell_ApprovePositive(uint8 _addressIndex) public endWithStopPrank {
+        (address randomUser, address richGuy, address _user1, address _user2, address _user3) = _buildAccountApproveDenyOracleFlexibleApprove(_addressIndex, ActionTypes.SELL);
+        DummyNFTAMM _amm = _setupAMM();
+        uint initialBalance = applicationNFT.balanceOf(randomUser);
+        vm.startPrank(_user1, _user1);
+        applicationNFT.safeTransferFrom(_user1, randomUser, 0);
+        vm.startPrank(randomUser);
+        applicationNFT.setApprovalForAll(address(_amm), true);
+        _amm.dummyTrade(address(applicationCoin), address(applicationNFT), 0, 0, false);
+        assertEq(applicationNFT.balanceOf(randomUser), initialBalance);
+        (randomUser, richGuy, _user3, _user2);
+    }
+
+    function testERC721_ApplicationERC721Fuzz_AccountApproveDenyOracleFlexible_Sell_ApproveNegative(uint8 _addressIndex) public endWithStopPrank {
+        (address randomUser, address richGuy, address _user1, address _user2, address _user3) = _buildAccountApproveDenyOracleFlexibleApprove(_addressIndex, ActionTypes.SELL);
+        DummyNFTAMM _amm = _setupAMM();
+        vm.startPrank(_user1, _user1);
+        applicationNFT.setApprovalForAll(address(_amm), true);
+        vm.expectRevert(abi.encodeWithSignature("AddressNotApproved()"));
+        _amm.dummyTrade(address(applicationCoin), address(applicationNFT), 0, 0, false);
+        (randomUser, richGuy, _user3, _user2);
+    }
+
+    /** ACCOUNT APPROVE DENY ORACLE FLEXIBLE : APPROVE BUY */
+
+    function testERC721_ApplicationERC721Fuzz_AccountApproveDenyOracleFlexible_Buy_ApprovePositive(uint8 _addressIndex) public endWithStopPrank {
+        (address randomUser, address richGuy, address _user1, address _user2, address _user3) = _buildAccountApproveDenyOracleFlexibleApprove(_addressIndex, ActionTypes.BUY);
+        DummyNFTAMM _amm = _setupAMM();
+        switchToAppAdministrator();
+        goodBoys.push(address(_amm));
+        oracleApproved.addToApprovedList(goodBoys);
+        uint initialBalance = applicationNFT.balanceOf(randomUser);
+        uint nft = applicationNFT.tokenOfOwnerByIndex(address(_amm), 0);
+        vm.startPrank(randomUser);
+        _amm.dummyTrade(address(applicationCoin), address(applicationNFT), 0, nft, true);
+        assertEq(applicationNFT.balanceOf(randomUser), initialBalance + 1);
+        (richGuy, _user1, _user3, _user2);
+    }
+
+    function testERC721_ApplicationERC721Fuzz_AccountApproveDenyOracleFlexible_Buy_ApproveNegative(uint8 _addressIndex) public endWithStopPrank {
+        (address randomUser, address richGuy, address _user1, address _user2, address _user3) = _buildAccountApproveDenyOracleFlexibleApprove(_addressIndex, ActionTypes.BUY);
+        DummyNFTAMM _amm = _setupAMM();
+        uint nft = applicationNFT.tokenOfOwnerByIndex(address(_amm), 0);
+        vm.startPrank(_user1, _user1);
+        vm.expectRevert(abi.encodeWithSignature("AddressNotApproved()"));
+        _amm.dummyTrade(address(applicationCoin), address(applicationNFT), 0, nft, true);
+        (randomUser, richGuy, _user3, _user2);
+    }
+
+    /******************************************************
      *************** TOKEN MAX DAILY TRADES ***************
      ******************************************************/
 

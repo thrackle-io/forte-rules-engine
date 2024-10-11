@@ -12,6 +12,7 @@ import "src/client/token/handler/diamond/RuleStorage.sol";
 library StorageLib {
     bytes32 constant DIAMOND_CUT_STORAGE_HANDLER_POS = bytes32(uint256(keccak256("diamond-cut.storage-handler")) - 1);
     bytes32 constant ACCOUNT_APPROVE_DENY_ORACLE_HANDLER_POSITION = bytes32(uint256(keccak256("account-approve-deny-oracle-position")) - 1);
+    bytes32 constant ACCOUNT_APPROVE_DENY_ORACLE_FLEXIBLE_HANDLER_POSITION = bytes32(uint256(keccak256("account-approve-deny-oracle-flexible-position")) - 1);
     bytes32 constant ACCOUNT_MIN_MAX_TOKEN_BALANCE_HANDLER_POSITION = bytes32(uint256(keccak256("account-min-max-token-balance-position")) - 1);
     bytes32 constant HANDLER_BASE_POSITION = bytes32(uint256(keccak256("handler-base-position")) - 1);    
     bytes32 constant FEES_HANDLER_POSITION = bytes32(uint256(keccak256("fees-position")) - 1);
@@ -154,6 +155,17 @@ library StorageLib {
      */
     function accountApproveDenyOracleStorage() internal pure returns (AccountApproveDenyOracleS storage ds) {
         bytes32 position = ACCOUNT_APPROVE_DENY_ORACLE_HANDLER_POSITION;
+        assembly {
+            ds.slot := position
+        }
+    }
+
+    /**
+     * @dev Function to store Oracle Flexible rules
+     * @return ds Data Storage of Oracle Flexible Rule
+     */
+    function accountApproveDenyOracleFlexibleStorage() internal pure returns (AccountApproveDenyOracleFlexibleS storage ds) {
+        bytes32 position = ACCOUNT_APPROVE_DENY_ORACLE_FLEXIBLE_HANDLER_POSITION;
         assembly {
             ds.slot := position
         }

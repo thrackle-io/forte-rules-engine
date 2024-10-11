@@ -240,6 +240,28 @@ contract RuleDataFacet is Context, RuleAdministratorOnly, IEconomicEvents, IInpu
     }
 
     /**
+     * @dev Function add an Account Approve Deny Oracle Flexible rule
+     * @param _appManagerAddr Address of App Manager
+     * @param _type type of Oracle Rule --> 0 = restricted; 1 = allowed
+     * @param _addressToggle toggle the address to be checked: 0 = Both to and from Address, 1 = to address only, 2 = from address only, 3 = Either to or from address.
+     * @param _oracleAddress Address of Oracle
+     * @return ruleId position of rule in storage
+     */
+    function addAccountApproveDenyOracleFlexible(address _appManagerAddr, uint8 _type, uint8 _addressToggle, address _oracleAddress) external ruleAdministratorOnly(_appManagerAddr) returns (uint32) {
+        if (_appManagerAddr == address(0)) revert ZeroAddress();
+        if (_oracleAddress == address(0)) revert ZeroAddress();
+        if (_type > 1) revert InvalidOracleType(_type);
+        if (_addressToggle > 3) revert InvalidRuleInput(); 
+        RuleS.AccountApproveDenyOracleFlexibleS storage data = Storage.accountApproveDenyOracleFlexibleStorage();
+        NonTaggedRules.AccountApproveDenyOracleFlexible memory rule = NonTaggedRules.AccountApproveDenyOracleFlexible(_type, _addressToggle, _oracleAddress);
+        uint32 ruleId = data.accountApproveDenyOracleFlexibleIndex;
+        data.accountApproveDenyOracleFlexibleRules[ruleId] = rule;
+        emit AD1467_ProtocolRuleCreated(ACCOUNT_APPROVE_DENY_ORACLE_FLEXIBLE, ruleId, new bytes32[](0));
+        ++data.accountApproveDenyOracleFlexibleIndex;
+        return ruleId;
+    }
+
+    /**
      * @dev Function add an Min Hold Time rule
      * @param _appManagerAddr Address of App Manager
      * @param _minHoldtime minimum number of full hours a token must be held. 

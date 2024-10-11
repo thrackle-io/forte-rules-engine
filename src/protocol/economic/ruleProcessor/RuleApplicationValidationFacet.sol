@@ -131,6 +131,24 @@ contract RuleApplicationValidationFacet is ERC173 {
      * @dev Validate the existence of the rule
      * @param _ruleId Rule Identifier
      */
+    function validateAccountApproveDenyOracleFlexible(ActionTypes[] memory _actions, uint32 _ruleId) external view {
+        _ruleId.checkRuleExistence(getTotalAccountApproveDenyOracleFlexible());
+        require(areActionsEnabledInRule(ACCOUNT_APPROVE_DENY_ORACLE_FLEXIBLE, _actions), "Action Validation Failed");
+    }
+
+    /**
+     * @dev Function get total Account Approve Deny Oracle Flexible rules
+     * @return total accountApproveDenyOracleFlexibleRules array length
+     */
+    function getTotalAccountApproveDenyOracleFlexible() internal view returns (uint32) {
+        RuleS.AccountApproveDenyOracleFlexibleS storage data = Storage.accountApproveDenyOracleFlexibleStorage();
+        return data.accountApproveDenyOracleFlexibleIndex;
+    }
+
+    /**
+     * @dev Validate the existence of the rule
+     * @param _ruleId Rule Identifier
+     */
     function validateTokenMaxBuySellVolume(ActionTypes[] memory _actions, uint32 _ruleId) external view {
         _ruleId.checkRuleExistence(getTotalTokenMaxBuySellVolume());
         require(areActionsEnabledInRule(TOKEN_MAX_BUY_SELL_VOLUME, _actions), "Action Validation Failed");

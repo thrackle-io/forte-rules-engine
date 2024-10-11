@@ -108,6 +108,128 @@ contract ERC20RuleProcessorFacet is IInputErrors, IRuleProcessorErrors, IERC20Er
     }
 
     /**
+     * @dev This function receives an array of rule ids, which it uses to get the oracle details, then calls the oracle to determine permissions.
+     * @param _rules Rule Id Array
+     * @param _toAddress user address to be checked
+     * @param _fromAddress user address to be checked
+     */
+    function checkAccountApproveDenyOraclesFlexible(Rule[] memory _rules, address _toAddress, address _fromAddress) external view {
+        for (uint256 accountApproveDenyOracleFlexibleIndex; accountApproveDenyOracleFlexibleIndex < _rules.length; ++accountApproveDenyOracleFlexibleIndex) {
+            if (_rules[accountApproveDenyOracleFlexibleIndex].active) checkAccountApproveDenyOracleFlexible(_rules[accountApproveDenyOracleFlexibleIndex].ruleId, _toAddress, _fromAddress);
+        }
+    }
+
+    /**
+     * @dev This function receives a rule id, which it uses to get the oracle details, then calls the oracle to determine permissions.
+     * @param _ruleId Rule Id
+     * @param _toAddress to address to be checked
+     * @param _fromAddress to address to be checked
+     */
+    function checkAccountApproveDenyOracleFlexible(uint32 _ruleId, address _toAddress, address _fromAddress) internal view {
+        NonTaggedRules.AccountApproveDenyOracleFlexible memory oracleRuleFlexible = getAccountApproveDenyOracleFlexible(_ruleId);
+        uint256 oType = oracleRuleFlexible.oracleType;
+        address oracleAddress = oracleRuleFlexible.oracleAddress;
+        uint8 _addressCheckToggle = oracleRuleFlexible.addressToggle; 
+        if (oType == uint(ORACLE_TYPE.APPROVED_LIST)) {
+            _isAddressApproved(oracleAddress, _toAddress, _fromAddress, _addressCheckToggle); 
+        } else if (oType == uint(ORACLE_TYPE.DENIED_LIST)) {
+            _isAddressDenied(oracleAddress, _toAddress, _fromAddress, _addressCheckToggle);
+        } else {
+            revert OracleTypeInvalid();
+        }
+    }
+
+    /**
+     * @dev Function to check if the address(es) is in the approve oracle
+     * @param _oracleAddress address of the approve oracle
+     * @param _toAddress to address to be checked
+     * @param _fromAddress to address to be checked
+     * @param _addressCheckToggle toggle the address to be checked: 0 = Both to and from Address, 1 = to address only, 2 = from address only, 3 = Either to or from address.
+     */
+    function _isAddressApproved(address _oracleAddress, address _toAddress, address _fromAddress, uint8 _addressCheckToggle) internal view {
+        if (_addressCheckToggle == 0){
+            // check both to and from addresses are approved 
+            // slither-disable-next-line calls-loop
+            if (!(IOracle(_oracleAddress).isApproved(_toAddress) && IOracle(_oracleAddress).isApproved(_fromAddress))) {
+                revert AddressNotApproved();
+            }
+        } else if (_addressCheckToggle == 1){
+            // check only the to address is approved
+            // slither-disable-next-line calls-loop
+            if (!IOracle(_oracleAddress).isApproved(_toAddress)) {
+                revert AddressNotApproved();
+            }
+        } else if (_addressCheckToggle == 2){
+            // check only the from address is approved
+            // slither-disable-next-line calls-loop
+            if (!IOracle(_oracleAddress).isApproved(_fromAddress)) {
+                revert AddressNotApproved();
+            }
+        } else {
+            // check if either to or from addresses are in the approve oracle 
+            // slither-disable-next-line calls-loop
+            if (!(IOracle(_oracleAddress).isApproved(_toAddress) || IOracle(_oracleAddress).isApproved(_fromAddress))) {
+                revert AddressNotApproved();
+            }
+        }
+    }
+
+    /**
+     * @dev Function to check if the address(es) is in the denied oracle
+     * @param _oracleAddress address of the denied oracle
+     * @param _toAddress to address to be checked
+     * @param _fromAddress to address to be checked
+     * @param _addressCheckToggle toggle the address to be checked: 0 = Both to and from Address, 1 = to address only, 2 = from address only, 3 = Either to or from address.
+     */
+    function _isAddressDenied(address _oracleAddress, address _toAddress, address _fromAddress, uint8 _addressCheckToggle) internal view {
+        if (_addressCheckToggle == 0){
+            // check both to and from addresses are denied 
+            // slither-disable-next-line calls-loop
+            if (IOracle(_oracleAddress).isDenied(_toAddress) && IOracle(_oracleAddress).isDenied(_fromAddress)) {
+                revert AddressIsDenied();
+            }
+        } else if (_addressCheckToggle == 1){
+            // check only the to address is denied
+            // slither-disable-next-line calls-loop
+            if (IOracle(_oracleAddress).isDenied(_toAddress)) {
+                revert AddressIsDenied();
+            }
+        } else if (_addressCheckToggle == 2){
+            // check only the from address is denied
+            // slither-disable-next-line calls-loop
+            if (IOracle(_oracleAddress).isDenied(_fromAddress)) {
+                revert AddressIsDenied();
+            }
+        } else {
+            // check that neither to or from address is in the denied oracle 
+            // slither-disable-next-line calls-loop
+            if (IOracle(_oracleAddress).isDenied(_toAddress) || IOracle(_oracleAddress).isDenied(_fromAddress)) {
+                revert AddressIsDenied();
+            }
+        }
+    }
+
+    /**
+     * @dev Function get Account Approve Deny Oracle Flexible Rule by index
+     * @param _index Position of rule in storage
+     * @return AccountApproveDenyOracleFlexible at index
+     */
+    function getAccountApproveDenyOracleFlexible(uint32 _index) public view returns (NonTaggedRules.AccountApproveDenyOracleFlexible memory) {
+        _index.checkRuleExistence(getTotalAccountApproveDenyOracleFlexible());
+        RuleS.AccountApproveDenyOracleFlexibleS storage data = Storage.accountApproveDenyOracleFlexibleStorage();
+        return data.accountApproveDenyOracleFlexibleRules[_index];
+    }
+
+    /**
+     * @dev Function get total Account Approve Deny Oracle Flexible rules
+     * @return total accountApproveDenyOracleFlexibleRules array length
+     */
+    function getTotalAccountApproveDenyOracleFlexible() public view returns (uint32) {
+        RuleS.AccountApproveDenyOracleFlexibleS storage data = Storage.accountApproveDenyOracleFlexibleStorage();
+        return data.accountApproveDenyOracleFlexibleIndex;
+    }
+
+    /**
      * @dev Rule checks if the Token Max Trading Volume rule will be violated.
      * @notice If the totalSupply value is set in the rule, it is set as the circulating supply. Otherwise, this function uses the ERC20 totalSupply sent from handler.
      * @param _ruleId Rule identifier for rule arguments

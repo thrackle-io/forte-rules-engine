@@ -73,6 +73,12 @@ interface IRuleStorage {
         uint32 accountApproveDenyOracleIndex;
     }
 
+    /// ******** Account Approve/Deny Oracle ********
+    struct AccountApproveDenyOracleFlexibleS {
+        mapping(uint32 => INonTaggedRules.AccountApproveDenyOracleFlexible) accountApproveDenyOracleFlexibleRules;
+        uint32 accountApproveDenyOracleFlexibleIndex;
+    }
+
     /// ******** Token Min Hold Time ********
     struct TokenMinHoldTimeS {
         mapping(uint32 => INonTaggedRules.TokenMinHoldTime) tokenMinHoldTimeRules;

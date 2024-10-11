@@ -1086,6 +1086,418 @@ contract ApplicationERC20FuzzTest is ERC20Util {
         amm.dummyTrade(address(applicationCoin), address(applicationCoin2), transferAmount, transferAmount, true);
     }
 
+    /** Test all actions */
+    function testERC20_ApplicationERC20Fuzz_AccountApproveDenyOracleFlexible_All_Positive(uint8 _addressIndex) public endWithStopPrank {
+        switchToAppAdministrator();
+        applicationCoin.mint(appAdministrator, type(uint256).max);
+        (address _user1, address _user2, address _user3) = _get3RandomAddresses(_addressIndex);
+        /// set up a non admin user with tokens
+        applicationCoin.transfer(_user1, 100000);
+        assertEq(applicationCoin.balanceOf(_user1), 100000);
+
+        // add the rule.
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(0, 3);
+        setAccountApproveDenyOracleFlexibleRule(address(applicationCoinHandler), ruleId);
+        switchToAppAdministrator();
+        // add a blocked address
+        badBoys.push(_user3);
+        oracleDenied.addToDeniedList(badBoys);
+        // test that the oracle works
+        // This one should pass
+        ///perform transfer that checks rule
+        vm.stopPrank();
+        vm.startPrank(_user1, _user1);
+        applicationCoin.transfer(_user2, 10);
+        assertEq(applicationCoin.balanceOf(_user2), 10);
+    }
+
+    /** Test TRANSFER only */
+    function testERC20_ApplicationERC20Fuzz_AccountApproveDenyOracleFlexible_Transfer_Positive(uint8 _addressIndex) public endWithStopPrank {
+        switchToAppAdministrator();
+        applicationCoin.mint(appAdministrator, type(uint256).max);
+        (address _user1, address _user2, address _user3) = _get3RandomAddresses(_addressIndex);
+        /// set up a non admin user with tokens
+        applicationCoin.transfer(_user1, 100000);
+        assertEq(applicationCoin.balanceOf(_user1), 100000);
+
+        // add the rule.
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(0, 3);
+        setAccountApproveDenyOracleFlexibleRuleSingleAction(ActionTypes.P2P_TRANSFER, address(applicationCoinHandler), ruleId);
+        switchToAppAdministrator();
+        // add a blocked address
+        badBoys.push(_user3);
+        oracleDenied.addToDeniedList(badBoys);
+        // test that the oracle works
+        // This one should pass
+        ///perform transfer that checks rule
+        vm.stopPrank();
+        vm.startPrank(_user1, _user1);
+        applicationCoin.transfer(_user2, 10);
+        assertEq(applicationCoin.balanceOf(_user2), 10);
+    }
+
+    /** Test MINT only */
+    function testERC20_ApplicationERC20Fuzz_AccountApproveDenyOracleFlexible_Mint_Positive(uint8 _addressIndex) public endWithStopPrank {
+        switchToAppAdministrator();
+        (address _user1, address _user2) = _get2RandomAddresses(_addressIndex);
+        // add the rule.
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(0, 3);
+        setAccountApproveDenyOracleFlexibleRuleSingleAction(ActionTypes.MINT, address(applicationCoinHandler), ruleId);
+        switchToAppAdministrator();
+        // add a blocked address
+        badBoys.push(_user2);
+        oracleDenied.addToDeniedList(badBoys);
+        // test that the oracle works
+        ///perform transfer that checks rule
+        vm.stopPrank();
+        vm.startPrank(_user1, _user1);
+        applicationCoin.mint(_user1, 10);
+        assertEq(applicationCoin.balanceOf(_user1), 10);
+    }
+
+    /** Test BURN only */
+    function testERC20_ApplicationERC20Fuzz_AccountApproveDenyOracleFlexible_Burn_Positive(uint8 _addressIndex) public endWithStopPrank {
+        switchToAppAdministrator();
+        applicationCoin.mint(appAdministrator, type(uint64).max);
+        (address _user1, address _user2) = _get2RandomAddresses(_addressIndex);
+        // transfer tokens to standard user
+        applicationCoin.transfer(_user1, 100);
+        // add the rule.
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(0, 3);
+        setAccountApproveDenyOracleFlexibleRuleSingleAction(ActionTypes.BURN, address(applicationCoinHandler), ruleId);
+        switchToAppAdministrator();
+        // add a blocked address
+        badBoys.push(_user2);
+        oracleDenied.addToDeniedList(badBoys);
+        // test that the oracle works
+        ///perform transfer that checks rule
+        vm.stopPrank();
+        vm.startPrank(_user1, _user1);
+        applicationCoin.burn(10);
+        assertEq(applicationCoin.balanceOf(_user1), 90);
+    }
+
+    /** Test BUY only */
+    function testERC20_ApplicationERC20Fuzz_AccountApproveDenyOracleFlexible_Buy_Positive(uint8 _addressIndex) public endWithStopPrank {
+        switchToAppAdministrator();
+        uint256 transferAmount = 10;
+        (address _user1, address _user2) = _get2RandomAddresses(_addressIndex);
+        // Create and configure AMM, load user1 with applicationCoin2 so she can buy applicationCoin
+        DummyAMM amm = _createAndInitializeAMM(applicationCoin, applicationCoin2, _user1, transferAmount, false);
+        // add the rule.
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(0, 3);
+        setAccountApproveDenyOracleFlexibleRuleSingleAction(ActionTypes.BUY, address(applicationCoinHandler), ruleId);
+        switchToAppAdministrator();
+        // add a blocked address
+        badBoys.push(_user2);
+        oracleDenied.addToDeniedList(badBoys);
+        vm.startPrank(_user1, _user1);
+        /// Approve transfer
+        applicationCoin2.approve(address(amm), transferAmount);
+        /// Buy some applicationCoin
+        amm.dummyTrade(address(applicationCoin), address(applicationCoin2), transferAmount, transferAmount, false);
+        assertEq(applicationCoin.balanceOf(_user1), transferAmount);
+    }
+
+    /** Test SELL only */
+    function testERC20_ApplicationERC20Fuzz_AccountApproveDenyOracleFlexible_Sell_Positive(uint8 _addressIndex) public endWithStopPrank {
+        switchToAppAdministrator();
+        uint256 transferAmount = 10;
+        (address _user1, address _user2) = _get2RandomAddresses(_addressIndex);
+        // Create and configure AMM, load user1 with applicationCoin2 so she can buy applicationCoin
+        DummyAMM amm = _createAndInitializeAMM(applicationCoin, applicationCoin2, _user1, transferAmount, true);
+        // add the rule.
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(0, 3);
+        setAccountApproveDenyOracleFlexibleRuleSingleAction(ActionTypes.SELL, address(applicationCoinHandler), ruleId);
+        switchToAppAdministrator();
+        // add a blocked address
+        badBoys.push(_user2);
+        oracleDenied.addToDeniedList(badBoys);
+        vm.startPrank(_user1, _user1);
+        /// Approve transfer
+        applicationCoin.approve(address(amm), transferAmount);
+        /// Buy some applicationCoin
+        amm.dummyTrade(address(applicationCoin), address(applicationCoin2), transferAmount, transferAmount, true);
+        assertEq(applicationCoin2.balanceOf(_user1), transferAmount);
+    }
+
+    /** All Actions */
+    function testERC20_ApplicationERC20Fuzz_AccountApproveDenyOracleFlexible_All_Denied(uint8 _addressIndex) public endWithStopPrank {
+        switchToAppAdministrator();
+        applicationCoin.mint(appAdministrator, type(uint256).max);
+        (address _user1, address _user3) = _get2RandomAddresses(_addressIndex);
+        /// set up a non admin user with tokens
+        applicationCoin.transfer(_user1, 100000);
+        assertEq(applicationCoin.balanceOf(_user1), 100000);
+
+        // add the rule.
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(0, 3);
+        setAccountApproveDenyOracleFlexibleRule(address(applicationCoinHandler), ruleId);
+        switchToAppAdministrator();
+        // add a blocked address
+        badBoys.push(_user3);
+        oracleDenied.addToDeniedList(badBoys);
+        ///perform transfer that checks rule
+        // This one should fail
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        applicationCoin.transfer(_user3, 10);
+        assertEq(applicationCoin.balanceOf(_user3), 0);
+    }
+
+     /** Test TRANSFER only */
+    function testERC20_ApplicationERC20Fuzz_AccountApproveDenyOracleFlexible_Transfer_Denied(uint8 _addressIndex) public endWithStopPrank {
+        switchToAppAdministrator();
+        applicationCoin.mint(appAdministrator, type(uint256).max);
+        (address _user1, address _user3) = _get2RandomAddresses(_addressIndex);
+        /// set up a non admin user with tokens
+        applicationCoin.transfer(_user1, 100000);
+        assertEq(applicationCoin.balanceOf(_user1), 100000);
+
+        // add the rule.
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(0, 3);
+        setAccountApproveDenyOracleFlexibleRuleSingleAction(ActionTypes.P2P_TRANSFER, address(applicationCoinHandler), ruleId);
+        switchToAppAdministrator();
+        // add a blocked address
+        badBoys.push(_user3);
+        oracleDenied.addToDeniedList(badBoys);
+        ///perform transfer that checks rule
+        // This one should fail
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        applicationCoin.transfer(_user3, 10);
+        assertEq(applicationCoin.balanceOf(_user3), 0);
+    }
+
+    /** Test BURN only */
+    function testERC20_ApplicationERC20Fuzz_AccountApproveDenyOracleFlexible_Burn_Denied(uint8 _addressIndex) public endWithStopPrank {
+        (address _user1) = _get1RandomAddress(_addressIndex);
+        switchToAppAdministrator();
+        applicationCoin.mint(appAdministrator, type(uint64).max);
+        /// set up a non admin user with tokens
+        applicationCoin.transfer(_user1, 100000);
+        assertEq(applicationCoin.balanceOf(_user1), 100000);
+        // add the rule.
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(0, 3);
+        setAccountApproveDenyOracleFlexibleRuleSingleAction(ActionTypes.BURN, address(applicationCoinHandler), ruleId);
+        switchToAppAdministrator();
+        // add a blocked address
+        badBoys.push(_user1);
+        oracleDenied.addToDeniedList(badBoys);
+        ///perform transfer that checks rule
+        vm.startPrank(_user1, _user1);
+        // This one should fail
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        applicationCoin.burn(10);
+    }
+
+    /** Test MINT only */
+    function testERC20_ApplicationERC20Fuzz_AccountApproveDenyOracleFlexible_Mint_Denied(uint8 _addressIndex) public endWithStopPrank {
+        (address _user1) = _get1RandomAddress(_addressIndex);
+
+        // add the rule.
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(0, 3);
+        setAccountApproveDenyOracleFlexibleRuleSingleAction(ActionTypes.MINT, address(applicationCoinHandler), ruleId);
+        switchToAppAdministrator();
+        // add a blocked address
+        badBoys.push(_user1);
+        oracleDenied.addToDeniedList(badBoys);
+        ///perform transfer that checks rule
+        // This one should fail
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        applicationCoin.mint(_user1,10);
+    }
+
+    /** Test BUY only */
+    function testERC20_ApplicationERC20Fuzz_AccountApproveDenyOracleFlexible_Buy_Denied(uint8 _addressIndex) public endWithStopPrank {
+        switchToAppAdministrator();
+        uint256 transferAmount = 10;
+        (address _user1) = _get1RandomAddress(_addressIndex);
+        // Create and configure AMM, load user1 with applicationCoin2 so she can buy applicationCoin
+        DummyAMM amm = _createAndInitializeAMM(applicationCoin, applicationCoin2, _user1, transferAmount, false);
+        // add the rule.
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(0, 3);
+        setAccountApproveDenyOracleFlexibleRuleSingleAction(ActionTypes.BUY, address(applicationCoinHandler), ruleId);
+        switchToAppAdministrator();
+        // add a blocked address
+        badBoys.push(_user1);
+        oracleDenied.addToDeniedList(badBoys);
+        vm.startPrank(_user1, _user1);
+        ///perform transfer that checks rule
+        /// Approve transfer
+        applicationCoin2.approve(address(amm), transferAmount);
+        // This one should fail
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        /// Buy some applicationCoin
+        amm.dummyTrade(address(applicationCoin), address(applicationCoin2), transferAmount, transferAmount, false);
+    }
+
+    /** Test SELL only */
+    function testERC20_ApplicationERC20Fuzz_AccountApproveDenyOracleFlexible_Sell_Denied(uint8 _addressIndex) public endWithStopPrank {
+        switchToAppAdministrator();
+        uint256 transferAmount = 10;
+        (address _user1) = _get1RandomAddress(_addressIndex);
+        // Create and configure AMM, load user1 with applicationCoin2 so she can buy applicationCoin
+        DummyAMM amm = _createAndInitializeAMM(applicationCoin, applicationCoin2, _user1, transferAmount, true);
+        // add the rule.
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(0, 3);
+        setAccountApproveDenyOracleFlexibleRuleSingleAction(ActionTypes.SELL, address(applicationCoinHandler), ruleId);
+        switchToAppAdministrator();
+        // add a blocked address
+        badBoys.push(_user1);
+        oracleDenied.addToDeniedList(badBoys);
+        vm.startPrank(_user1, _user1);
+        ///perform transfer that checks rule
+        /// Approve transfer
+        applicationCoin.approve(address(amm), transferAmount);
+        // This one should fail
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        /// Buy some applicationCoin
+        amm.dummyTrade(address(applicationCoin), address(applicationCoin2), transferAmount, transferAmount, true);
+    }
+
+    /** Test All Actions */
+    function testERC20_ApplicationERC20Fuzz_AccountApproveDenyOracleFlexible_All_NotApproved(uint8 _addressIndex) public endWithStopPrank {
+        switchToAppAdministrator();
+        applicationCoin.mint(appAdministrator, type(uint256).max);
+        (address _user1, address _user3) = _get2RandomAddresses(_addressIndex);
+        /// set up a non admin user with tokens
+        applicationCoin.transfer(_user1, 100000);
+        assertEq(applicationCoin.balanceOf(_user1), 100000);
+
+        // add the rule.
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(1, 0);
+        setAccountApproveDenyOracleFlexibleRule(address(applicationCoinHandler), ruleId);
+        switchToAppAdministrator();
+        ///perform transfer that checks rule
+        // This one should fail
+        vm.expectRevert(abi.encodeWithSignature("AddressNotApproved()"));
+        applicationCoin.transfer(_user3, 10);
+        assertEq(applicationCoin.balanceOf(_user3), 0);
+    }
+
+    /** Test TRANSFER only */
+    function testERC20_ApplicationERC20Fuzz_AccountApproveDenyOracleFlexible_Transfer_NotApproved(uint8 _addressIndex) public endWithStopPrank {
+        switchToAppAdministrator();
+        applicationCoin.mint(appAdministrator, type(uint256).max);
+        (address _user1, address _user3) = _get2RandomAddresses(_addressIndex);
+        /// set up a non admin user with tokens
+        applicationCoin.transfer(_user1, 100000);
+        assertEq(applicationCoin.balanceOf(_user1), 100000);
+
+        // add the rule.
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(1, 0);
+        setAccountApproveDenyOracleFlexibleRuleSingleAction(ActionTypes.P2P_TRANSFER, address(applicationCoinHandler), ruleId);
+        switchToAppAdministrator();
+        ///perform transfer that checks rule
+        // This one should fail
+        vm.expectRevert(abi.encodeWithSignature("AddressNotApproved()"));
+        applicationCoin.transfer(_user3, 10);
+        assertEq(applicationCoin.balanceOf(_user3), 0);
+    }
+
+    /** Test MINT only */
+    function testERC20_ApplicationERC20Fuzz_AccountApproveDenyOracleFlexible_Mint_NotApproved(uint8 _addressIndex) public endWithStopPrank {
+        switchToAppAdministrator();
+        applicationCoin.mint(appAdministrator, type(uint256).max);
+        (address _user1, address _user3) = _get2RandomAddresses(_addressIndex);
+        /// set up a non admin user with tokens
+        applicationCoin.transfer(_user1, 100000);
+        assertEq(applicationCoin.balanceOf(_user1), 100000);
+
+        // add the rule.
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(1, 0);
+        setAccountApproveDenyOracleFlexibleRuleSingleAction(ActionTypes.MINT, address(applicationCoinHandler), ruleId);
+        vm.startPrank(_user3, _user3);
+        ///perform transfer that checks rule
+        // This one should fail
+        vm.expectRevert(abi.encodeWithSignature("AddressNotApproved()"));
+        applicationCoin.mint(_user3, 10);
+    }
+
+    /** Test BURN only */
+    function testERC20_ApplicationERC20Fuzz_AccountApproveDenyOracleFlexible_Burn_NotApproved(uint8 _addressIndex) public endWithStopPrank {
+        switchToAppAdministrator();
+        applicationCoin.mint(appAdministrator, type(uint256).max);
+        (address _user1, address _user3) = _get2RandomAddresses(_addressIndex);
+        /// set up a non admin user with tokens
+        applicationCoin.transfer(_user1, 100000);
+        assertEq(applicationCoin.balanceOf(_user1), 100000);
+
+        // add the rule.
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(1, 0);
+        setAccountApproveDenyOracleFlexibleRuleSingleAction(ActionTypes.BURN, address(applicationCoinHandler), ruleId);
+        vm.startPrank(_user3, _user3);
+        ///perform transfer that checks rule
+        // This one should fail
+        vm.expectRevert(abi.encodeWithSignature("AddressNotApproved()"));
+        applicationCoin.burn( 10);
+    }
+
+    /** Test BUY only */
+    function testERC20_ApplicationERC20Fuzz_AccountApproveDenyOracleFlexible_Buy_NotApproved(uint8 _addressIndex) public endWithStopPrank {
+        switchToAppAdministrator();
+        uint256 transferAmount = 10;
+        (address _user1) = _get1RandomAddress(_addressIndex);
+        // Create and configure AMM, load user1 with applicationCoin2 so she can buy applicationCoin
+        DummyAMM amm = _createAndInitializeAMM(applicationCoin, applicationCoin2, _user1, transferAmount, false);
+        // add the rule.
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(1, 0);
+        setAccountApproveDenyOracleFlexibleRuleSingleAction(ActionTypes.BUY, address(applicationCoinHandler), ruleId);
+        switchToAppAdministrator();
+        // add a blocked address
+        badBoys.push(_user1);
+        oracleDenied.addToDeniedList(badBoys);
+        vm.startPrank(_user1, _user1);
+        ///perform transfer that checks rule
+        /// Approve transfer
+        applicationCoin2.approve(address(amm), transferAmount);
+        // This one should fail
+        vm.expectRevert(abi.encodeWithSignature("AddressNotApproved()"));
+        /// Buy some applicationCoin
+        amm.dummyTrade(address(applicationCoin), address(applicationCoin2), transferAmount, transferAmount, false);
+    }
+
+    /** Test SELL only */
+    function testERC20_ApplicationERC20Fuzz_AccountApproveDenyOracleFlexible_Sell_NotApproved(uint8 _addressIndex) public endWithStopPrank {
+        switchToAppAdministrator();
+        uint256 transferAmount = 10;
+        (address _user1) = _get1RandomAddress(_addressIndex);
+        // Create and configure AMM, load user1 with applicationCoin2 so she can buy applicationCoin
+        DummyAMM amm = _createAndInitializeAMM(applicationCoin, applicationCoin2, _user1, transferAmount, true);
+        // add the rule.
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(1, 0);
+        setAccountApproveDenyOracleFlexibleRuleSingleAction(ActionTypes.SELL, address(applicationCoinHandler), ruleId);
+        switchToAppAdministrator();
+        // add a blocked address
+        badBoys.push(_user1);
+        oracleDenied.addToDeniedList(badBoys);
+        vm.startPrank(_user1, _user1);
+        ///perform transfer that checks rule
+        /// Approve transfer
+        applicationCoin.approve(address(amm), transferAmount);
+        // This one should fail
+        vm.expectRevert(abi.encodeWithSignature("AddressNotApproved()"));
+        /// Buy some applicationCoin
+        amm.dummyTrade(address(applicationCoin), address(applicationCoin2), transferAmount, transferAmount, true);
+    }
+
     function _parameterizeRiskAndPeriod(uint8 _risk, uint8 _period) internal pure returns (uint8 period, uint8 risk) {
         period = _period > 6 ? _period / 6 + 1 : 1;
         risk = _parameterizeRisk(_risk);

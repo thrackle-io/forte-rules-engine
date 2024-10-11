@@ -22,6 +22,7 @@ library RuleStoragePositionLib {
     bytes32 constant ACCOUNT_MIN_MAX_TOKEN_BALANCE_POSITION = bytes32(uint256(keccak256("account-min-max-token-balance")) - 1);
     bytes32 constant TOKEN_MAX_SUPPLY_VOLATILITY_POSITION = bytes32(uint256(keccak256("token-max-supply-volatility")) - 1);
     bytes32 constant ACC_APPROVE_DENY_ORACLE_POSITION = bytes32(uint256(keccak256("account-approve-deny-oracle")) - 1);
+    bytes32 constant ACC_APPROVE_DENY_ORACLE_FLEXIBLE_POSITION = bytes32(uint256(keccak256("account-approve-deny-oracle-flexible")) - 1);
     bytes32 constant ACC_MAX_VALUE_BY_ACCESS_LEVEL_POSITION = bytes32(uint256(keccak256("account-max-value-by-access-level")) - 1);
     bytes32 constant ACC_MAX_TX_VALUE_BY_RISK_SCORE_POSITION = bytes32(uint256(keccak256("account-max-transaction-value-by-access-level")) - 1);
     bytes32 constant ACCOUNT_MAX_VALUE_BY_RISK_SCORE_POSITION = bytes32(uint256(keccak256("account-max-value-by-risk-score")) - 1);
@@ -124,6 +125,17 @@ library RuleStoragePositionLib {
      */
     function accountApproveDenyOracleStorage() internal pure returns (IRuleStorage.AccountApproveDenyOracleS storage ds) {
         bytes32 position = ACC_APPROVE_DENY_ORACLE_POSITION;
+        assembly {
+            ds.slot := position
+        }
+    }
+
+    /**
+     * @dev Function to store Flexible Oracle rules
+     * @return ds Data Storage of Flexible Oracle Rule
+     */
+    function accountApproveDenyOracleFlexibleStorage() internal pure returns (IRuleStorage.AccountApproveDenyOracleFlexibleS storage ds) {
+        bytes32 position = ACC_APPROVE_DENY_ORACLE_FLEXIBLE_POSITION;
         assembly {
             ds.slot := position
         }

@@ -590,6 +590,204 @@ contract MarketplaceNonCustodialTestsErc20BuysNftSells is TokenUtils, ERC721Util
         marketplace.sellItem(address(applicationNFTv2), NFT_ID_1);
     }
 
+    function _oracleFlexibleRuleSetUpSeller() internal returns (uint32, uint32) {
+        // create oracle rule and set users to approve list 
+        switchToRuleAdmin();
+        // ERC20 Approve Oracle 
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(1, 0);
+        setAccountApproveDenyOracleFlexibleRule(address(applicationCoinHandler), ruleId);
+        switchToAppAdministrator();
+        // ERC721 Deny Oracle 
+        uint32 newRuleId = createAccountApproveDenyOracleFlexibleRule(0, 3);
+        return (ruleId, newRuleId); 
+    }
+
+    function test_inSellersOperatorMarketplace_AccountApproveDenyOracleFlexibleRules_ERC20Buy() public endWithStopPrank() {
+        (uint32 ruleId, uint32 newRuleId) = _oracleFlexibleRuleSetUpSeller();
+        newRuleId; 
+        ruleId;
+        // test 1 - Test Buy side of ERC20 Transaction fails if buyer is not approved 
+        vm.startPrank(user2, user2);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TransferFailed.selector, 
+                address(applicationCoin), 
+                IERC20Errors.AddressNotApproved.selector
+            )
+        );
+        marketplace.sellItem(address(applicationNFTv2), NFT_ID_1);
+    }
+
+    function test_inSellersOperatorMarketplace_AccountApproveDenyOracleFlexibleRules_ERC20Sell() public endWithStopPrank() {
+        (uint32 ruleId, uint32 newRuleId) = _oracleFlexibleRuleSetUpSeller();
+        newRuleId; 
+        ruleId;
+        // test 2 - Test ERC20 Transaction fails if seller is not approved 
+        switchToAppAdministrator();
+        goodBoys.push(address(user2));
+        oracleApproved.addToApprovedList(goodBoys);
+        
+        vm.startPrank(user2, user2);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TransferFailed.selector, 
+                address(applicationCoin), 
+                IERC20Errors.AddressNotApproved.selector
+            )
+        );
+        marketplace.sellItem(address(applicationNFTv2), NFT_ID_1);
+    }
+
+    function test_inSellersOperatorMarketplace_AccountApproveDenyOracleFlexibleRules_ERC721Buy() public endWithStopPrank() {
+        (uint32 ruleId, uint32 newRuleId) = _oracleFlexibleRuleSetUpSeller();
+        ruleId;
+        // test 3 - Test Buy side of ERC721 Transaction fails if buyer is not approved 
+        switchToAppAdministrator();
+        goodBoys.push(address(user1));
+        goodBoys.push(address(user2));
+        oracleApproved.addToApprovedList(goodBoys);
+        badBoys.push(address(user2));
+        oracleDenied.addToDeniedList(badBoys);
+        setAccountApproveDenyOracleFlexibleRule(address(applicationNFTHandlerv2), newRuleId);
+
+        vm.startPrank(user2, user2);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TransferFailed.selector, 
+                address(applicationNFTv2), 
+                IERC20Errors.AddressIsDenied.selector
+            )
+        );
+        marketplace.sellItem(address(applicationNFTv2), NFT_ID_1);
+    }
+
+    function test_inSellersOperatorMarketplace_AccountApproveDenyOracleFlexibleRules_ERC721Sell() public endWithStopPrank() {
+        (uint32 ruleId, uint32 newRuleId) = _oracleFlexibleRuleSetUpSeller();
+        ruleId;
+        // test 4 - Test ERC721 Transaction fails if seller is not approved 
+        switchToAppAdministrator();
+        goodBoys.push(address(user1));
+        goodBoys.push(address(user2));
+        oracleApproved.addToApprovedList(goodBoys);
+        badBoys.push(address(user1));
+        oracleDenied.addToDeniedList(badBoys);
+        setAccountApproveDenyOracleFlexibleRule(address(applicationNFTHandlerv2), newRuleId);
+
+        vm.stopPrank();
+        vm.startPrank(user2, user2);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TransferFailed.selector, 
+                address(applicationNFTv2), 
+                IERC20Errors.AddressIsDenied.selector
+            )
+        );
+        marketplace.sellItem(address(applicationNFTv2), NFT_ID_1);
+
+    }
+
+    function test_inSellersOperatorMarketplace_AccountApproveDenyOracleFlexibleRules_Full() public endWithStopPrank() {
+        (uint32 ruleId, uint32 newRuleId) = _oracleFlexibleRuleSetUpSeller();
+        ruleId;
+        // all passing 
+        switchToAppAdministrator();
+        goodBoys.push(address(user1));
+        goodBoys.push(address(user2));
+        oracleApproved.addToApprovedList(goodBoys);
+        setAccountApproveDenyOracleFlexibleRule(address(applicationNFTHandlerv2), newRuleId);
+        // Both oracle rules active 
+        // users approved and no users denied 
+        vm.startPrank(user2, user2);
+        marketplace.sellItem(address(applicationNFTv2), NFT_ID_1);
+    }
+
+    function test_inSellersOperatorMarketplace_AccountApproveDenyOracleFlexibleRules_DenyAndApproveOracleFlexible_Sell() public endWithStopPrank() {
+        // create oracle rule and set users to approve list 
+        switchToRuleAdmin();
+        // ERC20 Deny Oracle 
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(0, 3);
+        switchToAppAdministrator();
+        // ERC721 Approve Oracle 
+        uint32 newRuleId = createAccountApproveDenyOracleFlexibleRule(1, 0);
+        setAccountApproveDenyOracleFlexibleRule(address(applicationNFTHandlerv2), newRuleId);
+        uint snapshot = vm.snapshot();
+        // test 1 - Test Buy side of ERC20 Transaction fails if buyer is not approved 
+        vm.startPrank(user2, user2);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TransferFailed.selector, 
+                address(applicationNFTv2), 
+                IERC20Errors.AddressNotApproved.selector
+            )
+        );
+        marketplace.sellItem(address(applicationNFTv2), NFT_ID_1);
+        // test 2 - Test Sell side of ERC20 Transaction fails if seller is not approved 
+        vm.revertTo(snapshot);
+        switchToAppAdministrator();
+        goodBoys.push(address(user2));
+        oracleApproved.addToApprovedList(goodBoys);
+        
+        vm.startPrank(user2, user2);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TransferFailed.selector, 
+                address(applicationNFTv2), 
+                IERC20Errors.AddressNotApproved.selector
+            )
+        );
+        marketplace.sellItem(address(applicationNFTv2), NFT_ID_1);
+        // test 3 - Test Buy side of ERC721 Transaction fails if buyer is not approved 
+        vm.revertTo(snapshot);
+        switchToAppAdministrator();
+        goodBoys.push(address(user1));
+        goodBoys.push(address(user2));
+        oracleApproved.addToApprovedList(goodBoys);
+        badBoys.push(address(user2));
+        oracleDenied.addToDeniedList(badBoys);
+        setAccountApproveDenyOracleFlexibleRule(address(applicationCoinHandler), ruleId);
+
+        vm.startPrank(user2, user2);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TransferFailed.selector, 
+                address(applicationCoin), 
+                IERC20Errors.AddressIsDenied.selector
+            )
+        );
+        marketplace.sellItem(address(applicationNFTv2), NFT_ID_1);
+        // test 4 - Test Sell side of ERC20 Transaction fails if buyer is not approved 
+        vm.revertTo(snapshot);
+        switchToAppAdministrator();
+        goodBoys.push(address(user1));
+        goodBoys.push(address(user2));
+        oracleApproved.addToApprovedList(goodBoys);
+        badBoys.push(address(user2));
+        oracleDenied.addToDeniedList(badBoys);
+        setAccountApproveDenyOracleFlexibleRule(address(applicationCoinHandler), ruleId);
+
+        vm.stopPrank();
+        vm.startPrank(user2, user2);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TransferFailed.selector, 
+                address(applicationCoin), 
+                IERC20Errors.AddressIsDenied.selector
+            )
+        );
+        marketplace.sellItem(address(applicationNFTv2), NFT_ID_1);
+        // all passing 
+        vm.revertTo(snapshot);
+        switchToAppAdministrator();
+        goodBoys.push(address(user1));
+        goodBoys.push(address(user2));
+        oracleApproved.addToApprovedList(goodBoys);
+        setAccountApproveDenyOracleFlexibleRule(address(applicationCoinHandler), ruleId);
+        // Both oracle rules active 
+        // users approved and no users denied 
+        vm.startPrank(user2, user2);
+        marketplace.sellItem(address(applicationNFTv2), NFT_ID_1);
+    }
+
     function _accountMinMaxTokenBalanceInitializer() internal {
         bytes32[] memory accsERC20 = createBytes32Array("ERC20_SOLIDMIN_SOLIDMAX", "ERC20_SOLIDMIN_NOMAX");
         bytes32[] memory accsERC721 = createBytes32Array("ERC721_NOMIN_SOLIDMAX", "ERC721_SOLIDMIN_SOLIDMAX");

@@ -432,6 +432,173 @@ abstract contract ERC721CommonTests is TestCommonFoundry, ERC721Util {
         amm.dummyTrade(address(applicationCoin), address(testCaseNFT), 0, 12, false);
     }
 
+    /// Account Approve Deny Oracle Flexible Tests
+    function testERC721_ERC721CommonTests_AccountApproveDenyOracleFlexible_Deny_Negative() public endWithStopPrank ifDeploymentTestsEnabled {
+        ///perform transfer that checks rule
+        // This one should fail
+        _accountApproveDenyOracleFlexibleSetup(true, 3);
+        vm.startPrank(user1, user1);
+        vm.expectRevert(0x2767bda4);
+        testCaseNFT.transferFrom(user1, address(69), 1);
+        assertEq(testCaseNFT.balanceOf(address(69)), 0);
+    }
+
+    function testERC721_ERC721CommonTests_AccountApproveDenyOracleFlexible_Approve_Negative() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountApproveDenyOracleFlexibleSetup(false, 0);
+        // This one should fail
+        vm.startPrank(user1, user1);
+        vm.expectRevert(0xcafd3316);
+        testCaseNFT.transferFrom(user1, address(88), 3);
+    }
+
+    function testERC721_ERC721CommonTests_AccountApproveDenyOracleFlexible_Invalid() public endWithStopPrank ifDeploymentTestsEnabled {
+        // Finally, check the invalid type
+        vm.expectRevert("Oracle Type Invalid");
+        createAccountApproveDenyOracleFlexibleRule(2, 0);
+    }
+
+    function testERC721_ERC721CommonTests_AccountApproveDenyOracleFlexible_Burning() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountApproveDenyOracleFlexibleSetup(true, 0);
+        /// swap to user and burn
+        vm.startPrank(user1, user1);
+        ERC721Burnable(address(testCaseNFT)).burn(4);
+        /// set oracle to deny and add address(0) to list to deny burns
+        switchToRuleAdmin();
+        uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(0, 3);
+        setAccountApproveDenyOracleFlexibleRule(address(applicationNFTHandler), ruleId);
+        switchToAppAdministrator();
+        badBoys.push(address(user1));
+        oracleDenied.addToDeniedList(badBoys);
+        /// user attempts burn
+        vm.startPrank(user1, user1);
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        ERC721Burnable(address(testCaseNFT)).burn(3);
+    }
+
+    function testERC721_ERC721CommonTests_AccountApproveDenyOracleFlexible_Approve_Burn() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountApproveDenyOracleFlexibleSetup(false, 2);
+        switchToAppAdministrator();
+        goodBoys.push(address(user2));
+        oracleApproved.addToApprovedList(goodBoys);
+        vm.stopPrank();
+        vm.startPrank(user2, user2); 
+        ERC721Burnable(address(testCaseNFT)).burn(0);
+    }
+
+    function testERC721_ERC721CommonTests_AccountApproveDenyOracleFlexible_Approve_Mint() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountApproveDenyOracleFlexibleSetup(false, 1);
+        switchToAppAdministrator();
+        goodBoys.push(address(user2));
+        oracleApproved.addToApprovedList(goodBoys);
+        UtilApplicationERC721(address(testCaseNFT)).safeMint(user2);
+    }
+
+    function testERC721_ERC721CommonTests_AccountApproveDenyOracleFlexible_Approve_Buy() public endWithStopPrank ifDeploymentTestsEnabled {
+        _setUpNFTAMMForRuleChecks();
+        _accountApproveDenyOracleFlexibleSetupNoMints(false, 0);
+        switchToAppAdministrator();
+        goodBoys.push(user);
+        goodBoys.push(address(amm));
+        oracleApproved.addToApprovedList(goodBoys);
+        switchToUser();
+        testCaseNFT.setApprovalForAll(address(amm), true);
+        applicationCoin.approve(address(amm), 10 * ATTO);
+        amm.dummyTrade(address(applicationCoin), address(testCaseNFT), 1, 9, true);
+    }
+
+    function testERC721_ERC721CommonTests_AccountApproveDenyOracleFlexible_Approve_Buy_Negative() public endWithStopPrank ifDeploymentTestsEnabled {
+        _setUpNFTAMMForRuleChecks();
+        _accountApproveDenyOracleFlexibleSetupNoMints(false, 3);
+        applicationCoin.mint(rich_user, 500); 
+        vm.stopPrank();
+        vm.startPrank(rich_user, rich_user); 
+        testCaseNFT.setApprovalForAll(address(amm), true);
+        applicationCoin.approve(address(amm), 10 * ATTO);
+        vm.expectRevert(abi.encodeWithSignature("AddressNotApproved()"));
+        amm.dummyTrade(address(applicationCoin), address(testCaseNFT), 0, 9, true);
+    }
+
+    function testERC721_ERC721CommonTests_AccountApproveDenyOracleFlexible_Approve_Sell() public endWithStopPrank ifDeploymentTestsEnabled {
+        _setUpNFTAMMForRuleChecks();
+        _accountApproveDenyOracleFlexibleSetupNoMints(false, 0);
+        switchToAppAdministrator();
+        goodBoys.push(address(amm));
+        oracleApproved.addToApprovedList(goodBoys);
+        switchToUser();
+        testCaseNFT.setApprovalForAll(address(amm), true);
+        applicationCoin.approve(address(amm), 10 * ATTO);
+        amm.dummyTrade(address(applicationCoin), address(testCaseNFT), 0, 12, false);
+    }
+
+    function testERC721_ERC721CommonTests_AccountApproveDenyOracleFlexible_Approve_Sell_Negative() public endWithStopPrank ifDeploymentTestsEnabled {
+        _setUpNFTAMMForRuleChecks();
+        switchToUser();
+        UtilApplicationERC721(address(testCaseNFT)).safeTransferFrom(user, rich_user, 12);
+        _accountApproveDenyOracleFlexibleSetupNoMints(false, 0);
+        vm.stopPrank();
+        vm.startPrank(rich_user, rich_user);
+        testCaseNFT.setApprovalForAll(address(amm), true);
+        applicationCoin.approve(address(amm), 10 * ATTO);
+        vm.expectRevert(abi.encodeWithSignature("AddressNotApproved()"));
+        amm.dummyTrade(address(applicationCoin), address(testCaseNFT), 0, 12, false);
+    }
+
+    function testERC721_ERC721CommonTests_AccountApproveDenyOracleFlexible_Deny_Burn() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountApproveDenyOracleFlexibleSetup(true, 3);
+        vm.stopPrank();
+        vm.startPrank(user2, user2); 
+        ERC721Burnable(address(testCaseNFT)).burn(0);
+    }
+
+    function testERC721_ERC721CommonTests_AccountApproveDenyOracleFlexible_Deny_Mint() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountApproveDenyOracleFlexibleSetup(true, 3);
+        switchToAppAdministrator(); 
+        UtilApplicationERC721(address(testCaseNFT)).safeMint(user2);
+    }
+
+    function testERC721_ERC721CommonTests_AccountApproveDenyOracleFlexible_Deny_Buy() public endWithStopPrank ifDeploymentTestsEnabled {
+        _setUpNFTAMMForRuleChecks();
+        _accountApproveDenyOracleFlexibleSetupNoMints(true, 3);
+        switchToUser();
+        testCaseNFT.setApprovalForAll(address(amm), true);
+        applicationCoin.approve(address(amm), 10 * ATTO);
+        amm.dummyTrade(address(applicationCoin), address(testCaseNFT), 0, 9, true);
+    }
+
+    function testERC721_ERC721CommonTests_AccountApproveDenyOracleFlexible_Deny_Buy_Negative() public endWithStopPrank ifDeploymentTestsEnabled {
+        _setUpNFTAMMForRuleChecks();
+        _accountApproveDenyOracleFlexibleSetupNoMints(true, 3);
+        applicationCoin.mint(rich_user, 500); 
+        vm.stopPrank();
+        vm.startPrank(rich_user, rich_user); 
+        testCaseNFT.setApprovalForAll(address(amm), true);
+        applicationCoin.approve(address(amm), 10 * ATTO);
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        amm.dummyTrade(address(applicationCoin), address(testCaseNFT), 1, 9, true);
+    }
+
+    function testERC721_ERC721CommonTests_AccountApproveDenyOracleFlexible_Deny_Sell() public endWithStopPrank ifDeploymentTestsEnabled {
+        _setUpNFTAMMForRuleChecks();
+        _accountApproveDenyOracleFlexibleSetupNoMints(true, 3);
+        switchToUser();
+        testCaseNFT.setApprovalForAll(address(amm), true);
+        applicationCoin.approve(address(amm), 10 * ATTO);
+        amm.dummyTrade(address(applicationCoin), address(testCaseNFT), 0, 12, false);
+    }
+
+    function testERC721_ERC721CommonTests_AccountApproveDenyOracleFlexible_Deny_Sell_Negative() public endWithStopPrank ifDeploymentTestsEnabled {
+        _setUpNFTAMMForRuleChecks();
+        switchToUser();
+        UtilApplicationERC721(address(testCaseNFT)).safeTransferFrom(user, rich_user, 12);
+        _accountApproveDenyOracleFlexibleSetupNoMints(true, 3);
+        vm.stopPrank();
+        vm.startPrank(rich_user, rich_user);
+        testCaseNFT.setApprovalForAll(address(amm), true);
+        applicationCoin.approve(address(amm), 10 * ATTO);
+        vm.expectRevert(abi.encodeWithSignature("AddressIsDenied()"));
+        amm.dummyTrade(address(applicationCoin), address(testCaseNFT), 0, 12, false);
+    }
+
     function testERC721_ERC721CommonTests_PauseRulesViaAppManager() public endWithStopPrank ifDeploymentTestsEnabled {
         switchToAppAdministrator();
         /// set up a non admin user an nft
@@ -2419,6 +2586,152 @@ abstract contract ERC721CommonTests is TestCommonFoundry, ERC721Util {
         }
     }
 
+    /* AccountApproveDenyOracleFlexible */
+    function testERC721_ERC721CommonTests_AccountApproveDenyOracleFlexibleAtomicFullSet() public endWithStopPrank ifDeploymentTestsEnabled {
+        uint32[] memory ruleIds = new uint32[](25);
+        ActionTypes[] memory actions = new ActionTypes[](25);
+        // Set up rule
+        uint256 actionIndex;
+        uint256 mainIndex;
+        for (uint i; i < 5; i++) {
+            for (uint j; j < 5; j++) {
+                actions[mainIndex] = ActionTypes(actionIndex);
+                ruleIds[mainIndex] = createAccountApproveDenyOracleFlexibleRule(0, 0);
+                mainIndex++;
+            }
+            actionIndex++;
+        }
+
+        // Apply the rules to all actions
+        setAccountApproveDenyOracleFlexibleRuleFull(address(applicationNFTHandler), actions, ruleIds);
+        // Verify that all the rule id's were set correctly and are active(Had to go old school with control break logic)
+        mainIndex = 0;
+        uint256 internalIndex;
+        ActionTypes lastAction;
+        for (uint i; i < 5; i++) {
+            if (actions[mainIndex] != lastAction) {
+                internalIndex = 0;
+            }
+            for (uint j; j < 5; j++) {
+                assertEq(ERC721NonTaggedRuleFacet(address(applicationNFTHandler)).getAccountApproveDenyOracleFlexibleIds(actions[mainIndex])[internalIndex], ruleIds[mainIndex]);
+                assertTrue(ERC721NonTaggedRuleFacet(address(applicationNFTHandler)).isAccountApproveDenyOracleFlexibleActive(actions[mainIndex], ruleIds[mainIndex]));
+                lastAction = actions[mainIndex];
+                internalIndex++;
+                mainIndex++;
+            }
+        }
+    }
+
+    function testERC721_ERC721CommonTests_AccountApproveDenyOracleFlexibleAtomicFullReSet() public endWithStopPrank ifDeploymentTestsEnabled {
+        uint32[] memory ruleIds = new uint32[](25);
+        ActionTypes[] memory actions = new ActionTypes[](25);
+        // Set up rule
+        uint256 actionIndex;
+        uint256 mainIndex;
+        for (uint i; i < 5; i++) {
+            for (uint j; j < 5; j++) {
+                actions[mainIndex] = ActionTypes(actionIndex);
+                ruleIds[mainIndex] = createAccountApproveDenyOracleFlexibleRule(0, 0);
+                mainIndex++;
+            }
+            actionIndex++;
+        }
+
+        // Apply the rules to all actions
+        setAccountApproveDenyOracleFlexibleRuleFull(address(applicationNFTHandler), actions, ruleIds);
+        // Reset with a partial list of rules and insure that the changes are saved correctly
+        uint32[] memory ruleIds2 = new uint32[](24);
+        ActionTypes[] memory actions2 = new ActionTypes[](24);
+        actionIndex = 0;
+        mainIndex = 0;
+        for (uint i; i < 3; i++) {
+            for (uint j; j < 8; j++) {
+                actions2[mainIndex] = ActionTypes(actionIndex);
+                ruleIds2[mainIndex] = createAccountApproveDenyOracleFlexibleRule(0, 0);
+                mainIndex++;
+            }
+            actionIndex++;
+        }
+        // Apply the new set of rules
+        setAccountApproveDenyOracleFlexibleRuleFull(address(applicationNFTHandler), actions2, ruleIds2);
+        // Verify that all the rule id's were set correctly and are active(Had to go old school with control break logic)
+        mainIndex = 0;
+        uint256 internalIndex;
+        ActionTypes lastAction;
+        for (uint i; i < 3; i++) {
+            if (actions2[mainIndex] != lastAction) {
+                internalIndex = 0;
+            }
+            for (uint j; j < 8; j++) {
+                assertEq(ERC721NonTaggedRuleFacet(address(applicationNFTHandler)).getAccountApproveDenyOracleFlexibleIds(actions2[mainIndex])[internalIndex], ruleIds2[mainIndex]);
+                assertTrue(ERC721NonTaggedRuleFacet(address(applicationNFTHandler)).isAccountApproveDenyOracleFlexibleActive(actions2[mainIndex], ruleIds2[mainIndex]));
+                lastAction = actions2[mainIndex];
+                internalIndex++;
+                mainIndex++;
+            }
+        }
+
+        // Verify that all the rule id's were cleared for the previous set of rules(Had to go old school with control break logic)
+        mainIndex = 0;
+        internalIndex = 0;
+        lastAction = ActionTypes(0);
+        for (uint i; i < 5; i++) {
+            if (actions[mainIndex] != lastAction) {
+                internalIndex = 0;
+            }
+            for (uint j; j < 5; j++) {
+                uint32[] memory ruleIds3 = ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).getAccountApproveDenyOracleFlexibleIds(actions[mainIndex]);
+                // If a value was returned it must not match a previous rule
+                if (ruleIds3.length > 0) {
+                    assertFalse(ruleIds3[internalIndex] == ruleIds[mainIndex]);
+                }
+                assertFalse(ERC20NonTaggedRuleFacet(address(applicationNFTHandler)).isAccountApproveDenyOracleFlexibleActive(actions[mainIndex], ruleIds[mainIndex]));
+                lastAction = actions[mainIndex];
+                internalIndex++;
+                mainIndex++;
+            }
+        }
+    }
+
+      function testERC721_ERC721CommonTests_AccountApproveDenyOracleFlexibleRulefull_ZeroLengthActions() public endWithStopPrank ifDeploymentTestsEnabled {
+        uint32[] memory ruleIds = new uint32[](25);
+        ActionTypes[] memory actions = new ActionTypes[](25);
+
+        // Set up rules
+        uint256 actionIndex;
+        uint256 mainIndex;
+        for (uint i; i < 5; i++) {
+            for (uint j; j < 5; j++) {
+                actions[mainIndex] = ActionTypes(actionIndex);
+                ruleIds[mainIndex] = createAccountApproveDenyOracleFlexibleRule(0, 0);
+                mainIndex++;
+            }
+            actionIndex++;
+        }
+
+        // Apply the rules to all actions
+        setAccountApproveDenyOracleFlexibleRuleFull(address(applicationNFTHandler), actions, ruleIds);
+        
+        // Verify that all the rule id's were set correctly and are active
+        for (uint i; i < 5; ++i) {
+            assertEq(ERC721NonTaggedRuleFacet(address(applicationNFTHandler)).getAccountApproveDenyOracleFlexibleIds(actions[i])[i], ruleIds[i]);
+            assertTrue(ERC721NonTaggedRuleFacet(address(applicationNFTHandler)).isAccountApproveDenyOracleFlexibleActive(actions[i], ruleIds[i]));
+        }
+
+        // Create zero length arrays
+        uint32[] memory ruleIdsZero = new uint32[](0);
+        ActionTypes[] memory actionsZero = new ActionTypes[](0);
+
+        // Apply zero length arrays
+        setAccountApproveDenyOracleFlexibleRuleFull(address(applicationNFTHandler), actionsZero, ruleIdsZero);
+        
+        // Verify that all the rule ids were cleared and not active
+        for (uint i; i < 5; ++i) {
+            assertEq(ERC721NonTaggedRuleFacet(address(applicationNFTHandler)).getAccountApproveDenyOracleFlexibleIds(actions[i]).length, 0);
+            assertFalse(ERC721NonTaggedRuleFacet(address(applicationNFTHandler)).isAccountApproveDenyOracleFlexibleActive(actions[i], ruleIds[i]));
+        }
+    }
+
     /* TokenMinimumTransaction */
     function testERC721_ERC721CommonTests_TokenMinimumTransactionAtomicFullSet() public endWithStopPrank ifDeploymentTestsEnabled {
         uint32[] memory ruleIds = new uint32[](5);
@@ -2837,6 +3150,57 @@ abstract contract ERC721CommonTests is TestCommonFoundry, ERC721Util {
         } else {
             uint32 ruleId = createAccountApproveDenyOracleRule(1);
             setAccountApproveDenyOracleRule(address(applicationNFTHandler), ruleId);
+            // add an allowed address
+            switchToAppAdministrator();
+            goodBoys.push(address(user2));
+            goodBoys.push(address(user));
+            oracleApproved.addToApprovedList(goodBoys);
+        }
+    }
+
+    function _accountApproveDenyOracleFlexibleSetup(bool deny, uint8 addressToggle) public endWithStopPrank ifDeploymentTestsEnabled {
+        switchToAppAdministrator();
+        /// set up a non admin user an nft
+        for (uint i; i < 5; i++) {
+            UtilApplicationERC721(address(testCaseNFT)).safeMint(user1);
+        }
+        assertEq(testCaseNFT.balanceOf(user1), 5);
+        if (deny) {
+            // add the rule.
+            uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(0, addressToggle);
+            setAccountApproveDenyOracleFlexibleRule(address(applicationNFTHandler), ruleId);
+            // add a blocked address
+            switchToAppAdministrator();
+            badBoys.push(address(69));
+            oracleDenied.addToDeniedList(badBoys);
+        } else {
+            uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(1, addressToggle);
+            setAccountApproveDenyOracleFlexibleRule(address(applicationNFTHandler), ruleId);
+            // add an allowed address
+            switchToAppAdministrator();
+            goodBoys.push(address(user1));
+            goodBoys.push(address(user2));
+            goodBoys.push(address(user));
+            oracleApproved.addToApprovedList(goodBoys);
+        }
+        vm.startPrank(user1, user1);
+        testCaseNFT.transferFrom(user1, user2, 0);
+        assertEq(testCaseNFT.balanceOf(user2), 1);
+    }
+
+    function _accountApproveDenyOracleFlexibleSetupNoMints(bool deny, uint8 addressToggle) public endWithStopPrank ifDeploymentTestsEnabled {
+        switchToAppAdministrator();
+        if (deny) {
+            // add the rule.
+            uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(0, addressToggle);
+            setAccountApproveDenyOracleFlexibleRule(address(applicationNFTHandler), ruleId);
+            // add a blocked address
+            switchToAppAdministrator();
+            badBoys.push(rich_user);
+            oracleDenied.addToDeniedList(badBoys);
+        } else {
+            uint32 ruleId = createAccountApproveDenyOracleFlexibleRule(1, addressToggle);
+            setAccountApproveDenyOracleFlexibleRule(address(applicationNFTHandler), ruleId);
             // add an allowed address
             switchToAppAdministrator();
             goodBoys.push(address(user2));

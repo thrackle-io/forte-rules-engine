@@ -1,7 +1,7 @@
 # Oracle Configuration
 [![Project Version][version-image]][version-url]
 
-Oracles may be used with the protocol to provide approved and/or denied lists. These oracles are used in conjunction with the [Account Approve Deny Oracle Rule](../rules/ACCOUNT-APPROVE-DENY-ORACLE.md) which is created and applied like any other rule. Up to ten oracle rules may be applied per [action](../rules/ACTION-TYPES.md). The protocol provides example oracle contracts([OracleApproved](../../../src/example/OracleApproved.sol), [OracleDenied](../../../src/example/OracleDenied.sol)) or [external oracles](./EXTERNAL-ORACLE.md) can be created to suit the use case.
+Oracles may be used with the protocol to provide approved and/or denied lists. These oracles are used in conjunction with either the [Account Approve Deny Oracle Rule](../rules/ACCOUNT-APPROVE-DENY-ORACLE.md) or the See [Account Approve Deny Oracle Flexible Rule](../rules/ACCOUNT-APPROVE-DENY-ORACLE-FLEXIBLE.md). which are created and applied like any other rule. Up to ten oracle rules may be applied per [action](../rules/ACTION-TYPES.md). The protocol provides example oracle contracts([OracleApproved](../../../src/example/OracleApproved.sol), [OracleDenied](../../../src/example/OracleDenied.sol)) or [external oracles](./EXTERNAL-ORACLE.md) can be created to suit the use case.
 
 ## Approval List Oracle
 
@@ -88,7 +88,7 @@ The implementations for each of the above functions can be found in the [OracleD
 
 ## Upgrading: 
 
-To upgrade to a new oracle address first create a new `AccountApproveOrDenyOracle` [rule](../rules/ACCOUNT-APPROVE-DENY-ORACLE.md) with the new oracle type and address. This requires the new oracle address to be deployed and conform to the [IOracle](../../../src/common/IOracle.sol) interface. Add the new rule with the [Rule Processor Diamond](../architecture/protocol/RULE-PROCESSOR-DIAMOND.md) and use the protocol generated `ruleId` to set the new oracle rule within the [asset handler](../architecture/client/assetHandler/PROTOCOL-ASSET-HANDLER-DIAMOND.md) to be upgraded. 
+To upgrade to a new oracle address first create a new `AccountApproveOrDenyOracle` [rule](../rules/ACCOUNT-APPROVE-DENY-ORACLE.md) or `AccountApproveOrDenyOracleFlexible` [rule](../rules/ACCOUNT-APPROVE-DENY-ORACLE-FLEXIBLE.md)with the new oracle type and address. This requires the new oracle address to be deployed and conform to the [IOracle](../../../src/common/IOracle.sol) interface. Add the new rule with the [Rule Processor Diamond](../architecture/protocol/RULE-PROCESSOR-DIAMOND.md) and use the protocol generated `ruleId` to set the new oracle rule within the [asset handler](../architecture/client/assetHandler/PROTOCOL-ASSET-HANDLER-DIAMOND.md) to be upgraded. 
 
 ## Process for switching to an external access level provider
 

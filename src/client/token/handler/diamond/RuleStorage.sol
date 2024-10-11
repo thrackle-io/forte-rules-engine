@@ -26,6 +26,10 @@ struct AccountApproveDenyOracleS{
    mapping(ActionTypes => Rule[]) accountApproveDenyOracle;
 }
 
+struct AccountApproveDenyOracleFlexibleS{
+   mapping(ActionTypes => Rule[]) accountApproveDenyOracleFlexible;
+}
+
 struct AccountMaxTradeSizeS{
    mapping(ActionTypes => Rule) accountMaxTradeSize; 
    mapping(address => uint256) boughtInPeriod;
