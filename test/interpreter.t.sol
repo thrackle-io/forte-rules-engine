@@ -3,8 +3,10 @@ pragma solidity ^0.8.24;
 
 import "src/interpreter.sol";
 import "forge-std/console2.sol";
+import "lib/solady/src/utils/LibString.sol";
 
 contract InterpreterTest  {
+    using LibString for *;
     Interpreter testVal;
 
     function setUp() public {
@@ -32,7 +34,7 @@ contract InterpreterTest  {
     }
 
     function testCheckRule() public {
-        string memory toParse = "1 + 12 - 3 * 4 - 4 / 4 + 2 == 11 AND 2 == 2 --> revert --> 'transfer(address, uint256) returns bool'";
+        string memory toParse = "[ 1 + 12 - 3 * 4 - 4 / 4 + 2 == 11 AND [ 2 == 2 AND 4 == 4 ]] OR [ 7 == 7 AND 7 == 8 ] --> revert --> 'transfer(address, uint256) returns bool'";
         testVal.interpretSyntaxRule(toParse, address(0x12345678));
         TransactionInfo memory tInfo;
         tInfo.tokenAddress = address(0x12345678);
@@ -40,4 +42,5 @@ contract InterpreterTest  {
         bool retVal = testVal.checkRule(tInfo);
         console2.log(retVal);
     }
+
 }

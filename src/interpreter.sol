@@ -79,18 +79,18 @@ contract Interpreter {
 
                 if(retVal.getExpressions()[j].comparator.contains("==")) {
                     values[j] = (leftHandValue == rightHandValue);
+                } else {
+                    values[j] = false;
                 }
-
+                retVal.setLogicalStructure(retVal.getLogicalStructure().replace(j.toString(), values[j] ? "true" : "false"));
             }
-            //TODO: use logical structure to determine if overall expression true or false
-            for(uint256 j = 0; j < values.length; j++) {
-                if(!values[j]) {
-                    return false;
-                }
+
+            bool result = RuleLib.evaluateStructure(retVal.getLogicalStructure());
+            if(result == false) {
+                return result;
             }
         }
 
         return true;
     }
-
 }

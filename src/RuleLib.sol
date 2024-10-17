@@ -49,7 +49,6 @@ library RuleLib {
 
         // Parse each individual expression
         for(uint256 i = 0; i < expressionArray.length; i++) {
-            // strings.slice memory s = expressionArray[i].toSlice();  
             if(expressionArray[i].contains("== ")) {
                 string[] memory split = splitString(expressionArray[i], "== ");
                 if(split.length == 2) {
@@ -173,7 +172,8 @@ library RuleLib {
     function determineOperationValue(ExpressionComponents memory components, TransactionInfo memory transactionInfo) public returns (uint256) {
         uint256[] memory values = determineOperandValue(components.operands);
         // Loop through operators and equate 
-        // Current deficiency evaluating left to right, not accounting for PEMDAS or []
+        // Current deficiency evaluating left to right, not accounting for PEMDAS or [] this can be remedied by applying the same
+        // algorithm that's used in evaluateStructure below but seemed a bridge too far for the POC
         uint256 initialValue = values[0];
         uint256 equationIndex = 1;
         for(uint256 i = 0; i < components.operators.length; i++) {
@@ -203,9 +203,9 @@ library RuleLib {
 
         for(uint256 i = 0; i < operands.length; i++) {
             if(operands[i].contains("FC:")) {
-
+                //TODO: Create a mock FC: parser to return a value in order to test FC: syntax parsing
             } else if(operands[i].contains("TR:")) {
-
+                //TODO: Create a mock TR: parser to return a value in order to test TR: syntax parsing
             } else if(operands[i].eq("senderAddress")) {
 
             } else {
@@ -214,6 +214,75 @@ library RuleLib {
         }
 
         return retVal;
+    }
+
+    /**
+     * @dev takes a structure containing brackets [], ANDs, and ORs and evaluates whether it results in a true of false
+     * @notice the individual operations are expected to have already been replaced with their resulting true or false
+     * @param structure the structure string to evaluate 
+     */
+    function evaluateStructure(string memory structure) public view returns (bool) {
+            // Algorithm explanation: 
+            // 1. Locate the last instance of '['
+            // 2. Locate the next instance of ']'
+            // 3. evaluate the equation inbetween 
+            // 4. replace the bracketed portion with the result
+            // 5. repeat until there are no brackets
+
+            bool bracketsRemain = structure.contains('[');
+            while(bracketsRemain) {
+                uint256 index = structure.lastIndexOf('[', bytes(structure).length);
+                uint256 indexTwo = structure.indexOf(']', index);
+
+                string memory substr = structure.slice(index, indexTwo + 1);
+
+                structure = structure.replace(substr, evaluateLogicalExpression(substr));
+                bracketsRemain = structure.contains('[');
+            }
+
+            // Once all bracketed expressions have been evaluated, evaluate the remaining overall expression (left to right) 
+            structure = evaluateLogicalExpression(structure);
+            if(structure.contains("true")) {
+                return true;
+            } else {
+                return false;
+            }
+    }
+
+    /**
+     * @dev Evaluates an individual expression (what would be contained inside of the brackets []) and determines whether it results in true or false
+     * @notice the individual operations are expected to have already been replaced with their resulting true or false
+     * @notice working under the assumption that each individual expression is made up of a single AND or OR and more complex expressions utilize brackets 
+     * @param toEvaluate the expression string to evaluate 
+     */
+    function evaluateLogicalExpression(string memory toEvaluate) public view returns (string memory) {
+        if(toEvaluate.contains("AND")) {
+            string[] memory splitStr = toEvaluate.split(" AND ");
+            bool isTrue = true;
+            for(uint256 i = 0; i < splitStr.length; i++) {
+                if(splitStr[i].contains("false")) {
+                    isTrue = false;
+                }
+            }
+            if(isTrue) {
+                return "true";
+            } else {
+                return "false";
+            }
+        } else if(toEvaluate.contains("OR")) {
+            string[] memory splitStr = toEvaluate.split(" OR ");
+            bool isTrue = false;
+            for(uint256 i = 0; i < splitStr.length; i++) {
+                if(splitStr[i].contains("true")) {
+                    isTrue = true;
+                }
+            }
+            if(isTrue) {
+                return "true";
+            } else {
+                return "false";
+            }
+        }
     }
 
     // Utility Functions

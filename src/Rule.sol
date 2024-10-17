@@ -81,6 +81,10 @@ contract Rule {
         expressionLogicalStructure = str;
     }
 
+    function getLogicalStructure() public view returns (string memory) {
+        return expressionLogicalStructure;
+    }
+
     function addEffect(Effect memory effect) public {
         effects.push(effect);
     }
