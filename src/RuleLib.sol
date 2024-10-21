@@ -285,6 +285,69 @@ library RuleLib {
         }
     }
 
+    /**
+     * @dev given an array of ForeignCall structures find the applicable call, make the call, and return the value
+     * @param operand the string representation of the foreigh call i.e. FC:tag(address) returns string
+     * @param calls the array of foreign calls to search through 
+     */
+    function evaluateForeignCall(string memory operand, ForeignCall[] memory calls) public returns (uint256) {
+        string[] memory firstSplit = operand.split("FC:");
+        string[] memory secondSplit = firstSplit[1].split("(");
+        uint256 retVal = 0;
+        for(uint256 i = 0; i < calls.length; i++) {
+            if(calls[i].functionName.eq(secondSplit[0])) {
+                string[] memory thirdSplit = secondSplit[1].split(")");
+                string[] memory fourthSplit = thirdSplit[0].split(",");
+                bytes memory encoded = encodeBasedOnArgumentCount(calls[i], fourthSplit);
+                (bool response, bytes memory data) = calls[i].contractAddress.call(encoded);
+                if(response) {
+                    //TODO: decode the data and add it to the return value
+                    retVal += 10;
+                }
+                break;
+            }
+        }
+
+        return retVal; 
+    }
+
+    /**
+     * @dev encode the foreign call signature and it's arguments so the call itself can be made.
+     * @param call the Foreign call structure
+     * @param arguments the string representation of the various arguments.
+     */
+    function encodeBasedOnArgumentCount(ForeignCall memory call, string[] memory arguments) public returns (bytes memory) {
+        //NOTE: Major outstanding issue 
+        // Encoding with a variable length list of arguments, each of variable types is difficult
+        // The original idea was to encode each argument individually based on its type and then concat all of the bytes
+        // together with the function signature to create the encoded bytes for the call. 
+        // Unfortunately you have to make the call to encode/encodePacked with all of the arguments in a single call.
+        // (one of the initial bytes holds a value for how many arguments follow). Doing this in a single encode/encodePacked call
+        // with variable length and type arguments doesn't work. 
+        // My next goal was to convert each of the arguments to bytes (or some generic type) first before encoding them. 
+        // But this just isn't really supported by Solidity. The current implementation works for strings because if you encode them twice
+        // it doesn't change the value (for some reason), for everything else it does.
+        bytes[] memory erryThang = new bytes[](call.argumentTypes.length);
+        bytes memory encoded;
+        bytes4 FUNC_SELECTOR = bytes4(keccak256(bytes(call.functionSignature)));
+        for(uint256 i = 0; i < call.argumentTypes.length; i++) {
+            if(call.argumentTypes[i].eq("address")) {
+                //TODO: Determine how to encode this correctly
+            } else if(call.argumentTypes[i].eq("uint256")) {
+                //TODO: Determine how to encode this correctly
+            } else {
+                erryThang[i] = abi.encodePacked(arguments[i]);
+            }
+        }
+        bytes memory params;
+        params = abi.encode(erryThang[0], erryThang[1]);
+
+        encoded = bytes.concat(FUNC_SELECTOR);
+        encoded = bytes.concat(encoded, params);
+
+        return encoded;
+    }
+
     // Utility Functions
     //-----------------------------------------------------------------------------------------------------------
 

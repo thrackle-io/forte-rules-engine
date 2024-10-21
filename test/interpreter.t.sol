@@ -4,13 +4,15 @@ pragma solidity ^0.8.24;
 import "src/interpreter.sol";
 import "forge-std/console2.sol";
 import "lib/solady/src/utils/LibString.sol";
+import "src/testContract.sol";
 
 contract InterpreterTest  {
     using LibString for *;
     Interpreter testVal;
-
+    testContract testC;
     function setUp() public {
         testVal = new Interpreter();
+        testC = new testContract();
     }
 
     function testInterpretSytaxRule() public {
@@ -43,4 +45,41 @@ contract InterpreterTest  {
         console2.log(retVal);
     }
 
+    function testEncodingForeignCall() public {
+        string[] memory args = new string[](2);
+        args[0] = "test";
+        args[1] = "otherTest";
+        string memory functionSignature = "testSig(string,string)";
+        ForeignCall memory fc;
+        fc.functionSignature = functionSignature;
+        fc.argumentTypes = new string[](2);
+        fc.argumentTypes[0] = "string";
+        fc.argumentTypes[1] = "string";
+        bytes memory encoded = RuleLib.encodeBasedOnArgumentCount(fc, args);
+        bytes memory referenceEncoding = encodingReference();
+        if(keccak256(encoded) == keccak256(referenceEncoding)) {
+            console2.log("Match");
+        } else {
+            console2.log("No match");
+        }
+    }
+
+    function encodingReference() public returns (bytes memory) {
+        bytes memory encodedTest = abi.encodeWithSignature("testSig(string,string)", "test", "otherTest");
+        return encodedTest;
+    }
+
+    function testEvaluatingForeignCall() public {
+        ForeignCall memory fc;
+        fc.argumentTypes = new string[](2);
+        fc.argumentTypes[0] = "string";
+        fc.argumentTypes[1] = "string";
+        fc.contractAddress = address(testC);
+        fc.functionName = "testSig";
+        fc.functionSignature = "testSig(string,string)";
+        ForeignCall[] memory calls = new ForeignCall[](1);
+        calls[0] = fc;
+        uint256 retVal = RuleLib.evaluateForeignCall("FC:testSig(string,string)", calls);
+        console2.log(retVal);
+    }
 }

@@ -20,6 +20,13 @@ struct Expression {
     ExpressionComponents rhsComp;
 }
 
+struct ForeignCall {
+    address contractAddress;
+    string functionName;
+    string functionSignature;
+    string[] argumentTypes;
+}
+
 /**
  * Structure for the individual effects
  */
