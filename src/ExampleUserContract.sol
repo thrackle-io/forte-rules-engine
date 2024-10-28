@@ -4,27 +4,29 @@ pragma solidity ^0.8.13;
 import "src/RulesEngineStructures.sol";
 import "src/IRulesEngine.sol";
 
-contract exampleUserContract {
+contract ExampleUserContract {
     address rulesEngineAddress;
 
-    function transfer(address _to, uint256 _amount) public view returns (bool success) {
+    function setRulesEngineAddress(address rulesEngine) public {
+        rulesEngineAddress = rulesEngine;
+    }
+
+    function transfer(address _to, uint256 _amount) public view returns (bool) {
         Arguments memory args;
         args.addresses = new address[](1);
         args.addresses[0] = _to;
         args.ints = new uint256[](1);
+        args.ints[0] = _amount;
         args.argumentTypes = new PT[](2);
         args.argumentTypes[0] = PT.ADDR;
         args.argumentTypes[1] = PT.UINT;
         bytes memory encoded = customEncoder(args);
-        checkRulesCall(encoded);
-        // This is where the overriden transfer would be called 
-
-        return true;
+        return checkRulesCall(encoded);
     }
 
-    function checkRulesCall(bytes memory arguments) public view {
+    function checkRulesCall(bytes memory arguments) public view returns (bool) {
         IRulesEngine rulesEngine = IRulesEngine(rulesEngineAddress);
-        rulesEngine.checkRules(address(0x1234567), "transfer(address, uint256)", arguments);
+        return rulesEngine.checkRules(address(0x1234567), "transfer(address,uint256) returns (bool)", arguments);
     }
 
     function customEncoder(Arguments memory arguments) public pure returns (bytes memory retVal) {

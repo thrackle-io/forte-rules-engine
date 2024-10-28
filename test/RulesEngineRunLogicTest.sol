@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "src/RulesEngineRunLogic.sol";
+import "src/ExampleUserContract.sol";
 import "forge-std/console2.sol";
 
 /**
@@ -11,6 +12,7 @@ import "forge-std/console2.sol";
 contract RulesEngineRunLogicTest {
 
     RulesEngineRunLogic logic;
+    ExampleUserContract userContract;
     address contractAddress = address(0x1234567);
     string functionSignature = "transfer(address,uint256) returns (bool)";
 
@@ -38,9 +40,11 @@ contract RulesEngineRunLogicTest {
         pTypes[1] = PT.UINT;
 
         logic.addFunctionSignature(contractAddress, functionSignature, pTypes);
+        userContract = new ExampleUserContract();
+        userContract.setRulesEngineAddress(address(logic));
     }
 
-    function testCheckRules() public {
+    function testCheckRulesExplicit() public {
         Arguments memory arguments;
         arguments.argumentTypes = new PT[](2);
         arguments.argumentTypes[0] = PT.ADDR;
@@ -48,10 +52,15 @@ contract RulesEngineRunLogicTest {
         arguments.addresses = new address[](1);
         arguments.addresses[0] = address(0x7654321);
         arguments.ints = new uint256[](1);
-        arguments.ints[0] = 5;
+        arguments.ints[0] = 3;
         bytes memory retVal = customEncoder(arguments);
-        bool reponse = logic.checkRules(contractAddress, functionSignature, retVal);
-        
+        bool response = logic.checkRules(contractAddress, functionSignature, retVal);
+        console2.log(response);
+    }
+
+    function testCheckRulesWithExampleContract() public {
+        bool retVal = userContract.transfer(address(0x7654321), 3);
+        console2.log(retVal);
     }
 
     function customEncoder(Arguments memory arguments) public pure returns (bytes memory retVal) {
