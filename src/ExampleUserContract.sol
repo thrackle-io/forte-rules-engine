@@ -34,13 +34,13 @@ contract exampleUserContract {
 
         for(uint256 i = 0; i < arguments.argumentTypes.length; i++) {
             if(arguments.argumentTypes[i] == PT.ADDR) {
-                bytes.concat(retVal, abi.encode(arguments.addresses[addressIter]));
+                retVal = bytes.concat(retVal, abi.encode(arguments.addresses[addressIter]));
                 addressIter += 1;
             } else if(arguments.argumentTypes[i] == PT.UINT) {
-                bytes.concat(retVal, abi.encode(arguments.ints[i]));
+                retVal = bytes.concat(retVal, abi.encode(arguments.ints[intIter]));
                 intIter += 1;
             } else if(arguments.argumentTypes[i] == PT.STR) {
-                bytes.concat(retVal, abi.encode(arguments.strings[i]));
+                retVal = bytes.concat(retVal, abi.encode(arguments.strings[stringIter]));
                 stringIter += 1;
             }
         }

@@ -86,9 +86,8 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @dev evaluates the conditions associated with all applicable rules and returns the result
      * @param contractAddress the address of the rules-enabled contract, used to pull the applicable rules
      * @param functionSignature the signature of the function that initiated the transaction, used to pull the applicable rules.
-     * @return responses the results from evaluating all associated rule conditions (Should be updated to be a single boolean after testing)
      */
-    function checkRules(address contractAddress, string calldata functionSignature, bytes calldata arguments) public view returns (uint256[] memory responses) {
+    function checkRules(address contractAddress, string calldata functionSignature, bytes calldata arguments) public view returns (bool) {
 
         // Decode arguments from function signature
         PT[] memory functionSignaturePlaceholders;
@@ -113,13 +112,15 @@ contract RulesEngineRunLogic is IRulesEngine {
             }
         }
 
-        responses = new uint256[](applicableRules.length);
 
         // Retrieve placeHolder[] for specific rule to be evaluated and translate function signature argument array 
         // to rule specific argument array
         for(uint256 i = 0; i < applicableRules.length; i++) {
-            responses[i] = evaluateIndividualRule(applicableRules[i], functionSignatureArgs);
+            if(!evaluateIndividualRule(applicableRules[i], functionSignatureArgs)) {
+                return false;
+            }
         }
+        return true;
     }
 
     /**
@@ -143,7 +144,8 @@ contract RulesEngineRunLogic is IRulesEngine {
 
         for(uint256 i = 0; i < functionSignaturePTs.length; i++) {
             if(functionSignaturePTs[i] == PT.ADDR) {
-                address data = i == 0 ? abi.decode(arguments[:32], (address)) : abi.decode(arguments[placeIter:32], (address));
+                // address data = abi.decode(arguments, (address));
+                address data = i == 0 ? abi.decode(arguments[:32], (address)) : abi.decode(arguments[placeIter:(placeIter + 32)], (address));
                 if(i != 0) {
                     placeIter += 32;
                 }
@@ -152,7 +154,7 @@ contract RulesEngineRunLogic is IRulesEngine {
                 overallIter += 1;
                 addressIter += 1;
             } else if(functionSignaturePTs[i] == PT.UINT) {
-                uint256 data = i == 0 ? abi.decode(arguments[:32], (uint256)) : abi.decode(arguments[placeIter:32], (uint256));
+                uint256 data = abi.decode(arguments[32:64], (uint256));
                 if(i != 0) {
                     placeIter += 32;
                 }
@@ -161,7 +163,7 @@ contract RulesEngineRunLogic is IRulesEngine {
                 overallIter += 1;
                 intIter += 1;
             } else if(functionSignaturePTs[i] == PT.STR) {
-                string memory data = i == 0 ? abi.decode(arguments[:32], (string)) : abi.decode(arguments[placeIter:32], (string));
+                string memory data = i == 0 ? abi.decode(arguments[:32], (string)) : abi.decode(arguments[placeIter:(placeIter + 32)], (string));
                 if(i != 0) {
                     placeIter += 32;
                 }
@@ -179,7 +181,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param functionSignatureArgs the values to replace the placeholders in the instruction set with.
      * @return response the result of the rule condition evaluation 
      */
-    function evaluateIndividualRule(Rule memory applicableRule, Arguments memory functionSignatureArgs) public view returns (uint256 response) {
+    function evaluateIndividualRule(Rule memory applicableRule, Arguments memory functionSignatureArgs) public view returns (bool response) {
         Arguments memory ruleArgs;
         ruleArgs.argumentTypes = new PT[](applicableRule.placeHolders.length);
         // Initializing each to the max size to avoid the cost of iterating through to determine how many of each type exist
@@ -219,7 +221,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param arguments the values to replace the placeholders in the instruction set with.
      * @return ans the result of evaluating the instruction set
      */
-    function run(uint256[] calldata prog, Arguments calldata arguments) public pure returns (uint256 ans) {
+    function run(uint256[] calldata prog, Arguments calldata arguments) public pure returns (bool ans) {
         uint256[64] memory mem;
         uint256 idx = 0;
         uint256 opi = 0;
@@ -230,7 +232,7 @@ contract RulesEngineRunLogic is IRulesEngine {
             if(op == LC.PLH) {
                 // Placeholder format will be:
                 // PLH, arguments array index, argument type specific array index
-                // For example if the Placeholder is the 3rd argument in the function signature, which is the first address type argument:
+                // For example if the Placeholder is the 3rd argument in the Arguments structure, which is the first address type argument:
                 // PLH, 2, 0
                 uint256 pli = prog[idx+1];
                 uint256 spci = prog[idx+2];
@@ -257,10 +259,10 @@ contract RulesEngineRunLogic is IRulesEngine {
             else if (op == LC.AND) { v = bool2ui(ui2bool(mem[prog[idx+1]]) && ui2bool(mem[prog[idx+2]])); idx += 3; }
             else if (op == LC.OR ) { v = bool2ui(ui2bool(mem[prog[idx+1]]) || ui2bool(mem[prog[idx+2]])); idx += 3; }
             else if (op == LC.NOT) { v = bool2ui(! ui2bool(mem[prog[idx+1]])); idx += 2; }
-            else { revert("Illegal instruction"); }
+            // else { revert("Illegal instruction"); }
             mem[opi] = v;
             opi += 1;
         }
-        return mem[opi - 1];
+        return ui2bool(mem[opi - 1]);
     }
 }
