@@ -11,6 +11,9 @@ import {IRulesEngine} from "src/IRulesEngine.sol";
  * @author @mpetersoCode55 
  */
 contract RulesEngineRunLogic is IRulesEngine {
+
+    mapping(address => functionSignatureToRuleMapping) ruleStorage;
+
     /**
      * @dev converts a uint256 to a bool
      * @param x the uint256 to convert
@@ -28,6 +31,58 @@ contract RulesEngineRunLogic is IRulesEngine {
     }
 
     /**
+     * Add a rule to the ruleStorage mapping.
+     * @param contractAddress the address of the contract the rule is associated with
+     * @param functionSignature the string representation of the function signature the rule is associated with
+     * @param rule the rule to add 
+     */
+    function addRule(address contractAddress, string calldata functionSignature, Rule calldata rule) public {
+        if(ruleStorage[contractAddress].set) {
+            functionSignatureToRuleMapping storage topLayerMap = ruleStorage[contractAddress];
+            if(topLayerMap.ruleMap[functionSignature].set) {
+                ruleStorageStructure storage innerMap = topLayerMap.ruleMap[functionSignature];
+                innerMap.rules.push(rule);
+            } else {
+                topLayerMap.ruleMap[functionSignature].set = true;
+                topLayerMap.ruleMap[functionSignature].rules.push(rule);
+            }
+        } else {
+            ruleStorage[contractAddress].set = true;
+            ruleStorage[contractAddress].ruleMap[functionSignature].set = true;
+            ruleStorage[contractAddress].ruleMap[functionSignature].rules.push(rule); 
+        }
+    }
+
+    /**
+     * Add a function signature to the ruleStorage mapping.
+     * @param contractAddress the address of the contract the function signature is associated with
+     * @param functionSignature the string representation of the function signature
+     * @param pTypes the types of the parameters for the function in order 
+     */
+    function addFunctionSignature(address contractAddress, string calldata functionSignature, PT[] memory pTypes) public {
+        if(ruleStorage[contractAddress].set) {
+            functionSignatureToRuleMapping storage topLayerMap = ruleStorage[contractAddress];
+            if(topLayerMap.functionSignatureMap[functionSignature].set) {
+                functionSignatureStorage storage innerMap = topLayerMap.functionSignatureMap[functionSignature];
+                for(uint256 i = 0; i < pTypes.length; i++) {
+                    innerMap.parameterTypes.push(pTypes[i]);
+                }
+            } else {
+                topLayerMap.functionSignatureMap[functionSignature].set = true;
+                for(uint256 i = 0; i < pTypes.length; i++) {
+                    topLayerMap.functionSignatureMap[functionSignature].parameterTypes.push(pTypes[i]);
+                }
+            }
+        } else {
+            ruleStorage[contractAddress].set = true;
+            ruleStorage[contractAddress].functionSignatureMap[functionSignature].set = true;
+            for(uint256 i = 0; i < pTypes.length; i++) {
+                ruleStorage[contractAddress].functionSignatureMap[functionSignature].parameterTypes.push(pTypes[i]); 
+            }
+        }
+    }
+
+    /**
      * @dev evaluates the conditions associated with all applicable rules and returns the result
      * @param contractAddress the address of the rules-enabled contract, used to pull the applicable rules
      * @param functionSignature the signature of the function that initiated the transaction, used to pull the applicable rules.
@@ -36,28 +91,35 @@ contract RulesEngineRunLogic is IRulesEngine {
     function checkRules(address contractAddress, string calldata functionSignature, bytes calldata arguments) public view returns (uint256[] memory responses) {
 
         // Decode arguments from function signature
-        //-----------------------------------------------------------------------------------------------------------------
-
-        // TODO: Pull function signature struct from storage
         PT[] memory functionSignaturePlaceholders;
-
+        if(ruleStorage[contractAddress].set) {
+            if(ruleStorage[contractAddress].functionSignatureMap[functionSignature].set) {
+                functionSignaturePlaceholders = new PT[](ruleStorage[contractAddress].functionSignatureMap[functionSignature].parameterTypes.length);
+                for(uint256 i = 0; i < functionSignaturePlaceholders.length; i++) {
+                    functionSignaturePlaceholders[i] = ruleStorage[contractAddress].functionSignatureMap[functionSignature].parameterTypes[i];
+                }
+            }
+        }
+        
         Arguments memory functionSignatureArgs = decodeFunctionSignatureArgs(functionSignaturePlaceholders, arguments);
 
-        //-----------------------------------------------------------------------------------------------------------------
-
-        // TODO: poll mapping for applicable rules based on token address and function signature
-        // Loop through the below logic for each rule (each having it's own rulePlaceholders structure pulled from storage) 
-        rule[] memory applicableRules = new rule[](1);
+        Rule[] memory applicableRules;
+        if(ruleStorage[contractAddress].set) {
+            if(ruleStorage[contractAddress].ruleMap[functionSignature].set) {
+                applicableRules = new Rule[](ruleStorage[contractAddress].ruleMap[functionSignature].rules.length);
+                for(uint256 i = 0; i < applicableRules.length; i++) {
+                    applicableRules[i] = ruleStorage[contractAddress].ruleMap[functionSignature].rules[i];
+                }
+            }
+        }
 
         responses = new uint256[](applicableRules.length);
 
         // Retrieve placeHolder[] for specific rule to be evaluated and translate function signature argument array 
         // to rule specific argument array
-        //-----------------------------------------------------------------------------------------------------------------
         for(uint256 i = 0; i < applicableRules.length; i++) {
             responses[i] = evaluateIndividualRule(applicableRules[i], functionSignatureArgs);
         }
-        //-----------------------------------------------------------------------------------------------------------------
     }
 
     /**
@@ -117,7 +179,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param functionSignatureArgs the values to replace the placeholders in the instruction set with.
      * @return response the result of the rule condition evaluation 
      */
-    function evaluateIndividualRule(rule memory applicableRule, Arguments memory functionSignatureArgs) public view returns (uint256 response) {
+    function evaluateIndividualRule(Rule memory applicableRule, Arguments memory functionSignatureArgs) public view returns (uint256 response) {
         Arguments memory ruleArgs;
         ruleArgs.argumentTypes = new PT[](applicableRule.placeHolders.length);
         // Initializing each to the max size to avoid the cost of iterating through to determine how many of each type exist

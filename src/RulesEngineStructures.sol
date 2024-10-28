@@ -36,7 +36,7 @@ struct Arguments {
 /**
  * Structure used to represent an individual rule
  */
-struct rule {
+struct Rule {
     // The instruction set that will be run at rule evaluation
     uint256[] instructionSet;
     
@@ -45,4 +45,20 @@ struct rule {
     // For example if the argument in question is the 2nd address in the function signature the placeHolder would be:
     // pType = parameterType.ADDR index = 1
     Placeholder[] placeHolders;
+}
+
+struct functionSignatureToRuleMapping {
+    bool set;
+    mapping (string => ruleStorageStructure) ruleMap;
+    mapping (string => functionSignatureStorage) functionSignatureMap;
+}
+
+struct functionSignatureStorage {
+    bool set;
+    PT[] parameterTypes;
+}
+
+struct ruleStorageStructure {
+    bool set;
+    Rule[] rules;
 }
