@@ -4,12 +4,13 @@ pragma solidity ^0.8.24;
 import "src/RulesEngineRunLogic.sol";
 import "src/ExampleUserContract.sol";
 import "forge-std/console2.sol";
+import "forge-std/StdAssertions.sol";
 
 /**
  * @title Test the functionality of the RulesEngineRunLogic contract
  * @author @mpetersoCode55 
  */
-contract RulesEngineRunLogicTest {
+contract RulesEngineRunLogicTest is StdAssertions {
 
     RulesEngineRunLogic logic;
     ExampleUserContract userContract;
@@ -55,12 +56,12 @@ contract RulesEngineRunLogicTest {
         arguments.ints[0] = 3;
         bytes memory retVal = customEncoder(arguments);
         bool response = logic.checkRules(contractAddress, functionSignature, retVal);
-        console2.log(response);
+        assertFalse(response);
     }
 
     function testCheckRulesWithExampleContract() public {
         bool retVal = userContract.transfer(address(0x7654321), 3);
-        console2.log(retVal);
+        assertFalse(retVal);
     }
 
     function customEncoder(Arguments memory arguments) public pure returns (bytes memory retVal) {

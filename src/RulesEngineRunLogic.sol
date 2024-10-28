@@ -246,9 +246,7 @@ contract RulesEngineRunLogic is IRulesEngine {
                     // Convert string to uint256 for direct comparison using == and != operations
                     v = uint256(keccak256(abi.encode(arguments.strings[spci]))); idx += 3;
                 }
-            }
-
-            if (op == LC.NUM) { v = prog[idx+1]; idx += 2; }
+            } else if (op == LC.NUM) { v = prog[idx+1]; idx += 2; }
             else if (op == LC.ADD) { v = mem[prog[idx+1]] + mem[prog[idx+2]]; idx += 3; }
             else if (op == LC.SUB) { v = mem[prog[idx+1]] - mem[prog[idx+2]]; idx += 3; }
             else if (op == LC.MUL) { v = mem[prog[idx+1]] * mem[prog[idx+2]]; idx += 3; }
@@ -259,7 +257,7 @@ contract RulesEngineRunLogic is IRulesEngine {
             else if (op == LC.AND) { v = bool2ui(ui2bool(mem[prog[idx+1]]) && ui2bool(mem[prog[idx+2]])); idx += 3; }
             else if (op == LC.OR ) { v = bool2ui(ui2bool(mem[prog[idx+1]]) || ui2bool(mem[prog[idx+2]])); idx += 3; }
             else if (op == LC.NOT) { v = bool2ui(! ui2bool(mem[prog[idx+1]])); idx += 2; }
-            // else { revert("Illegal instruction"); }
+            else { revert("Illegal instruction"); }
             mem[opi] = v;
             opi += 1;
         }
