@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "src/RulesEngineStructures.sol";
-import {IRulesEngine} from "src/IRulesEngine.sol";
+import "src/IRulesEngine.sol";
 
 /**
  * @title Rules Engine Run Logic
@@ -12,7 +12,7 @@ import {IRulesEngine} from "src/IRulesEngine.sol";
  */
 contract RulesEngineRunLogic is IRulesEngine {
 
-    mapping(address => functionSignatureToRuleMapping) ruleStorage;
+    mapping(address => RulesStorageStructure.functionSignatureToRuleMapping) ruleStorage;
 
     /**
      * @dev converts a uint256 to a bool
@@ -36,11 +36,11 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param functionSignature the string representation of the function signature the rule is associated with
      * @param rule the rule to add 
      */
-    function addRule(address contractAddress, string calldata functionSignature, Rule calldata rule) public {
+    function addRule(address contractAddress, bytes calldata functionSignature, RulesStorageStructure.Rule calldata rule) public {
         if(ruleStorage[contractAddress].set) {
-            functionSignatureToRuleMapping storage topLayerMap = ruleStorage[contractAddress];
+            RulesStorageStructure.functionSignatureToRuleMapping storage topLayerMap = ruleStorage[contractAddress];
             if(topLayerMap.ruleMap[functionSignature].set) {
-                ruleStorageStructure storage innerMap = topLayerMap.ruleMap[functionSignature];
+                RulesStorageStructure.ruleStorageStructure storage innerMap = topLayerMap.ruleMap[functionSignature];
                 innerMap.rules.push(rule);
             } else {
                 topLayerMap.ruleMap[functionSignature].set = true;
@@ -59,11 +59,11 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param functionSignature the string representation of the function signature
      * @param pTypes the types of the parameters for the function in order 
      */
-    function addFunctionSignature(address contractAddress, string calldata functionSignature, PT[] memory pTypes) public {
+    function addFunctionSignature(address contractAddress, bytes calldata functionSignature, RulesStorageStructure.PT[] memory pTypes) public {
         if(ruleStorage[contractAddress].set) {
-            functionSignatureToRuleMapping storage topLayerMap = ruleStorage[contractAddress];
+            RulesStorageStructure.functionSignatureToRuleMapping storage topLayerMap = ruleStorage[contractAddress];
             if(topLayerMap.functionSignatureMap[functionSignature].set) {
-                functionSignatureStorage storage innerMap = topLayerMap.functionSignatureMap[functionSignature];
+                RulesStorageStructure.functionSignatureStorage storage innerMap = topLayerMap.functionSignatureMap[functionSignature];
                 for(uint256 i = 0; i < pTypes.length; i++) {
                     innerMap.parameterTypes.push(pTypes[i]);
                 }
@@ -87,25 +87,25 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param contractAddress the address of the rules-enabled contract, used to pull the applicable rules
      * @param functionSignature the signature of the function that initiated the transaction, used to pull the applicable rules.
      */
-    function checkRules(address contractAddress, string calldata functionSignature, bytes calldata arguments) public view returns (bool) {
+    function checkRules(address contractAddress, bytes calldata functionSignature, bytes calldata arguments) public view returns (bool) {
 
         // Decode arguments from function signature
-        PT[] memory functionSignaturePlaceholders;
+        RulesStorageStructure.PT[] memory functionSignaturePlaceholders;
         if(ruleStorage[contractAddress].set) {
             if(ruleStorage[contractAddress].functionSignatureMap[functionSignature].set) {
-                functionSignaturePlaceholders = new PT[](ruleStorage[contractAddress].functionSignatureMap[functionSignature].parameterTypes.length);
+                functionSignaturePlaceholders = new RulesStorageStructure.PT[](ruleStorage[contractAddress].functionSignatureMap[functionSignature].parameterTypes.length);
                 for(uint256 i = 0; i < functionSignaturePlaceholders.length; i++) {
                     functionSignaturePlaceholders[i] = ruleStorage[contractAddress].functionSignatureMap[functionSignature].parameterTypes[i];
                 }
             }
         }
         
-        Arguments memory functionSignatureArgs = decodeFunctionSignatureArgs(functionSignaturePlaceholders, arguments);
+        RulesStorageStructure.Arguments memory functionSignatureArgs = decodeFunctionSignatureArgs(functionSignaturePlaceholders, arguments);
 
-        Rule[] memory applicableRules;
+        RulesStorageStructure.Rule[] memory applicableRules;
         if(ruleStorage[contractAddress].set) {
             if(ruleStorage[contractAddress].ruleMap[functionSignature].set) {
-                applicableRules = new Rule[](ruleStorage[contractAddress].ruleMap[functionSignature].rules.length);
+                applicableRules = new RulesStorageStructure.Rule[](ruleStorage[contractAddress].ruleMap[functionSignature].rules.length);
                 for(uint256 i = 0; i < applicableRules.length; i++) {
                     applicableRules[i] = ruleStorage[contractAddress].ruleMap[functionSignature].rules[i];
                 }
@@ -129,45 +129,45 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param arguments the encoded arguments 
      * @return functionSignatureArgs the Arguments struct containing the decoded function arguments
      */
-    function decodeFunctionSignatureArgs(PT[] memory functionSignaturePTs, bytes calldata arguments) public pure returns (Arguments memory functionSignatureArgs) {
+    function decodeFunctionSignatureArgs(RulesStorageStructure.PT[] memory functionSignaturePTs, bytes calldata arguments) public pure returns (RulesStorageStructure.Arguments memory functionSignatureArgs) {
         uint256 placeIter = 32;
         uint256 addressIter = 0;
         uint256 intIter = 0;
         uint256 stringIter = 0;
         uint256 overallIter = 0;
         
-        functionSignatureArgs.argumentTypes = new PT[](functionSignaturePTs.length);
+        functionSignatureArgs.argumentTypes = new RulesStorageStructure.PT[](functionSignaturePTs.length);
         // Initializing each to the max size to avoid the cost of iterating through to determine how many of each type exist
         functionSignatureArgs.addresses = new address[](functionSignaturePTs.length);
         functionSignatureArgs.ints = new uint256[](functionSignaturePTs.length);
         functionSignatureArgs.strings = new string[](functionSignaturePTs.length);
 
         for(uint256 i = 0; i < functionSignaturePTs.length; i++) {
-            if(functionSignaturePTs[i] == PT.ADDR) {
+            if(functionSignaturePTs[i] == RulesStorageStructure.PT.ADDR) {
                 // address data = abi.decode(arguments, (address));
                 address data = i == 0 ? abi.decode(arguments[:32], (address)) : abi.decode(arguments[placeIter:(placeIter + 32)], (address));
                 if(i != 0) {
                     placeIter += 32;
                 }
-                functionSignatureArgs.argumentTypes[overallIter] = PT.ADDR;
+                functionSignatureArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.ADDR;
                 functionSignatureArgs.addresses[addressIter] = data;
                 overallIter += 1;
                 addressIter += 1;
-            } else if(functionSignaturePTs[i] == PT.UINT) {
+            } else if(functionSignaturePTs[i] == RulesStorageStructure.PT.UINT) {
                 uint256 data = abi.decode(arguments[32:64], (uint256));
                 if(i != 0) {
                     placeIter += 32;
                 }
-                functionSignatureArgs.argumentTypes[overallIter] = PT.UINT;
+                functionSignatureArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.UINT;
                 functionSignatureArgs.ints[intIter] = data;
                 overallIter += 1;
                 intIter += 1;
-            } else if(functionSignaturePTs[i] == PT.STR) {
+            } else if(functionSignaturePTs[i] == RulesStorageStructure.PT.STR) {
                 string memory data = i == 0 ? abi.decode(arguments[:32], (string)) : abi.decode(arguments[placeIter:(placeIter + 32)], (string));
                 if(i != 0) {
                     placeIter += 32;
                 }
-                functionSignatureArgs.argumentTypes[overallIter] = PT.STR;
+                functionSignatureArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.STR;
                 functionSignatureArgs.strings[stringIter] = data;
                 overallIter += 1;
                 stringIter += 1;
@@ -181,9 +181,9 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param functionSignatureArgs the values to replace the placeholders in the instruction set with.
      * @return response the result of the rule condition evaluation 
      */
-    function evaluateIndividualRule(Rule memory applicableRule, Arguments memory functionSignatureArgs) public view returns (bool response) {
-        Arguments memory ruleArgs;
-        ruleArgs.argumentTypes = new PT[](applicableRule.placeHolders.length);
+    function evaluateIndividualRule(RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs) public view returns (bool response) {
+        RulesStorageStructure.Arguments memory ruleArgs;
+        ruleArgs.argumentTypes = new RulesStorageStructure.PT[](applicableRule.placeHolders.length);
         // Initializing each to the max size to avoid the cost of iterating through to determine how many of each type exist
         ruleArgs.addresses = new address[](applicableRule.placeHolders.length);
         ruleArgs.ints = new uint256[](applicableRule.placeHolders.length);
@@ -194,18 +194,18 @@ contract RulesEngineRunLogic is IRulesEngine {
         uint256 stringIter = 0;
 
         for(uint256 i = 0; i < applicableRule.placeHolders.length; i++) {
-            if(applicableRule.placeHolders[i].pType == PT.ADDR) {
-                ruleArgs.argumentTypes[overallIter] = PT.ADDR;
+            if(applicableRule.placeHolders[i].pType == RulesStorageStructure.PT.ADDR) {
+                ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.ADDR;
                 ruleArgs.addresses[addressIter] = functionSignatureArgs.addresses[applicableRule.placeHolders[i].typeSpecificIndex];
                 overallIter += 1;
                 addressIter += 1;
-            } else if(applicableRule.placeHolders[i].pType == PT.UINT) {
-                ruleArgs.argumentTypes[overallIter] = PT.UINT;
+            } else if(applicableRule.placeHolders[i].pType == RulesStorageStructure.PT.UINT) {
+                ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.UINT;
                 ruleArgs.ints[intIter] = functionSignatureArgs.ints[applicableRule.placeHolders[i].typeSpecificIndex];
                 overallIter += 1;
                 intIter += 1;
-            } else if(applicableRule.placeHolders[i].pType == PT.STR) {
-                ruleArgs.argumentTypes[overallIter] = PT.STR;
+            } else if(applicableRule.placeHolders[i].pType == RulesStorageStructure.PT.STR) {
+                ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.STR;
                 ruleArgs.strings[stringIter] = functionSignatureArgs.strings[applicableRule.placeHolders[i].typeSpecificIndex];
                 overallIter += 1;
                 stringIter += 1;
@@ -221,42 +221,42 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param arguments the values to replace the placeholders in the instruction set with.
      * @return ans the result of evaluating the instruction set
      */
-    function run(uint256[] calldata prog, Arguments calldata arguments) public pure returns (bool ans) {
+    function run(uint256[] calldata prog, RulesStorageStructure.Arguments calldata arguments) public pure returns (bool ans) {
         uint256[64] memory mem;
         uint256 idx = 0;
         uint256 opi = 0;
         while (idx < prog.length) {
             uint256 v = 0;
-            LC op = LC(prog[idx]);
+            RulesStorageStructure.LC op = RulesStorageStructure.LC(prog[idx]);
 
-            if(op == LC.PLH) {
+            if(op == RulesStorageStructure.LC.PLH) {
                 // Placeholder format will be:
                 // PLH, arguments array index, argument type specific array index
                 // For example if the Placeholder is the 3rd argument in the Arguments structure, which is the first address type argument:
                 // PLH, 2, 0
                 uint256 pli = prog[idx+1];
                 uint256 spci = prog[idx+2];
-                PT typ = arguments.argumentTypes[pli];
-                if(typ == PT.ADDR) {
+                RulesStorageStructure.PT typ = arguments.argumentTypes[pli];
+                if(typ == RulesStorageStructure.PT.ADDR) {
                     // Convert address to uint256 for direct comparison using == and != operations
                     v = uint256(uint160(arguments.addresses[spci])); idx += 3;
-                } else if(typ == PT.UINT) {
+                } else if(typ == RulesStorageStructure.PT.UINT) {
                     v = arguments.ints[spci]; idx += 3;
-                } else if(typ == PT.STR) {
+                } else if(typ == RulesStorageStructure.PT.STR) {
                     // Convert string to uint256 for direct comparison using == and != operations
                     v = uint256(keccak256(abi.encode(arguments.strings[spci]))); idx += 3;
                 }
-            } else if (op == LC.NUM) { v = prog[idx+1]; idx += 2; }
-            else if (op == LC.ADD) { v = mem[prog[idx+1]] + mem[prog[idx+2]]; idx += 3; }
-            else if (op == LC.SUB) { v = mem[prog[idx+1]] - mem[prog[idx+2]]; idx += 3; }
-            else if (op == LC.MUL) { v = mem[prog[idx+1]] * mem[prog[idx+2]]; idx += 3; }
-            else if (op == LC.DIV) { v = mem[prog[idx+1]] / mem[prog[idx+2]]; idx += 3; }
-            else if (op == LC.LT ) { v = bool2ui(mem[prog[idx+1]] < mem[prog[idx+2]]); idx += 3; }
-            else if (op == LC.GT ) { v = bool2ui(mem[prog[idx+1]] > mem[prog[idx+2]]); idx += 3; }
-            else if (op == LC.EQ ) { v = bool2ui(mem[prog[idx+1]] == mem[prog[idx+2]]); idx += 3; }
-            else if (op == LC.AND) { v = bool2ui(ui2bool(mem[prog[idx+1]]) && ui2bool(mem[prog[idx+2]])); idx += 3; }
-            else if (op == LC.OR ) { v = bool2ui(ui2bool(mem[prog[idx+1]]) || ui2bool(mem[prog[idx+2]])); idx += 3; }
-            else if (op == LC.NOT) { v = bool2ui(! ui2bool(mem[prog[idx+1]])); idx += 2; }
+            } else if (op == RulesStorageStructure.LC.NUM) { v = prog[idx+1]; idx += 2; }
+            else if (op == RulesStorageStructure.LC.ADD) { v = mem[prog[idx+1]] + mem[prog[idx+2]]; idx += 3; }
+            else if (op == RulesStorageStructure.LC.SUB) { v = mem[prog[idx+1]] - mem[prog[idx+2]]; idx += 3; }
+            else if (op == RulesStorageStructure.LC.MUL) { v = mem[prog[idx+1]] * mem[prog[idx+2]]; idx += 3; }
+            else if (op == RulesStorageStructure.LC.DIV) { v = mem[prog[idx+1]] / mem[prog[idx+2]]; idx += 3; }
+            else if (op == RulesStorageStructure.LC.LT ) { v = bool2ui(mem[prog[idx+1]] < mem[prog[idx+2]]); idx += 3; }
+            else if (op == RulesStorageStructure.LC.GT ) { v = bool2ui(mem[prog[idx+1]] > mem[prog[idx+2]]); idx += 3; }
+            else if (op == RulesStorageStructure.LC.EQ ) { v = bool2ui(mem[prog[idx+1]] == mem[prog[idx+2]]); idx += 3; }
+            else if (op == RulesStorageStructure.LC.AND) { v = bool2ui(ui2bool(mem[prog[idx+1]]) && ui2bool(mem[prog[idx+2]])); idx += 3; }
+            else if (op == RulesStorageStructure.LC.OR ) { v = bool2ui(ui2bool(mem[prog[idx+1]]) || ui2bool(mem[prog[idx+2]])); idx += 3; }
+            else if (op == RulesStorageStructure.LC.NOT) { v = bool2ui(! ui2bool(mem[prog[idx+1]])); idx += 2; }
             else { revert("Illegal instruction"); }
             mem[opi] = v;
             opi += 1;

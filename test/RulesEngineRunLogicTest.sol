@@ -20,43 +20,43 @@ contract RulesEngineRunLogicTest is StdAssertions {
     function setUp() public{
         logic = new RulesEngineRunLogic();
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
+        RulesStorageStructure.Rule memory rule;
         // Instruction set: LC.PLH, 1, 0, LC.NUM, 4, LC.GT, 0, 1
         rule.instructionSet = new uint256[](8);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(RulesStorageStructure.LC.PLH);
         rule.instructionSet[1] = 0;
         rule.instructionSet[2] = 0;
-        rule.instructionSet[3] = uint(LC.NUM);
+        rule.instructionSet[3] = uint(RulesStorageStructure.LC.NUM);
         rule.instructionSet[4] = 4;
-        rule.instructionSet[5] = uint(LC.GT);
+        rule.instructionSet[5] = uint(RulesStorageStructure.LC.GT);
         rule.instructionSet[6] = 0;
         rule.instructionSet[7] = 1;
-        rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders = new RulesStorageStructure.Placeholder[](1);
+        rule.placeHolders[0].pType = RulesStorageStructure.PT.UINT;
         rule.placeHolders[0].typeSpecificIndex = 0;
-        logic.addRule(contractAddress, functionSignature, rule);
+        logic.addRule(contractAddress, bytes(functionSignature), rule);
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
 
-        logic.addFunctionSignature(contractAddress, functionSignature, pTypes);
+        logic.addFunctionSignature(contractAddress, bytes(functionSignature), pTypes);
         userContract = new ExampleUserContract();
         userContract.setRulesEngineAddress(address(logic));
     }
 
     function testCheckRulesExplicit() public {
-        Arguments memory arguments;
-        arguments.argumentTypes = new PT[](2);
-        arguments.argumentTypes[0] = PT.ADDR;
-        arguments.argumentTypes[1] = PT.UINT;
+        RulesStorageStructure.Arguments memory arguments;
+        arguments.argumentTypes = new RulesStorageStructure.PT[](2);
+        arguments.argumentTypes[0] = RulesStorageStructure.PT.ADDR;
+        arguments.argumentTypes[1] = RulesStorageStructure.PT.UINT;
         arguments.addresses = new address[](1);
         arguments.addresses[0] = address(0x7654321);
         arguments.ints = new uint256[](1);
-        arguments.ints[0] = 3;
+        arguments.ints[0] = 5;
         bytes memory retVal = customEncoder(arguments);
-        bool response = logic.checkRules(contractAddress, functionSignature, retVal);
-        assertFalse(response);
+        bool response = logic.checkRules(contractAddress, bytes(functionSignature), retVal);
+        assertTrue(response);
     }
 
     function testCheckRulesWithExampleContract() public {
@@ -64,19 +64,19 @@ contract RulesEngineRunLogicTest is StdAssertions {
         assertFalse(retVal);
     }
 
-    function customEncoder(Arguments memory arguments) public pure returns (bytes memory retVal) {
+    function customEncoder(RulesStorageStructure.Arguments memory arguments) public pure returns (bytes memory retVal) {
         uint256 addressIter = 0;
         uint256 intIter = 0;
         uint256 stringIter = 0;
 
         for(uint256 i = 0; i < arguments.argumentTypes.length; i++) {
-            if(arguments.argumentTypes[i] == PT.ADDR) {
+            if(arguments.argumentTypes[i] == RulesStorageStructure.PT.ADDR) {
                 retVal = bytes.concat(retVal, abi.encode(arguments.addresses[addressIter]));
                 addressIter += 1;
-            } else if(arguments.argumentTypes[i] == PT.UINT) {
+            } else if(arguments.argumentTypes[i] == RulesStorageStructure.PT.UINT) {
                 retVal = bytes.concat(retVal, abi.encode(arguments.ints[intIter]));
                 intIter += 1;
-            } else if(arguments.argumentTypes[i] == PT.STR) {
+            } else if(arguments.argumentTypes[i] == RulesStorageStructure.PT.STR) {
                 retVal = bytes.concat(retVal, abi.encode(arguments.strings[stringIter]));
                 stringIter += 1;
             }
