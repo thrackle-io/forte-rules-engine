@@ -263,4 +263,83 @@ contract RulesEngineRunLogic is IRulesEngine {
         }
         return ui2bool(mem[opi - 1]);
     }
+
+       function assemblyEncode(uint256[] memory parameterTypes, uint256[] memory ints, address[] memory addresses, string[] memory strings) public pure returns (bytes memory res) {
+        uint256 len = parameterTypes.length;
+        uint256 strCount = 0;
+        uint256 remainingCount = 0;
+        uint256[] memory strLengths = new uint256[](strings.length); 
+        bytes32[] memory convertedStrings = new bytes32[](strings.length);
+        for(uint256 i = 0; i < convertedStrings.length; i++) {
+            strLengths[i] = bytes(strings[i]).length;
+            convertedStrings[i] = stringToBytes32(strings[i]);
+            strCount += 1;
+        }
+        remainingCount = parameterTypes.length - strCount;
+
+        uint256 strStartLoc = parameterTypes.length;
+
+        assembly {
+            // Iterator for the uint256 array
+            let intIter := 1
+            // Iterator for the address array
+            let addrIter := 1
+            // Iterator for the string array
+            let strIter := 1
+            // get free memory pointer
+            res := mload(0x40)        
+            // set length based on size of parameter array                
+            mstore(res, add(mul(0x20, remainingCount), mul(0x60, strCount))) 
+
+            let i := 1
+            for {} lt(i, add(len, 1)) {} {
+                // Retrieve the next parameter type
+                let pType := mload(add(parameterTypes, mul(0x20, i)))
+
+                // If parameter type is integer encode the uint256
+                if eq(pType, 0) {
+                    let value := mload(add(ints, mul(0x20, intIter)))
+                    mstore(add(res, mul(0x20, i)), value)
+                    intIter := add(intIter, 1) 
+                } 
+
+                // If parameter type is address encode the address
+                if eq(pType, 1) {
+                    let value := mload(add(addresses, mul(0x20, addrIter)))
+                    value := and(value, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+                    mstore(add(res, mul(0x20, i)), value)
+                    addrIter := add(addrIter, 1)
+                }
+
+                if eq(pType, 2) {
+                    mstore(add(res, mul(0x20, i)), mul(0x20, strStartLoc))
+                    strStartLoc := add(strStartLoc, 2)
+                }
+
+                // Increment global iterators 
+                i := add(i, 1)
+            }
+
+            let j := 0
+            for {} lt(j, strCount) {} {
+                let value := mload(add(convertedStrings, mul(0x20, strIter)))
+                let leng := mload(add(strLengths, mul(0x20, strIter)))
+                mstore(add(res, mul(0x20, i)), leng)   
+                mstore(add(res, add(mul(0x20, i), 0x20)), value)
+                i := add(i, 1)
+                i := add(i, 1)
+                strIter := add(strIter, 1)
+                j := add(j, 1)
+            }
+            // update free memory pointer
+            mstore(0x40, add(res, mul(0x20, i)))
+        }
+        
+    }
+
+    function stringToBytes32(string memory source) public pure returns (bytes32 result) {
+        assembly {
+            result := mload(add(source, 32))
+        }
+    }
 }

@@ -5,6 +5,7 @@ import "src/RulesEngineRunLogic.sol";
 import "src/ExampleUserContract.sol";
 import "forge-std/console2.sol";
 import "forge-std/StdAssertions.sol";
+import "test/ForeignCallTestContract.sol";
 
 /**
  * @title Test the functionality of the RulesEngineRunLogic contract
@@ -16,6 +17,7 @@ contract RulesEngineRunLogicTest is StdAssertions {
     ExampleUserContract userContract;
     address contractAddress = address(0x1234567);
     string functionSignature = "transfer(address,uint256) returns (bool)";
+    // string _name = "testName";
 
     function setUp() public{
         logic = new RulesEngineRunLogic();
@@ -54,7 +56,7 @@ contract RulesEngineRunLogicTest is StdAssertions {
         arguments.addresses[0] = address(0x7654321);
         arguments.ints = new uint256[](1);
         arguments.ints[0] = 5;
-        bytes memory retVal = customEncoder(arguments);
+        bytes memory retVal = RuleEncodingLibrary.customEncoder(arguments);
         bool response = logic.checkRules(contractAddress, bytes(functionSignature), retVal);
         assertTrue(response);
     }
@@ -64,23 +66,39 @@ contract RulesEngineRunLogicTest is StdAssertions {
         assertFalse(retVal);
     }
 
-    function customEncoder(RulesStorageStructure.Arguments memory arguments) public pure returns (bytes memory retVal) {
-        uint256 addressIter = 0;
-        uint256 intIter = 0;
-        uint256 stringIter = 0;
+    function testEncodingForeignCall() public {
+        string memory functionSig = "testSig(uint256,string,uint256,string,address)";
 
-        for(uint256 i = 0; i < arguments.argumentTypes.length; i++) {
-            if(arguments.argumentTypes[i] == RulesStorageStructure.PT.ADDR) {
-                retVal = bytes.concat(retVal, abi.encode(arguments.addresses[addressIter]));
-                addressIter += 1;
-            } else if(arguments.argumentTypes[i] == RulesStorageStructure.PT.UINT) {
-                retVal = bytes.concat(retVal, abi.encode(arguments.ints[intIter]));
-                intIter += 1;
-            } else if(arguments.argumentTypes[i] == RulesStorageStructure.PT.STR) {
-                retVal = bytes.concat(retVal, abi.encode(arguments.strings[stringIter]));
-                stringIter += 1;
-            }
-        }
+        uint256[] memory vals = new uint256[](3);
+        vals[0] = 1;
+        vals[1] = 2;
+        vals[2] = 3;
+
+        uint256[] memory params = new uint256[](5);
+        params[0] = 0;
+        params[1] = 2;
+        params[2] = 0;
+        params[3] = 2;
+        params[4] = 1;
+
+        address[] memory addresses = new address[](1);
+        addresses[0] = address(0x1234567);
+
+        string[] memory strings = new string[](2);
+        strings[0] = "test";
+        strings[1] = "otherTest";
+        bytes memory argsEncoded = logic.assemblyEncode(params, vals, addresses, strings);
+        bytes4 FUNC_SELECTOR = bytes4(keccak256(bytes(functionSig)));
+        bytes memory encoded;
+        encoded = bytes.concat(encoded, FUNC_SELECTOR);
+        encoded = bytes.concat(encoded, argsEncoded);
+        ForeignCallTestContract foreignCall = new ForeignCallTestContract();
+
+        (bool response, bytes memory data) = address(foreignCall).call(encoded);
+        assertEq(foreignCall.getDecodedIntOne(), 1);
+        assertEq(foreignCall.getDecodedIntTwo(), 2);
+        assertEq(foreignCall.getDecodedStrOne(), "test");
+        assertEq(foreignCall.getDecodedStrTwo(), "otherTest");
+        assertEq(foreignCall.getDecodedAddr(), address(0x1234567));
     }
-
 }
