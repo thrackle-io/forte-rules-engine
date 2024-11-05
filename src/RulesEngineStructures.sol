@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 interface RulesStorageStructure {
 
-    enum LC { NUM, ADD, SUB, MUL, DIV, LT, GT, EQ, AND, OR, NOT, PLH }
+    enum LC { NUM, ADD, SUB, MUL, DIV, LT, GT, EQ, AND, OR, NOT, PLH, FC }
 
     // Supported Parameter Types
     enum PT { ADDR, STR, UINT, BOOL }
@@ -17,6 +17,8 @@ interface RulesStorageStructure {
         PT pType;
         // The index in the specific array for the specified type;
         uint256 typeSpecificIndex;
+
+        bool foreignCall;
     }
 
     /**
@@ -47,6 +49,36 @@ interface RulesStorageStructure {
         // For example if the argument in question is the 2nd address in the function signature the placeHolder would be:
         // pType = parameterType.ADDR index = 1
         Placeholder[] placeHolders;
+
+        uint256[] foreignCalls;
+
+        FCArgToRuleArgMappings[] fcArgumentMappings;
+    }
+
+    struct ForeignCallReturnValue {
+        PT pType;
+        address addr;
+        string str;
+        uint256 intValue;
+        bool boolValue;
+    }
+
+    struct FCArgToRuleArgMappings {
+        uint256 foreignCallIndex;
+        FCArgToRuleArg[] mappings;
+    }
+
+    struct FCArgToRuleArg {
+        PT fcArgType;
+        Placeholder functionSignatureArg;
+    }
+
+    struct ForeignCall {
+        address foreignCallAddress;
+        uint256 foreignCallIndex;
+        bytes4 signature;
+        PT returnType;
+        PT[] parameterTypes;
     }
 
     struct functionSignatureToRuleMapping {
@@ -63,6 +95,11 @@ interface RulesStorageStructure {
     struct ruleStorageStructure {
         bool set;
         Rule[] rules;
+    }
+
+    struct foreignCallStorage {
+        bool set;
+        ForeignCall[] foreignCalls;
     }
 
 }

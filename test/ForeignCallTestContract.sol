@@ -14,12 +14,21 @@ contract ForeignCallTestContract {
     string decodedStrTwo;
     address decodedAddr;   
 
-    function testSig(uint256 encodedIntOne, string memory encodedStrOne, uint256 encodedIntTwo, string memory encodedStrTwo, address encodedAddr) public {
+    function testSig(uint256 encodedIntOne, string memory encodedStrOne, uint256 encodedIntTwo, string memory encodedStrTwo, address encodedAddr) public returns (bool) {
         decodedIntOne = encodedIntOne;
         decondedIntTwo = encodedIntTwo;
         decodedStrOne = encodedStrOne;
         decodedStrTwo = encodedStrTwo;
         decodedAddr = encodedAddr;
+        if(encodedIntOne == 1 && encodedIntTwo == 3 && keccak256(bytes(encodedStrOne)) == keccak256("two")) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function simpleCheck(uint256 value) public pure returns (uint256) {
+        return value;
     }
 
     function getDecodedIntOne() public view returns (uint256) {

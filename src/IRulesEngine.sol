@@ -11,5 +11,5 @@ interface IRulesEngine {
      * @param contractAddress the address of the rules-enabled contract, used to pull the applicable rules
      * @param functionSignature the signature of the function that initiated the transaction, used to pull the applicable rules.
      */
-    function checkRules(address contractAddress, bytes calldata functionSignature, bytes calldata arguments) external view returns (bool);
+    function checkRules(address contractAddress, bytes calldata functionSignature, bytes calldata arguments) external returns (bool);
 }
