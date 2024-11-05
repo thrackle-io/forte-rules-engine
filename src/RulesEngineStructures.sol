@@ -17,7 +17,7 @@ interface RulesStorageStructure {
         PT pType;
         // The index in the specific array for the specified type;
         uint256 typeSpecificIndex;
-
+        // Used to determine whether this Placeholder represents the value returned from a foreign call
         bool foreignCall;
     }
 
@@ -50,34 +50,61 @@ interface RulesStorageStructure {
         // pType = parameterType.ADDR index = 1
         Placeholder[] placeHolders;
 
-        uint256[] foreignCalls;
-
-        FCArgToRuleArgMappings[] fcArgumentMappings;
+        // Mapping between the Foreigns Calls arguments and the arguments of the function signature this rule is associated with
+        ForeignCallArgumentMappings[] fcArgumentMappings;
     }
 
+   /**
+    * Structure used to represent the return value of a Foreign Call
+    */
     struct ForeignCallReturnValue {
+        // Parameter type of the return value
         PT pType;
+        // Set if Parameter type is address
         address addr;
+        // Set if Parameter type is string
         string str;
+        // Set if Parameter type is int
         uint256 intValue;
+        // Set if Parameter type is bool
         bool boolValue;
     }
 
-    struct FCArgToRuleArgMappings {
+    /**
+     * Structure used to represent the mapping of arguments between a Rules 
+     * Function Call Arguments and the Foreign Calls Arguments.
+     */
+    struct ForeignCallArgumentMappings {
+        // Index of the foreign call structure 
         uint256 foreignCallIndex;
-        FCArgToRuleArg[] mappings;
+        // Mappings of individual arguments (Function Signature -> Foreign Call)
+        IndividualArgumentMapping[] mappings;
     }
 
-    struct FCArgToRuleArg {
-        PT fcArgType;
+    /**
+     * Structure to represent the mapping of an individual argument between a 
+     * Rules Function Call Argument and a Foreign Call Argument.
+     */
+    struct IndividualArgumentMapping {
+        // The Parameter Type of the Function Call Argument
+        PT functionCallArgumentType;
+        // The Argument information for the Function Call Argument
         Placeholder functionSignatureArg;
     }
 
+    /**
+     * Structure used to represent a foreign call that can be made during rule evaluation
+     */
     struct ForeignCall {
+        // Address of the contract to make the call to
         address foreignCallAddress;
+        // Unique identifier for the foreign contract structure (used by the rule to reference it)
         uint256 foreignCallIndex;
+        // The function signature of the foreign call
         bytes4 signature;
+        // The parameter type of the foreign calls return
         PT returnType;
+        // The parameter types of the arguments the foreign call takes
         PT[] parameterTypes;
     }
 

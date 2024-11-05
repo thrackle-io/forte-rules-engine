@@ -30,7 +30,10 @@ contract RulesEngineRunLogicTest is StdAssertions {
     function setupRuleWithoutForeignCall() public {
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         RulesStorageStructure.Rule memory rule;
+        
         // Instruction set: LC.PLH, 1, 0, LC.NUM, 4, LC.GT, 0, 1
+
+        // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = new uint256[](8);
         rule.instructionSet[0] = uint(RulesStorageStructure.LC.PLH);
         rule.instructionSet[1] = 0;
@@ -40,6 +43,8 @@ contract RulesEngineRunLogicTest is StdAssertions {
         rule.instructionSet[5] = uint(RulesStorageStructure.LC.GT);
         rule.instructionSet[6] = 0;
         rule.instructionSet[7] = 1;
+
+        // Build the calling function argument placeholder 
         rule.placeHolders = new RulesStorageStructure.Placeholder[](1);
         rule.placeHolders[0].pType = RulesStorageStructure.PT.UINT;
         rule.placeHolders[0].typeSpecificIndex = 0;
@@ -58,9 +63,13 @@ contract RulesEngineRunLogicTest is StdAssertions {
         fcArgs[0] = RulesStorageStructure.PT.UINT;
         RulesStorageStructure.ForeignCall memory fc = logic.buildForeignCall(address(userContract), address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);
         RulesStorageStructure.Rule memory rule;
+        
+        // Build the foreign call placeholder
         rule.placeHolders = new RulesStorageStructure.Placeholder[](1); 
         rule.placeHolders[0].foreignCall = true;
         rule.placeHolders[0].typeSpecificIndex = fc.foreignCallIndex;
+
+        // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = new uint256[](8);
         rule.instructionSet[0] = uint(RulesStorageStructure.LC.PLH);
         rule.instructionSet[1] = 0;
@@ -70,9 +79,11 @@ contract RulesEngineRunLogicTest is StdAssertions {
         rule.instructionSet[5] = uint(RulesStorageStructure.LC.GT);
         rule.instructionSet[6] = 0;
         rule.instructionSet[7] = 1;
-        rule.fcArgumentMappings = new RulesStorageStructure.FCArgToRuleArgMappings[](1);
-        rule.fcArgumentMappings[0].mappings = new RulesStorageStructure.FCArgToRuleArg[](1);
-        rule.fcArgumentMappings[0].mappings[0].fcArgType = RulesStorageStructure.PT.UINT;
+
+        // Build the mapping between calling function arguments and foreign call arguments
+        rule.fcArgumentMappings = new RulesStorageStructure.ForeignCallArgumentMappings[](1);
+        rule.fcArgumentMappings[0].mappings = new RulesStorageStructure.IndividualArgumentMapping[](1);
+        rule.fcArgumentMappings[0].mappings[0].functionCallArgumentType = RulesStorageStructure.PT.UINT;
         rule.fcArgumentMappings[0].mappings[0].functionSignatureArg.foreignCall = false;
         rule.fcArgumentMappings[0].mappings[0].functionSignatureArg.pType = RulesStorageStructure.PT.UINT;
         rule.fcArgumentMappings[0].mappings[0].functionSignatureArg.typeSpecificIndex = 0;
@@ -99,7 +110,7 @@ contract RulesEngineRunLogicTest is StdAssertions {
         assertTrue(response);
     }
 
-    function testCheckRulesExplicitWithForeignCall() public {
+    function testCheckRulesExplicitWithForeignCallPositive() public {
         setupRuleWithForeignCall();
         RulesStorageStructure.Arguments memory arguments;
         arguments.argumentTypes = new RulesStorageStructure.PT[](2);
@@ -113,6 +124,22 @@ contract RulesEngineRunLogicTest is StdAssertions {
 
         bool response = logic.checkRules(address(userContract), bytes(functionSignature), retVal);
         assertTrue(response);
+    }
+
+    function testCheckRulesExplicitWithForeignCallNegative() public {
+        setupRuleWithForeignCall();
+        RulesStorageStructure.Arguments memory arguments;
+        arguments.argumentTypes = new RulesStorageStructure.PT[](2);
+        arguments.argumentTypes[0] = RulesStorageStructure.PT.ADDR;
+        arguments.argumentTypes[1] = RulesStorageStructure.PT.UINT;
+        arguments.addresses = new address[](1);
+        arguments.addresses[0] = address(0x7654321);
+        arguments.ints = new uint256[](1);
+        arguments.ints[0] = 3;
+        bytes memory retVal = RuleEncodingLibrary.customEncoder(arguments);
+
+        bool response = logic.checkRules(address(userContract), bytes(functionSignature), retVal);
+        assertFalse(response);
     }
 
     function testCheckRulesWithExampleContract() public {
@@ -182,6 +209,7 @@ contract RulesEngineRunLogicTest is StdAssertions {
         // FC index: 0 1 2 3 4
         // RS index: 1 3 4 5 6
 
+        // Build the rule signature function arguments structure
         functionArguments.argumentTypes = new RulesStorageStructure.PT[](7);
         functionArguments.argumentTypes[0] = RulesStorageStructure.PT.STR;
         functionArguments.argumentTypes[1] = RulesStorageStructure.PT.UINT;
@@ -205,27 +233,29 @@ contract RulesEngineRunLogicTest is StdAssertions {
         functionArguments.ints[2] = 3;
 
         RulesStorageStructure.Rule memory rule;
-        rule.fcArgumentMappings = new RulesStorageStructure.FCArgToRuleArgMappings[](1);
-        rule.fcArgumentMappings[0].foreignCallIndex = 0;
-        rule.fcArgumentMappings[0].mappings = new RulesStorageStructure.FCArgToRuleArg[](5);
 
-        rule.fcArgumentMappings[0].mappings[0].fcArgType = RulesStorageStructure.PT.UINT;
+        // Build the mapping between calling function arguments and foreign call arguments
+        rule.fcArgumentMappings = new RulesStorageStructure.ForeignCallArgumentMappings[](1);
+        rule.fcArgumentMappings[0].foreignCallIndex = 0;
+        rule.fcArgumentMappings[0].mappings = new RulesStorageStructure.IndividualArgumentMapping[](5);
+
+        rule.fcArgumentMappings[0].mappings[0].functionCallArgumentType = RulesStorageStructure.PT.UINT;
         rule.fcArgumentMappings[0].mappings[0].functionSignatureArg.pType = RulesStorageStructure.PT.UINT;
         rule.fcArgumentMappings[0].mappings[0].functionSignatureArg.typeSpecificIndex = 0;
 
-        rule.fcArgumentMappings[0].mappings[1].fcArgType = RulesStorageStructure.PT.STR;
+        rule.fcArgumentMappings[0].mappings[1].functionCallArgumentType = RulesStorageStructure.PT.STR;
         rule.fcArgumentMappings[0].mappings[1].functionSignatureArg.pType = RulesStorageStructure.PT.STR;
         rule.fcArgumentMappings[0].mappings[1].functionSignatureArg.typeSpecificIndex = 1;
 
-        rule.fcArgumentMappings[0].mappings[2].fcArgType = RulesStorageStructure.PT.UINT;
+        rule.fcArgumentMappings[0].mappings[2].functionCallArgumentType = RulesStorageStructure.PT.UINT;
         rule.fcArgumentMappings[0].mappings[2].functionSignatureArg.pType = RulesStorageStructure.PT.UINT;
         rule.fcArgumentMappings[0].mappings[2].functionSignatureArg.typeSpecificIndex = 2;
 
-        rule.fcArgumentMappings[0].mappings[3].fcArgType = RulesStorageStructure.PT.STR;
+        rule.fcArgumentMappings[0].mappings[3].functionCallArgumentType = RulesStorageStructure.PT.STR;
         rule.fcArgumentMappings[0].mappings[3].functionSignatureArg.pType = RulesStorageStructure.PT.STR;
         rule.fcArgumentMappings[0].mappings[3].functionSignatureArg.typeSpecificIndex = 2;
 
-        rule.fcArgumentMappings[0].mappings[4].fcArgType = RulesStorageStructure.PT.ADDR;
+        rule.fcArgumentMappings[0].mappings[4].functionCallArgumentType = RulesStorageStructure.PT.ADDR;
         rule.fcArgumentMappings[0].mappings[4].functionSignatureArg.pType = RulesStorageStructure.PT.ADDR;
         rule.fcArgumentMappings[0].mappings[4].functionSignatureArg.typeSpecificIndex = 0;
 

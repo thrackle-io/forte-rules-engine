@@ -196,10 +196,15 @@ contract RulesEngineRunLogic is IRulesEngine {
         uint256 stringIter = 0;
 
         for(uint256 i = 0; i < applicableRule.placeHolders.length; i++) {
+            // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
             if(applicableRule.placeHolders[i].foreignCall) {
+                // Loop through the foreign call structures associated with the calling contracts address
                 for(uint256 j = 0; j < foreignCalls[contractAddress].foreignCalls.length; j++) {
+                    // Check if the index for this placeholder matches the foreign calls index
                     if(foreignCalls[contractAddress].foreignCalls[j].foreignCallIndex == applicableRule.placeHolders[i].typeSpecificIndex) {
+                        // Place the foreign call
                         RulesStorageStructure.ForeignCallReturnValue memory retVal = evaluateForeignCallForRule(foreignCalls[contractAddress].foreignCalls[j], applicableRule, functionSignatureArgs);
+                        // Set the placeholders value and type based on the value returned by the foreign call
                         ruleArgs.argumentTypes[overallIter] = retVal.pType;
                         if(retVal.pType == RulesStorageStructure.PT.ADDR) {
                             ruleArgs.addresses[addressIter] = retVal.addr;
@@ -217,6 +222,7 @@ contract RulesEngineRunLogic is IRulesEngine {
                     }
                 }
             } else {
+                // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
                 if(applicableRule.placeHolders[i].pType == RulesStorageStructure.PT.ADDR) {
                     ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.ADDR;
                     ruleArgs.addresses[addressIter] = functionSignatureArgs.addresses[applicableRule.placeHolders[i].typeSpecificIndex];
@@ -288,9 +294,18 @@ contract RulesEngineRunLogic is IRulesEngine {
         return ui2bool(mem[opi - 1]);
     }
 
+    /**
+     * @dev Builds a foreign call structure and adds it to the contracts storage, mapped to the contract address it is associated with
+     * @param contractAddress the address of the contract the foreign call will be mapped to
+     * @param foreignContractAddress the address of the contract where the foreign call exists
+     * @param functionSignature the string representation of the function signature of the foreign call
+     * @param returnType the parameter type of the foreign calls return value
+     * @param arguments the parameter types of the foreign calls arguments in order
+     * @return fc the foreign call structure 
+     */
     function buildForeignCall(address contractAddress, address foreignContractAddress, string memory functionSignature, RulesStorageStructure.PT returnType, RulesStorageStructure.PT[] memory arguments) public returns (RulesStorageStructure.ForeignCall memory fc) {
-        // RulesStorageStructure.ForeignCall memory fc;
         fc.foreignCallAddress = foreignContractAddress;
+        // Convert the string representation of the function signature to a selector
         fc.signature = bytes4(keccak256(bytes(functionSignature)));
         fc.foreignCallIndex = foreignCallIndex;
         foreignCallIndex += 1;
@@ -300,6 +315,7 @@ contract RulesEngineRunLogic is IRulesEngine {
             fc.parameterTypes[i] = arguments[i];
         }
 
+        // If the foreign call structure already exists in the mapping update it, otherwise add it
         if(foreignCalls[contractAddress].set) {
             foreignCalls[contractAddress].foreignCalls.push(fc);
         } else {
@@ -308,27 +324,40 @@ contract RulesEngineRunLogic is IRulesEngine {
         }
     }
 
+    /**
+     * @dev encodes the arguments and places a foreign call, returning the calls return value as long as it is successful
+     * @param fc the Foreign Call structure
+     * @param rule the Rule that is placing the foreign call
+     * @param functionArguments the arguments of the rules calling funciton (to be passed to the foreign call as needed)
+     * @return retVal the foreign calls return value
+     */
     function evaluateForeignCallForRule(RulesStorageStructure.ForeignCall memory fc, RulesStorageStructure.Rule memory rule, RulesStorageStructure.Arguments memory functionArguments) public returns (RulesStorageStructure.ForeignCallReturnValue memory retVal) {
+        // Arrays used to hold the parameter types and values to be encoded
         uint256[] memory paramTypeEncode = new uint256[](fc.parameterTypes.length);
         uint256[] memory uintEncode = new uint256[](fc.parameterTypes.length);
         address[] memory addressEncode = new address[](fc.parameterTypes.length);
         string[] memory stringEncode = new string[](fc.parameterTypes.length);
+        // Iterators for the various types to make sure the correct indexes in each array are populated
         uint256 uintIter = 0;
         uint256 addrIter = 0;
         uint256 strIter = 0;
 
+        // Iterate over the foreign call argument mappings contained within the rule structure
         for(uint256 i = 0; i < rule.fcArgumentMappings.length; i++) {
+            // verify this mappings foreign call index matches that of the foreign call structure
             if(rule.fcArgumentMappings[i].foreignCallIndex == fc.foreignCallIndex) {
+                // Iterate through the array of mappings between calling function arguments and foreign call arguments
                 for(uint256 j = 0; j < rule.fcArgumentMappings[i].mappings.length; j++) {
-                    if(rule.fcArgumentMappings[i].mappings[j].fcArgType == RulesStorageStructure.PT.ADDR) {
+                    // Check the parameter type and set the values in the encode arrays accordingly 
+                    if(rule.fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.ADDR) {
                         paramTypeEncode[j] = 1; 
                         addressEncode[addrIter] = functionArguments.addresses[rule.fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
                         addrIter += 1;
-                    } else if(rule.fcArgumentMappings[i].mappings[j].fcArgType == RulesStorageStructure.PT.UINT) {
+                    } else if(rule.fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.UINT) {
                         paramTypeEncode[j] = 0;
                         uintEncode[uintIter] = functionArguments.ints[rule.fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
                         uintIter += 1;
-                    } else if(rule.fcArgumentMappings[i].mappings[j].fcArgType == RulesStorageStructure.PT.STR) {
+                    } else if(rule.fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.STR) {
                         paramTypeEncode[j] = 2;
                         stringEncode[strIter] = functionArguments.strings[rule.fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
                         strIter += 1;
@@ -337,15 +366,20 @@ contract RulesEngineRunLogic is IRulesEngine {
             }
         }
 
+        // Encode the arugments
         bytes memory argsEncoded = assemblyEncode(paramTypeEncode, uintEncode, addressEncode, stringEncode);
 
+        // Build the bytes object with the function selector and the encoded arguments
         bytes memory encoded;
         encoded = bytes.concat(encoded, fc.signature);
         encoded = bytes.concat(encoded, argsEncoded);
 
+        // place the foreign call
         (bool response, bytes memory data) = fc.foreignCallAddress.call(encoded);
 
+        // Verify that the foreign call was successful
         if(response) {
+            // Decode the return value based on the specified return value parameter type in the foreign call structure
             if(fc.returnType == RulesStorageStructure.PT.BOOL) {
                 retVal.pType = RulesStorageStructure.PT.BOOL;
                 retVal.boolValue = abi.decode(data, (bool));
@@ -362,7 +396,15 @@ contract RulesEngineRunLogic is IRulesEngine {
         }
     }
 
-       function assemblyEncode(uint256[] memory parameterTypes, uint256[] memory ints, address[] memory addresses, string[] memory strings) public pure returns (bytes memory res) {
+    /**
+     * @dev Uses assembly to encode a variable length array of variable type arguments so they can be used in a foreign call
+     * @param parameterTypes the parameter types of the arguments in order
+     * @param ints the uint256 parameters to be encoded
+     * @param addresses the address parameters to be encoded
+     * @param strings the string parameters to be encoded
+     * @return res the encoded arguments
+     */
+    function assemblyEncode(uint256[] memory parameterTypes, uint256[] memory ints, address[] memory addresses, string[] memory strings) public pure returns (bytes memory res) {
         uint256 len = parameterTypes.length;
         uint256 strCount = 0;
         uint256 remainingCount = 0;

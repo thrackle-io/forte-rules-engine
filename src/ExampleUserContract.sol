@@ -12,10 +12,6 @@ import "src/IRulesEngine.sol";
 contract ExampleUserContract {
     address rulesEngineAddress;
 
-    uint256 one;
-    uint256 two;
-    string strS;
-
     function transfer(address _to, uint256 _amount) public returns (bool) {
         RulesStorageStructure.Arguments memory args;
         args.addresses = new address[](1);
