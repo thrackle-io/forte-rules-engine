@@ -3,17 +3,17 @@ pragma solidity ^0.8.24;
 
 import "src/RulesEngineRunLogic.sol";
 import "src/ExampleUserContract.sol";
-import "forge-std/console2.sol";
-import "forge-std/StdAssertions.sol";
+import "forge-std/Test.sol";
 import "test/ForeignCallTestContract.sol";
+import "test/RuleEngineRunLogicWrapper.sol";
 
 /**
  * @title Test the functionality of the RulesEngineRunLogic contract
  * @author @mpetersoCode55 
  */
-contract RulesEngineRunLogicTest is StdAssertions {
+contract RulesEngineRunLogicTest is Test {
 
-    RulesEngineRunLogic logic;
+    RulesEngineRunLogicWrapper logic;
     ExampleUserContract userContract;
     ForeignCallTestContract testContract;
 
@@ -21,7 +21,7 @@ contract RulesEngineRunLogicTest is StdAssertions {
     string functionSignature = "transfer(address,uint256) returns (bool)";
 
     function setUp() public{
-        logic = new RulesEngineRunLogic();
+        logic = new RulesEngineRunLogicWrapper();
         userContract = new ExampleUserContract();
         userContract.setRulesEngineAddress(address(logic));
         testContract = new ForeignCallTestContract();
@@ -61,7 +61,7 @@ contract RulesEngineRunLogicTest is StdAssertions {
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         RulesStorageStructure.PT[] memory fcArgs = new RulesStorageStructure.PT[](1);
         fcArgs[0] = RulesStorageStructure.PT.UINT;
-        RulesStorageStructure.ForeignCall memory fc = logic.buildForeignCall(address(userContract), address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);
+        RulesStorageStructure.ForeignCall memory fc = logic.updateForeignCall(address(userContract), address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);
         RulesStorageStructure.Rule memory rule;
         
         // Build the foreign call placeholder
@@ -169,7 +169,7 @@ contract RulesEngineRunLogicTest is StdAssertions {
         string[] memory strings = new string[](2);
         strings[0] = "test";
         strings[1] = "otherTest";
-        bytes memory argsEncoded = logic.assemblyEncode(params, vals, addresses, strings);
+        bytes memory argsEncoded = logic.assemblyEncodeExt(params, vals, addresses, strings);
         bytes4 FUNC_SELECTOR = bytes4(keccak256(bytes(functionSig)));
         bytes memory encoded;
         encoded = bytes.concat(encoded, FUNC_SELECTOR);
@@ -259,7 +259,7 @@ contract RulesEngineRunLogicTest is StdAssertions {
         rule.fcArgumentMappings[0].mappings[4].functionSignatureArg.pType = RulesStorageStructure.PT.ADDR;
         rule.fcArgumentMappings[0].mappings[4].functionSignatureArg.typeSpecificIndex = 0;
 
-        RulesStorageStructure.ForeignCallReturnValue memory retVal = logic.evaluateForeignCallForRule(fc, rule, functionArguments);
+        RulesStorageStructure.ForeignCallReturnValue memory retVal = logic.evaluateForeignCallForRuleExt(fc, rule, functionArguments);
         console2.log(retVal.boolValue);
     }
 }

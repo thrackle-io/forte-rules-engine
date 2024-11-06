@@ -131,7 +131,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param arguments the encoded arguments 
      * @return functionSignatureArgs the Arguments struct containing the decoded function arguments
      */
-    function decodeFunctionSignatureArgs(RulesStorageStructure.PT[] memory functionSignaturePTs, bytes calldata arguments) public pure returns (RulesStorageStructure.Arguments memory functionSignatureArgs) {
+    function decodeFunctionSignatureArgs(RulesStorageStructure.PT[] memory functionSignaturePTs, bytes calldata arguments) internal pure returns (RulesStorageStructure.Arguments memory functionSignatureArgs) {
         uint256 placeIter = 32;
         uint256 addressIter = 0;
         uint256 intIter = 0;
@@ -183,7 +183,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param functionSignatureArgs the values to replace the placeholders in the instruction set with.
      * @return response the result of the rule condition evaluation 
      */
-    function evaluateIndividualRule(RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, address contractAddress) public returns (bool response) {
+    function evaluateIndividualRule(RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, address contractAddress) internal returns (bool response) {
         RulesStorageStructure.Arguments memory ruleArgs;
         ruleArgs.argumentTypes = new RulesStorageStructure.PT[](applicableRule.placeHolders.length);
         // Initializing each to the max size to avoid the cost of iterating through to determine how many of each type exist
@@ -303,7 +303,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param arguments the parameter types of the foreign calls arguments in order
      * @return fc the foreign call structure 
      */
-    function buildForeignCall(address contractAddress, address foreignContractAddress, string memory functionSignature, RulesStorageStructure.PT returnType, RulesStorageStructure.PT[] memory arguments) public returns (RulesStorageStructure.ForeignCall memory fc) {
+    function updateForeignCall(address contractAddress, address foreignContractAddress, string memory functionSignature, RulesStorageStructure.PT returnType, RulesStorageStructure.PT[] memory arguments) public returns (RulesStorageStructure.ForeignCall memory fc) {
         fc.foreignCallAddress = foreignContractAddress;
         // Convert the string representation of the function signature to a selector
         fc.signature = bytes4(keccak256(bytes(functionSignature)));
@@ -331,7 +331,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param functionArguments the arguments of the rules calling funciton (to be passed to the foreign call as needed)
      * @return retVal the foreign calls return value
      */
-    function evaluateForeignCallForRule(RulesStorageStructure.ForeignCall memory fc, RulesStorageStructure.Rule memory rule, RulesStorageStructure.Arguments memory functionArguments) public returns (RulesStorageStructure.ForeignCallReturnValue memory retVal) {
+    function evaluateForeignCallForRule(RulesStorageStructure.ForeignCall memory fc, RulesStorageStructure.Rule memory rule, RulesStorageStructure.Arguments memory functionArguments) internal returns (RulesStorageStructure.ForeignCallReturnValue memory retVal) {
         // Arrays used to hold the parameter types and values to be encoded
         uint256[] memory paramTypeEncode = new uint256[](fc.parameterTypes.length);
         uint256[] memory uintEncode = new uint256[](fc.parameterTypes.length);
@@ -392,6 +392,8 @@ contract RulesEngineRunLogic is IRulesEngine {
             } else if(fc.returnType == RulesStorageStructure.PT.ADDR) {
                 retVal.pType = RulesStorageStructure.PT.ADDR;
                 retVal.addr = abi.decode(data, (address));
+            } else if(fc.returnType == RulesStorageStructure.PT.VOID) {
+                retVal.pType = RulesStorageStructure.PT.VOID;
             }
         }
     }
@@ -404,7 +406,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param strings the string parameters to be encoded
      * @return res the encoded arguments
      */
-    function assemblyEncode(uint256[] memory parameterTypes, uint256[] memory ints, address[] memory addresses, string[] memory strings) public pure returns (bytes memory res) {
+    function assemblyEncode(uint256[] memory parameterTypes, uint256[] memory ints, address[] memory addresses, string[] memory strings) internal pure returns (bytes memory res) {
         uint256 len = parameterTypes.length;
         uint256 strCount = 0;
         uint256 remainingCount = 0;
@@ -477,7 +479,7 @@ contract RulesEngineRunLogic is IRulesEngine {
         
     }
 
-    function stringToBytes32(string memory source) public pure returns (bytes32 result) {
+    function stringToBytes32(string memory source) internal pure returns (bytes32 result) {
         assembly {
             result := mload(add(source, 32))
         }

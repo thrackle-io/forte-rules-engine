@@ -6,7 +6,7 @@ interface RulesStorageStructure {
     enum LC { NUM, ADD, SUB, MUL, DIV, LT, GT, EQ, AND, OR, NOT, PLH, FC }
 
     // Supported Parameter Types
-    enum PT { ADDR, STR, UINT, BOOL }
+    enum PT { ADDR, STR, UINT, BOOL, VOID }
 
     /**
     * Structure used to represent the placeholders in the rule instruction set
