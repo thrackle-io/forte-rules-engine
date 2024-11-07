@@ -12,7 +12,7 @@ import "src/IRulesEngine.sol";
 contract ExampleUserContract {
     address rulesEngineAddress;
 
-    function transfer(address _to, uint256 _amount) public view returns (bool) {
+    function transfer(address _to, uint256 _amount) public returns (bool) {
         RulesStorageStructure.Arguments memory args;
         args.addresses = new address[](1);
         args.addresses[0] = _to;
@@ -29,7 +29,7 @@ contract ExampleUserContract {
         return retVal;
     }
 
-        function setRulesEngineAddress(address rulesEngine) public {
+    function setRulesEngineAddress(address rulesEngine) public {
         rulesEngineAddress = rulesEngine;
     }
 }
