@@ -16,6 +16,7 @@ contract RulesEngineRunLogic is IRulesEngine {
     mapping(address => RulesStorageStructure.functionSignatureToRuleMapping) ruleStorage;
     uint256 foreignCallIndex = 0;
     mapping(address => RulesStorageStructure.foreignCallStorage) foreignCalls;
+    mapping(address => RulesStorageStructure.trackerValuesStorage) trackerStorage;
 
     address effectProcessor;
 
@@ -84,6 +85,53 @@ contract RulesEngineRunLogic is IRulesEngine {
             for(uint256 i = 0; i < pTypes.length; i++) {
                 ruleStorage[contractAddress].functionSignatureMap[functionSignature].parameterTypes.push(pTypes[i]); 
             } 
+        }
+    }
+
+    /**
+     * Add a tracker to the trackerStorage mapping.
+     * @param contractAddress the address of the contract the trackerStorage is associated with
+     * @param tracker the tracker to add 
+     */
+    function addTracker(address contractAddress, RulesStorageStructure.trackers calldata tracker) public {
+        if(trackerStorage[contractAddress].set) {
+           trackerStorage[contractAddress].trackers.push(tracker);
+        } else {
+            trackerStorage[contractAddress].set = true;
+            trackerStorage[contractAddress].trackers.push(tracker);
+        }
+    }
+
+    /**
+     * Function to update tracker in trackerStorage mapping.
+     * @param contractAddress the address of the contract the function signature is associated with
+     * @param updatedUintTracker uint256 tracker update 
+     * @param updatedAddressTracker address tracker update 
+     * @param updatedStringTracker string tracker update 
+     * @param updatedBoolTracker bool tracker update 
+     * @param updatedBytesTracker bytes tracker update 
+     */
+    function updateTracker(address contractAddress, uint256 updatedUintTracker, address updatedAddressTracker, string memory updatedStringTracker, bool updatedBoolTracker, bytes memory updatedBytesTracker) public {
+        // Open to feedback on this if there is a better way to update the struct members based on type 
+        if(trackerStorage[contractAddress].set) {
+          // grab trackers.length 
+          for(uint256 i = 0; i < trackerStorage[contractAddress].trackers.length; i++){
+            // go to specific index of tracker to update based on typeSpecificIndex (use this as overloaded key) 
+            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.UINT) trackerStorage[contractAddress].trackers[i].uintTrackers = updatedUintTracker;
+            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.ADDR) trackerStorage[contractAddress].trackers[i].addressTrackers = updatedAddressTracker;
+            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.STR) trackerStorage[contractAddress].trackers[i].stringTrackers = updatedStringTracker;
+            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.BOOL) trackerStorage[contractAddress].trackers[i].boolTrackers = updatedBoolTracker;
+            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.BYTES) trackerStorage[contractAddress].trackers[i].bytesTrackers = updatedBytesTracker;
+           }
+        } else {
+            trackerStorage[contractAddress].set = true;
+            for(uint256 i = 0; i < trackerStorage[contractAddress].trackers.length; i++){
+            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.UINT) trackerStorage[contractAddress].trackers[i].uintTrackers = updatedUintTracker;
+            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.ADDR) trackerStorage[contractAddress].trackers[i].addressTrackers = updatedAddressTracker;
+            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.STR) trackerStorage[contractAddress].trackers[i].stringTrackers = updatedStringTracker;
+            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.BOOL) trackerStorage[contractAddress].trackers[i].boolTrackers = updatedBoolTracker;
+            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.BYTES) trackerStorage[contractAddress].trackers[i].bytesTrackers = updatedBytesTracker;
+           }
         }
     }
 
@@ -229,6 +277,26 @@ contract RulesEngineRunLogic is IRulesEngine {
                     }
                 }
             } else {
+                if (applicableRule.placeHolders[i].trackerValue) {
+                    // Loop through tracker storage for invoking address  
+                        for(uint256 k = 0; k < trackerStorage[contractAddress].trackers.length; k++) {
+                        // determine pType of tracker
+                            ruleArgs.argumentTypes[overallIter] = trackerStorage[contractAddress].trackers[k].pType;
+                        if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.ADDR){
+                            ruleArgs.addresses[addressIter] = trackerStorage[contractAddress].trackers[k].addressTrackers;
+                            overallIter += 1;
+                            addressIter += 1;
+                        } else if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.UINT) {
+                            ruleArgs.ints[intIter] = trackerStorage[contractAddress].trackers[k].uintTrackers;
+                            overallIter += 1;
+                            intIter += 1;
+                        } else if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.STR) {
+                            ruleArgs.strings[stringIter] = trackerStorage[contractAddress].trackers[k].stringTrackers;
+                            overallIter += 1;
+                            stringIter += 1;
+                        }
+                    }
+            } else {
                 // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
                 if(applicableRule.placeHolders[i].pType == RulesStorageStructure.PT.ADDR) {
                     ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.ADDR;
@@ -248,8 +316,8 @@ contract RulesEngineRunLogic is IRulesEngine {
                 }
             }
         }
-
-        response = this.run(applicableRule.instructionSet, ruleArgs);
+            response = this.run(applicableRule.instructionSet, ruleArgs);
+        }
     }
 
     /**

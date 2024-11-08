@@ -61,14 +61,13 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         rule.placeHolders = new RulesStorageStructure.Placeholder[](1);
         rule.placeHolders[0].pType = RulesStorageStructure.PT.UINT;
         rule.placeHolders[0].typeSpecificIndex = 0;
-       
-        logic.addRule(contractAddress, bytes(functionSignature), rule);
+        logic.addRule(address(userContract), bytes(functionSignature), rule);
 
         RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
         pTypes[0] = RulesStorageStructure.PT.ADDR;
         pTypes[1] = RulesStorageStructure.PT.UINT;
 
-        logic.addFunctionSignature(contractAddress, bytes(functionSignature), pTypes);
+        logic.addFunctionSignature(address(userContract), bytes(functionSignature), pTypes);
     }
 
     function setupRuleWithForeignCall() public {
@@ -114,13 +113,13 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         RulesStorageStructure.Rule memory rule =  _createGTRule(4);
         rule.negEffects[0] = effectId_revert;
        
-        logic.addRule(contractAddress, bytes(functionSignature), rule);
+        logic.addRule(address(userContract), bytes(functionSignature), rule);
 
         RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
         pTypes[0] = RulesStorageStructure.PT.ADDR;
         pTypes[1] = RulesStorageStructure.PT.UINT;
 
-        logic.addFunctionSignature(contractAddress, bytes(functionSignature), pTypes);
+        logic.addFunctionSignature(address(userContract), bytes(functionSignature), pTypes);
     }
 
     function _setupRuleWithPosEvent() public {
@@ -128,13 +127,13 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         RulesStorageStructure.Rule memory rule =  _createGTRule(4);
         rule.posEffects[0] = effectId_event;
        
-        logic.addRule(contractAddress, bytes(functionSignature), rule);
+        logic.addRule(address(userContract), bytes(functionSignature), rule);
 
         RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
         pTypes[0] = RulesStorageStructure.PT.ADDR;
         pTypes[1] = RulesStorageStructure.PT.UINT;
 
-        logic.addFunctionSignature(contractAddress, bytes(functionSignature), pTypes);
+        logic.addFunctionSignature(address(userContract), bytes(functionSignature), pTypes);
     }
 
     function _setupRuleWith2PosEvent() public {
@@ -143,13 +142,13 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         rule.posEffects[0] = effectId_event;
         rule.posEffects[1] = effectId_event2;
        
-        logic.addRule(contractAddress, bytes(functionSignature), rule);
+        logic.addRule(address(userContract), bytes(functionSignature), rule);
 
         RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
         pTypes[0] = RulesStorageStructure.PT.ADDR;
         pTypes[1] = RulesStorageStructure.PT.UINT;
 
-        logic.addFunctionSignature(contractAddress, bytes(functionSignature), pTypes);
+        logic.addFunctionSignature(address(userContract), bytes(functionSignature), pTypes);
     }
 
     function testCheckRulesExplicit() public {
@@ -163,7 +162,7 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         arguments.ints = new uint256[](1);
         arguments.ints[0] = 5;
         bytes memory retVal = RuleEncodingLibrary.customEncoder(arguments);
-        bool response = logic.checkRules(contractAddress, bytes(functionSignature), retVal);
+        bool response = logic.checkRules(address(userContract), bytes(functionSignature), retVal);
         assertTrue(response);
     }
 
@@ -264,6 +263,8 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         assertEq(foreignCall.getDecodedStrOne(), "test");
         assertEq(foreignCall.getDecodedStrTwo(), "otherTest");
         assertEq(foreignCall.getDecodedAddr(), address(0x1234567));
+        response; 
+        data; // added to silence warnings - we should have these in an assertion 
     }
 
     function testEvaluateForeignCallForRule() public {
@@ -392,4 +393,79 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         return effectProcessor.updateEffect(Effect({effectId: 0, effectType: ET.REVERT, text: _text}));
     }
 
+
+
+    /// Tracker Tests 
+
+     function setupRuleWithTracker(uint256 trackerValue) public {
+        // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        RulesStorageStructure.Rule memory rule;
+
+        // Instruction set: LC.PLH, 1, 0, LC.PLH, 1, 0, LC.GT, 0, 1
+        rule.instructionSet = new uint256[](9);
+        rule.instructionSet[0] = uint(RulesStorageStructure.LC.PLH);
+        rule.instructionSet[1] = 0;
+        rule.instructionSet[2] = 0;
+        rule.instructionSet[3] = uint(RulesStorageStructure.LC.PLH);
+        rule.instructionSet[4] = 1;
+        rule.instructionSet[5] = 1;
+        rule.instructionSet[6] = uint(RulesStorageStructure.LC.GT);
+        rule.instructionSet[7] = 0;
+        rule.instructionSet[8] = 1;
+        
+        rule.placeHolders = new RulesStorageStructure.Placeholder[](2);
+        rule.placeHolders[0].pType = RulesStorageStructure.PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 0;
+        rule.placeHolders[1].pType = RulesStorageStructure.PT.UINT;
+        rule.placeHolders[1].trackerValue = true;
+
+
+        logic.addRule(address(userContract), bytes(functionSignature), rule);
+
+        //build tracker 
+        RulesStorageStructure.trackers memory tracker;  
+        /// build the members of the struct: 
+        tracker.pType = RulesStorageStructure.PT.UINT; 
+        tracker.uintTrackers = trackerValue; 
+
+        logic.addTracker(address(userContract), tracker);
+
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+
+        logic.addFunctionSignature(address(userContract), bytes(functionSignature), pTypes);
+
+    }
+
+    function testCheckRulesWithTrackerValue() public {
+        setupRuleWithTracker(2);
+        bool retVal = userContract.transfer(address(0x7654321), 3);
+        assertTrue(retVal);
+    }
+
+    function testCheckRulesWithTrackerValueNegative() public {
+        setupRuleWithTracker(7);
+        bool retVal = userContract.transfer(address(0x7654321), 6);
+        assertFalse(retVal);
+    }
+
+    function testManualUpdateToTrackerThenCheckRules() public {
+        setupRuleWithTracker(4);
+        bool retVal = userContract.transfer(address(0x7654321), 5);
+        assertTrue(retVal); 
+        // expect failure here 
+        retVal = userContract.transfer(address(0x7654321), 3);
+        assertFalse(retVal);
+        /// manually update the tracker here to higher value so that rule fails
+        //                  calling contract,  updated uint, empty address, empty string, bool, empty bytes 
+        logic.updateTracker(address(userContract), 7, address(0x00), "", true, ""); 
+
+        retVal = userContract.transfer(address(0x7654321), 4);
+        assertFalse(retVal);
+
+        retVal = userContract.transfer(address(0x7654321), 9);
+        assertTrue(retVal);
+
+    }
 }
