@@ -13,7 +13,7 @@ import "src/effects/EffectStructures.sol";
  * @title Test the functionality of the RulesEngineRunLogic contract
  * @author @mpetersoCode55 
  */
-contract RulesEngineRunLogicTest is Test {
+contract RulesEngineRunLogicTest is Test,EffectStructures {
 
     RulesEngineRunLogicWrapper logic;
     ExampleUserContract userContract;
@@ -37,6 +37,7 @@ contract RulesEngineRunLogicTest is Test {
         userContract = new ExampleUserContract();
         userContract.setRulesEngineAddress(address(logic));
         testContract = new ForeignCallTestContract();
+        _setupEffectProcessor();
     }
 
     function setupRuleWithoutForeignCall() public {
@@ -46,28 +47,21 @@ contract RulesEngineRunLogicTest is Test {
         // Instruction set: LC.PLH, 1, 0, LC.NUM, 4, LC.GT, 0, 1
 
         // Build the instruction set for the rule (including placeholders)
-        // rule.instructionSet = new uint256[](8);
-        // rule.instructionSet[0] = uint(RulesStorageStructure.LC.PLH);
-        // rule.instructionSet[1] = 0;
-        // rule.instructionSet[2] = 0;
-        // rule.instructionSet[3] = uint(RulesStorageStructure.LC.NUM);
-        // rule.instructionSet[4] = 4;
-        // rule.instructionSet[5] = uint(RulesStorageStructure.LC.GT);
-        // rule.instructionSet[6] = 0;
-        // rule.instructionSet[7] = 1;
+        rule.instructionSet = new uint256[](8);
+        rule.instructionSet[0] = uint(RulesStorageStructure.LC.PLH);
+        rule.instructionSet[1] = 0;
+        rule.instructionSet[2] = 0;
+        rule.instructionSet[3] = uint(RulesStorageStructure.LC.NUM);
+        rule.instructionSet[4] = 4;
+        rule.instructionSet[5] = uint(RulesStorageStructure.LC.GT);
+        rule.instructionSet[6] = 0;
+        rule.instructionSet[7] = 1;
 
-        // // Build the calling function argument placeholder 
-        // rule.placeHolders = new RulesStorageStructure.Placeholder[](1);
-        // rule.placeHolders[0].pType = RulesStorageStructure.PT.UINT;
-        // rule.placeHolders[0].typeSpecificIndex = 0;
-        // Create and attach the EffectProcessor.
-        _setupEffectProcessor();
-        // Create a simple rule
-        rule = _createGTRule(4);
-        // Apply 
-        rule.negEffects[0] = effectId_revert;
-        rule.posEffects[0] = effectId_event;
-        rule.posEffects[1] = effectId_event2;
+        // Build the calling function argument placeholder 
+        rule.placeHolders = new RulesStorageStructure.Placeholder[](1);
+        rule.placeHolders[0].pType = RulesStorageStructure.PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 0;
+       
         logic.addRule(contractAddress, bytes(functionSignature), rule);
 
         RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
@@ -113,6 +107,49 @@ contract RulesEngineRunLogicTest is Test {
         pTypes[0] = RulesStorageStructure.PT.ADDR;
         pTypes[1] = RulesStorageStructure.PT.UINT;
         logic.addFunctionSignature(address(userContract), bytes(functionSignature), pTypes);
+    }
+
+    function _setupRuleWithRevert() public {
+        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        RulesStorageStructure.Rule memory rule =  _createGTRule(4);
+        rule.negEffects[0] = effectId_revert;
+       
+        logic.addRule(contractAddress, bytes(functionSignature), rule);
+
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+
+        logic.addFunctionSignature(contractAddress, bytes(functionSignature), pTypes);
+    }
+
+    function _setupRuleWithPosEvent() public {
+        // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
+        RulesStorageStructure.Rule memory rule =  _createGTRule(4);
+        rule.posEffects[0] = effectId_event;
+       
+        logic.addRule(contractAddress, bytes(functionSignature), rule);
+
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+
+        logic.addFunctionSignature(contractAddress, bytes(functionSignature), pTypes);
+    }
+
+    function _setupRuleWith2PosEvent() public {
+        // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
+        RulesStorageStructure.Rule memory rule =  _createGTRule(4);
+        rule.posEffects[0] = effectId_event;
+        rule.posEffects[1] = effectId_event2;
+       
+        logic.addRule(contractAddress, bytes(functionSignature), rule);
+
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+
+        logic.addFunctionSignature(contractAddress, bytes(functionSignature), pTypes);
     }
 
     function testCheckRulesExplicit() public {
@@ -166,14 +203,18 @@ contract RulesEngineRunLogicTest is Test {
         setupRuleWithoutForeignCall();
         bool retVal = userContract.transfer(address(0x7654321), 3);
         assertFalse(retVal);
+    }
+
     /// Ensure that rule with a negative effect revert applied, that passes, will revert
     function testCheckRulesWithExampleContractNegativeRevert() public {
+        _setupRuleWithRevert();
         vm.expectRevert(abi.encodePacked(revert_text)); 
         userContract.transfer(address(0x7654321), 3);
     }
 
     /// Ensure that rule with a positive effect event applied, that passes, will emit the event
     function testCheckRulesWithExampleContractPositiveEvent() public {
+        _setupRuleWithPosEvent();
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(event_text);
         userContract.transfer(address(0x7654321), 5);
@@ -181,6 +222,7 @@ contract RulesEngineRunLogicTest is Test {
 
     /// Ensure that rule with a positive effect event applied, that passes, will emit the event
     function testCheckRulesWithExampleContractMultiplePositiveEvent() public {
+        _setupRuleWith2PosEvent();
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(event_text);
         vm.expectEmit(true, true, false, false);
@@ -341,11 +383,13 @@ contract RulesEngineRunLogicTest is Test {
     }
 
     function _createEffectEvent(string memory _text) public returns(uint256 _effectId){
+        // RulesStorageStructure.ForeignCallArgumentMappings[] memory fcMapping = new RulesStorageStructure.ForeignCallArgumentMappings[](1);
         // Create a event effect
         return effectProcessor.updateEffect(Effect({effectId: 0, effectType: ET.EVENT, text: _text}));
     }
 
     function _createEffectRevert(string memory _text) public returns(uint256 _effectId){
+        // RulesStorageStructure.ForeignCallArgumentMappings[] memory fcMapping = new RulesStorageStructure.ForeignCallArgumentMappings[](1);
         // Create a revert effect
         return effectProcessor.updateEffect(Effect({effectId: 0, effectType: ET.REVERT, text: _text}));
     }

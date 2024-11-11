@@ -18,9 +18,11 @@ import "src/effects/EffectStructures.sol";
      */
     function doEffects(uint256[] calldata _effectIds) external {
         for(uint256 i = 0; i < _effectIds.length; i++) {
-            Effect memory effect = effectStorage[_effectIds[i]];
-            if (effect.effectType == ET.REVERT) doRevert(effect.text);
-            if (effect.effectType == ET.EVENT) doEvent(effect.text);
+            if(_effectIds[i] > 0){// only ref Id's greater than 0 are valid
+                Effect memory effect = effectStorage[_effectIds[i]];
+                if (effect.effectType == ET.REVERT) doRevert(effect.text);
+                if (effect.effectType == ET.EVENT) doEvent(effect.text);
+            }
         }
     }
 
@@ -63,4 +65,32 @@ import "src/effects/EffectStructures.sol";
     function deleteEffect(uint256 _effectId) external {
         delete effectStorage[_effectId];
     }
+
+    // /**
+    //  * @dev Builds a foreign call structure and adds it to the contracts storage, mapped to the contract address it is associated with
+    //  * @param contractAddress the address of the contract the foreign call will be mapped to
+    //  * @param foreignContractAddress the address of the contract where the foreign call exists
+    //  * @param functionSignature the string representation of the function signature of the foreign call
+    //  * @param returnType the parameter type of the foreign calls return value
+    //  * @param arguments the parameter types of the foreign calls arguments in order
+    //  * @return fc the foreign call structure 
+    //  */
+    // function updateForeignCall(address contractAddress, address foreignContractAddress, string memory functionSignature, RulesStorageStructure.PT[] memory arguments) public returns (RulesStorageStructure.ForeignCall memory fc) {
+    //     fc.foreignCallAddress = foreignContractAddress;
+    //     // Convert the string representation of the function signature to a selector
+    //     fc.signature = bytes4(keccak256(bytes(functionSignature)));
+    //     fc.foreignCallIndex += 1;
+    //     fc.parameterTypes = new RulesStorageStructure.PT[](arguments.length);
+    //     for(uint256 i = 0; i < arguments.length; i++) {
+    //         fc.parameterTypes[i] = arguments[i];
+    //     }
+
+    //     // If the foreign call structure already exists in the mapping update it, otherwise add it
+    //     if(foreignCalls[contractAddress].set) {
+    //         foreignCalls[contractAddress].foreignCalls.push(fc);
+    //     } else {
+    //         foreignCalls[contractAddress].set = true;
+    //         foreignCalls[contractAddress].foreignCalls.push(fc);
+    //     }
+    // }
  }
