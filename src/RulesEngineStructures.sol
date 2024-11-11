@@ -170,11 +170,11 @@ interface RulesStorageStructure {
         // Define what type of tracker
         PT pType; 
         // tracker types arrays 
-        uint256 uintTrackers; 
-        address addressTrackers; 
-        string stringTrackers; 
-        bytes bytesTrackers; 
-        bool boolTrackers;
+        uint256 uintTracker; 
+        address addressTracker; 
+        string stringTracker; 
+        bytes bytesTracker; 
+        bool boolTracker;
 
     }
 

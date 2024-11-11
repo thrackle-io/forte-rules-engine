@@ -427,7 +427,7 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         RulesStorageStructure.trackers memory tracker;  
         /// build the members of the struct: 
         tracker.pType = RulesStorageStructure.PT.UINT; 
-        tracker.uintTrackers = trackerValue; 
+        tracker.uintTracker = trackerValue; 
 
         logic.addTracker(address(userContract), tracker);
 
@@ -477,9 +477,9 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
 
         RulesStorageStructure.trackers memory testTracker = logic.getTracker(address(userContract), 0); 
 
-        assertTrue(testTracker.uintTrackers == 2); 
-        assertTrue(testTracker.addressTrackers == address(0x00)); 
-        assertFalse(testTracker.uintTrackers == 3); 
+        assertTrue(testTracker.uintTracker == 2); 
+        assertTrue(testTracker.addressTracker == address(0x00)); 
+        assertFalse(testTracker.uintTracker == 3); 
 
     }
 }

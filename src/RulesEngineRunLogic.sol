@@ -94,12 +94,8 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param tracker the tracker to add 
      */
     function addTracker(address contractAddress, RulesStorageStructure.trackers calldata tracker) public {
-        if(trackerStorage[contractAddress].set) {
-           trackerStorage[contractAddress].trackers.push(tracker);
-        } else {
-            trackerStorage[contractAddress].set = true;
-            trackerStorage[contractAddress].trackers.push(tracker);
-        }
+        trackerStorage[contractAddress].set = true;
+        trackerStorage[contractAddress].trackers.push(tracker);
     }
 
     /**
@@ -113,25 +109,13 @@ contract RulesEngineRunLogic is IRulesEngine {
      */
     function updateTracker(address contractAddress, uint256 updatedUintTracker, address updatedAddressTracker, string memory updatedStringTracker, bool updatedBoolTracker, bytes memory updatedBytesTracker) public {
         // Open to feedback on this if there is a better way to update the struct members based on type 
-        if(trackerStorage[contractAddress].set) {
-          // grab trackers.length 
-          for(uint256 i = 0; i < trackerStorage[contractAddress].trackers.length; i++){
-            // go to specific index of tracker to update based on typeSpecificIndex (use this as overloaded key) 
-            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.UINT) trackerStorage[contractAddress].trackers[i].uintTrackers = updatedUintTracker;
-            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.ADDR) trackerStorage[contractAddress].trackers[i].addressTrackers = updatedAddressTracker;
-            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.STR) trackerStorage[contractAddress].trackers[i].stringTrackers = updatedStringTracker;
-            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.BOOL) trackerStorage[contractAddress].trackers[i].boolTrackers = updatedBoolTracker;
-            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.BYTES) trackerStorage[contractAddress].trackers[i].bytesTrackers = updatedBytesTracker;
-           }
-        } else {
-            trackerStorage[contractAddress].set = true;
-            for(uint256 i = 0; i < trackerStorage[contractAddress].trackers.length; i++){
-            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.UINT) trackerStorage[contractAddress].trackers[i].uintTrackers = updatedUintTracker;
-            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.ADDR) trackerStorage[contractAddress].trackers[i].addressTrackers = updatedAddressTracker;
-            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.STR) trackerStorage[contractAddress].trackers[i].stringTrackers = updatedStringTracker;
-            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.BOOL) trackerStorage[contractAddress].trackers[i].boolTrackers = updatedBoolTracker;
-            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.BYTES) trackerStorage[contractAddress].trackers[i].bytesTrackers = updatedBytesTracker;
-           }
+        trackerStorage[contractAddress].set = true;
+        for(uint256 i = 0; i < trackerStorage[contractAddress].trackers.length; i++){
+            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.UINT) trackerStorage[contractAddress].trackers[i].uintTracker = updatedUintTracker;
+            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.ADDR) trackerStorage[contractAddress].trackers[i].addressTracker = updatedAddressTracker;
+            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.STR) trackerStorage[contractAddress].trackers[i].stringTracker = updatedStringTracker;
+            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.BOOL) trackerStorage[contractAddress].trackers[i].boolTracker = updatedBoolTracker;
+            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.BYTES) trackerStorage[contractAddress].trackers[i].bytesTracker = updatedBytesTracker;
         }
     }
 
@@ -261,15 +245,15 @@ contract RulesEngineRunLogic is IRulesEngine {
         uint256 intIter = 0;
         uint256 stringIter = 0;
 
-        for(uint256 i = 0; i < applicableRule.placeHolders.length; i++) {
+        for(uint256 placeholderIndex = 0; placeholderIndex < applicableRule.placeHolders.length; placeholderIndex++) {
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
-            if(applicableRule.placeHolders[i].foreignCall) {
+            if(applicableRule.placeHolders[placeholderIndex].foreignCall) {
                 // Loop through the foreign call structures associated with the calling contracts address
-                for(uint256 j = 0; j < foreignCalls[contractAddress].foreignCalls.length; j++) {
+                for(uint256 foreignCallsIdx = 0; foreignCallsIdx < foreignCalls[contractAddress].foreignCalls.length; foreignCallsIdx++) {
                     // Check if the index for this placeholder matches the foreign calls index
-                    if(foreignCalls[contractAddress].foreignCalls[j].foreignCallIndex == applicableRule.placeHolders[i].typeSpecificIndex) {
+                    if(foreignCalls[contractAddress].foreignCalls[foreignCallsIdx].foreignCallIndex == applicableRule.placeHolders[placeholderIndex].typeSpecificIndex) {
                         // Place the foreign call
-                        RulesStorageStructure.ForeignCallReturnValue memory retVal = evaluateForeignCallForRule(foreignCalls[contractAddress].foreignCalls[j], applicableRule, functionSignatureArgs);
+                        RulesStorageStructure.ForeignCallReturnValue memory retVal = evaluateForeignCallForRule(foreignCalls[contractAddress].foreignCalls[foreignCallsIdx], applicableRule, functionSignatureArgs);
                         // Set the placeholders value and type based on the value returned by the foreign call
                         ruleArgs.argumentTypes[overallIter] = retVal.pType;
                         if(retVal.pType == RulesStorageStructure.PT.ADDR) {
@@ -288,40 +272,42 @@ contract RulesEngineRunLogic is IRulesEngine {
                     }
                 }
             } else {
-                if (applicableRule.placeHolders[i].trackerValue) {
-                    // Loop through tracker storage for invoking address  
-                        for(uint256 k = 0; k < trackerStorage[contractAddress].trackers.length; k++) {
-                        // determine pType of tracker
-                            ruleArgs.argumentTypes[overallIter] = trackerStorage[contractAddress].trackers[k].pType;
-                        if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.ADDR){
-                            ruleArgs.addresses[addressIter] = trackerStorage[contractAddress].trackers[k].addressTrackers;
-                            overallIter += 1;
-                            addressIter += 1;
-                        } else if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.UINT) {
-                            ruleArgs.ints[intIter] = trackerStorage[contractAddress].trackers[k].uintTrackers;
-                            overallIter += 1;
-                            intIter += 1;
-                        } else if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.STR) {
-                            ruleArgs.strings[stringIter] = trackerStorage[contractAddress].trackers[k].stringTrackers;
-                            overallIter += 1;
-                            stringIter += 1;
-                        }
+                // Determine if the placeholder represents the return value of a tracker 
+                if (applicableRule.placeHolders[placeholderIndex].trackerValue) {
+                // Loop through tracker storage for invoking address  
+                for(uint256 trackerValueIndex = 0; trackerValueIndex < trackerStorage[contractAddress].trackers.length; trackerValueIndex++) {
+                    // determine pType of tracker
+                    ruleArgs.argumentTypes[overallIter] = trackerStorage[contractAddress].trackers[trackerValueIndex].pType;
+                    // replace the placeholder value with the tracker value 
+                    if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.ADDR){
+                        ruleArgs.addresses[addressIter] = trackerStorage[contractAddress].trackers[trackerValueIndex].addressTracker;
+                        overallIter += 1;
+                        addressIter += 1;
+                    } else if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.UINT) {
+                        ruleArgs.ints[intIter] = trackerStorage[contractAddress].trackers[trackerValueIndex].uintTracker;
+                        overallIter += 1;
+                        intIter += 1;
+                    } else if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.STR) {
+                        ruleArgs.strings[stringIter] = trackerStorage[contractAddress].trackers[trackerValueIndex].stringTracker;
+                        overallIter += 1;
+                        stringIter += 1;
                     }
+                }
             } else {
                 // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
-                if(applicableRule.placeHolders[i].pType == RulesStorageStructure.PT.ADDR) {
+                if(applicableRule.placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.ADDR) {
                     ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.ADDR;
-                    ruleArgs.addresses[addressIter] = functionSignatureArgs.addresses[applicableRule.placeHolders[i].typeSpecificIndex];
+                    ruleArgs.addresses[addressIter] = functionSignatureArgs.addresses[applicableRule.placeHolders[placeholderIndex].typeSpecificIndex];
                     overallIter += 1;
                     addressIter += 1;
-                } else if(applicableRule.placeHolders[i].pType == RulesStorageStructure.PT.UINT) {
+                } else if(applicableRule.placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.UINT) {
                     ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.UINT;
-                    ruleArgs.ints[intIter] = functionSignatureArgs.ints[applicableRule.placeHolders[i].typeSpecificIndex];
+                    ruleArgs.ints[intIter] = functionSignatureArgs.ints[applicableRule.placeHolders[placeholderIndex].typeSpecificIndex];
                     overallIter += 1;
                     intIter += 1;
-                } else if(applicableRule.placeHolders[i].pType == RulesStorageStructure.PT.STR) {
+                } else if(applicableRule.placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.STR) {
                     ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.STR;
-                    ruleArgs.strings[stringIter] = functionSignatureArgs.strings[applicableRule.placeHolders[i].typeSpecificIndex];
+                    ruleArgs.strings[stringIter] = functionSignatureArgs.strings[applicableRule.placeHolders[placeholderIndex].typeSpecificIndex];
                     overallIter += 1;
                     stringIter += 1;
                 }
