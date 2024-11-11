@@ -6,6 +6,8 @@ import "src/ExampleUserContract.sol";
 import "forge-std/Test.sol";
 import "test/ForeignCallTestContract.sol";
 import "test/RuleEngineRunLogicWrapper.sol";
+import "src/effects/EffectProcessor.sol";
+import "src/effects/EffectStructures.sol";
 
 /**
  * @title Test the functionality of the RulesEngineRunLogic contract
@@ -19,6 +21,16 @@ contract RulesEngineRunLogicTest is Test {
 
     address contractAddress = address(0x1234567);
     string functionSignature = "transfer(address,uint256) returns (bool)";
+    EffectProcessor effectProcessor;
+
+    string constant event_text = "Rules Engine Event";
+    string constant revert_text = "Rules Engine Revert";
+    string constant event_text2 = "Rules Engine Event 2";
+    string constant revert_text2 = "Rules Engine Revert 2";
+    uint256 effectId_revert;
+    uint256 effectId_revert2;
+    uint256 effectId_event;
+    uint256 effectId_event2;
 
     function setUp() public{
         logic = new RulesEngineRunLogicWrapper();
@@ -34,20 +46,28 @@ contract RulesEngineRunLogicTest is Test {
         // Instruction set: LC.PLH, 1, 0, LC.NUM, 4, LC.GT, 0, 1
 
         // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = new uint256[](8);
-        rule.instructionSet[0] = uint(RulesStorageStructure.LC.PLH);
-        rule.instructionSet[1] = 0;
-        rule.instructionSet[2] = 0;
-        rule.instructionSet[3] = uint(RulesStorageStructure.LC.NUM);
-        rule.instructionSet[4] = 4;
-        rule.instructionSet[5] = uint(RulesStorageStructure.LC.GT);
-        rule.instructionSet[6] = 0;
-        rule.instructionSet[7] = 1;
+        // rule.instructionSet = new uint256[](8);
+        // rule.instructionSet[0] = uint(RulesStorageStructure.LC.PLH);
+        // rule.instructionSet[1] = 0;
+        // rule.instructionSet[2] = 0;
+        // rule.instructionSet[3] = uint(RulesStorageStructure.LC.NUM);
+        // rule.instructionSet[4] = 4;
+        // rule.instructionSet[5] = uint(RulesStorageStructure.LC.GT);
+        // rule.instructionSet[6] = 0;
+        // rule.instructionSet[7] = 1;
 
-        // Build the calling function argument placeholder 
-        rule.placeHolders = new RulesStorageStructure.Placeholder[](1);
-        rule.placeHolders[0].pType = RulesStorageStructure.PT.UINT;
-        rule.placeHolders[0].typeSpecificIndex = 0;
+        // // Build the calling function argument placeholder 
+        // rule.placeHolders = new RulesStorageStructure.Placeholder[](1);
+        // rule.placeHolders[0].pType = RulesStorageStructure.PT.UINT;
+        // rule.placeHolders[0].typeSpecificIndex = 0;
+        // Create and attach the EffectProcessor.
+        _setupEffectProcessor();
+        // Create a simple rule
+        rule = _createGTRule(4);
+        // Apply 
+        rule.negEffects[0] = effectId_revert;
+        rule.posEffects[0] = effectId_event;
+        rule.posEffects[1] = effectId_event2;
         logic.addRule(contractAddress, bytes(functionSignature), rule);
 
         RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
@@ -146,6 +166,26 @@ contract RulesEngineRunLogicTest is Test {
         setupRuleWithoutForeignCall();
         bool retVal = userContract.transfer(address(0x7654321), 3);
         assertFalse(retVal);
+    /// Ensure that rule with a negative effect revert applied, that passes, will revert
+    function testCheckRulesWithExampleContractNegativeRevert() public {
+        vm.expectRevert(abi.encodePacked(revert_text)); 
+        userContract.transfer(address(0x7654321), 3);
+    }
+
+    /// Ensure that rule with a positive effect event applied, that passes, will emit the event
+    function testCheckRulesWithExampleContractPositiveEvent() public {
+        vm.expectEmit(true, true, false, false);
+        emit RulesEngineEvent(event_text);
+        userContract.transfer(address(0x7654321), 5);
+    }
+
+    /// Ensure that rule with a positive effect event applied, that passes, will emit the event
+    function testCheckRulesWithExampleContractMultiplePositiveEvent() public {
+        vm.expectEmit(true, true, false, false);
+        emit RulesEngineEvent(event_text);
+        vm.expectEmit(true, true, false, false);
+        emit RulesEngineEvent(event_text2);
+        userContract.transfer(address(0x7654321), 11);
     }
 
     function testEncodingForeignCall() public {
@@ -262,4 +302,52 @@ contract RulesEngineRunLogicTest is Test {
         RulesStorageStructure.ForeignCallReturnValue memory retVal = logic.evaluateForeignCallForRuleExt(fc, rule, functionArguments);
         console2.log(retVal.boolValue);
     }
+    function _createGTRule(uint256 _amount) public returns(RulesStorageStructure.Rule memory){
+        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        RulesStorageStructure.Rule memory rule;
+        // Set up some effects.
+        _setupEffectProcessor();
+        // Instruction set: LC.PLH, 1, 0, LC.NUM, _amount, LC.GT, 0, 1
+        rule.instructionSet = new uint256[](8);
+        rule.instructionSet[0] = uint(RulesStorageStructure.LC.PLH);
+        rule.instructionSet[1] = 0;
+        rule.instructionSet[2] = 0;
+        rule.instructionSet[3] = uint(RulesStorageStructure.LC.NUM);
+        rule.instructionSet[4] = _amount;
+        rule.instructionSet[5] = uint(RulesStorageStructure.LC.GT);
+        rule.instructionSet[6] = 0;
+        rule.instructionSet[7] = 1;
+        rule.placeHolders = new RulesStorageStructure.Placeholder[](1);
+        rule.placeHolders[0].pType = RulesStorageStructure.PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 0;
+        // Add a negative/positive effects
+        rule.negEffects = new uint256[](1);
+        rule.posEffects = new uint256[](2);
+        return rule;
+    }
+
+    function _setupEffectProcessor() public {
+        // Create the Effect Processor and connect it.
+        effectProcessor = new EffectProcessor();
+        logic.setEffectProcessor(address(effectProcessor));
+        _createAllEffects();
+    }
+
+    function _createAllEffects() public {
+        effectId_event = _createEffectEvent(event_text); // effectId = 1
+        effectId_revert = _createEffectRevert(revert_text); // effectId = 2
+        effectId_event2 = _createEffectEvent(event_text2); // effectId = 3
+        effectId_revert2 = _createEffectRevert(revert_text2); // effectId = 4
+    }
+
+    function _createEffectEvent(string memory _text) public returns(uint256 _effectId){
+        // Create a event effect
+        return effectProcessor.updateEffect(Effect({effectId: 0, effectType: ET.EVENT, text: _text}));
+    }
+
+    function _createEffectRevert(string memory _text) public returns(uint256 _effectId){
+        // Create a revert effect
+        return effectProcessor.updateEffect(Effect({effectId: 0, effectType: ET.REVERT, text: _text}));
+    }
+
 }
