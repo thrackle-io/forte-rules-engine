@@ -397,6 +397,7 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
 
     /// Tracker Tests 
 
+    // set up a rule with a uint256 tracker value for testing 
      function setupRuleWithTracker(uint256 trackerValue) public {
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         RulesStorageStructure.Rule memory rule;
@@ -466,6 +467,19 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
 
         retVal = userContract.transfer(address(0x7654321), 9);
         assertTrue(retVal);
+
+    }
+
+    function testGetTrackerValue() public {
+        setupRuleWithTracker(2);
+        bool retVal = userContract.transfer(address(0x7654321), 3);
+        assertTrue(retVal);
+
+        RulesStorageStructure.trackers memory testTracker = logic.getTracker(address(userContract), 0); 
+
+        assertTrue(testTracker.uintTrackers == 2); 
+        assertTrue(testTracker.addressTrackers == address(0x00)); 
+        assertFalse(testTracker.uintTrackers == 3); 
 
     }
 }

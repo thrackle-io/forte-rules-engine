@@ -136,6 +136,17 @@ contract RulesEngineRunLogic is IRulesEngine {
     }
 
     /**
+     * Return a tracker from the trackerStorage.
+     * @param contractAddress the address of the contract the trackerStorage is associated with
+     * @param index postion of the tracker to return 
+     * @return trackers
+     */
+    function getTracker(address contractAddress, uint256 index) public view returns (RulesStorageStructure.trackers memory trackers) {
+        // return trackers for contract address at speficic index  
+        return trackerStorage[contractAddress].trackers[index];
+    }
+
+    /**
      * @dev evaluates the conditions associated with all applicable rules and returns the result
      * @param contractAddress the address of the rules-enabled contract, used to pull the applicable rules
      * @param functionSignature the signature of the function that initiated the transaction, used to pull the applicable rules.
