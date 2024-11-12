@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import "src/RulesEngineStructures.sol";
 import "src/IRulesEngine.sol";
+import "src/effects/EffectProcessor.sol";
 
 /**
  * @title Rules Engine Run Logic
@@ -15,6 +16,8 @@ contract RulesEngineRunLogic is IRulesEngine {
     mapping(address => RulesStorageStructure.functionSignatureToRuleMapping) ruleStorage;
     uint256 foreignCallIndex = 0;
     mapping(address => RulesStorageStructure.foreignCallStorage) foreignCalls;
+
+    address effectProcessor;
 
     /**
      * @dev converts a uint256 to a bool
@@ -80,7 +83,7 @@ contract RulesEngineRunLogic is IRulesEngine {
             ruleStorage[contractAddress].functionSignatureMap[functionSignature].set = true;
             for(uint256 i = 0; i < pTypes.length; i++) {
                 ruleStorage[contractAddress].functionSignatureMap[functionSignature].parameterTypes.push(pTypes[i]); 
-            }
+            } 
         }
     }
 
@@ -111,15 +114,19 @@ contract RulesEngineRunLogic is IRulesEngine {
                 for(uint256 i = 0; i < applicableRules.length; i++) {
                     applicableRules[i] = ruleStorage[contractAddress].ruleMap[functionSignature].rules[i];
                 }
-            }
+            } 
         }
 
 
         // Retrieve placeHolder[] for specific rule to be evaluated and translate function signature argument array 
         // to rule specific argument array
-        for(uint256 i = 0; i < applicableRules.length; i++) {
+
+        for(uint256 i = 0; i < applicableRules.length; i++) { 
             if(!evaluateIndividualRule(applicableRules[i], functionSignatureArgs, contractAddress)) {
+                EffectProcessor(effectProcessor).doEffects(applicableRules[i].negEffects);
                 return false;
+            } else{
+                EffectProcessor(effectProcessor).doEffects(applicableRules[i].posEffects);
             }
         }
         return true;
@@ -483,5 +490,10 @@ contract RulesEngineRunLogic is IRulesEngine {
         assembly {
             result := mload(add(source, 32))
         }
+    
+}
+
+    function setEffectProcessor(address _address) external {
+        effectProcessor = _address;
     }
 }

@@ -52,6 +52,10 @@ interface RulesStorageStructure {
 
         // Mapping between the Foreigns Calls arguments and the arguments of the function signature this rule is associated with
         ForeignCallArgumentMappings[] fcArgumentMappings;
+        // List of all positive effects
+        uint256[] posEffects;
+        // List of all positive effects
+        uint256[] negEffects;
     }
 
    /**
@@ -69,6 +73,7 @@ interface RulesStorageStructure {
         // Set if Parameter type is bool
         bool boolValue;
     }
+
 
     /**
      * Structure used to represent the mapping of arguments between a Rules 
