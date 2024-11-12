@@ -383,13 +383,11 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
     }
 
     function _createEffectEvent(string memory _text) public returns(uint256 _effectId){
-        // RulesStorageStructure.ForeignCallArgumentMappings[] memory fcMapping = new RulesStorageStructure.ForeignCallArgumentMappings[](1);
         // Create a event effect
         return effectProcessor.updateEffect(Effect({effectId: 0, effectType: ET.EVENT, text: _text}));
     }
 
     function _createEffectRevert(string memory _text) public returns(uint256 _effectId){
-        // RulesStorageStructure.ForeignCallArgumentMappings[] memory fcMapping = new RulesStorageStructure.ForeignCallArgumentMappings[](1);
         // Create a revert effect
         return effectProcessor.updateEffect(Effect({effectId: 0, effectType: ET.REVERT, text: _text}));
     }
