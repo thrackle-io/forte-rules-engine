@@ -23,7 +23,7 @@ contract ExampleUserContract {
         args.argumentTypes[1] = RulesStorageStructure.PT.UINT;
         bytes memory encoded = RuleEncodingLibrary.customEncoder(args);
         IRulesEngine rulesEngine = IRulesEngine(rulesEngineAddress);
-        bool retVal = rulesEngine.checkRules(address(0x1234567), bytes("transfer(address,uint256) returns (bool)"), encoded);
+        bool retVal = rulesEngine.checkRules(address(this), bytes("transfer(address,uint256) returns (bool)"), encoded);
         // This is where the overridden transfer would be called
 
         return retVal;
