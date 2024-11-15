@@ -12,11 +12,27 @@ import "src/effects/EffectProcessor.sol";
  * @author @mpetersoCode55 
  */
 contract RulesEngineRunLogic is IRulesEngine {
-
-    mapping(address => RulesStorageStructure.functionSignatureToRuleMapping) ruleStorage;
-    uint256 foreignCallIndex = 0;
+    // Contract Address to policy Id's 
+    // TODO: Add capability for multiple policies per contract
+    mapping (address contractAddress => uint256[]) contractPolicyIdMap; 
+    // policy Id's to policy storage
+    mapping (uint256 policyId => RulesStorageStructure.policyStorageStructure) policyStorage;
+    // rule Id's to rule storage
+    mapping(uint256 ruleId => RulesStorageStructure.ruleStorageStructure) ruleStorage;
+    // function Id's to function storage
+    mapping(uint256 functionId => RulesStorageStructure.functionSignatureStorageStructure) functionSignatureStorage;
     mapping(address => RulesStorageStructure.foreignCallStorage) foreignCalls;
     mapping(address => RulesStorageStructure.trackerValuesStorage) trackerStorage;
+
+    // Loading helper mappings
+    // mapping (bytes => uint256) functionSignatureIdMap;
+    // mapping (bytes => uint256[]) signatureToRuleIds;
+    RulesStorageStructure.Policy policy;
+
+    uint256 foreignCallIndex;
+    uint256 policyId;
+    uint256 ruleId;
+    uint256 functionSignatureId;
 
     address effectProcessor;
 
@@ -37,55 +53,91 @@ contract RulesEngineRunLogic is IRulesEngine {
     }
 
     /**
-     * Add a rule to the ruleStorage mapping.
-     * @param contractAddress the address of the contract the rule is associated with
-     * @param functionSignature the string representation of the function signature the rule is associated with
-     * @param rule the rule to add 
+     * Add a Policy to Storage
+     * @param _policyId id of of the policy 
+     * @param _signatures all signatures in the policy
+     * @param functionSignatureIds corresponding signature ids in the policy
+     * @param ruleIds two dimensional array of the rules
+     * @return policyId generated policyId
+     * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
      */
-    function addRule(address contractAddress, bytes calldata functionSignature, RulesStorageStructure.Rule calldata rule) public {
-        if(ruleStorage[contractAddress].set) {
-            RulesStorageStructure.functionSignatureToRuleMapping storage topLayerMap = ruleStorage[contractAddress];
-            if(topLayerMap.ruleMap[functionSignature].set) {
-                RulesStorageStructure.ruleStorageStructure storage innerMap = topLayerMap.ruleMap[functionSignature];
-                innerMap.rules.push(rule);
-            } else {
-                topLayerMap.ruleMap[functionSignature].set = true;
-                topLayerMap.ruleMap[functionSignature].rules.push(rule);
-            }
+    function updatePolicy(uint256 _policyId, bytes[] calldata _signatures, uint256[] calldata functionSignatureIds, uint256[][] calldata ruleIds) public returns(uint256){
+        // increment the policyId if necessary
+        if (_policyId == 0) {
+            policyId+=1;
         } else {
-            ruleStorage[contractAddress].set = true;
-            ruleStorage[contractAddress].ruleMap[functionSignature].set = true;
-            ruleStorage[contractAddress].ruleMap[functionSignature].rules.push(rule); 
+            policyId = _policyId;            
+        }
+        // validate the policy data 
+        // signature length must match the signature id length
+        if (_signatures.length != functionSignatureIds.length) revert("Signatures and signature id's are inconsistent"); 
+        // Loop through all the passed in signatures for the policy      
+        for (uint256 i = 0; i < _signatures.length; i++) {
+            // make sure that all the function signatures exist
+            if(!functionSignatureStorage[functionSignatureIds[i]].set) revert("Invalid Signature");
+            // Load into the mapping
+            policyStorage[policyId].policy.functionSignatureIdMap[_signatures[i]] = functionSignatureIds[i];
+            // make sure that all the rules attached to each function signature exist
+            for (uint256 j = 0; j < ruleIds[i].length; j++) {
+                if(!ruleStorage[ruleIds[i][j]].set) revert("Invalid Rule");
+            }
+            policyStorage[policyId].policy.signatureToRuleIds[_signatures[i]] = ruleIds[i];
+        }        
+        policyStorage[policyId].set = true;
+        return policyId;
+    }
+
+    /**
+     * Apply the policeis to the contracts.
+     * @param _contractAddress address of the contract to have policies applied
+     * @param _policyId the rule to add 
+     */
+    function applyPolicy(address _contractAddress, uint256[] calldata _policyId) public {
+        // TODO: atomic setting function plus an addToAppliedPolicies?
+        contractPolicyIdMap[_contractAddress] = new uint256[](_policyId.length);
+        for(uint256 i = 0; i < _policyId.length; i++) {
+           contractPolicyIdMap[_contractAddress][i] = _policyId[i];
         }
     }
 
     /**
-     * Add a function signature to the ruleStorage mapping.
-     * @param contractAddress the address of the contract the function signature is associated with
-     * @param functionSignature the string representation of the function signature
-     * @param pTypes the types of the parameters for the function in order 
+     * Add a rule to the ruleStorage mapping.
+     * @param _ruleId the id of the rule
+     * @param rule the rule to add 
+     * @return ruleId the generated ruleId
      */
-    function addFunctionSignature(address contractAddress, bytes calldata functionSignature, RulesStorageStructure.PT[] memory pTypes) public {
-        if(ruleStorage[contractAddress].set) {
-            RulesStorageStructure.functionSignatureToRuleMapping storage topLayerMap = ruleStorage[contractAddress];
-            if(topLayerMap.functionSignatureMap[functionSignature].set) {
-                RulesStorageStructure.functionSignatureStorage storage innerMap = topLayerMap.functionSignatureMap[functionSignature];
-                for(uint256 i = 0; i < pTypes.length; i++) {
-                    innerMap.parameterTypes.push(pTypes[i]);
-                }
-            } else {
-                topLayerMap.functionSignatureMap[functionSignature].set = true;
-                for(uint256 i = 0; i < pTypes.length; i++) {
-                    topLayerMap.functionSignatureMap[functionSignature].parameterTypes.push(pTypes[i]);
-                }
-            }
+    function updateRule(uint256 _ruleId, RulesStorageStructure.Rule calldata rule) public returns(uint256) {
+        // TODO: Add validations for rule
+        // increment the ruleId if necessary
+        if (_ruleId == 0) {
+            ruleId+=1;
         } else {
-            ruleStorage[contractAddress].set = true;
-            ruleStorage[contractAddress].functionSignatureMap[functionSignature].set = true;
-            for(uint256 i = 0; i < pTypes.length; i++) {
-                ruleStorage[contractAddress].functionSignatureMap[functionSignature].parameterTypes.push(pTypes[i]); 
-            } 
+            ruleId = _ruleId;            
         }
+        ruleStorage[ruleId].set = true;
+        ruleStorage[ruleId].rule = rule;
+        return ruleId;        
+    }
+
+    /**
+     * Add a function signature to the storage.
+     * @param _functionSignatureId functionSignatureId
+     * @param functionSignature the string representation of the function signature
+     * @param pTypes the types of the parameters for the function in order
+     * @return ruleId generated rule Id 
+     */
+    function updateFunctionSignature(uint256 _functionSignatureId, bytes4 functionSignature, RulesStorageStructure.PT[] memory pTypes) public returns(uint256) {
+        // TODO: Add validations for function signatures
+        // increment the functionSignatureId if necessary
+        if (_functionSignatureId == 0) {
+            functionSignatureId+=1;
+        } else {
+            functionSignatureId = _functionSignatureId;            
+        }
+        functionSignatureStorage[functionSignatureId].set = true;
+        functionSignatureStorage[functionSignatureId].signature = functionSignature;   
+        functionSignatureStorage[functionSignatureId].parameterTypes = pTypes;
+        return functionSignatureId;
     }
 
     /**
@@ -132,47 +184,62 @@ contract RulesEngineRunLogic is IRulesEngine {
 
     /**
      * @dev evaluates the conditions associated with all applicable rules and returns the result
+     * @dev PEP for policy checks
      * @param contractAddress the address of the rules-enabled contract, used to pull the applicable rules
      * @param functionSignature the signature of the function that initiated the transaction, used to pull the applicable rules.
+     * @param arguments function arguments
+     * TODO: refine the parameters to this function. contractAddress is not necessary as it's the message caller
      */
-    function checkRules(address contractAddress, bytes calldata functionSignature, bytes calldata arguments) public returns (bool) {
-
-        // Decode arguments from function signature
-        RulesStorageStructure.PT[] memory functionSignaturePlaceholders;
-        if(ruleStorage[contractAddress].set) {
-            if(ruleStorage[contractAddress].functionSignatureMap[functionSignature].set) {
-                functionSignaturePlaceholders = new RulesStorageStructure.PT[](ruleStorage[contractAddress].functionSignatureMap[functionSignature].parameterTypes.length);
-                for(uint256 i = 0; i < functionSignaturePlaceholders.length; i++) {
-                    functionSignaturePlaceholders[i] = ruleStorage[contractAddress].functionSignatureMap[functionSignature].parameterTypes[i];
-                }
-            }
-        }
-        
-        RulesStorageStructure.Arguments memory functionSignatureArgs = decodeFunctionSignatureArgs(functionSignaturePlaceholders, arguments);
-
-        RulesStorageStructure.Rule[] memory applicableRules;
-        if(ruleStorage[contractAddress].set) {
-            if(ruleStorage[contractAddress].ruleMap[functionSignature].set) {
-                applicableRules = new RulesStorageStructure.Rule[](ruleStorage[contractAddress].ruleMap[functionSignature].rules.length);
-                for(uint256 i = 0; i < applicableRules.length; i++) {
-                    applicableRules[i] = ruleStorage[contractAddress].ruleMap[functionSignature].rules[i];
-                }
-            } 
-        }
-
-
-        // Retrieve placeHolder[] for specific rule to be evaluated and translate function signature argument array 
-        // to rule specific argument array
-
-        for(uint256 i = 0; i < applicableRules.length; i++) { 
-            if(!evaluateIndividualRule(applicableRules[i], functionSignatureArgs, contractAddress)) {
-                EffectProcessor(effectProcessor).doEffects(applicableRules[i].negEffects);
-                return false;
-            } else{
-                EffectProcessor(effectProcessor).doEffects(applicableRules[i].posEffects);
-            }
+    function checkPolicies(address contractAddress, bytes calldata functionSignature, bytes calldata arguments) public returns (bool) {        
+        // loop through all the active policies
+        for(uint256 policyIdx = 0; policyIdx < contractPolicyIdMap[contractAddress].length; policyIdx++) {
+            _checkPolicy(contractPolicyIdMap[contractAddress][policyIdx], contractAddress, functionSignature, arguments);
         }
         return true;
+    }
+
+     /**
+     * @dev evaluates the conditions associated with all applicable rules and returns the result
+     * @param _policyId the address of the rules-enabled contract, used to pull the applicable rules
+     * @param contractAddress the address of the rules-enabled contract, used to pull the applicable rules
+     * @param functionSignature the signature of the function that initiated the transaction, used to pull the applicable rules.
+     * @param arguments function arguments
+     */
+    function _checkPolicy(uint256 _policyId, address contractAddress, bytes calldata functionSignature, bytes calldata arguments) internal {
+        // Decode arguments from function signature
+        RulesStorageStructure.PT[] memory functionSignaturePlaceholders;
+        // Check to make sure the policy is set
+            if(policyStorage[_policyId].set) {
+                // Get the function 
+                if(functionSignatureStorage[policyStorage[_policyId].policy.functionSignatureIdMap[functionSignature]].set) {
+                    functionSignaturePlaceholders = new RulesStorageStructure.PT[](functionSignatureStorage[policyStorage[_policyId].policy.functionSignatureIdMap[functionSignature]].parameterTypes.length);
+                    for(uint256 i = 0; i < functionSignaturePlaceholders.length; i++) {
+                        functionSignaturePlaceholders[i] = functionSignatureStorage[policyStorage[_policyId].policy.functionSignatureIdMap[functionSignature]].parameterTypes[i];
+                    }
+                }
+            }
+            
+            RulesStorageStructure.Arguments memory functionSignatureArgs = decodeFunctionSignatureArgs(functionSignaturePlaceholders, arguments);
+
+            RulesStorageStructure.Rule[] memory applicableRules = new RulesStorageStructure.Rule[](policyStorage[_policyId].policy.signatureToRuleIds[functionSignature].length);
+            for(uint256 i = 0; i < applicableRules.length; i++) {
+                if(ruleStorage[policyStorage[_policyId].policy.signatureToRuleIds[functionSignature][i]].set) {
+                    applicableRules[i] = ruleStorage[policyStorage[_policyId].policy.signatureToRuleIds[functionSignature][i]].rule;
+                }
+            }
+
+
+            // Retrieve placeHolder[] for specific rule to be evaluated and translate function signature argument array 
+            // to rule specific argument array
+
+            for(uint256 i = 0; i < applicableRules.length; i++) { 
+                if(!evaluateIndividualRule(applicableRules[i], functionSignatureArgs, contractAddress)) {
+                    EffectProcessor(effectProcessor).doEffects(applicableRules[i].negEffects);
+                } else{
+                    EffectProcessor(effectProcessor).doEffects(applicableRules[i].posEffects);
+                }
+            }
+
     }
 
     /**
@@ -232,6 +299,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param applicableRule the rule structure containing the instruction set, with placeholders, to execute
      * @param functionSignatureArgs the values to replace the placeholders in the instruction set with.
      * @return response the result of the rule condition evaluation 
+     * TODO: Look into the relationship between policy and foreign calls
      */
     function evaluateIndividualRule(RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, address contractAddress) internal returns (bool response) {
         RulesStorageStructure.Arguments memory ruleArgs;

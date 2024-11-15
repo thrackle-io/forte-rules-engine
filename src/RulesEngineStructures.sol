@@ -117,31 +117,21 @@ interface RulesStorageStructure {
         // The parameter types of the arguments the foreign call takes
         PT[] parameterTypes;
     }
-
-    /**
-    * Structure used to store the foreign call sctructs 
-    */
-    struct foreignCallStorage {
+    // Policy storage
+    struct policyStorageStructure {
         bool set;
-        ForeignCall[] foreignCalls;
+        Policy policy;
     }
 
-    /**
-    * Structure to store the rule mappings 
-    * Function Signature => Rule Storage Struct 
-    * Function Signature => function signature storage 
-    */
-    struct functionSignatureToRuleMapping {
-        bool set;
-        mapping (bytes => ruleStorageStructure) ruleMap;
-        mapping (bytes => functionSignatureStorage) functionSignatureMap;
+    struct Policy {
+        // function signatures to function signature Id
+        mapping (bytes => uint256) functionSignatureIdMap;
+        // function signatures to ruleIds
+        mapping (bytes => uint256[]) signatureToRuleIds;
     }
-
-    /**
-    * Structure to store the parameter types of the function signature 
-    */
-    struct functionSignatureStorage {
+    struct functionSignatureStorageStructure {
         bool set;
+        bytes4 signature;
         PT[] parameterTypes;
     }
 
@@ -150,7 +140,7 @@ interface RulesStorageStructure {
     */
     struct ruleStorageStructure {
         bool set;
-        Rule[] rules;
+        Rule rule;
     }
 
     /**
