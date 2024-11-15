@@ -157,11 +157,11 @@ contract RulesEngineRunLogic is IRulesEngine {
         // Open to feedback on this if there is a better way to update the struct members based on type 
         trackerStorage[_policyId].set = true;
         for(uint256 i = 0; i < trackerStorage[_policyId].trackers.length; i++){
-            if (trackerStorage[_policyId].trackers[i].pType == RulesStorageStructure.PT.UINT) trackerStorage[_policyId].trackers[i].uintTracker = updatedUintTracker;
-            if (trackerStorage[_policyId].trackers[i].pType == RulesStorageStructure.PT.ADDR) trackerStorage[_policyId].trackers[i].addressTracker = updatedAddressTracker;
-            if (trackerStorage[_policyId].trackers[i].pType == RulesStorageStructure.PT.STR) trackerStorage[_policyId].trackers[i].stringTracker = updatedStringTracker;
-            if (trackerStorage[_policyId].trackers[i].pType == RulesStorageStructure.PT.BOOL) trackerStorage[_policyId].trackers[i].boolTracker = updatedBoolTracker;
-            if (trackerStorage[_policyId].trackers[i].pType == RulesStorageStructure.PT.BYTES) trackerStorage[_policyId].trackers[i].bytesTracker = updatedBytesTracker;
+            if (trackerStorage[_policyId].trackers[i].pType == RulesStorageStructure.PT.UINT) trackerStorage[_policyId].trackers[i].trackerValue = abi.encode(updatedUintTracker);
+            if (trackerStorage[_policyId].trackers[i].pType == RulesStorageStructure.PT.ADDR) trackerStorage[_policyId].trackers[i].trackerValue = abi.encode(updatedAddressTracker);
+            if (trackerStorage[_policyId].trackers[i].pType == RulesStorageStructure.PT.STR) trackerStorage[_policyId].trackers[i].trackerValue = abi.encode(updatedStringTracker);
+            if (trackerStorage[_policyId].trackers[i].pType == RulesStorageStructure.PT.BOOL) trackerStorage[_policyId].trackers[i].trackerValue = abi.encode(updatedBoolTracker);
+            if (trackerStorage[_policyId].trackers[i].pType == RulesStorageStructure.PT.BYTES) trackerStorage[_policyId].trackers[i].trackerValue = abi.encode(updatedBytesTracker);
         }
     }
 
@@ -262,7 +262,7 @@ contract RulesEngineRunLogic is IRulesEngine {
             }
         }
         
-        RulesStorageStructure.Arguments memory functionSignatureArgs = decodeFunctionSignatureArgs(functionSignaturePlaceholders, arguments);
+        RulesStorageStructure.Arguments memory functionSignatureArgs = abi.decode(arguments, (RulesStorageStructure.Arguments));
 
         RulesStorageStructure.Rule[] memory applicableRules = new RulesStorageStructure.Rule[](policyStorage[_policyId].policy.signatureToRuleIds[functionSignature].length);
         for(uint256 i = 0; i < applicableRules.length; i++) {
@@ -305,14 +305,8 @@ contract RulesEngineRunLogic is IRulesEngine {
     function buildArguments(uint256 _policyId, RulesStorageStructure.Placeholder[] memory placeHolders, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgs, RulesStorageStructure.Arguments memory functionSignatureArgs) public returns (RulesStorageStructure.Arguments memory) {
         RulesStorageStructure.Arguments memory ruleArgs;
         ruleArgs.argumentTypes = new RulesStorageStructure.PT[](placeHolders.length);
-        // Initializing each to the max size to avoid the cost of iterating through to determine how many of each type exist
-        ruleArgs.addresses = new address[](placeHolders.length);
-        ruleArgs.ints = new uint256[](placeHolders.length);
-        ruleArgs.strings = new string[](placeHolders.length);
+        ruleArgs.values = new bytes[](placeHolders.length);
         uint256 overallIter = 0;
-        uint256 addressIter = 0;
-        uint256 intIter = 0;
-        uint256 stringIter = 0;
 
         for(uint256 placeholderIndex = 0; placeholderIndex < placeHolders.length; placeholderIndex++) {
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
@@ -320,19 +314,8 @@ contract RulesEngineRunLogic is IRulesEngine {
                     RulesStorageStructure.ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, placeHolders, fcArgs, functionSignatureArgs, placeholderIndex);
                     // Set the placeholders value and type based on the value returned by the foreign call
                     ruleArgs.argumentTypes[overallIter] = retVal.pType;
-                    if(retVal.pType == RulesStorageStructure.PT.ADDR) {
-                        ruleArgs.addresses[addressIter] = retVal.addr;
-                        overallIter += 1;
-                        addressIter += 1;
-                    } else if(retVal.pType == RulesStorageStructure.PT.STR) {
-                        ruleArgs.strings[stringIter] = retVal.str;
-                        overallIter += 1;
-                        stringIter += 1;
-                    } else if(retVal.pType == RulesStorageStructure.PT.UINT) {
-                        ruleArgs.ints[intIter] = retVal.intValue;
-                        overallIter += 1;
-                        intIter += 1;
-                    }
+                    ruleArgs.values[overallIter] = retVal.value;
+                    ++overallIter;
             } else {
                 // Determine if the placeholder represents the return value of a tracker 
                 if (placeHolders[placeholderIndex].trackerValue) {
@@ -341,38 +324,20 @@ contract RulesEngineRunLogic is IRulesEngine {
                         // determine pType of tracker
                         ruleArgs.argumentTypes[overallIter] = trackerStorage[_policyId].trackers[trackerValueIndex].pType;
                         // replace the placeholder value with the tracker value 
-                        if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.ADDR){
-                            ruleArgs.addresses[addressIter] = trackerStorage[_policyId].trackers[trackerValueIndex].addressTracker;
-                            overallIter += 1;
-                            addressIter += 1;
-                        } else if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.UINT) {
-                            ruleArgs.ints[intIter] = trackerStorage[_policyId].trackers[trackerValueIndex].uintTracker;
-                            overallIter += 1;
-                            intIter += 1;
-                        } else if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.STR) {
-                            ruleArgs.strings[stringIter] = trackerStorage[_policyId].trackers[trackerValueIndex].stringTracker;
-                            overallIter += 1;
-                            stringIter += 1;
-                        }
+                        ruleArgs.values[overallIter] = trackerStorage[_policyId].trackers[trackerValueIndex].trackerValue;
+                        ++overallIter;
                     }
                 } else {
                     // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
                     if(placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.ADDR) {
                         ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.ADDR;
-                        ruleArgs.addresses[addressIter] = functionSignatureArgs.addresses[placeHolders[placeholderIndex].typeSpecificIndex];
-                        overallIter += 1;
-                        addressIter += 1;
-                    } else if(placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.UINT) {
+                    } else if(applicableRule.placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.UINT) {
                         ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.UINT;
-                        ruleArgs.ints[intIter] = functionSignatureArgs.ints[placeHolders[placeholderIndex].typeSpecificIndex];
-                        overallIter += 1;
-                        intIter += 1;
-                    } else if(placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.STR) {
+                    } else if(applicableRule.placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.STR) {
                         ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.STR;
-                        ruleArgs.strings[stringIter] = functionSignatureArgs.strings[placeHolders[placeholderIndex].typeSpecificIndex];
-                        overallIter += 1;
-                        stringIter += 1;
                     }
+                    ruleArgs.values[overallIter] = functionSignatureArgs.values[applicableRule.placeHolders[placeholderIndex].typeSpecificIndex];
+                    ++overallIter;
                 }
             }
         }
@@ -394,21 +359,18 @@ contract RulesEngineRunLogic is IRulesEngine {
             RulesStorageStructure.LC op = RulesStorageStructure.LC(prog[idx]);
 
             if(op == RulesStorageStructure.LC.PLH) {
-                // Placeholder format will be:
-                // PLH, arguments array index, argument type specific array index
-                // For example if the Placeholder is the 3rd argument in the Arguments structure, which is the first address type argument:
-                // PLH, 2, 0
+                // Placeholder format is: get the index of the argument in the array. For example, PLH 0 is get the first argument in the arguments array and get its type and value
                 uint256 pli = prog[idx+1];
                 uint256 spci = prog[idx+2];
                 RulesStorageStructure.PT typ = arguments.argumentTypes[pli];
                 if(typ == RulesStorageStructure.PT.ADDR) {
                     // Convert address to uint256 for direct comparison using == and != operations
-                    v = uint256(uint160(arguments.addresses[spci])); idx += 3;
+                    v = uint256(uint160(address(abi.decode(arguments.values[pli], (address))))); idx += 2;
                 } else if(typ == RulesStorageStructure.PT.UINT) {
-                    v = arguments.ints[spci]; idx += 3;
+                    v = abi.decode(arguments.values[pli], (uint256)); idx += 2;
                 } else if(typ == RulesStorageStructure.PT.STR) {
                     // Convert string to uint256 for direct comparison using == and != operations
-                    v = uint256(keccak256(abi.encode(arguments.strings[spci]))); idx += 3;
+                    v = uint256(keccak256(abi.encode(abi.decode(arguments.values[pli], (string))))); idx += 2;
                 }
             } else if(op == RulesStorageStructure.LC.TRU) {
                 // Tracker Update format will be:
@@ -437,58 +399,6 @@ contract RulesEngineRunLogic is IRulesEngine {
         return ui2bool(mem[opi - 1]);
     }
 
-    /**
-     * @dev Decodes the encoded function arguments and fills out an Arguments struct to represent them
-     * @param functionSignaturePTs the parmeter types of the arguments in the function in order, pulled from storage
-     * @param arguments the encoded arguments 
-     * @return functionSignatureArgs the Arguments struct containing the decoded function arguments
-     */
-    function decodeFunctionSignatureArgs(RulesStorageStructure.PT[] memory functionSignaturePTs, bytes calldata arguments) public pure returns (RulesStorageStructure.Arguments memory functionSignatureArgs) {
-        uint256 placeIter = 32;
-        uint256 addressIter = 0;
-        uint256 intIter = 0;
-        uint256 stringIter = 0;
-        uint256 overallIter = 0;
-        
-        functionSignatureArgs.argumentTypes = new RulesStorageStructure.PT[](functionSignaturePTs.length);
-        // Initializing each to the max size to avoid the cost of iterating through to determine how many of each type exist
-        functionSignatureArgs.addresses = new address[](functionSignaturePTs.length);
-        functionSignatureArgs.ints = new uint256[](functionSignaturePTs.length);
-        functionSignatureArgs.strings = new string[](functionSignaturePTs.length);
-
-        for(uint256 i = 0; i < functionSignaturePTs.length; i++) {
-            if(functionSignaturePTs[i] == RulesStorageStructure.PT.ADDR) {
-                // address data = abi.decode(arguments, (address));
-                address data = i == 0 ? abi.decode(arguments[:32], (address)) : abi.decode(arguments[placeIter:(placeIter + 32)], (address));
-                if(i != 0) {
-                    placeIter += 32;
-                }
-                functionSignatureArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.ADDR;
-                functionSignatureArgs.addresses[addressIter] = data;
-                overallIter += 1;
-                addressIter += 1;
-            } else if(functionSignaturePTs[i] == RulesStorageStructure.PT.UINT) {
-                uint256 data = abi.decode(arguments[32:64], (uint256));
-                if(i != 0) {
-                    placeIter += 32;
-                }
-                functionSignatureArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.UINT;
-                functionSignatureArgs.ints[intIter] = data;
-                overallIter += 1;
-                intIter += 1;
-            } else if(functionSignaturePTs[i] == RulesStorageStructure.PT.STR) {
-                string memory data = i == 0 ? abi.decode(arguments[:32], (string)) : abi.decode(arguments[placeIter:(placeIter + 32)], (string));
-                if(i != 0) {
-                    placeIter += 32;
-                }
-                functionSignatureArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.STR;
-                functionSignatureArgs.strings[stringIter] = data;
-                overallIter += 1;
-                stringIter += 1;
-            }
-        }
-    } 
-
 
     function evaluateForeignCalls(uint256 _policyId, RulesStorageStructure.Placeholder[] memory placeHolders, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgumentMappings, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256 placeholderIndex) public returns(RulesStorageStructure.ForeignCallReturnValue memory) {
         // Loop through the foreign call structures associated with the calling contracts address
@@ -509,70 +419,120 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param functionArguments the arguments of the rules calling funciton (to be passed to the foreign call as needed)
      * @return retVal the foreign calls return value
      */
-    function evaluateForeignCallForRule(RulesStorageStructure.ForeignCall memory fc, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgumentMappings, RulesStorageStructure.Arguments memory functionArguments) internal returns (RulesStorageStructure.ForeignCallReturnValue memory retVal) {
-        // Arrays used to hold the parameter types and values to be encoded
-        uint256[] memory paramTypeEncode = new uint256[](fc.parameterTypes.length);
-        uint256[] memory uintEncode = new uint256[](fc.parameterTypes.length);
-        address[] memory addressEncode = new address[](fc.parameterTypes.length);
-        string[] memory stringEncode = new string[](fc.parameterTypes.length);
-        // Iterators for the various types to make sure the correct indexes in each array are populated
-        uint256 uintIter = 0;
-        uint256 addrIter = 0;
-        uint256 strIter = 0;
-
-        // Iterate over the foreign call argument mappings contained within the rule structure
-        for(uint256 i = 0; i < fcArgumentMappings.length; i++) {
-            // verify this mappings foreign call index matches that of the foreign call structure
-            if(fcArgumentMappings[i].foreignCallIndex == fc.foreignCallIndex) {
-                // Iterate through the array of mappings between calling function arguments and foreign call arguments
-                for(uint256 j = 0; j < fcArgumentMappings[i].mappings.length; j++) {
-                    // Check the parameter type and set the values in the encode arrays accordingly 
-                    if(fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.ADDR) {
-                        paramTypeEncode[j] = 1; 
-                        addressEncode[addrIter] = functionArguments.addresses[fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
-                        addrIter += 1;
-                    } else if(fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.UINT) {
-                        paramTypeEncode[j] = 0;
-                        uintEncode[uintIter] = functionArguments.ints[fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
-                        uintIter += 1;
-                    } else if(fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.STR) {
-                        paramTypeEncode[j] = 2;
-                        stringEncode[strIter] = functionArguments.strings[fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
-                        strIter += 1;
+    function evaluateForeignCallForRule(RulesStorageStructure.ForeignCall memory fc, RulesStorageStructure.Rule memory rule, RulesStorageStructure.Arguments memory functionArguments) internal returns (RulesStorageStructure.ForeignCallReturnValue memory retVal) {
+        // First, calculate total size needed and positions of dynamic data
+        uint256 headSize = 0;  // Size of the head (static + offsets)
+        uint256 tailSize = 0;  // Size of the dynamic data
+        
+        // First pass: calculate sizes
+        for(uint256 i = 0; i < rule.fcArgumentMappings.length; i++) {
+            if(rule.fcArgumentMappings[i].foreignCallIndex == fc.foreignCallIndex) {
+                for(uint256 j = 0; j < rule.fcArgumentMappings[i].mappings.length; j++) {
+                    RulesStorageStructure.PT argType = rule.fcArgumentMappings[i].mappings[j].functionCallArgumentType;
+                    
+                    if(argType == RulesStorageStructure.PT.STR) {
+                        headSize += 32;  // offset in head
+                        // Get the string length from the encoded value
+                        bytes memory strValue = functionArguments.values[rule.fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
+                        uint256 strLength = strValue.length;
+                        tailSize += 32 + ((strLength + 31) / 32) * 32;  // length + padded string data
+                    } else {
+                        // Static types (UINT, ADDR) take 32 bytes in the head
+                        headSize += 32;
                     }
                 }
             }
         }
 
-        // Encode the arugments
-        bytes memory argsEncoded = assemblyEncode(paramTypeEncode, uintEncode, addressEncode, stringEncode);
+        // Allocate memory for the entire call data
+        bytes memory encodedCall;
+        bytes4 selector = fc.signature;
+        assembly {
+            // Allocate memory for function selector (4 bytes) + arguments
+            let totalSize := add(4, add(headSize, tailSize))
+            encodedCall := mload(0x40)
+            mstore(encodedCall, totalSize)  // Store length
+            
+            // Store function selector in first 4 bytes
+            let ptr := add(encodedCall, 0x20)
+            mstore(ptr, selector)
+            
+            // Update free memory pointer
+            mstore(0x40, add(encodedCall, add(0x20, totalSize)))
+        }
 
-        // Build the bytes object with the function selector and the encoded arguments
-        bytes memory encoded;
-        encoded = bytes.concat(encoded, fc.signature);
-        encoded = bytes.concat(encoded, argsEncoded);
+        uint256 headPtr = 4;  // Start after function selector
+        uint256 tailPtr = headSize + 4;  // Dynamic data starts after the head
 
-        // place the foreign call
-        (bool response, bytes memory data) = fc.foreignCallAddress.call(encoded);
+
+        // Second pass: encode the arguments
+        for(uint256 i = 0; i < rule.fcArgumentMappings.length; i++) {
+            if(rule.fcArgumentMappings[i].foreignCallIndex == fc.foreignCallIndex) {
+                for(uint256 j = 0; j < rule.fcArgumentMappings[i].mappings.length; j++) {
+                    RulesStorageStructure.PT argType = rule.fcArgumentMappings[i].mappings[j].functionCallArgumentType;
+                    bytes memory value = functionArguments.values[rule.fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
+
+                    if(argType == RulesStorageStructure.PT.STR) {
+                        // For strings: put offset in head, data in tail
+                        assembly {
+                            // Store offset in head
+                            mstore(add(add(encodedCall, 0x20), headPtr), sub(tailPtr, 4))
+                            
+                            // Copy string data to tail
+                            let strLength := mload(add(value, 0x20))  // Get string length
+                            mstore(add(add(encodedCall, 0x20), tailPtr), strLength)  // Store length
+                            let paddedLength := mul(div(add(strLength, 31), 32), 32)
+                            
+                            // Copy string data
+                            let srcPtr := add(value, 0x40)
+                            let destPtr := add(add(encodedCall, 0x20), add(tailPtr, 0x20))
+                            
+                            // Copy word by word
+                            let words := div(add(strLength, 31), 32)
+                            for { let z := 0 } lt(z, words) { z := add(z, 1) } {
+                                mstore(add(destPtr, mul(z, 32)), mload(add(srcPtr, mul(z, 32))))
+                            }
+                            
+                            tailPtr := add(tailPtr, add(0x20, paddedLength))
+                            headPtr := add(headPtr, 32)
+                        }
+                        
+                    } 
+                    else if(argType == RulesStorageStructure.PT.ADDR) {
+                        assembly {
+                            mstore(add(add(encodedCall, 0x20), headPtr), and(mload(add(value, 0x20)), 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF))
+                            headPtr := add(headPtr, 32)
+                        }
+                    }
+                    else if(argType == RulesStorageStructure.PT.UINT) {
+                        assembly {
+                            mstore(add(add(encodedCall, 0x20), headPtr), mload(add(value, 0x20)))
+                            headPtr := add(headPtr, 32)
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Place the foreign call
+        (bool response, bytes memory data) = fc.foreignCallAddress.call(encodedCall);
+    
 
         // Verify that the foreign call was successful
         if(response) {
             // Decode the return value based on the specified return value parameter type in the foreign call structure
             if(fc.returnType == RulesStorageStructure.PT.BOOL) {
                 retVal.pType = RulesStorageStructure.PT.BOOL;
-                retVal.boolValue = abi.decode(data, (bool));
             } else if(fc.returnType == RulesStorageStructure.PT.UINT) {
                 retVal.pType = RulesStorageStructure.PT.UINT;
-                retVal.intValue = abi.decode(data, (uint256));
             } else if(fc.returnType == RulesStorageStructure.PT.STR) {
                 retVal.pType = RulesStorageStructure.PT.STR;
-                retVal.str = abi.decode(data, (string));
             } else if(fc.returnType == RulesStorageStructure.PT.ADDR) {
                 retVal.pType = RulesStorageStructure.PT.ADDR;
-                retVal.addr = abi.decode(data, (address));
             } else if(fc.returnType == RulesStorageStructure.PT.VOID) {
                 retVal.pType = RulesStorageStructure.PT.VOID;
             }
+            retVal.value = data;
         }
     }
 
