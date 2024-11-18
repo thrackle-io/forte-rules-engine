@@ -143,7 +143,12 @@ interface RulesStorageStructure {
         Rule rule;
     }
 
-    /**
+    struct foreignCallStorage {
+        bool set;
+        ForeignCall[] foreignCalls;
+    }
+
+   /**
     * Structure to hold Tracker structs 
     */
     struct trackerValuesStorage {

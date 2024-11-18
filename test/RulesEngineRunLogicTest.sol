@@ -463,36 +463,52 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         rule.placeHolders[0].typeSpecificIndex = 0;
         rule.placeHolders[1].pType = RulesStorageStructure.PT.UINT;
         rule.placeHolders[1].trackerValue = true;
+        // Add a negative/positive effects
+        rule.negEffects = new uint256[](1);
+        rule.posEffects = new uint256[](2);
+        rule.negEffects[0] = effectId_revert;
+        rule.posEffects[0] = effectId_event;
 
-
-        logic.addRule(address(userContract), bytes(functionSignature), rule);
-
-        //build tracker 
-        RulesStorageStructure.trackers memory tracker;  
-        /// build the members of the struct: 
-        tracker.pType = RulesStorageStructure.PT.UINT; 
-        tracker.uintTracker = trackerValue; 
-
-        logic.addTracker(address(userContract), tracker);
+         // Save the rule
+        uint256 ruleId = logic.updateRule(0,rule);
 
         RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
         pTypes[0] = RulesStorageStructure.PT.ADDR;
         pTypes[1] = RulesStorageStructure.PT.UINT;
+        // Save the function signature
+        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
+        // Save the Policy
+        signatures.push(bytes(functionSignature));  
+        functionSignatureIds.push(functionSignatureId);
+        // Build the tracker
+        RulesStorageStructure.trackers memory tracker;  
+        /// build the members of the struct: 
+        tracker.pType = RulesStorageStructure.PT.UINT; 
+        tracker.uintTracker = trackerValue; 
+        // Add the tracker
+        logic.addTracker(address(userContract), tracker);
+        functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
 
-        logic.addFunctionSignature(address(userContract), bytes(functionSignature), pTypes);
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        uint256[] memory policyIds = new uint256[](1); 
+        policyIds[0] = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);        
+        logic.applyPolicy(address(userContract), policyIds);
 
     }
 
     function testCheckRulesWithTrackerValue() public {
         setupRuleWithTracker(2);
+        vm.expectEmit(true, true, false, false);
+        emit RulesEngineEvent(event_text);
         bool retVal = userContract.transfer(address(0x7654321), 3);
         assertTrue(retVal);
     }
 
     function testCheckRulesWithTrackerValueNegative() public {
         setupRuleWithTracker(7);
-        bool retVal = userContract.transfer(address(0x7654321), 6);
-        assertFalse(retVal);
+        vm.expectRevert(abi.encodePacked(revert_text)); 
+        userContract.transfer(address(0x7654321), 6);
     }
 
     function testManualUpdateToTrackerThenCheckRules() public {
@@ -500,14 +516,14 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         bool retVal = userContract.transfer(address(0x7654321), 5);
         assertTrue(retVal); 
         // expect failure here 
+        vm.expectRevert(abi.encodePacked(revert_text)); 
         retVal = userContract.transfer(address(0x7654321), 3);
-        assertFalse(retVal);
         /// manually update the tracker here to higher value so that rule fails
         //                  calling contract,  updated uint, empty address, empty string, bool, empty bytes 
         logic.updateTracker(address(userContract), 7, address(0x00), "", true, ""); 
 
+        vm.expectRevert(abi.encodePacked(revert_text)); 
         retVal = userContract.transfer(address(0x7654321), 4);
-        assertFalse(retVal);
 
         retVal = userContract.transfer(address(0x7654321), 9);
         assertTrue(retVal);
