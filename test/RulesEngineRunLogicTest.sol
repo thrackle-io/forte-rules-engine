@@ -5,7 +5,6 @@ import "src/RulesEngineRunLogic.sol";
 import "src/ExampleUserContract.sol";
 import "forge-std/Test.sol";
 import "test/ForeignCallTestContract.sol";
-import "test/RuleEngineRunLogicWrapper.sol";
 import "src/effects/EffectProcessor.sol";
 import "src/effects/EffectStructures.sol";
 
@@ -15,7 +14,7 @@ import "src/effects/EffectStructures.sol";
  */
 contract RulesEngineRunLogicTest is Test,EffectStructures {
 
-    RulesEngineRunLogicWrapper logic;
+    RulesEngineRunLogic logic;
     ExampleUserContract userContract;
     ForeignCallTestContract testContract;
 
@@ -36,7 +35,7 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
     uint256[][] ruleIds;
 
     function setUp() public{
-        logic = new RulesEngineRunLogicWrapper();
+        logic = new RulesEngineRunLogic();
         userContract = new ExampleUserContract();
         userContract.setRulesEngineAddress(address(logic));
         testContract = new ForeignCallTestContract();
@@ -359,7 +358,7 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         string[] memory strings = new string[](2);
         strings[0] = "test";
         strings[1] = "otherTest";
-        bytes memory argsEncoded = logic.assemblyEncodeExt(params, vals, addresses, strings);
+        bytes memory argsEncoded = ExpressionParsingLibrary.assemblyEncode(params, vals, addresses, strings);
         bytes4 FUNC_SELECTOR = bytes4(keccak256(bytes(functionSig)));
         bytes memory encoded;
         encoded = bytes.concat(encoded, FUNC_SELECTOR);
@@ -451,7 +450,7 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         rule.fcArgumentMappings[0].mappings[4].functionSignatureArg.pType = RulesStorageStructure.PT.ADDR;
         rule.fcArgumentMappings[0].mappings[4].functionSignatureArg.typeSpecificIndex = 0;
 
-        RulesStorageStructure.ForeignCallReturnValue memory retVal = logic.evaluateForeignCallForRuleExt(fc, rule, functionArguments);
+        RulesStorageStructure.ForeignCallReturnValue memory retVal = ExpressionParsingLibrary.evaluateForeignCallForRule(fc, rule, functionArguments);
         console2.log(retVal.boolValue);
     }
     function _createGTRule(uint256 _amount) public returns(RulesStorageStructure.Rule memory){
