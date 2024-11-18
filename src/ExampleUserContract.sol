@@ -23,12 +23,16 @@ contract ExampleUserContract {
         args.argumentTypes[1] = RulesStorageStructure.PT.UINT;
         bytes memory encoded = RuleEncodingLibrary.customEncoder(args);
         IRulesEngine rulesEngine = IRulesEngine(rulesEngineAddress);
-        bool retVal = rulesEngine.checkRules(address(this), bytes("transfer(address,uint256) returns (bool)"), encoded);
+        bool retVal = rulesEngine.checkPolicies(address(this), bytes("transfer(address,uint256) returns (bool)"), encoded);
         // This is where the overridden transfer would be called
 
         return retVal;
     }
 
+    /**
+     * Set the Rules Engine address
+     * @param rulesEngine rules engine address
+     */
     function setRulesEngineAddress(address rulesEngine) public {
         rulesEngineAddress = rulesEngine;
     }

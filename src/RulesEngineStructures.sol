@@ -117,48 +117,43 @@ interface RulesStorageStructure {
         // The parameter types of the arguments the foreign call takes
         PT[] parameterTypes;
     }
-
-    /**
-    * Structure used to store the foreign call sctructs 
-    */
-    struct foreignCallStorage {
+    // Policy storage
+    struct PolicyStorageStructure {
         bool set;
-        ForeignCall[] foreignCalls;
+        Policy policy;
     }
 
-    /**
-    * Structure to store the rule mappings 
-    * Function Signature => Rule Storage Struct 
-    * Function Signature => function signature storage 
-    */
-    struct functionSignatureToRuleMapping {
-        bool set;
-        mapping (bytes => ruleStorageStructure) ruleMap;
-        mapping (bytes => functionSignatureStorage) functionSignatureMap;
+    struct Policy {
+        // function signatures to function signature Id
+        mapping (bytes => uint256) functionSignatureIdMap;
+        // function signatures to ruleIds
+        mapping (bytes => uint256[]) signatureToRuleIds;
     }
-
-    /**
-    * Structure to store the parameter types of the function signature 
-    */
-    struct functionSignatureStorage {
+    struct FunctionSignatureStorageStructure {
         bool set;
+        bytes4 signature;
         PT[] parameterTypes;
     }
 
     /**
     * Structure to store the Rules structs 
     */
-    struct ruleStorageStructure {
+    struct RuleStorageStructure {
         bool set;
-        Rule[] rules;
+        Rule rule;
     }
 
-    /**
+    struct ForeignCallStorage {
+        bool set;
+        ForeignCall[] foreignCalls;
+    }
+
+   /**
     * Structure to hold Tracker structs 
     */
-    struct trackerValuesStorage {
+    struct TrackerValuesStorage {
         bool set; 
-        trackers[] trackers; 
+        Trackers[] trackers; 
     }
 
     /**
@@ -166,7 +161,7 @@ interface RulesStorageStructure {
     * TrackerValuePositions array is the key for the tracker value mapping positions 
     * Trackers must be initialized with a starting value and are updated outside of the run function. Therefore must have their own persistent storage for setting and getting of tracker values 
     */
-    struct trackers {
+    struct Trackers {
         // Define what type of tracker
         PT pType; 
         // tracker types arrays 
