@@ -82,6 +82,71 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         logic.applyPolicy(address(userContract), policyIds);
     }
 
+    // Test attempt to add a policy with no signatures saved.
+    function testUpdatePolicyInvalidRule() public {
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+        // Save the function signature
+        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
+        signatures.push(bytes(functionSignature));  
+        functionSignatureIds.push(functionSignatureId);
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= 1;
+        vm.expectRevert("Invalid Rule");
+        logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);
+    }
+
+    // Test attempt to add a policy with no signatures saved.
+    function testUpdatePolicyInvalidSignature() public {
+        signatures.push(bytes(functionSignature));  
+        functionSignatureIds.push(1);
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= 1;
+        vm.expectRevert("Invalid Signature");
+        logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);
+    }
+
+    // Test attempt to add a policy with valid parts.
+    function testUpdatePolicyPositive() public {
+        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        RulesStorageStructure.Rule memory rule;
+        
+        // Instruction set: LC.PLH, 1, 0, LC.NUM, 4, LC.GT, 0, 1
+
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = new uint256[](8);
+        rule.instructionSet[0] = uint(RulesStorageStructure.LC.PLH);
+        rule.instructionSet[1] = 0;
+        rule.instructionSet[2] = 0;
+        rule.instructionSet[3] = uint(RulesStorageStructure.LC.NUM);
+        rule.instructionSet[4] = 4;
+        rule.instructionSet[5] = uint(RulesStorageStructure.LC.GT);
+        rule.instructionSet[6] = 0;
+        rule.instructionSet[7] = 1;
+
+        // Build the calling function argument placeholder 
+        rule.placeHolders = new RulesStorageStructure.Placeholder[](1);
+        rule.placeHolders[0].pType = RulesStorageStructure.PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 0;
+        // Save the rule
+        uint256 ruleId = logic.updateRule(0,rule);
+
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+        // Save the function signature
+        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
+        // Save the Policy
+        signatures.push(bytes(functionSignature));  
+        functionSignatureIds.push(functionSignatureId);
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        uint256[] memory policyIds = new uint256[](1); 
+        assertGt(logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds),0);        
+
+    }
+
     
     function setupRuleWithForeignCall() public {
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
