@@ -259,7 +259,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      */
     function evaluateIndividualRule(int256 _policyId, RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs) internal returns (bool response) {
             RulesStorageStructure.Arguments memory ruleArgs = buildArguments(applicableRule.placeHolders, applicableRule.fcArgumentMappingsConditions, functionSignatureArgs, contractAddress);
-            response = this.run(applicableRule.instructionSet, ruleArgs);
+            response = this.run(applicableRule.instructionSet, ruleArgs, contractAddress);
     }
 
     function buildArguments(RulesStorageStructure.Placeholder[] memory placeHolders, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgs, RulesStorageStructure.Arguments memory functionSignatureArgs, address contractAddress) public returns (RulesStorageStructure.Arguments memory) {
@@ -375,13 +375,10 @@ contract RulesEngineRunLogic is IRulesEngine {
     }
 
     function evaluateExpression(RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256[] memory instructionSet, address contractAddress) public {
-        RulesStorageStructure.Arguments effectArguments = buildArguments(applicableRule.effectPlaceHolders, applicableRule.fcArgumentMappingsEffects, functionSignatureArgs, contractAddress);
-        // TODO: Tracker Updates
-        updateTrackers();
-
-    }
-
-    function updateTrackers() public {
+        RulesStorageStructure.Arguments memory effectArguments = buildArguments(applicableRule.effectPlaceHolders, applicableRule.fcArgumentMappingsEffects, functionSignatureArgs, contractAddress);
+        if(instructionSet.length > 1) {
+            this.run(instructionSet, effectArguments, contractAddress);
+        }
 
     }
 
@@ -415,7 +412,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param arguments the values to replace the placeholders in the instruction set with.
      * @return ans the result of evaluating the instruction set
      */
-    function run(uint256[] calldata prog, RulesStorageStructure.Arguments calldata arguments) public pure returns (bool ans) {
+    function run(uint256[] calldata prog, RulesStorageStructure.Arguments calldata arguments, address contractAddress) public returns (bool ans) {
         uint256[64] memory mem;
         uint256 idx = 0;
         uint256 opi = 0;
@@ -440,6 +437,15 @@ contract RulesEngineRunLogic is IRulesEngine {
                     // Convert string to uint256 for direct comparison using == and != operations
                     v = uint256(keccak256(abi.encode(arguments.strings[spci]))); idx += 3;
                 }
+            } else if(op == RulesStorageStructure.LC.TRU) {
+                // Tracker Update format will be:
+                // TRU, tracker index, mem index
+                // TODO: Update to account for type
+                if(trackerStorage[contractAddress].trackers[prog[idx + 1]].pType == RulesStorageStructure.PT.UINT) {
+                    trackerStorage[contractAddress].trackers[prog[idx + 1]].uintTracker = mem[prog[idx+2]];
+                }
+                idx += 3;
+
             } else if (op == RulesStorageStructure.LC.NUM) { v = prog[idx+1]; idx += 2; }
             else if (op == RulesStorageStructure.LC.ADD) { v = mem[prog[idx+1]] + mem[prog[idx+2]]; idx += 3; }
             else if (op == RulesStorageStructure.LC.SUB) { v = mem[prog[idx+1]] - mem[prog[idx+2]]; idx += 3; }

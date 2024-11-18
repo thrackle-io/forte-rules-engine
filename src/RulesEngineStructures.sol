@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 interface RulesStorageStructure {
 
     /// Enumerated list of Logical operators used in Rule Engine Run 
-    enum LC { NUM, ADD, SUB, MUL, DIV, LT, GT, EQ, AND, OR, NOT, PLH, FC, FCR }
+    enum LC { NUM, ADD, SUB, MUL, DIV, LT, GT, EQ, AND, OR, NOT, PLH, FC, TRU }
 
     // Supported Parameter Types
     enum PT { ADDR, STR, UINT, BOOL, VOID, BYTES }

@@ -33,6 +33,7 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
     uint256[][] ruleIds;
 
     uint256 effectId_expression;
+    uint256 effectId_expression2;
 
     function setUp() public{
         logic = new RulesEngineRunLogic();
@@ -143,6 +144,51 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         ruleIds[0][0]= ruleId;
         assertGt(logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds),0);        
 
+    }
+
+    function setupEffectWithTrackerUpdate() public {
+        // Rule: 1 == 1 -> TRU:someTracker += FC:simpleCheck(amount) -> transfer(address _to, uint256 amount) returns (bool)
+        RulesStorageStructure.PT[] memory fcArgs = new RulesStorageStructure.PT[](1);
+        fcArgs[0] = RulesStorageStructure.PT.UINT;
+        RulesStorageStructure.ForeignCall memory fc = logic.updateForeignCall(address(userContract), address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);
+        RulesStorageStructure.Rule memory rule;
+        rule.posEffects = new uint256[](1);
+        rule.posEffects[0] = effectId_expression2;
+        rule.instructionSet = new uint256[](7);
+        rule.instructionSet[0] = uint(RulesStorageStructure.LC.NUM);
+        rule.instructionSet[1] = 1;
+        rule.instructionSet[2] = uint(RulesStorageStructure.LC.NUM);
+        rule.instructionSet[3] = 1;
+        rule.instructionSet[4] = uint(RulesStorageStructure.LC.EQ);
+        rule.instructionSet[5] = 0;
+        rule.instructionSet[6] = 1;
+
+        rule.effectPlaceHolders = new RulesStorageStructure.Placeholder[](2); 
+        rule.effectPlaceHolders[0].foreignCall = true;
+        rule.effectPlaceHolders[0].typeSpecificIndex = fc.foreignCallIndex;
+        rule.effectPlaceHolders[1].pType = RulesStorageStructure.PT.UINT;
+        rule.effectPlaceHolders[1].trackerValue = true;
+
+        rule.fcArgumentMappingsEffects = new RulesStorageStructure.ForeignCallArgumentMappings[](1);
+        rule.fcArgumentMappingsEffects[0].mappings = new RulesStorageStructure.IndividualArgumentMapping[](1);
+        rule.fcArgumentMappingsEffects[0].mappings[0].functionCallArgumentType = RulesStorageStructure.PT.UINT;
+        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.foreignCall = false;
+        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.pType = RulesStorageStructure.PT.UINT;
+        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.typeSpecificIndex = 0;
+        logic.addRule(address(userContract), bytes(functionSignature), rule);
+
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+        logic.addFunctionSignature(address(userContract), bytes(functionSignature), pTypes);
+
+        //build tracker 
+        RulesStorageStructure.trackers memory tracker;  
+        /// build the members of the struct: 
+        tracker.pType = RulesStorageStructure.PT.UINT; 
+        tracker.uintTracker = 2; 
+
+        logic.addTracker(address(userContract), tracker);
     }
 
     function setupEffectWithForeignCall() public {
@@ -362,6 +408,23 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         assertEq(testContract.getInternalValue(), 5);
     }
 
+    function testCheckRulesExplicitWithTrackerUpdateEffect() public {
+        setupEffectWithTrackerUpdate();
+        RulesStorageStructure.Arguments memory arguments;
+        arguments.argumentTypes = new RulesStorageStructure.PT[](2);
+        arguments.argumentTypes[0] = RulesStorageStructure.PT.ADDR;
+        arguments.argumentTypes[1] = RulesStorageStructure.PT.UINT;
+        arguments.addresses = new address[](1);
+        arguments.addresses[0] = address(0x7654321);
+        arguments.ints = new uint256[](1);
+        arguments.ints[0] = 5;
+        bytes memory retVal = RuleEncodingLibrary.customEncoder(arguments);
+
+        bool response = logic.checkRules(address(userContract), bytes(functionSignature), retVal);
+        RulesStorageStructure.trackers memory trackerValue = logic.getTracker(address(userContract), 0);
+        assertEq(trackerValue.uintTracker, 7);
+    }
+
     function testCheckRulesExplicitWithForeignCallNegative() public {
         setupRuleWithForeignCall();
         RulesStorageStructure.Arguments memory arguments;
@@ -552,6 +615,7 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         effectId_event2 = _createEffectEvent(event_text2); // effectId = 3
         effectId_revert2 = _createEffectRevert(revert_text2); // effectId = 4
         effectId_expression = _createEffectExpression(); // effectId = 5;
+        effectId_expression2 = _createEffectExpressionTrackerUpdate();
 
     }
 
@@ -573,9 +637,31 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         effect.effectId = 0;
         effect.effectType = ET.EXPRESSION;
         effect.text = "";
-        effect.instructionSet = new uint256[](2);
-        effect.instructionSet[0] = uint(RulesStorageStructure.LC.FC);
+        effect.instructionSet = new uint256[](1);
+
+        return logic.updateEffect(effect);
+    }
+
+    function _createEffectExpressionTrackerUpdate() public returns(uint256 _effectId) {
+        EffectStructures.Effect memory effect;
+        effect.effectId = 0;
+        effect.effectType = ET.EXPRESSION;
+        effect.text = "";
+        effect.instructionSet = new uint256[](12);
+        // Foreign Call Placeholder
+        effect.instructionSet[0] = uint(RulesStorageStructure.LC.PLH);
         effect.instructionSet[1] = 0;
+        effect.instructionSet[2] = 0;
+        // Tracker Placeholder
+        effect.instructionSet[3] = uint(RulesStorageStructure.LC.PLH);
+        effect.instructionSet[4] = 1;
+        effect.instructionSet[5] = 1;
+        effect.instructionSet[6] = uint(RulesStorageStructure.LC.ADD);
+        effect.instructionSet[7] = 0;
+        effect.instructionSet[8] = 1;
+        effect.instructionSet[9] = uint(RulesStorageStructure.LC.TRU);
+        effect.instructionSet[10] = 0;
+        effect.instructionSet[11] = 2;
 
         return logic.updateEffect(effect);
     }
