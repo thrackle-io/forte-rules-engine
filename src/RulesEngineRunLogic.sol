@@ -65,7 +65,7 @@ contract RulesEngineRunLogic is IRulesEngine {
         // increment the policyId if necessary
         if (_policyId == 0) {
             unchecked{
-                policyId+=1;
+                ++policyId;
             }
         } else {
             policyId = _policyId;            
@@ -113,7 +113,7 @@ contract RulesEngineRunLogic is IRulesEngine {
         // increment the ruleId if necessary
         if (_ruleId == 0) {
             unchecked{
-                ruleId+=1;
+                ++ruleId;
             }
         } else {
             ruleId = _ruleId;            
@@ -135,7 +135,7 @@ contract RulesEngineRunLogic is IRulesEngine {
         // increment the functionSignatureId if necessary
         if (_functionSignatureId == 0) {
             unchecked{
-                functionSignatureId+=1;
+                ++functionSignatureId;
             }
         } else {
             functionSignatureId = _functionSignatureId;            
