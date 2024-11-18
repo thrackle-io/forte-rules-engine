@@ -118,7 +118,7 @@ interface RulesStorageStructure {
         PT[] parameterTypes;
     }
     // Policy storage
-    struct policyStorageStructure {
+    struct PolicyStorageStructure {
         bool set;
         Policy policy;
     }
@@ -129,7 +129,7 @@ interface RulesStorageStructure {
         // function signatures to ruleIds
         mapping (bytes => uint256[]) signatureToRuleIds;
     }
-    struct functionSignatureStorageStructure {
+    struct FunctionSignatureStorageStructure {
         bool set;
         bytes4 signature;
         PT[] parameterTypes;
@@ -138,12 +138,12 @@ interface RulesStorageStructure {
     /**
     * Structure to store the Rules structs 
     */
-    struct ruleStorageStructure {
+    struct RuleStorageStructure {
         bool set;
         Rule rule;
     }
 
-    struct foreignCallStorage {
+    struct ForeignCallStorage {
         bool set;
         ForeignCall[] foreignCalls;
     }
@@ -151,9 +151,9 @@ interface RulesStorageStructure {
    /**
     * Structure to hold Tracker structs 
     */
-    struct trackerValuesStorage {
+    struct TrackerValuesStorage {
         bool set; 
-        trackers[] trackers; 
+        Trackers[] trackers; 
     }
 
     /**
@@ -161,7 +161,7 @@ interface RulesStorageStructure {
     * TrackerValuePositions array is the key for the tracker value mapping positions 
     * Trackers must be initialized with a starting value and are updated outside of the run function. Therefore must have their own persistent storage for setting and getting of tracker values 
     */
-    struct trackers {
+    struct Trackers {
         // Define what type of tracker
         PT pType; 
         // tracker types arrays 

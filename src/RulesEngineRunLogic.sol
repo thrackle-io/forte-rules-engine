@@ -16,13 +16,13 @@ contract RulesEngineRunLogic is IRulesEngine {
     // TODO: Add capability for multiple policies per contract
     mapping (address contractAddress => uint256[]) contractPolicyIdMap; 
     // policy Id's to policy storage
-    mapping (uint256 policyId => RulesStorageStructure.policyStorageStructure) policyStorage;
+    mapping (uint256 policyId => RulesStorageStructure.PolicyStorageStructure) policyStorage;
     // rule Id's to rule storage
-    mapping(uint256 ruleId => RulesStorageStructure.ruleStorageStructure) ruleStorage;
+    mapping(uint256 ruleId => RulesStorageStructure.RuleStorageStructure) ruleStorage;
     // function Id's to function storage
-    mapping(uint256 functionId => RulesStorageStructure.functionSignatureStorageStructure) functionSignatureStorage;
-    mapping(address => RulesStorageStructure.foreignCallStorage) foreignCalls;
-    mapping(address => RulesStorageStructure.trackerValuesStorage) trackerStorage;
+    mapping(uint256 functionId => RulesStorageStructure.FunctionSignatureStorageStructure) functionSignatureStorage;
+    mapping(address => RulesStorageStructure.ForeignCallStorage) foreignCalls;
+    mapping(address => RulesStorageStructure.TrackerValuesStorage) trackerStorage;
 
     // Loading helper mappings
     // mapping (bytes => uint256) functionSignatureIdMap;
@@ -56,15 +56,17 @@ contract RulesEngineRunLogic is IRulesEngine {
      * Add a Policy to Storage
      * @param _policyId id of of the policy 
      * @param _signatures all signatures in the policy
-     * @param functionSignatureIds corresponding signature ids in the policy
-     * @param ruleIds two dimensional array of the rules
+     * @param functionSignatureIds corresponding signature ids in the policy. The elements in this array are one to one matches of the elements in _signatures array. They store the functionSignatureId for each of the signatures in _signatures array.
+     * @param ruleIds two dimensional array of the rules. This array contains a simple count at first level and the second level is the array of ruleId's within the policy.
      * @return policyId generated policyId
      * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
      */
     function updatePolicy(uint256 _policyId, bytes[] calldata _signatures, uint256[] calldata functionSignatureIds, uint256[][] calldata ruleIds) public returns(uint256){
         // increment the policyId if necessary
         if (_policyId == 0) {
-            policyId+=1;
+            unchecked{
+                policyId+=1;
+            }
         } else {
             policyId = _policyId;            
         }
@@ -88,7 +90,7 @@ contract RulesEngineRunLogic is IRulesEngine {
     }
 
     /**
-     * Apply the policeis to the contracts.
+     * Apply the policies to the contracts.
      * @param _contractAddress address of the contract to have policies applied
      * @param _policyId the rule to add 
      */
@@ -110,7 +112,9 @@ contract RulesEngineRunLogic is IRulesEngine {
         // TODO: Add validations for rule
         // increment the ruleId if necessary
         if (_ruleId == 0) {
-            ruleId+=1;
+            unchecked{
+                ruleId+=1;
+            }
         } else {
             ruleId = _ruleId;            
         }
@@ -130,7 +134,9 @@ contract RulesEngineRunLogic is IRulesEngine {
         // TODO: Add validations for function signatures
         // increment the functionSignatureId if necessary
         if (_functionSignatureId == 0) {
-            functionSignatureId+=1;
+            unchecked{
+                functionSignatureId+=1;
+            }
         } else {
             functionSignatureId = _functionSignatureId;            
         }
@@ -145,7 +151,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param contractAddress the address of the contract the trackerStorage is associated with
      * @param tracker the tracker to add 
      */
-    function addTracker(address contractAddress, RulesStorageStructure.trackers calldata tracker) public {
+    function addTracker(address contractAddress, RulesStorageStructure.Trackers calldata tracker) public {
         trackerStorage[contractAddress].set = true;
         trackerStorage[contractAddress].trackers.push(tracker);
     }
@@ -177,7 +183,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param index postion of the tracker to return 
      * @return trackers
      */
-    function getTracker(address contractAddress, uint256 index) public view returns (RulesStorageStructure.trackers memory trackers) {
+    function getTracker(address contractAddress, uint256 index) public view returns (RulesStorageStructure.Trackers memory trackers) {
         // return trackers for contract address at speficic index  
         return trackerStorage[contractAddress].trackers[index];
     }

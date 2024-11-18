@@ -29,7 +29,11 @@ contract ExampleUserContract {
         return retVal;
     }
 
-        function setRulesEngineAddress(address rulesEngine) public {
+    /**
+     * Set the Rules Engine address
+     * @param rulesEngine rules engine address
+     */
+    function setRulesEngineAddress(address rulesEngine) public {
         rulesEngineAddress = rulesEngine;
     }
 }

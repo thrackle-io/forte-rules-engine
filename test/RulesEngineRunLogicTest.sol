@@ -546,7 +546,7 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         signatures.push(bytes(functionSignature));  
         functionSignatureIds.push(functionSignatureId);
         // Build the tracker
-        RulesStorageStructure.trackers memory tracker;  
+        RulesStorageStructure.Trackers memory tracker;  
         /// build the members of the struct: 
         tracker.pType = RulesStorageStructure.PT.UINT; 
         tracker.uintTracker = trackerValue; 
@@ -600,7 +600,7 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         bool retVal = userContract.transfer(address(0x7654321), 3);
         assertTrue(retVal);
 
-        RulesStorageStructure.trackers memory testTracker = logic.getTracker(address(userContract), 0); 
+        RulesStorageStructure.Trackers memory testTracker = logic.getTracker(address(userContract), 0); 
 
         assertTrue(testTracker.uintTracker == 2); 
         assertTrue(testTracker.addressTracker == address(0x00)); 
