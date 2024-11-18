@@ -21,8 +21,8 @@ contract RulesEngineRunLogic is IRulesEngine {
     mapping(uint256 ruleId => RulesStorageStructure.RuleStorageStructure) ruleStorage;
     // function Id's to function storage
     mapping(uint256 functionId => RulesStorageStructure.FunctionSignatureStorageStructure) functionSignatureStorage;
-    mapping(address => RulesStorageStructure.ForeignCallStorage) foreignCalls;
-    mapping(address => RulesStorageStructure.TrackerValuesStorage) trackerStorage;
+    mapping(uint256 policyId => RulesStorageStructure.ForeignCallStorage) foreignCalls;
+    mapping(uint256 policyId => RulesStorageStructure.TrackerValuesStorage) trackerStorage;
 
     // Loading helper mappings
     // mapping (bytes => uint256) functionSignatureIdMap;
@@ -148,44 +148,44 @@ contract RulesEngineRunLogic is IRulesEngine {
 
     /**
      * Add a tracker to the trackerStorage mapping.
-     * @param contractAddress the address of the contract the trackerStorage is associated with
+     * @param _policyId the policyId the trackerStorage is associated with
      * @param tracker the tracker to add 
      */
-    function addTracker(address contractAddress, RulesStorageStructure.Trackers calldata tracker) public {
-        trackerStorage[contractAddress].set = true;
-        trackerStorage[contractAddress].trackers.push(tracker);
+    function addTracker(uint256 _policyId, RulesStorageStructure.Trackers calldata tracker) public {
+        trackerStorage[_policyId].set = true;
+        trackerStorage[_policyId].trackers.push(tracker);
     }
 
     /**
      * Function to update tracker in trackerStorage mapping.
-     * @param contractAddress the address of the contract the function signature is associated with
+     * @param _policyId the policyId the trackerStorage is associated with
      * @param updatedUintTracker uint256 tracker update 
      * @param updatedAddressTracker address tracker update 
      * @param updatedStringTracker string tracker update 
      * @param updatedBoolTracker bool tracker update 
      * @param updatedBytesTracker bytes tracker update 
      */
-    function updateTracker(address contractAddress, uint256 updatedUintTracker, address updatedAddressTracker, string memory updatedStringTracker, bool updatedBoolTracker, bytes memory updatedBytesTracker) public {
+    function updateTracker(uint256 _policyId, uint256 updatedUintTracker, address updatedAddressTracker, string memory updatedStringTracker, bool updatedBoolTracker, bytes memory updatedBytesTracker) public {
         // Open to feedback on this if there is a better way to update the struct members based on type 
-        trackerStorage[contractAddress].set = true;
-        for(uint256 i = 0; i < trackerStorage[contractAddress].trackers.length; i++){
-            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.UINT) trackerStorage[contractAddress].trackers[i].uintTracker = updatedUintTracker;
-            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.ADDR) trackerStorage[contractAddress].trackers[i].addressTracker = updatedAddressTracker;
-            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.STR) trackerStorage[contractAddress].trackers[i].stringTracker = updatedStringTracker;
-            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.BOOL) trackerStorage[contractAddress].trackers[i].boolTracker = updatedBoolTracker;
-            if (trackerStorage[contractAddress].trackers[i].pType == RulesStorageStructure.PT.BYTES) trackerStorage[contractAddress].trackers[i].bytesTracker = updatedBytesTracker;
+        trackerStorage[_policyId].set = true;
+        for(uint256 i = 0; i < trackerStorage[_policyId].trackers.length; i++){
+            if (trackerStorage[_policyId].trackers[i].pType == RulesStorageStructure.PT.UINT) trackerStorage[_policyId].trackers[i].uintTracker = updatedUintTracker;
+            if (trackerStorage[_policyId].trackers[i].pType == RulesStorageStructure.PT.ADDR) trackerStorage[_policyId].trackers[i].addressTracker = updatedAddressTracker;
+            if (trackerStorage[_policyId].trackers[i].pType == RulesStorageStructure.PT.STR) trackerStorage[_policyId].trackers[i].stringTracker = updatedStringTracker;
+            if (trackerStorage[_policyId].trackers[i].pType == RulesStorageStructure.PT.BOOL) trackerStorage[_policyId].trackers[i].boolTracker = updatedBoolTracker;
+            if (trackerStorage[_policyId].trackers[i].pType == RulesStorageStructure.PT.BYTES) trackerStorage[_policyId].trackers[i].bytesTracker = updatedBytesTracker;
         }
     }
 
     /**
      * Return a tracker from the trackerStorage.
-     * @param contractAddress the address of the contract the trackerStorage is associated with
+     * @param _policyId the policyId the trackerStorage is associated with
      * @param index postion of the tracker to return 
      * @return trackers
      */
-    function getTracker(address contractAddress, uint256 index) public view returns (RulesStorageStructure.Trackers memory trackers) {
+    function getTracker(uint256 _policyId, uint256 index) public view returns (RulesStorageStructure.Trackers memory trackers) {
         // return trackers for contract address at speficic index  
-        return trackerStorage[contractAddress].trackers[index];
+        return trackerStorage[_policyId].trackers[index];
     }
 
     /**
@@ -239,7 +239,7 @@ contract RulesEngineRunLogic is IRulesEngine {
             // to rule specific argument array
 
             for(uint256 i = 0; i < applicableRules.length; i++) { 
-                if(!evaluateIndividualRule(applicableRules[i], functionSignatureArgs, contractAddress)) {
+                if(!evaluateIndividualRule(_policyId, applicableRules[i], functionSignatureArgs, contractAddress)) {
                     EffectProcessor(effectProcessor).doEffects(applicableRules[i].negEffects);
                 } else{
                     EffectProcessor(effectProcessor).doEffects(applicableRules[i].posEffects);
@@ -302,12 +302,13 @@ contract RulesEngineRunLogic is IRulesEngine {
 
     /**
      * @dev evaluates an individual rules condition(s)
+     * @param _policyId Policy id being evaluated.
      * @param applicableRule the rule structure containing the instruction set, with placeholders, to execute
      * @param functionSignatureArgs the values to replace the placeholders in the instruction set with.
      * @return response the result of the rule condition evaluation 
      * TODO: Look into the relationship between policy and foreign calls
      */
-    function evaluateIndividualRule(RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, address contractAddress) internal returns (bool response) {
+    function evaluateIndividualRule(uint256 _policyId, RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, address contractAddress) internal returns (bool response) {
         RulesStorageStructure.Arguments memory ruleArgs;
         ruleArgs.argumentTypes = new RulesStorageStructure.PT[](applicableRule.placeHolders.length);
         // Initializing each to the max size to avoid the cost of iterating through to determine how many of each type exist
@@ -323,11 +324,11 @@ contract RulesEngineRunLogic is IRulesEngine {
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
             if(applicableRule.placeHolders[placeholderIndex].foreignCall) {
                 // Loop through the foreign call structures associated with the calling contracts address
-                for(uint256 foreignCallsIdx = 0; foreignCallsIdx < foreignCalls[contractAddress].foreignCalls.length; foreignCallsIdx++) {
+                for(uint256 foreignCallsIdx = 0; foreignCallsIdx < foreignCalls[_policyId].foreignCalls.length; foreignCallsIdx++) {
                     // Check if the index for this placeholder matches the foreign calls index
-                    if(foreignCalls[contractAddress].foreignCalls[foreignCallsIdx].foreignCallIndex == applicableRule.placeHolders[placeholderIndex].typeSpecificIndex) {
+                    if(foreignCalls[_policyId].foreignCalls[foreignCallsIdx].foreignCallIndex == applicableRule.placeHolders[placeholderIndex].typeSpecificIndex) {
                         // Place the foreign call
-                        RulesStorageStructure.ForeignCallReturnValue memory retVal = evaluateForeignCallForRule(foreignCalls[contractAddress].foreignCalls[foreignCallsIdx], applicableRule, functionSignatureArgs);
+                        RulesStorageStructure.ForeignCallReturnValue memory retVal = evaluateForeignCallForRule(foreignCalls[_policyId].foreignCalls[foreignCallsIdx], applicableRule, functionSignatureArgs);
                         // Set the placeholders value and type based on the value returned by the foreign call
                         ruleArgs.argumentTypes[overallIter] = retVal.pType;
                         if(retVal.pType == RulesStorageStructure.PT.ADDR) {
@@ -349,20 +350,20 @@ contract RulesEngineRunLogic is IRulesEngine {
                 // Determine if the placeholder represents the return value of a tracker 
                 if (applicableRule.placeHolders[placeholderIndex].trackerValue) {
                 // Loop through tracker storage for invoking address  
-                for(uint256 trackerValueIndex = 0; trackerValueIndex < trackerStorage[contractAddress].trackers.length; trackerValueIndex++) {
+                for(uint256 trackerValueIndex = 0; trackerValueIndex < trackerStorage[_policyId].trackers.length; trackerValueIndex++) {
                     // determine pType of tracker
-                    ruleArgs.argumentTypes[overallIter] = trackerStorage[contractAddress].trackers[trackerValueIndex].pType;
+                    ruleArgs.argumentTypes[overallIter] = trackerStorage[_policyId].trackers[trackerValueIndex].pType;
                     // replace the placeholder value with the tracker value 
                     if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.ADDR){
-                        ruleArgs.addresses[addressIter] = trackerStorage[contractAddress].trackers[trackerValueIndex].addressTracker;
+                        ruleArgs.addresses[addressIter] = trackerStorage[_policyId].trackers[trackerValueIndex].addressTracker;
                         overallIter += 1;
                         addressIter += 1;
                     } else if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.UINT) {
-                        ruleArgs.ints[intIter] = trackerStorage[contractAddress].trackers[trackerValueIndex].uintTracker;
+                        ruleArgs.ints[intIter] = trackerStorage[_policyId].trackers[trackerValueIndex].uintTracker;
                         overallIter += 1;
                         intIter += 1;
                     } else if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.STR) {
-                        ruleArgs.strings[stringIter] = trackerStorage[contractAddress].trackers[trackerValueIndex].stringTracker;
+                        ruleArgs.strings[stringIter] = trackerStorage[_policyId].trackers[trackerValueIndex].stringTracker;
                         overallIter += 1;
                         stringIter += 1;
                     }
@@ -442,14 +443,14 @@ contract RulesEngineRunLogic is IRulesEngine {
 
     /**
      * @dev Builds a foreign call structure and adds it to the contracts storage, mapped to the contract address it is associated with
-     * @param contractAddress the address of the contract the foreign call will be mapped to
+     * @param _policyId the policy Id of the policy the foreign call will be mapped to
      * @param foreignContractAddress the address of the contract where the foreign call exists
      * @param functionSignature the string representation of the function signature of the foreign call
      * @param returnType the parameter type of the foreign calls return value
      * @param arguments the parameter types of the foreign calls arguments in order
      * @return fc the foreign call structure 
      */
-    function updateForeignCall(address contractAddress, address foreignContractAddress, string memory functionSignature, RulesStorageStructure.PT returnType, RulesStorageStructure.PT[] memory arguments) public returns (RulesStorageStructure.ForeignCall memory fc) {
+    function updateForeignCall(uint256 _policyId, address foreignContractAddress, string memory functionSignature, RulesStorageStructure.PT returnType, RulesStorageStructure.PT[] memory arguments) public returns (RulesStorageStructure.ForeignCall memory fc) {
         fc.foreignCallAddress = foreignContractAddress;
         // Convert the string representation of the function signature to a selector
         fc.signature = bytes4(keccak256(bytes(functionSignature)));
@@ -462,11 +463,11 @@ contract RulesEngineRunLogic is IRulesEngine {
         }
 
         // If the foreign call structure already exists in the mapping update it, otherwise add it
-        if(foreignCalls[contractAddress].set) {
-            foreignCalls[contractAddress].foreignCalls.push(fc);
+        if(foreignCalls[_policyId].set) {
+            foreignCalls[_policyId].foreignCalls.push(fc);
         } else {
-            foreignCalls[contractAddress].set = true;
-            foreignCalls[contractAddress].foreignCalls.push(fc);
+            foreignCalls[_policyId].set = true;
+            foreignCalls[_policyId].foreignCalls.push(fc);
         }
     }
 

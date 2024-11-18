@@ -142,23 +142,19 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        uint256[] memory policyIds = new uint256[](1); 
         assertGt(logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds),0);        
 
     }
 
     
-    function setupRuleWithForeignCall() public {
-        // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        RulesStorageStructure.PT[] memory fcArgs = new RulesStorageStructure.PT[](1);
-        fcArgs[0] = RulesStorageStructure.PT.UINT;
-        RulesStorageStructure.ForeignCall memory fc = logic.updateForeignCall(address(userContract), address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);
+    function setupRuleWithForeignCall() public returns(uint256 policyId) {
+        // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
         RulesStorageStructure.Rule memory rule;
         
         // Build the foreign call placeholder
         rule.placeHolders = new RulesStorageStructure.Placeholder[](1); 
         rule.placeHolders[0].foreignCall = true;
-        rule.placeHolders[0].typeSpecificIndex = fc.foreignCallIndex;
+        rule.placeHolders[0].typeSpecificIndex = 0;
 
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = new uint256[](8);
@@ -193,8 +189,12 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        uint256[] memory policyIds = new uint256[](1); 
-        policyIds[0] = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);        
+        uint256[] memory policyIds = new uint256[](1);
+        policyId = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);
+        RulesStorageStructure.PT[] memory fcArgs = new RulesStorageStructure.PT[](1);
+        fcArgs[0] = RulesStorageStructure.PT.UINT;
+        RulesStorageStructure.ForeignCall memory fc = logic.updateForeignCall(policyId, address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);        
+        policyIds[0] = policyId;
         logic.applyPolicy(address(userContract), policyIds);
     }
 
@@ -507,7 +507,7 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
     /// Tracker Tests 
 
     // set up a rule with a uint256 tracker value for testing 
-     function setupRuleWithTracker(uint256 trackerValue) public {
+     function setupRuleWithTracker(uint256 trackerValue) public returns(uint256 policyId){
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         RulesStorageStructure.Rule memory rule;
 
@@ -547,19 +547,20 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         functionSignatureIds.push(functionSignatureId);
         // Build the tracker
         RulesStorageStructure.Trackers memory tracker;  
-        /// build the members of the struct: 
-        tracker.pType = RulesStorageStructure.PT.UINT; 
-        tracker.uintTracker = trackerValue; 
-        // Add the tracker
-        logic.addTracker(address(userContract), tracker);
-        functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
         uint256[] memory policyIds = new uint256[](1); 
-        policyIds[0] = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);        
+        policyId = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);  
+        /// build the members of the struct: 
+        tracker.pType = RulesStorageStructure.PT.UINT; 
+        tracker.uintTracker = trackerValue; 
+        // Add the tracker
+        logic.addTracker(policyId, tracker);
+        functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
+        policyIds[0] = policyId;     
         logic.applyPolicy(address(userContract), policyIds);
-
+        return policyId;
     }
 
     function testCheckRulesWithTrackerValue() public {
@@ -577,7 +578,7 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
     }
 
     function testManualUpdateToTrackerThenCheckRules() public {
-        setupRuleWithTracker(4);
+        uint256 policyId = setupRuleWithTracker(4);
         bool retVal = userContract.transfer(address(0x7654321), 5);
         assertTrue(retVal); 
         // expect failure here 
@@ -585,7 +586,7 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         retVal = userContract.transfer(address(0x7654321), 3);
         /// manually update the tracker here to higher value so that rule fails
         //                  calling contract,  updated uint, empty address, empty string, bool, empty bytes 
-        logic.updateTracker(address(userContract), 7, address(0x00), "", true, ""); 
+        logic.updateTracker(policyId, 7, address(0x00), "", true, ""); 
 
         vm.expectRevert(abi.encodePacked(revert_text)); 
         retVal = userContract.transfer(address(0x7654321), 4);
@@ -596,11 +597,11 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
     }
 
     function testGetTrackerValue() public {
-        setupRuleWithTracker(2);
+        uint256 policyId = setupRuleWithTracker(2);
         bool retVal = userContract.transfer(address(0x7654321), 3);
         assertTrue(retVal);
 
-        RulesStorageStructure.Trackers memory testTracker = logic.getTracker(address(userContract), 0); 
+        RulesStorageStructure.Trackers memory testTracker = logic.getTracker(policyId, 0); 
 
         assertTrue(testTracker.uintTracker == 2); 
         assertTrue(testTracker.addressTracker == address(0x00)); 
