@@ -62,105 +62,26 @@ library ExpressionParsingLibrary {
     } 
 
 
-    function evaluateForeignCalls(RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, address contractAddress, uint256 placeholderIndex, mapping(address => RulesStorageStructure.foreignCallStorage) storage foreignCalls) public returns(RulesStorageStructure.ForeignCallReturnValue memory) {
+    function evaluateForeignCalls(RulesStorageStructure.Placeholder[] memory placeHolders, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgumentMappings, RulesStorageStructure.Arguments memory functionSignatureArgs, address contractAddress, uint256 placeholderIndex, mapping(address => RulesStorageStructure.foreignCallStorage) storage foreignCalls) public returns(RulesStorageStructure.ForeignCallReturnValue memory) {
         // Loop through the foreign call structures associated with the calling contracts address
         for(uint256 foreignCallsIdx = 0; foreignCallsIdx < foreignCalls[contractAddress].foreignCalls.length; foreignCallsIdx++) {
             // Check if the index for this placeholder matches the foreign calls index
-            if(foreignCalls[contractAddress].foreignCalls[foreignCallsIdx].foreignCallIndex == applicableRule.placeHolders[placeholderIndex].typeSpecificIndex) {
+            if(foreignCalls[contractAddress].foreignCalls[foreignCallsIdx].foreignCallIndex == placeHolders[placeholderIndex].typeSpecificIndex) {
                 // Place the foreign call
-                RulesStorageStructure.ForeignCallReturnValue memory retVal = evaluateForeignCallForRule(foreignCalls[contractAddress].foreignCalls[foreignCallsIdx], applicableRule, functionSignatureArgs);
+                RulesStorageStructure.ForeignCallReturnValue memory retVal = evaluateForeignCallForRule(foreignCalls[contractAddress].foreignCalls[foreignCallsIdx], fcArgumentMappings, functionSignatureArgs);
                 return retVal;
             }
         }
     }
 
-    function buildArguments(RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, address contractAddress, bool conditionEval, mapping(address => RulesStorageStructure.foreignCallStorage) storage foreignCalls, mapping(address => RulesStorageStructure.trackerValuesStorage) storage trackerStorage) public returns (RulesStorageStructure.Arguments memory) {
-        RulesStorageStructure.Arguments memory ruleArgs;
-        ruleArgs.argumentTypes = new RulesStorageStructure.PT[](applicableRule.placeHolders.length);
-        // Initializing each to the max size to avoid the cost of iterating through to determine how many of each type exist
-        ruleArgs.addresses = new address[](applicableRule.placeHolders.length);
-        ruleArgs.ints = new uint256[](applicableRule.placeHolders.length);
-        ruleArgs.strings = new string[](applicableRule.placeHolders.length);
-        uint256 overallIter = 0;
-        uint256 addressIter = 0;
-        uint256 intIter = 0;
-        uint256 stringIter = 0;
-
-        for(uint256 placeholderIndex = 0; placeholderIndex < applicableRule.placeHolders.length; placeholderIndex++) {
-            // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
-            if(applicableRule.placeHolders[placeholderIndex].foreignCall) {
-                if(conditionEval) {
-                    RulesStorageStructure.ForeignCallReturnValue memory retVal = evaluateForeignCalls(applicableRule, functionSignatureArgs, contractAddress, placeholderIndex, foreignCalls);
-                    // Set the placeholders value and type based on the value returned by the foreign call
-                    ruleArgs.argumentTypes[overallIter] = retVal.pType;
-                    if(retVal.pType == RulesStorageStructure.PT.ADDR) {
-                        ruleArgs.addresses[addressIter] = retVal.addr;
-                        overallIter += 1;
-                        addressIter += 1;
-                    } else if(retVal.pType == RulesStorageStructure.PT.STR) {
-                        ruleArgs.strings[stringIter] = retVal.str;
-                        overallIter += 1;
-                        stringIter += 1;
-                    } else if(retVal.pType == RulesStorageStructure.PT.UINT) {
-                        ruleArgs.ints[intIter] = retVal.intValue;
-                        overallIter += 1;
-                        intIter += 1;
-                    }
-                } 
-            } else {
-                // Determine if the placeholder represents the return value of a tracker 
-                if (applicableRule.placeHolders[placeholderIndex].trackerValue) {
-                    // Loop through tracker storage for invoking address  
-                    for(uint256 trackerValueIndex = 0; trackerValueIndex < trackerStorage[contractAddress].trackers.length; trackerValueIndex++) {
-                        // determine pType of tracker
-                        ruleArgs.argumentTypes[overallIter] = trackerStorage[contractAddress].trackers[trackerValueIndex].pType;
-                        // replace the placeholder value with the tracker value 
-                        if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.ADDR){
-                            ruleArgs.addresses[addressIter] = trackerStorage[contractAddress].trackers[trackerValueIndex].addressTracker;
-                            overallIter += 1;
-                            addressIter += 1;
-                        } else if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.UINT) {
-                            ruleArgs.ints[intIter] = trackerStorage[contractAddress].trackers[trackerValueIndex].uintTracker;
-                            overallIter += 1;
-                            intIter += 1;
-                        } else if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.STR) {
-                            ruleArgs.strings[stringIter] = trackerStorage[contractAddress].trackers[trackerValueIndex].stringTracker;
-                            overallIter += 1;
-                            stringIter += 1;
-                        }
-                    }
-                } else {
-                    // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
-                    if(applicableRule.placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.ADDR) {
-                        ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.ADDR;
-                        ruleArgs.addresses[addressIter] = functionSignatureArgs.addresses[applicableRule.placeHolders[placeholderIndex].typeSpecificIndex];
-                        overallIter += 1;
-                        addressIter += 1;
-                    } else if(applicableRule.placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.UINT) {
-                        ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.UINT;
-                        ruleArgs.ints[intIter] = functionSignatureArgs.ints[applicableRule.placeHolders[placeholderIndex].typeSpecificIndex];
-                        overallIter += 1;
-                        intIter += 1;
-                    } else if(applicableRule.placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.STR) {
-                        ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.STR;
-                        ruleArgs.strings[stringIter] = functionSignatureArgs.strings[applicableRule.placeHolders[placeholderIndex].typeSpecificIndex];
-                        overallIter += 1;
-                        stringIter += 1;
-                    }
-                }
-            }
-        }
-        return ruleArgs;
-    }
-
         /**
      * @dev encodes the arguments and places a foreign call, returning the calls return value as long as it is successful
      * @param fc the Foreign Call structure
-     * @param rule the Rule that is placing the foreign call
+     * @param functionArguments the argument mappings for the foreign call (function arguments and tracker values)
      * @param functionArguments the arguments of the rules calling funciton (to be passed to the foreign call as needed)
      * @return retVal the foreign calls return value
      */
-    function evaluateForeignCallForRule(RulesStorageStructure.ForeignCall memory fc, RulesStorageStructure.Rule memory rule, RulesStorageStructure.Arguments memory functionArguments) public returns (RulesStorageStructure.ForeignCallReturnValue memory retVal) {
+    function evaluateForeignCallForRule(RulesStorageStructure.ForeignCall memory fc, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgumentMappings, RulesStorageStructure.Arguments memory functionArguments) public returns (RulesStorageStructure.ForeignCallReturnValue memory retVal) {
         // Arrays used to hold the parameter types and values to be encoded
         uint256[] memory paramTypeEncode = new uint256[](fc.parameterTypes.length);
         uint256[] memory uintEncode = new uint256[](fc.parameterTypes.length);
@@ -172,23 +93,23 @@ library ExpressionParsingLibrary {
         uint256 strIter = 0;
 
         // Iterate over the foreign call argument mappings contained within the rule structure
-        for(uint256 i = 0; i < rule.fcArgumentMappings.length; i++) {
+        for(uint256 i = 0; i < fcArgumentMappings.length; i++) {
             // verify this mappings foreign call index matches that of the foreign call structure
-            if(rule.fcArgumentMappings[i].foreignCallIndex == fc.foreignCallIndex) {
+            if(fcArgumentMappings[i].foreignCallIndex == fc.foreignCallIndex) {
                 // Iterate through the array of mappings between calling function arguments and foreign call arguments
-                for(uint256 j = 0; j < rule.fcArgumentMappings[i].mappings.length; j++) {
+                for(uint256 j = 0; j < fcArgumentMappings[i].mappings.length; j++) {
                     // Check the parameter type and set the values in the encode arrays accordingly 
-                    if(rule.fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.ADDR) {
+                    if(fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.ADDR) {
                         paramTypeEncode[j] = 1; 
-                        addressEncode[addrIter] = functionArguments.addresses[rule.fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
+                        addressEncode[addrIter] = functionArguments.addresses[fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
                         addrIter += 1;
-                    } else if(rule.fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.UINT) {
+                    } else if(fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.UINT) {
                         paramTypeEncode[j] = 0;
-                        uintEncode[uintIter] = functionArguments.ints[rule.fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
+                        uintEncode[uintIter] = functionArguments.ints[fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
                         uintIter += 1;
-                    } else if(rule.fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.STR) {
+                    } else if(fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.STR) {
                         paramTypeEncode[j] = 2;
-                        stringEncode[strIter] = functionArguments.strings[rule.fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
+                        stringEncode[strIter] = functionArguments.strings[fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
                         strIter += 1;
                     }
                 }

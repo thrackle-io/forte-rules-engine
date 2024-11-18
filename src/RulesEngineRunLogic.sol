@@ -3,8 +3,8 @@ pragma solidity ^0.8.13;
 
 import "src/RulesEngineStructures.sol";
 import "src/IRulesEngine.sol";
-import "src/effects/EffectProcessor.sol";
 import "src/ExpressionParsingLibrary.sol";
+import "src/effects/EffectStructures.sol";
 
 /**
  * @title Rules Engine Run Logic
@@ -35,6 +35,11 @@ contract RulesEngineRunLogic is IRulesEngine {
     uint256 ruleId;
     uint256 functionSignatureId;
 
+    /// Effect structures
+    mapping(uint256=>EffectStructures.Effect) effectStorage;
+
+
+    uint256 effectTotal;
     address effectProcessor;
 
     /**
@@ -232,13 +237,13 @@ contract RulesEngineRunLogic is IRulesEngine {
 
         // Retrieve placeHolder[] for specific rule to be evaluated and translate function signature argument array 
         // to rule specific argument array
-
         for(uint256 i = 0; i < applicableRules.length; i++) { 
+            RulesStorageStructure.foreignCallStorage memory foreignStorage = foreignCalls[contractAddress];
             if(!evaluateIndividualRule(applicableRules[i], functionSignatureArgs, contractAddress)) {
-                EffectProcessor(effectProcessor).doEffects(applicableRules[i].negEffects);
+                this.doEffects(applicableRules[i].negEffects, applicableRules[i], functionSignatureArgs, contractAddress);
                 return false;
             } else{
-                EffectProcessor(effectProcessor).doEffects(applicableRules[i].posEffects);
+                this.doEffects(applicableRules[i].posEffects, applicableRules[i], functionSignatureArgs, contractAddress);
             }
         }
         return true;
@@ -252,9 +257,156 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @return response the result of the rule condition evaluation 
      * TODO: Look into the relationship between policy and foreign calls
      */
-    function evaluateIndividualRule(uint256 _policyId, RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs) internal returns (bool response) {
-            RulesStorageStructure.Arguments memory ruleArgs = ExpressionParsingLibrary.buildArguments(applicableRule, functionSignatureArgs, contractAddress, true, foreignCalls, trackerStorage);
+    function evaluateIndividualRule(int256 _policyId, RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs) internal returns (bool response) {
+            RulesStorageStructure.Arguments memory ruleArgs = buildArguments(applicableRule.placeHolders, applicableRule.fcArgumentMappingsConditions, functionSignatureArgs, contractAddress);
             response = this.run(applicableRule.instructionSet, ruleArgs);
+    }
+
+    function buildArguments(RulesStorageStructure.Placeholder[] memory placeHolders, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgs, RulesStorageStructure.Arguments memory functionSignatureArgs, address contractAddress) public returns (RulesStorageStructure.Arguments memory) {
+        RulesStorageStructure.Arguments memory ruleArgs;
+        ruleArgs.argumentTypes = new RulesStorageStructure.PT[](placeHolders.length);
+        // Initializing each to the max size to avoid the cost of iterating through to determine how many of each type exist
+        ruleArgs.addresses = new address[](placeHolders.length);
+        ruleArgs.ints = new uint256[](placeHolders.length);
+        ruleArgs.strings = new string[](placeHolders.length);
+        uint256 overallIter = 0;
+        uint256 addressIter = 0;
+        uint256 intIter = 0;
+        uint256 stringIter = 0;
+
+        for(uint256 placeholderIndex = 0; placeholderIndex < placeHolders.length; placeholderIndex++) {
+            // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
+            if(placeHolders[placeholderIndex].foreignCall) {
+                    RulesStorageStructure.ForeignCallReturnValue memory retVal = ExpressionParsingLibrary.evaluateForeignCalls(placeHolders, fcArgs, functionSignatureArgs, contractAddress, placeholderIndex, foreignCalls);
+                    // Set the placeholders value and type based on the value returned by the foreign call
+                    ruleArgs.argumentTypes[overallIter] = retVal.pType;
+                    if(retVal.pType == RulesStorageStructure.PT.ADDR) {
+                        ruleArgs.addresses[addressIter] = retVal.addr;
+                        overallIter += 1;
+                        addressIter += 1;
+                    } else if(retVal.pType == RulesStorageStructure.PT.STR) {
+                        ruleArgs.strings[stringIter] = retVal.str;
+                        overallIter += 1;
+                        stringIter += 1;
+                    } else if(retVal.pType == RulesStorageStructure.PT.UINT) {
+                        ruleArgs.ints[intIter] = retVal.intValue;
+                        overallIter += 1;
+                        intIter += 1;
+                    }
+            } else {
+                // Determine if the placeholder represents the return value of a tracker 
+                if (placeHolders[placeholderIndex].trackerValue) {
+                    // Loop through tracker storage for invoking address  
+                    for(uint256 trackerValueIndex = 0; trackerValueIndex < trackerStorage[contractAddress].trackers.length; trackerValueIndex++) {
+                        // determine pType of tracker
+                        ruleArgs.argumentTypes[overallIter] = trackerStorage[contractAddress].trackers[trackerValueIndex].pType;
+                        // replace the placeholder value with the tracker value 
+                        if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.ADDR){
+                            ruleArgs.addresses[addressIter] = trackerStorage[contractAddress].trackers[trackerValueIndex].addressTracker;
+                            overallIter += 1;
+                            addressIter += 1;
+                        } else if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.UINT) {
+                            ruleArgs.ints[intIter] = trackerStorage[contractAddress].trackers[trackerValueIndex].uintTracker;
+                            overallIter += 1;
+                            intIter += 1;
+                        } else if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.STR) {
+                            ruleArgs.strings[stringIter] = trackerStorage[contractAddress].trackers[trackerValueIndex].stringTracker;
+                            overallIter += 1;
+                            stringIter += 1;
+                        }
+                    }
+                } else {
+                    // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
+                    if(placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.ADDR) {
+                        ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.ADDR;
+                        ruleArgs.addresses[addressIter] = functionSignatureArgs.addresses[placeHolders[placeholderIndex].typeSpecificIndex];
+                        overallIter += 1;
+                        addressIter += 1;
+                    } else if(placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.UINT) {
+                        ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.UINT;
+                        ruleArgs.ints[intIter] = functionSignatureArgs.ints[placeHolders[placeholderIndex].typeSpecificIndex];
+                        overallIter += 1;
+                        intIter += 1;
+                    } else if(placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.STR) {
+                        ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.STR;
+                        ruleArgs.strings[stringIter] = functionSignatureArgs.strings[placeHolders[placeholderIndex].typeSpecificIndex];
+                        overallIter += 1;
+                        stringIter += 1;
+                    }
+                }
+            }
+        }
+        return ruleArgs;
+    }
+
+    /**
+     * @dev Loop through effects for a given rule and execute them
+     * @param _effectIds list of effects
+     */
+    function doEffects(uint256[] calldata _effectIds, RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, address contractAddress) public {
+        for(uint256 i = 0; i < _effectIds.length; i++) {
+            if(_effectIds[i] > 0){// only ref Id's greater than 0 are valid
+                EffectStructures.Effect memory effect = effectStorage[_effectIds[i]];
+                if (effect.effectType == EffectStructures.ET.REVERT) { 
+                    doRevert(effect.text);
+                } else if (effect.effectType == EffectStructures.ET.EVENT) {
+                     doEvent(effect.text);
+                } else {
+                    evaluateExpression(applicableRule, functionSignatureArgs, effect.instructionSet, contractAddress);
+                }
+            }
+        }
+    }
+
+    /**
+     * @dev Reverts the transaction
+     * @param _message the reversion message
+     */
+    function doRevert(string memory _message) internal pure{
+        revert(_message);
+    }
+
+    /**
+     * @dev Emit an event
+     * @param _message the reversion message
+     */
+    function doEvent(string memory _message) internal {
+        emit EffectStructures.RulesEngineEvent(_message);
+    }
+
+    function evaluateExpression(RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256[] memory instructionSet, address contractAddress) public {
+        RulesStorageStructure.Arguments effectArguments = buildArguments(applicableRule.effectPlaceHolders, applicableRule.fcArgumentMappingsEffects, functionSignatureArgs, contractAddress);
+        // TODO: Tracker Updates
+        updateTrackers();
+
+    }
+
+    function updateTrackers() public {
+
+    }
+
+    /**
+     * @dev Update an effect
+     * @param _effect the Effect to update
+     */
+    function updateEffect(EffectStructures.Effect calldata _effect) external returns (uint256 _effectId){
+        if (_effect.effectId > 0){
+            effectStorage[_effect.effectId] = _effect;
+            _effectId = _effect.effectId;
+        } else {
+            effectTotal+=1;
+            effectStorage[effectTotal] = _effect;
+            _effectId = effectTotal;
+        }
+        return _effectId;
+    }
+
+    /**
+     * @dev Delete an effect
+     * @param _effectId the id of the effect to delete
+     */
+    function deleteEffect(uint256 _effectId) external {
+        delete effectStorage[_effectId];
     }
 
     /**

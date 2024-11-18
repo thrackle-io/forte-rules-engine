@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 interface RulesStorageStructure {
 
     /// Enumerated list of Logical operators used in Rule Engine Run 
-    enum LC { NUM, ADD, SUB, MUL, DIV, LT, GT, EQ, AND, OR, NOT, PLH, FC }
+    enum LC { NUM, ADD, SUB, MUL, DIV, LT, GT, EQ, AND, OR, NOT, PLH, FC, FCR }
 
     // Supported Parameter Types
     enum PT { ADDR, STR, UINT, BOOL, VOID, BYTES }
@@ -55,8 +55,16 @@ interface RulesStorageStructure {
         // pType = parameterType.ADDR index = 1
         Placeholder[] placeHolders;
 
-        // Mapping between the Foreigns Calls arguments and the arguments of the function signature this rule is associated with
-        ForeignCallArgumentMappings[] fcArgumentMappings;
+        Placeholder[] effectPlaceHolders;
+
+        // Mapping between the Foreigns Calls arguments and the arguments of the function signature and/or trackers this rule is associated with 
+        // (for foreign calls used in the rules condition evaluation)
+        ForeignCallArgumentMappings[] fcArgumentMappingsConditions;
+        
+        // Mapping between the Foreigns Calls arguments and the arguments of the function signature and/or trackers this rule is associated with 
+        // (for foreign calls used in the rules effect execution)
+        ForeignCallArgumentMappings[] fcArgumentMappingsEffects;
+
         // List of all positive effects
         uint256[] posEffects;
         // List of all positive effects
