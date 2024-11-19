@@ -36,27 +36,10 @@ contract RulesEngineRunLogic is IRulesEngine {
 
     /// Effect structures
     mapping(uint256=>EffectStructures.Effect) effectStorage;
-
-
     uint256 effectTotal;
-    address effectProcessor;
 
-    /**
-     * @dev converts a uint256 to a bool
-     * @param x the uint256 to convert
-     */
-    function ui2bool(uint256 x) public pure returns (bool ans) {
-        return x == 1;
-    }
-
-    /**
-     * @dev converts a bool to an uint256
-     * @param x the bool to convert
-     */
-    function bool2ui(bool x) public pure returns (uint256 ans) {
-        return x ? 1 : 0;
-    }
-
+    // Storage Modification Functions
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
     /**
      * Add a Policy to Storage
      * @param _policyId id of of the policy 
@@ -192,6 +175,65 @@ contract RulesEngineRunLogic is IRulesEngine {
         // return trackers for contract address at speficic index  
         return trackerStorage[_policyId].trackers[index];
     }
+
+    /**
+     * @dev Update an effect
+     * @param _effect the Effect to update
+     */
+    function updateEffect(EffectStructures.Effect calldata _effect) external returns (uint256 _effectId){
+        if (_effect.effectId > 0){
+            effectStorage[_effect.effectId] = _effect;
+            _effectId = _effect.effectId;
+        } else {
+            effectTotal+=1;
+            effectStorage[effectTotal] = _effect;
+            _effectId = effectTotal;
+        }
+        return _effectId;
+    }
+
+    /**
+     * @dev Delete an effect
+     * @param _effectId the id of the effect to delete
+     */
+    function deleteEffect(uint256 _effectId) external {
+        delete effectStorage[_effectId];
+    }
+
+    /**
+     * @dev Builds a foreign call structure and adds it to the contracts storage, mapped to the contract address it is associated with
+     * @param _policyId the policy Id of the policy the foreign call will be mapped to
+     * @param foreignContractAddress the address of the contract where the foreign call exists
+     * @param functionSignature the string representation of the function signature of the foreign call
+     * @param returnType the parameter type of the foreign calls return value
+     * @param arguments the parameter types of the foreign calls arguments in order
+     * @return fc the foreign call structure 
+     */
+    function updateForeignCall(uint256 _policyId, address foreignContractAddress, string memory functionSignature, RulesStorageStructure.PT returnType, RulesStorageStructure.PT[] memory arguments) public returns (RulesStorageStructure.ForeignCall memory fc) {
+        fc.foreignCallAddress = foreignContractAddress;
+        // Convert the string representation of the function signature to a selector
+        fc.signature = bytes4(keccak256(bytes(functionSignature)));
+        fc.foreignCallIndex = foreignCallIndex;
+        foreignCallIndex += 1;
+        fc.returnType = returnType;
+        fc.parameterTypes = new RulesStorageStructure.PT[](arguments.length);
+        for(uint256 i = 0; i < arguments.length; i++) {
+            fc.parameterTypes[i] = arguments[i];
+        }
+
+        // If the foreign call structure already exists in the mapping update it, otherwise add it
+        if(foreignCalls[_policyId].set) {
+            foreignCalls[_policyId].foreignCalls.push(fc);
+        } else {
+            foreignCalls[_policyId].set = true;
+            foreignCalls[_policyId].foreignCalls.push(fc);
+        }
+    }
+
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    // Rule Evaluation Functions
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
 
     /**
      * @dev evaluates the conditions associated with all applicable rules and returns the result
@@ -342,73 +384,6 @@ contract RulesEngineRunLogic is IRulesEngine {
     }
 
     /**
-     * @dev Loop through effects for a given rule and execute them
-     * @param _effectIds list of effects
-     */
-    function doEffects(uint256[] calldata _effectIds, RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256 _policyId) public {
-        for(uint256 i = 0; i < _effectIds.length; i++) {
-            if(_effectIds[i] > 0){// only ref Id's greater than 0 are valid
-                EffectStructures.Effect memory effect = effectStorage[_effectIds[i]];
-                if (effect.effectType == EffectStructures.ET.REVERT) { 
-                    doRevert(effect.text);
-                } else if (effect.effectType == EffectStructures.ET.EVENT) {
-                     doEvent(effect.text);
-                } else {
-                    evaluateExpression(applicableRule, functionSignatureArgs, effect.instructionSet, _policyId);
-                }
-            }
-        }
-    }
-
-    /**
-     * @dev Reverts the transaction
-     * @param _message the reversion message
-     */
-    function doRevert(string memory _message) internal pure{
-        revert(_message);
-    }
-
-    /**
-     * @dev Emit an event
-     * @param _message the reversion message
-     */
-    function doEvent(string memory _message) internal {
-        emit EffectStructures.RulesEngineEvent(_message);
-    }
-
-    function evaluateExpression(RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256[] memory instructionSet, uint256 _policyId) public {
-        RulesStorageStructure.Arguments memory effectArguments = buildArguments(applicableRule.effectPlaceHolders, applicableRule.fcArgumentMappingsEffects, functionSignatureArgs, _policyId);
-        if(instructionSet.length > 1) {
-            this.run(instructionSet, effectArguments, _policyId);
-        }
-
-    }
-
-    /**
-     * @dev Update an effect
-     * @param _effect the Effect to update
-     */
-    function updateEffect(EffectStructures.Effect calldata _effect) external returns (uint256 _effectId){
-        if (_effect.effectId > 0){
-            effectStorage[_effect.effectId] = _effect;
-            _effectId = _effect.effectId;
-        } else {
-            effectTotal+=1;
-            effectStorage[effectTotal] = _effect;
-            _effectId = effectTotal;
-        }
-        return _effectId;
-    }
-
-    /**
-     * @dev Delete an effect
-     * @param _effectId the id of the effect to delete
-     */
-    function deleteEffect(uint256 _effectId) external {
-        delete effectStorage[_effectId];
-    }
-
-    /**
      * @dev Evaluates the instruction set and returns an answer to the condition
      * @param prog The instruction set, with placeholders, to be run.
      * @param arguments the values to replace the placeholders in the instruction set with.
@@ -467,40 +442,6 @@ contract RulesEngineRunLogic is IRulesEngine {
     }
 
     /**
-     * @dev Builds a foreign call structure and adds it to the contracts storage, mapped to the contract address it is associated with
-     * @param _policyId the policy Id of the policy the foreign call will be mapped to
-     * @param foreignContractAddress the address of the contract where the foreign call exists
-     * @param functionSignature the string representation of the function signature of the foreign call
-     * @param returnType the parameter type of the foreign calls return value
-     * @param arguments the parameter types of the foreign calls arguments in order
-     * @return fc the foreign call structure 
-     */
-    function updateForeignCall(uint256 _policyId, address foreignContractAddress, string memory functionSignature, RulesStorageStructure.PT returnType, RulesStorageStructure.PT[] memory arguments) public returns (RulesStorageStructure.ForeignCall memory fc) {
-        fc.foreignCallAddress = foreignContractAddress;
-        // Convert the string representation of the function signature to a selector
-        fc.signature = bytes4(keccak256(bytes(functionSignature)));
-        fc.foreignCallIndex = foreignCallIndex;
-        foreignCallIndex += 1;
-        fc.returnType = returnType;
-        fc.parameterTypes = new RulesStorageStructure.PT[](arguments.length);
-        for(uint256 i = 0; i < arguments.length; i++) {
-            fc.parameterTypes[i] = arguments[i];
-        }
-
-        // If the foreign call structure already exists in the mapping update it, otherwise add it
-        if(foreignCalls[_policyId].set) {
-            foreignCalls[_policyId].foreignCalls.push(fc);
-        } else {
-            foreignCalls[_policyId].set = true;
-            foreignCalls[_policyId].foreignCalls.push(fc);
-        }
-    }
-
-    function setEffectProcessor(address _address) external {
-        effectProcessor = _address;
-    }
-
-       /**
      * @dev Decodes the encoded function arguments and fills out an Arguments struct to represent them
      * @param functionSignaturePTs the parmeter types of the arguments in the function in order, pulled from storage
      * @param arguments the encoded arguments 
@@ -565,7 +506,7 @@ contract RulesEngineRunLogic is IRulesEngine {
         }
     }
 
-        /**
+    /**
      * @dev encodes the arguments and places a foreign call, returning the calls return value as long as it is successful
      * @param fc the Foreign Call structure
      * @param functionArguments the argument mappings for the foreign call (function arguments and tracker values)
@@ -637,6 +578,74 @@ contract RulesEngineRunLogic is IRulesEngine {
                 retVal.pType = RulesStorageStructure.PT.VOID;
             }
         }
+    }
+
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+    // Effect Execution Functions
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * @dev Loop through effects for a given rule and execute them
+     * @param _effectIds list of effects
+     */
+    function doEffects(uint256[] calldata _effectIds, RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256 _policyId) public {
+        for(uint256 i = 0; i < _effectIds.length; i++) {
+            if(_effectIds[i] > 0){// only ref Id's greater than 0 are valid
+                EffectStructures.Effect memory effect = effectStorage[_effectIds[i]];
+                if (effect.effectType == EffectStructures.ET.REVERT) { 
+                    doRevert(effect.text);
+                } else if (effect.effectType == EffectStructures.ET.EVENT) {
+                     doEvent(effect.text);
+                } else {
+                    evaluateExpression(applicableRule, functionSignatureArgs, effect.instructionSet, _policyId);
+                }
+            }
+        }
+    }
+
+    /**
+     * @dev Reverts the transaction
+     * @param _message the reversion message
+     */
+    function doRevert(string memory _message) internal pure{
+        revert(_message);
+    }
+
+    /**
+     * @dev Emit an event
+     * @param _message the reversion message
+     */
+    function doEvent(string memory _message) internal {
+        emit EffectStructures.RulesEngineEvent(_message);
+    }
+
+    function evaluateExpression(RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256[] memory instructionSet, uint256 _policyId) public {
+        RulesStorageStructure.Arguments memory effectArguments = buildArguments(applicableRule.effectPlaceHolders, applicableRule.fcArgumentMappingsEffects, functionSignatureArgs, _policyId);
+        if(instructionSet.length > 1) {
+            this.run(instructionSet, effectArguments, _policyId);
+        }
+    }
+
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    // Utility Functions
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+    /**
+     * @dev converts a uint256 to a bool
+     * @param x the uint256 to convert
+     */
+    function ui2bool(uint256 x) public pure returns (bool ans) {
+        return x == 1;
+    }
+
+    /**
+     * @dev converts a bool to an uint256
+     * @param x the bool to convert
+     */
+    function bool2ui(bool x) public pure returns (uint256 ans) {
+        return x ? 1 : 0;
     }
 
     /**
