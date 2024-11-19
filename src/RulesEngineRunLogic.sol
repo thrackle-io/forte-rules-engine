@@ -3,7 +3,6 @@ pragma solidity ^0.8.13;
 
 import "src/RulesEngineStructures.sol";
 import "src/IRulesEngine.sol";
-import "src/ExpressionParsingLibrary.sol";
 import "src/effects/EffectStructures.sol";
 
 /**
@@ -202,51 +201,54 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param arguments function arguments
      * TODO: refine the parameters to this function. contractAddress is not necessary as it's the message caller
      */
-    function checkPolicies(address contractAddress, bytes calldata functionSignature, bytes calldata arguments) public returns (bool) {        
+    function checkPolicies(address contractAddress, bytes calldata functionSignature, bytes calldata arguments) public returns (bool) {  
+        bool retVal = true; 
         // loop through all the active policies
         for(uint256 policyIdx = 0; policyIdx < contractPolicyIdMap[contractAddress].length; policyIdx++) {
-            _checkPolicy(contractPolicyIdMap[contractAddress][policyIdx], contractAddress, functionSignature, arguments);
+            if(!_checkPolicy(contractPolicyIdMap[contractAddress][policyIdx], contractAddress, functionSignature, arguments)) {
+                retVal = false;
+            }
         }
+        return retVal;
     }
 
-    function _checkPolicy(uint256 _policyId, address contractAddress, bytes calldata functionSignature, bytes calldata arguments) internal {
-
+    function _checkPolicy(uint256 _policyId, address contractAddress, bytes calldata functionSignature, bytes calldata arguments) internal returns (bool retVal) {
         // Decode arguments from function signature
         RulesStorageStructure.PT[] memory functionSignaturePlaceholders;
-        if(ruleStorage[contractAddress].set) {
-            if(ruleStorage[contractAddress].functionSignatureMap[functionSignature].set) {
-                functionSignaturePlaceholders = new RulesStorageStructure.PT[](ruleStorage[contractAddress].functionSignatureMap[functionSignature].parameterTypes.length);
+        if(policyStorage[_policyId].set) {
+            if(functionSignatureStorage[policyStorage[_policyId].policy.functionSignatureIdMap[functionSignature]].set) {
+                functionSignaturePlaceholders = new RulesStorageStructure.PT[](functionSignatureStorage[policyStorage[_policyId].policy.functionSignatureIdMap[functionSignature]].parameterTypes.length);
                 for(uint256 i = 0; i < functionSignaturePlaceholders.length; i++) {
-                    functionSignaturePlaceholders[i] = ruleStorage[contractAddress].functionSignatureMap[functionSignature].parameterTypes[i];
+                    functionSignaturePlaceholders[i] = functionSignatureStorage[policyStorage[_policyId].policy.functionSignatureIdMap[functionSignature]].parameterTypes[i];
                 }
             }
         }
         
-        RulesStorageStructure.Arguments memory functionSignatureArgs = ExpressionParsingLibrary.decodeFunctionSignatureArgs(functionSignaturePlaceholders, arguments);
+        RulesStorageStructure.Arguments memory functionSignatureArgs = decodeFunctionSignatureArgs(functionSignaturePlaceholders, arguments);
 
-        RulesStorageStructure.Rule[] memory applicableRules;
-        if(ruleStorage[contractAddress].set) {
-            if(ruleStorage[contractAddress].ruleMap[functionSignature].set) {
-                applicableRules = new RulesStorageStructure.Rule[](ruleStorage[contractAddress].ruleMap[functionSignature].rules.length);
-                for(uint256 i = 0; i < applicableRules.length; i++) {
-                    applicableRules[i] = ruleStorage[contractAddress].ruleMap[functionSignature].rules[i];
-                }
-            } 
+        RulesStorageStructure.Rule[] memory applicableRules = new RulesStorageStructure.Rule[](policyStorage[_policyId].policy.signatureToRuleIds[functionSignature].length);
+        for(uint256 i = 0; i < applicableRules.length; i++) {
+            if(ruleStorage[policyStorage[_policyId].policy.signatureToRuleIds[functionSignature][i]].set) {
+                applicableRules[i] = ruleStorage[policyStorage[_policyId].policy.signatureToRuleIds[functionSignature][i]].rule;
+            }
         }
-
 
         // Retrieve placeHolder[] for specific rule to be evaluated and translate function signature argument array 
         // to rule specific argument array
+        retVal = evaluateRulesAndExecuteEffects(_policyId, applicableRules, functionSignatureArgs);
+    }
+
+    function evaluateRulesAndExecuteEffects(uint256 _policyId, RulesStorageStructure.Rule[] memory applicableRules, RulesStorageStructure.Arguments memory functionSignatureArgs) public returns (bool retVal) {
+        retVal = true;
         for(uint256 i = 0; i < applicableRules.length; i++) { 
-            RulesStorageStructure.foreignCallStorage memory foreignStorage = foreignCalls[contractAddress];
-            if(!evaluateIndividualRule(applicableRules[i], functionSignatureArgs, contractAddress)) {
-                this.doEffects(applicableRules[i].negEffects, applicableRules[i], functionSignatureArgs, contractAddress);
-                return false;
+            RulesStorageStructure.ForeignCallStorage memory foreignStorage = foreignCalls[_policyId];
+            if(!evaluateIndividualRule(_policyId, applicableRules[i], functionSignatureArgs)) {
+                retVal = false;
+                this.doEffects(applicableRules[i].negEffects, applicableRules[i], functionSignatureArgs, _policyId);
             } else{
-                this.doEffects(applicableRules[i].posEffects, applicableRules[i], functionSignatureArgs, contractAddress);
+                this.doEffects(applicableRules[i].posEffects, applicableRules[i], functionSignatureArgs, _policyId);
             }
         }
-        return true;
     }
 
     /**
@@ -257,12 +259,12 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @return response the result of the rule condition evaluation 
      * TODO: Look into the relationship between policy and foreign calls
      */
-    function evaluateIndividualRule(int256 _policyId, RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs) internal returns (bool response) {
-            RulesStorageStructure.Arguments memory ruleArgs = buildArguments(applicableRule.placeHolders, applicableRule.fcArgumentMappingsConditions, functionSignatureArgs, contractAddress);
-            response = this.run(applicableRule.instructionSet, ruleArgs, contractAddress);
+    function evaluateIndividualRule(uint256 _policyId, RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs) internal returns (bool response) {
+            RulesStorageStructure.Arguments memory ruleArgs = buildArguments(applicableRule.placeHolders, applicableRule.fcArgumentMappingsConditions, functionSignatureArgs, _policyId);
+            response = this.run(applicableRule.instructionSet, ruleArgs, _policyId);
     }
 
-    function buildArguments(RulesStorageStructure.Placeholder[] memory placeHolders, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgs, RulesStorageStructure.Arguments memory functionSignatureArgs, address contractAddress) public returns (RulesStorageStructure.Arguments memory) {
+    function buildArguments(RulesStorageStructure.Placeholder[] memory placeHolders, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgs, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256 _policyId) public returns (RulesStorageStructure.Arguments memory) {
         RulesStorageStructure.Arguments memory ruleArgs;
         ruleArgs.argumentTypes = new RulesStorageStructure.PT[](placeHolders.length);
         // Initializing each to the max size to avoid the cost of iterating through to determine how many of each type exist
@@ -277,7 +279,7 @@ contract RulesEngineRunLogic is IRulesEngine {
         for(uint256 placeholderIndex = 0; placeholderIndex < placeHolders.length; placeholderIndex++) {
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
             if(placeHolders[placeholderIndex].foreignCall) {
-                    RulesStorageStructure.ForeignCallReturnValue memory retVal = ExpressionParsingLibrary.evaluateForeignCalls(placeHolders, fcArgs, functionSignatureArgs, contractAddress, placeholderIndex, foreignCalls);
+                    RulesStorageStructure.ForeignCallReturnValue memory retVal = evaluateForeignCalls(placeHolders, fcArgs, functionSignatureArgs, _policyId, placeholderIndex);
                     // Set the placeholders value and type based on the value returned by the foreign call
                     ruleArgs.argumentTypes[overallIter] = retVal.pType;
                     if(retVal.pType == RulesStorageStructure.PT.ADDR) {
@@ -297,20 +299,20 @@ contract RulesEngineRunLogic is IRulesEngine {
                 // Determine if the placeholder represents the return value of a tracker 
                 if (placeHolders[placeholderIndex].trackerValue) {
                     // Loop through tracker storage for invoking address  
-                    for(uint256 trackerValueIndex = 0; trackerValueIndex < trackerStorage[contractAddress].trackers.length; trackerValueIndex++) {
+                    for(uint256 trackerValueIndex = 0; trackerValueIndex < trackerStorage[_policyId].trackers.length; trackerValueIndex++) {
                         // determine pType of tracker
-                        ruleArgs.argumentTypes[overallIter] = trackerStorage[contractAddress].trackers[trackerValueIndex].pType;
+                        ruleArgs.argumentTypes[overallIter] = trackerStorage[_policyId].trackers[trackerValueIndex].pType;
                         // replace the placeholder value with the tracker value 
                         if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.ADDR){
-                            ruleArgs.addresses[addressIter] = trackerStorage[contractAddress].trackers[trackerValueIndex].addressTracker;
+                            ruleArgs.addresses[addressIter] = trackerStorage[_policyId].trackers[trackerValueIndex].addressTracker;
                             overallIter += 1;
                             addressIter += 1;
                         } else if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.UINT) {
-                            ruleArgs.ints[intIter] = trackerStorage[contractAddress].trackers[trackerValueIndex].uintTracker;
+                            ruleArgs.ints[intIter] = trackerStorage[_policyId].trackers[trackerValueIndex].uintTracker;
                             overallIter += 1;
                             intIter += 1;
                         } else if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.STR) {
-                            ruleArgs.strings[stringIter] = trackerStorage[contractAddress].trackers[trackerValueIndex].stringTracker;
+                            ruleArgs.strings[stringIter] = trackerStorage[_policyId].trackers[trackerValueIndex].stringTracker;
                             overallIter += 1;
                             stringIter += 1;
                         }
@@ -343,7 +345,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @dev Loop through effects for a given rule and execute them
      * @param _effectIds list of effects
      */
-    function doEffects(uint256[] calldata _effectIds, RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, address contractAddress) public {
+    function doEffects(uint256[] calldata _effectIds, RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256 _policyId) public {
         for(uint256 i = 0; i < _effectIds.length; i++) {
             if(_effectIds[i] > 0){// only ref Id's greater than 0 are valid
                 EffectStructures.Effect memory effect = effectStorage[_effectIds[i]];
@@ -352,7 +354,7 @@ contract RulesEngineRunLogic is IRulesEngine {
                 } else if (effect.effectType == EffectStructures.ET.EVENT) {
                      doEvent(effect.text);
                 } else {
-                    evaluateExpression(applicableRule, functionSignatureArgs, effect.instructionSet, contractAddress);
+                    evaluateExpression(applicableRule, functionSignatureArgs, effect.instructionSet, _policyId);
                 }
             }
         }
@@ -374,10 +376,10 @@ contract RulesEngineRunLogic is IRulesEngine {
         emit EffectStructures.RulesEngineEvent(_message);
     }
 
-    function evaluateExpression(RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256[] memory instructionSet, address contractAddress) public {
-        RulesStorageStructure.Arguments memory effectArguments = buildArguments(applicableRule.effectPlaceHolders, applicableRule.fcArgumentMappingsEffects, functionSignatureArgs, contractAddress);
+    function evaluateExpression(RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256[] memory instructionSet, uint256 _policyId) public {
+        RulesStorageStructure.Arguments memory effectArguments = buildArguments(applicableRule.effectPlaceHolders, applicableRule.fcArgumentMappingsEffects, functionSignatureArgs, _policyId);
         if(instructionSet.length > 1) {
-            this.run(instructionSet, effectArguments, contractAddress);
+            this.run(instructionSet, effectArguments, _policyId);
         }
 
     }
@@ -412,7 +414,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param arguments the values to replace the placeholders in the instruction set with.
      * @return ans the result of evaluating the instruction set
      */
-    function run(uint256[] calldata prog, RulesStorageStructure.Arguments calldata arguments, address contractAddress) public returns (bool ans) {
+    function run(uint256[] calldata prog, RulesStorageStructure.Arguments calldata arguments, uint256 _policyId) public returns (bool ans) {
         uint256[64] memory mem;
         uint256 idx = 0;
         uint256 opi = 0;
@@ -441,8 +443,8 @@ contract RulesEngineRunLogic is IRulesEngine {
                 // Tracker Update format will be:
                 // TRU, tracker index, mem index
                 // TODO: Update to account for type
-                if(trackerStorage[contractAddress].trackers[prog[idx + 1]].pType == RulesStorageStructure.PT.UINT) {
-                    trackerStorage[contractAddress].trackers[prog[idx + 1]].uintTracker = mem[prog[idx+2]];
+                if(trackerStorage[_policyId].trackers[prog[idx + 1]].pType == RulesStorageStructure.PT.UINT) {
+                    trackerStorage[_policyId].trackers[prog[idx + 1]].uintTracker = mem[prog[idx+2]];
                 }
                 idx += 3;
 
@@ -496,5 +498,231 @@ contract RulesEngineRunLogic is IRulesEngine {
 
     function setEffectProcessor(address _address) external {
         effectProcessor = _address;
+    }
+
+       /**
+     * @dev Decodes the encoded function arguments and fills out an Arguments struct to represent them
+     * @param functionSignaturePTs the parmeter types of the arguments in the function in order, pulled from storage
+     * @param arguments the encoded arguments 
+     * @return functionSignatureArgs the Arguments struct containing the decoded function arguments
+     */
+    function decodeFunctionSignatureArgs(RulesStorageStructure.PT[] memory functionSignaturePTs, bytes calldata arguments) public pure returns (RulesStorageStructure.Arguments memory functionSignatureArgs) {
+        uint256 placeIter = 32;
+        uint256 addressIter = 0;
+        uint256 intIter = 0;
+        uint256 stringIter = 0;
+        uint256 overallIter = 0;
+        
+        functionSignatureArgs.argumentTypes = new RulesStorageStructure.PT[](functionSignaturePTs.length);
+        // Initializing each to the max size to avoid the cost of iterating through to determine how many of each type exist
+        functionSignatureArgs.addresses = new address[](functionSignaturePTs.length);
+        functionSignatureArgs.ints = new uint256[](functionSignaturePTs.length);
+        functionSignatureArgs.strings = new string[](functionSignaturePTs.length);
+
+        for(uint256 i = 0; i < functionSignaturePTs.length; i++) {
+            if(functionSignaturePTs[i] == RulesStorageStructure.PT.ADDR) {
+                // address data = abi.decode(arguments, (address));
+                address data = i == 0 ? abi.decode(arguments[:32], (address)) : abi.decode(arguments[placeIter:(placeIter + 32)], (address));
+                if(i != 0) {
+                    placeIter += 32;
+                }
+                functionSignatureArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.ADDR;
+                functionSignatureArgs.addresses[addressIter] = data;
+                overallIter += 1;
+                addressIter += 1;
+            } else if(functionSignaturePTs[i] == RulesStorageStructure.PT.UINT) {
+                uint256 data = abi.decode(arguments[32:64], (uint256));
+                if(i != 0) {
+                    placeIter += 32;
+                }
+                functionSignatureArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.UINT;
+                functionSignatureArgs.ints[intIter] = data;
+                overallIter += 1;
+                intIter += 1;
+            } else if(functionSignaturePTs[i] == RulesStorageStructure.PT.STR) {
+                string memory data = i == 0 ? abi.decode(arguments[:32], (string)) : abi.decode(arguments[placeIter:(placeIter + 32)], (string));
+                if(i != 0) {
+                    placeIter += 32;
+                }
+                functionSignatureArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.STR;
+                functionSignatureArgs.strings[stringIter] = data;
+                overallIter += 1;
+                stringIter += 1;
+            }
+        }
+    } 
+
+
+    function evaluateForeignCalls(RulesStorageStructure.Placeholder[] memory placeHolders, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgumentMappings, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256 _policyId, uint256 placeholderIndex) public returns(RulesStorageStructure.ForeignCallReturnValue memory) {
+        // Loop through the foreign call structures associated with the calling contracts address
+        for(uint256 foreignCallsIdx = 0; foreignCallsIdx < foreignCalls[_policyId].foreignCalls.length; foreignCallsIdx++) {
+            // Check if the index for this placeholder matches the foreign calls index
+            if(foreignCalls[_policyId].foreignCalls[foreignCallsIdx].foreignCallIndex == placeHolders[placeholderIndex].typeSpecificIndex) {
+                // Place the foreign call
+                RulesStorageStructure.ForeignCallReturnValue memory retVal = evaluateForeignCallForRule(foreignCalls[_policyId].foreignCalls[foreignCallsIdx], fcArgumentMappings, functionSignatureArgs);
+                return retVal;
+            }
+        }
+    }
+
+        /**
+     * @dev encodes the arguments and places a foreign call, returning the calls return value as long as it is successful
+     * @param fc the Foreign Call structure
+     * @param functionArguments the argument mappings for the foreign call (function arguments and tracker values)
+     * @param functionArguments the arguments of the rules calling funciton (to be passed to the foreign call as needed)
+     * @return retVal the foreign calls return value
+     */
+    function evaluateForeignCallForRule(RulesStorageStructure.ForeignCall memory fc, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgumentMappings, RulesStorageStructure.Arguments memory functionArguments) public returns (RulesStorageStructure.ForeignCallReturnValue memory retVal) {
+        // Arrays used to hold the parameter types and values to be encoded
+        uint256[] memory paramTypeEncode = new uint256[](fc.parameterTypes.length);
+        uint256[] memory uintEncode = new uint256[](fc.parameterTypes.length);
+        address[] memory addressEncode = new address[](fc.parameterTypes.length);
+        string[] memory stringEncode = new string[](fc.parameterTypes.length);
+        // Iterators for the various types to make sure the correct indexes in each array are populated
+        uint256 uintIter = 0;
+        uint256 addrIter = 0;
+        uint256 strIter = 0;
+
+        // Iterate over the foreign call argument mappings contained within the rule structure
+        for(uint256 i = 0; i < fcArgumentMappings.length; i++) {
+            // verify this mappings foreign call index matches that of the foreign call structure
+            if(fcArgumentMappings[i].foreignCallIndex == fc.foreignCallIndex) {
+                // Iterate through the array of mappings between calling function arguments and foreign call arguments
+                for(uint256 j = 0; j < fcArgumentMappings[i].mappings.length; j++) {
+                    // Check the parameter type and set the values in the encode arrays accordingly 
+                    if(fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.ADDR) {
+                        paramTypeEncode[j] = 1; 
+                        addressEncode[addrIter] = functionArguments.addresses[fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
+                        addrIter += 1;
+                    } else if(fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.UINT) {
+                        paramTypeEncode[j] = 0;
+                        uintEncode[uintIter] = functionArguments.ints[fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
+                        uintIter += 1;
+                    } else if(fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.STR) {
+                        paramTypeEncode[j] = 2;
+                        stringEncode[strIter] = functionArguments.strings[fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
+                        strIter += 1;
+                    }
+                }
+            }
+        }
+
+        // Encode the arugments
+        bytes memory argsEncoded = assemblyEncode(paramTypeEncode, uintEncode, addressEncode, stringEncode);
+
+        // Build the bytes object with the function selector and the encoded arguments
+        bytes memory encoded;
+        encoded = bytes.concat(encoded, fc.signature);
+        encoded = bytes.concat(encoded, argsEncoded);
+
+        // place the foreign call
+        (bool response, bytes memory data) = fc.foreignCallAddress.call(encoded);
+
+        // Verify that the foreign call was successful
+        if(response) {
+            // Decode the return value based on the specified return value parameter type in the foreign call structure
+            if(fc.returnType == RulesStorageStructure.PT.BOOL) {
+                retVal.pType = RulesStorageStructure.PT.BOOL;
+                retVal.boolValue = abi.decode(data, (bool));
+            } else if(fc.returnType == RulesStorageStructure.PT.UINT) {
+                retVal.pType = RulesStorageStructure.PT.UINT;
+                retVal.intValue = abi.decode(data, (uint256));
+            } else if(fc.returnType == RulesStorageStructure.PT.STR) {
+                retVal.pType = RulesStorageStructure.PT.STR;
+                retVal.str = abi.decode(data, (string));
+            } else if(fc.returnType == RulesStorageStructure.PT.ADDR) {
+                retVal.pType = RulesStorageStructure.PT.ADDR;
+                retVal.addr = abi.decode(data, (address));
+            } else if(fc.returnType == RulesStorageStructure.PT.VOID) {
+                retVal.pType = RulesStorageStructure.PT.VOID;
+            }
+        }
+    }
+
+    /**
+     * @dev Uses assembly to encode a variable length array of variable type arguments so they can be used in a foreign call
+     * @param parameterTypes the parameter types of the arguments in order
+     * @param ints the uint256 parameters to be encoded
+     * @param addresses the address parameters to be encoded
+     * @param strings the string parameters to be encoded
+     * @return res the encoded arguments
+     */
+    function assemblyEncode(uint256[] memory parameterTypes, uint256[] memory ints, address[] memory addresses, string[] memory strings) public pure returns (bytes memory res) {
+        uint256 len = parameterTypes.length;
+        uint256 strCount = 0;
+        uint256 remainingCount = 0;
+        uint256[] memory strLengths = new uint256[](strings.length); 
+        bytes32[] memory convertedStrings = new bytes32[](strings.length);
+        for(uint256 i = 0; i < convertedStrings.length; i++) {
+            strLengths[i] = bytes(strings[i]).length;
+            convertedStrings[i] = stringToBytes32(strings[i]);
+            strCount += 1;
+        }
+        remainingCount = parameterTypes.length - strCount;
+
+        uint256 strStartLoc = parameterTypes.length;
+
+        assembly {
+            // Iterator for the uint256 array
+            let intIter := 1
+            // Iterator for the address array
+            let addrIter := 1
+            // Iterator for the string array
+            let strIter := 1
+            // get free memory pointer
+            res := mload(0x40)        
+            // set length based on size of parameter array                
+            mstore(res, add(mul(0x20, remainingCount), mul(0x60, strCount))) 
+
+            let i := 1
+            for {} lt(i, add(len, 1)) {} {
+                // Retrieve the next parameter type
+                let pType := mload(add(parameterTypes, mul(0x20, i)))
+
+                // If parameter type is integer encode the uint256
+                if eq(pType, 0) {
+                    let value := mload(add(ints, mul(0x20, intIter)))
+                    mstore(add(res, mul(0x20, i)), value)
+                    intIter := add(intIter, 1) 
+                } 
+
+                // If parameter type is address encode the address
+                if eq(pType, 1) {
+                    let value := mload(add(addresses, mul(0x20, addrIter)))
+                    value := and(value, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+                    mstore(add(res, mul(0x20, i)), value)
+                    addrIter := add(addrIter, 1)
+                }
+
+                if eq(pType, 2) {
+                    mstore(add(res, mul(0x20, i)), mul(0x20, strStartLoc))
+                    strStartLoc := add(strStartLoc, 2)
+                }
+
+                // Increment global iterators 
+                i := add(i, 1)
+            }
+
+            let j := 0
+            for {} lt(j, strCount) {} {
+                let value := mload(add(convertedStrings, mul(0x20, strIter)))
+                let leng := mload(add(strLengths, mul(0x20, strIter)))
+                mstore(add(res, mul(0x20, i)), leng)   
+                mstore(add(res, add(mul(0x20, i), 0x20)), value)
+                i := add(i, 1)
+                i := add(i, 1)
+                strIter := add(strIter, 1)
+                j := add(j, 1)
+            }
+            // update free memory pointer
+            mstore(0x40, add(res, mul(0x20, i)))
+        }
+        
+    }
+
+    function stringToBytes32(string memory source) internal pure returns (bytes32 result) {
+        assembly {
+            result := mload(add(source, 32))
+        }
     }
 }
