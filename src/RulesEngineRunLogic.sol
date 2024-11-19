@@ -243,8 +243,8 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param arguments function arguments
      * TODO: refine the parameters to this function. contractAddress is not necessary as it's the message caller
      */
-    function checkPolicies(address contractAddress, bytes calldata functionSignature, bytes calldata arguments) public returns (bool) {  
-        bool retVal = true; 
+    function checkPolicies(address contractAddress, bytes calldata functionSignature, bytes calldata arguments) public returns (bool retVal) {  
+        retVal = true; 
         // loop through all the active policies
         for(uint256 policyIdx = 0; policyIdx < contractPolicyIdMap[contractAddress].length; policyIdx++) {
             if(!_checkPolicy(contractPolicyIdMap[contractAddress][policyIdx], contractAddress, functionSignature, arguments)) {
@@ -286,9 +286,9 @@ contract RulesEngineRunLogic is IRulesEngine {
             RulesStorageStructure.ForeignCallStorage memory foreignStorage = foreignCalls[_policyId];
             if(!evaluateIndividualRule(_policyId, applicableRules[i], functionSignatureArgs)) {
                 retVal = false;
-                this.doEffects(applicableRules[i].negEffects, applicableRules[i], functionSignatureArgs, _policyId);
+                this.doEffects(_policyId, applicableRules[i].negEffects, applicableRules[i], functionSignatureArgs);
             } else{
-                this.doEffects(applicableRules[i].posEffects, applicableRules[i], functionSignatureArgs, _policyId);
+                this.doEffects(_policyId, applicableRules[i].posEffects, applicableRules[i], functionSignatureArgs);
             }
         }
     }
@@ -302,11 +302,11 @@ contract RulesEngineRunLogic is IRulesEngine {
      * TODO: Look into the relationship between policy and foreign calls
      */
     function evaluateIndividualRule(uint256 _policyId, RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs) internal returns (bool response) {
-            RulesStorageStructure.Arguments memory ruleArgs = buildArguments(applicableRule.placeHolders, applicableRule.fcArgumentMappingsConditions, functionSignatureArgs, _policyId);
-            response = this.run(applicableRule.instructionSet, ruleArgs, _policyId);
+            RulesStorageStructure.Arguments memory ruleArgs = buildArguments(_policyId, applicableRule.placeHolders, applicableRule.fcArgumentMappingsConditions, functionSignatureArgs);
+            response = this.run(_policyId, applicableRule.instructionSet, ruleArgs);
     }
 
-    function buildArguments(RulesStorageStructure.Placeholder[] memory placeHolders, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgs, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256 _policyId) public returns (RulesStorageStructure.Arguments memory) {
+    function buildArguments(uint256 _policyId, RulesStorageStructure.Placeholder[] memory placeHolders, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgs, RulesStorageStructure.Arguments memory functionSignatureArgs) public returns (RulesStorageStructure.Arguments memory) {
         RulesStorageStructure.Arguments memory ruleArgs;
         ruleArgs.argumentTypes = new RulesStorageStructure.PT[](placeHolders.length);
         // Initializing each to the max size to avoid the cost of iterating through to determine how many of each type exist
@@ -321,7 +321,7 @@ contract RulesEngineRunLogic is IRulesEngine {
         for(uint256 placeholderIndex = 0; placeholderIndex < placeHolders.length; placeholderIndex++) {
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
             if(placeHolders[placeholderIndex].foreignCall) {
-                    RulesStorageStructure.ForeignCallReturnValue memory retVal = evaluateForeignCalls(placeHolders, fcArgs, functionSignatureArgs, _policyId, placeholderIndex);
+                    RulesStorageStructure.ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, placeHolders, fcArgs, functionSignatureArgs, placeholderIndex);
                     // Set the placeholders value and type based on the value returned by the foreign call
                     ruleArgs.argumentTypes[overallIter] = retVal.pType;
                     if(retVal.pType == RulesStorageStructure.PT.ADDR) {
@@ -389,7 +389,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param arguments the values to replace the placeholders in the instruction set with.
      * @return ans the result of evaluating the instruction set
      */
-    function run(uint256[] calldata prog, RulesStorageStructure.Arguments calldata arguments, uint256 _policyId) public returns (bool ans) {
+    function run(uint256 _policyId, uint256[] calldata prog, RulesStorageStructure.Arguments calldata arguments) public returns (bool ans) {
         uint256[64] memory mem;
         uint256 idx = 0;
         uint256 opi = 0;
@@ -494,7 +494,7 @@ contract RulesEngineRunLogic is IRulesEngine {
     } 
 
 
-    function evaluateForeignCalls(RulesStorageStructure.Placeholder[] memory placeHolders, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgumentMappings, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256 _policyId, uint256 placeholderIndex) public returns(RulesStorageStructure.ForeignCallReturnValue memory) {
+    function evaluateForeignCalls(uint256 _policyId, RulesStorageStructure.Placeholder[] memory placeHolders, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgumentMappings, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256 placeholderIndex) public returns(RulesStorageStructure.ForeignCallReturnValue memory) {
         // Loop through the foreign call structures associated with the calling contracts address
         for(uint256 foreignCallsIdx = 0; foreignCallsIdx < foreignCalls[_policyId].foreignCalls.length; foreignCallsIdx++) {
             // Check if the index for this placeholder matches the foreign calls index
@@ -513,7 +513,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param functionArguments the arguments of the rules calling funciton (to be passed to the foreign call as needed)
      * @return retVal the foreign calls return value
      */
-    function evaluateForeignCallForRule(RulesStorageStructure.ForeignCall memory fc, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgumentMappings, RulesStorageStructure.Arguments memory functionArguments) public returns (RulesStorageStructure.ForeignCallReturnValue memory retVal) {
+    function evaluateForeignCallForRule(RulesStorageStructure.ForeignCall memory fc, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgumentMappings, RulesStorageStructure.Arguments memory functionArguments) internal returns (RulesStorageStructure.ForeignCallReturnValue memory retVal) {
         // Arrays used to hold the parameter types and values to be encoded
         uint256[] memory paramTypeEncode = new uint256[](fc.parameterTypes.length);
         uint256[] memory uintEncode = new uint256[](fc.parameterTypes.length);
@@ -590,7 +590,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @dev Loop through effects for a given rule and execute them
      * @param _effectIds list of effects
      */
-    function doEffects(uint256[] calldata _effectIds, RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256 _policyId) public {
+    function doEffects(uint256 _policyId, uint256[] calldata _effectIds, RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs) public {
         for(uint256 i = 0; i < _effectIds.length; i++) {
             if(_effectIds[i] > 0){// only ref Id's greater than 0 are valid
                 EffectStructures.Effect memory effect = effectStorage[_effectIds[i]];
@@ -599,7 +599,7 @@ contract RulesEngineRunLogic is IRulesEngine {
                 } else if (effect.effectType == EffectStructures.ET.EVENT) {
                      doEvent(effect.text);
                 } else {
-                    evaluateExpression(applicableRule, functionSignatureArgs, effect.instructionSet, _policyId);
+                    evaluateExpression(_policyId, applicableRule, functionSignatureArgs, effect.instructionSet);
                 }
             }
         }
@@ -621,10 +621,10 @@ contract RulesEngineRunLogic is IRulesEngine {
         emit EffectStructures.RulesEngineEvent(_message);
     }
 
-    function evaluateExpression(RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256[] memory instructionSet, uint256 _policyId) public {
-        RulesStorageStructure.Arguments memory effectArguments = buildArguments(applicableRule.effectPlaceHolders, applicableRule.fcArgumentMappingsEffects, functionSignatureArgs, _policyId);
+    function evaluateExpression(uint256 _policyId, RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256[] memory instructionSet) public {
+        RulesStorageStructure.Arguments memory effectArguments = buildArguments( _policyId, applicableRule.effectPlaceHolders, applicableRule.fcArgumentMappingsEffects, functionSignatureArgs);
         if(instructionSet.length > 1) {
-            this.run(instructionSet, effectArguments, _policyId);
+            this.run(_policyId, instructionSet, effectArguments);
         }
     }
 
@@ -656,7 +656,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param strings the string parameters to be encoded
      * @return res the encoded arguments
      */
-    function assemblyEncode(uint256[] memory parameterTypes, uint256[] memory ints, address[] memory addresses, string[] memory strings) public pure returns (bytes memory res) {
+    function assemblyEncode(uint256[] memory parameterTypes, uint256[] memory ints, address[] memory addresses, string[] memory strings) internal pure returns (bytes memory res) {
         uint256 len = parameterTypes.length;
         uint256 strCount = 0;
         uint256 remainingCount = 0;
