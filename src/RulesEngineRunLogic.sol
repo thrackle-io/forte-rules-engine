@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "src/RulesEngineStructures.sol";
 import "src/IRulesEngine.sol";
-import "src/effects/EffectProcessor.sol";
+import "src/effects/EffectStructures.sol";
 
 /**
  * @title Rules Engine Run Logic
@@ -34,24 +34,12 @@ contract RulesEngineRunLogic is IRulesEngine {
     uint256 ruleId;
     uint256 functionSignatureId;
 
-    address effectProcessor;
+    /// Effect structures
+    mapping(uint256=>EffectStructures.Effect) effectStorage;
+    uint256 effectTotal;
 
-    /**
-     * @dev converts a uint256 to a bool
-     * @param x the uint256 to convert
-     */
-    function ui2bool(uint256 x) public pure returns (bool ans) {
-        return x == 1;
-    }
-
-    /**
-     * @dev converts a bool to an uint256
-     * @param x the bool to convert
-     */
-    function bool2ui(bool x) public pure returns (uint256 ans) {
-        return x ? 1 : 0;
-    }
-
+    // Storage Modification Functions
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
     /**
      * Add a Policy to Storage
      * @param _policyId id of of the policy 
@@ -189,6 +177,61 @@ contract RulesEngineRunLogic is IRulesEngine {
     }
 
     /**
+     * @dev Update an effect
+     * @param _effect the Effect to update
+     */
+    function updateEffect(EffectStructures.Effect calldata _effect) external returns (uint256 _effectId){
+        if (_effect.effectId > 0){
+            effectStorage[_effect.effectId] = _effect;
+            _effectId = _effect.effectId;
+        } else {
+            effectTotal++;
+            effectStorage[effectTotal] = _effect;
+            _effectId = effectTotal;
+        }
+        return _effectId;
+    }
+
+    /**
+     * @dev Delete an effect
+     * @param _effectId the id of the effect to delete
+     */
+    function deleteEffect(uint256 _effectId) external {
+        delete effectStorage[_effectId];
+    }
+
+    /**
+     * @dev Builds a foreign call structure and adds it to the contracts storage, mapped to the contract address it is associated with
+     * @param _policyId the policy Id of the policy the foreign call will be mapped to
+     * @param foreignContractAddress the address of the contract where the foreign call exists
+     * @param functionSignature the string representation of the function signature of the foreign call
+     * @param returnType the parameter type of the foreign calls return value
+     * @param arguments the parameter types of the foreign calls arguments in order
+     * @return fc the foreign call structure 
+     */
+    function updateForeignCall(uint256 _policyId, address foreignContractAddress, string memory functionSignature, RulesStorageStructure.PT returnType, RulesStorageStructure.PT[] memory arguments) public returns (RulesStorageStructure.ForeignCall memory fc) {
+        fc.foreignCallAddress = foreignContractAddress;
+        // Convert the string representation of the function signature to a selector
+        fc.signature = bytes4(keccak256(bytes(functionSignature)));
+        fc.foreignCallIndex = foreignCallIndex;
+        foreignCallIndex++;
+        fc.returnType = returnType;
+        fc.parameterTypes = new RulesStorageStructure.PT[](arguments.length);
+        for(uint256 i = 0; i < arguments.length; i++) {
+            fc.parameterTypes[i] = arguments[i];
+        }
+
+        // If the foreign call structure already exists in the mapping update it, otherwise add it
+        foreignCalls[_policyId].foreignCalls.push(fc);
+        foreignCalls[_policyId].set = true;
+    }
+
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    // Rule Evaluation Functions
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    /**
      * @dev evaluates the conditions associated with all applicable rules and returns the result
      * @dev PEP for policy checks
      * @param contractAddress the address of the rules-enabled contract, used to pull the applicable rules
@@ -196,56 +239,202 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param arguments function arguments
      * TODO: refine the parameters to this function. contractAddress is not necessary as it's the message caller
      */
-    function checkPolicies(address contractAddress, bytes calldata functionSignature, bytes calldata arguments) public returns (bool) {        
+    function checkPolicies(address contractAddress, bytes calldata functionSignature, bytes calldata arguments) public returns (bool retVal) {  
+        retVal = true; 
         // loop through all the active policies
         for(uint256 policyIdx = 0; policyIdx < contractPolicyIdMap[contractAddress].length; policyIdx++) {
-            _checkPolicy(contractPolicyIdMap[contractAddress][policyIdx], contractAddress, functionSignature, arguments);
+            if(!_checkPolicy(contractPolicyIdMap[contractAddress][policyIdx], contractAddress, functionSignature, arguments)) {
+                retVal = false;
+            }
         }
-        return true;
+        return retVal;
     }
 
-     /**
-     * @dev evaluates the conditions associated with all applicable rules and returns the result
-     * @param _policyId the address of the rules-enabled contract, used to pull the applicable rules
-     * @param contractAddress the address of the rules-enabled contract, used to pull the applicable rules
-     * @param functionSignature the signature of the function that initiated the transaction, used to pull the applicable rules.
-     * @param arguments function arguments
-     */
-    function _checkPolicy(uint256 _policyId, address contractAddress, bytes calldata functionSignature, bytes calldata arguments) internal {
+    function _checkPolicy(uint256 _policyId, address contractAddress, bytes calldata functionSignature, bytes calldata arguments) internal returns (bool retVal) {
         // Decode arguments from function signature
         RulesStorageStructure.PT[] memory functionSignaturePlaceholders;
-        // Check to make sure the policy is set
-            if(policyStorage[_policyId].set) {
-                // Get the function 
-                if(functionSignatureStorage[policyStorage[_policyId].policy.functionSignatureIdMap[functionSignature]].set) {
-                    functionSignaturePlaceholders = new RulesStorageStructure.PT[](functionSignatureStorage[policyStorage[_policyId].policy.functionSignatureIdMap[functionSignature]].parameterTypes.length);
-                    for(uint256 i = 0; i < functionSignaturePlaceholders.length; i++) {
-                        functionSignaturePlaceholders[i] = functionSignatureStorage[policyStorage[_policyId].policy.functionSignatureIdMap[functionSignature]].parameterTypes[i];
+        if(policyStorage[_policyId].set) {
+            if(functionSignatureStorage[policyStorage[_policyId].policy.functionSignatureIdMap[functionSignature]].set) {
+                functionSignaturePlaceholders = new RulesStorageStructure.PT[](functionSignatureStorage[policyStorage[_policyId].policy.functionSignatureIdMap[functionSignature]].parameterTypes.length);
+                for(uint256 i = 0; i < functionSignaturePlaceholders.length; i++) {
+                    functionSignaturePlaceholders[i] = functionSignatureStorage[policyStorage[_policyId].policy.functionSignatureIdMap[functionSignature]].parameterTypes[i];
+                }
+            }
+        }
+        
+        RulesStorageStructure.Arguments memory functionSignatureArgs = decodeFunctionSignatureArgs(functionSignaturePlaceholders, arguments);
+
+        RulesStorageStructure.Rule[] memory applicableRules = new RulesStorageStructure.Rule[](policyStorage[_policyId].policy.signatureToRuleIds[functionSignature].length);
+        for(uint256 i = 0; i < applicableRules.length; i++) {
+            if(ruleStorage[policyStorage[_policyId].policy.signatureToRuleIds[functionSignature][i]].set) {
+                applicableRules[i] = ruleStorage[policyStorage[_policyId].policy.signatureToRuleIds[functionSignature][i]].rule;
+            }
+        }
+
+        // Retrieve placeHolder[] for specific rule to be evaluated and translate function signature argument array 
+        // to rule specific argument array
+        retVal = evaluateRulesAndExecuteEffects(_policyId, applicableRules, functionSignatureArgs);
+    }
+
+    function evaluateRulesAndExecuteEffects(uint256 _policyId, RulesStorageStructure.Rule[] memory applicableRules, RulesStorageStructure.Arguments memory functionSignatureArgs) public returns (bool retVal) {
+        retVal = true;
+        for(uint256 i = 0; i < applicableRules.length; i++) { 
+            RulesStorageStructure.ForeignCallStorage memory foreignStorage = foreignCalls[_policyId];
+            if(!evaluateIndividualRule(_policyId, applicableRules[i], functionSignatureArgs)) {
+                retVal = false;
+                this.doEffects(_policyId, applicableRules[i].negEffects, applicableRules[i], functionSignatureArgs);
+            } else{
+                this.doEffects(_policyId, applicableRules[i].posEffects, applicableRules[i], functionSignatureArgs);
+            }
+        }
+    }
+
+    /**
+     * @dev evaluates an individual rules condition(s)
+     * @param _policyId Policy id being evaluated.
+     * @param applicableRule the rule structure containing the instruction set, with placeholders, to execute
+     * @param functionSignatureArgs the values to replace the placeholders in the instruction set with.
+     * @return response the result of the rule condition evaluation 
+     * TODO: Look into the relationship between policy and foreign calls
+     */
+    function evaluateIndividualRule(uint256 _policyId, RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs) internal returns (bool response) {
+            RulesStorageStructure.Arguments memory ruleArgs = buildArguments(_policyId, applicableRule.placeHolders, applicableRule.fcArgumentMappingsConditions, functionSignatureArgs);
+            response = this.run(_policyId, applicableRule.instructionSet, ruleArgs);
+    }
+
+    function buildArguments(uint256 _policyId, RulesStorageStructure.Placeholder[] memory placeHolders, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgs, RulesStorageStructure.Arguments memory functionSignatureArgs) public returns (RulesStorageStructure.Arguments memory) {
+        RulesStorageStructure.Arguments memory ruleArgs;
+        ruleArgs.argumentTypes = new RulesStorageStructure.PT[](placeHolders.length);
+        // Initializing each to the max size to avoid the cost of iterating through to determine how many of each type exist
+        ruleArgs.addresses = new address[](placeHolders.length);
+        ruleArgs.ints = new uint256[](placeHolders.length);
+        ruleArgs.strings = new string[](placeHolders.length);
+        uint256 overallIter = 0;
+        uint256 addressIter = 0;
+        uint256 intIter = 0;
+        uint256 stringIter = 0;
+
+        for(uint256 placeholderIndex = 0; placeholderIndex < placeHolders.length; placeholderIndex++) {
+            // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
+            if(placeHolders[placeholderIndex].foreignCall) {
+                    RulesStorageStructure.ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, placeHolders, fcArgs, functionSignatureArgs, placeholderIndex);
+                    // Set the placeholders value and type based on the value returned by the foreign call
+                    ruleArgs.argumentTypes[overallIter] = retVal.pType;
+                    if(retVal.pType == RulesStorageStructure.PT.ADDR) {
+                        ruleArgs.addresses[addressIter] = retVal.addr;
+                        overallIter += 1;
+                        addressIter += 1;
+                    } else if(retVal.pType == RulesStorageStructure.PT.STR) {
+                        ruleArgs.strings[stringIter] = retVal.str;
+                        overallIter += 1;
+                        stringIter += 1;
+                    } else if(retVal.pType == RulesStorageStructure.PT.UINT) {
+                        ruleArgs.ints[intIter] = retVal.intValue;
+                        overallIter += 1;
+                        intIter += 1;
+                    }
+            } else {
+                // Determine if the placeholder represents the return value of a tracker 
+                if (placeHolders[placeholderIndex].trackerValue) {
+                    // Loop through tracker storage for invoking address  
+                    for(uint256 trackerValueIndex = 0; trackerValueIndex < trackerStorage[_policyId].trackers.length; trackerValueIndex++) {
+                        // determine pType of tracker
+                        ruleArgs.argumentTypes[overallIter] = trackerStorage[_policyId].trackers[trackerValueIndex].pType;
+                        // replace the placeholder value with the tracker value 
+                        if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.ADDR){
+                            ruleArgs.addresses[addressIter] = trackerStorage[_policyId].trackers[trackerValueIndex].addressTracker;
+                            overallIter += 1;
+                            addressIter += 1;
+                        } else if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.UINT) {
+                            ruleArgs.ints[intIter] = trackerStorage[_policyId].trackers[trackerValueIndex].uintTracker;
+                            overallIter += 1;
+                            intIter += 1;
+                        } else if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.STR) {
+                            ruleArgs.strings[stringIter] = trackerStorage[_policyId].trackers[trackerValueIndex].stringTracker;
+                            overallIter += 1;
+                            stringIter += 1;
+                        }
+                    }
+                } else {
+                    // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
+                    if(placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.ADDR) {
+                        ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.ADDR;
+                        ruleArgs.addresses[addressIter] = functionSignatureArgs.addresses[placeHolders[placeholderIndex].typeSpecificIndex];
+                        overallIter += 1;
+                        addressIter += 1;
+                    } else if(placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.UINT) {
+                        ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.UINT;
+                        ruleArgs.ints[intIter] = functionSignatureArgs.ints[placeHolders[placeholderIndex].typeSpecificIndex];
+                        overallIter += 1;
+                        intIter += 1;
+                    } else if(placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.STR) {
+                        ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.STR;
+                        ruleArgs.strings[stringIter] = functionSignatureArgs.strings[placeHolders[placeholderIndex].typeSpecificIndex];
+                        overallIter += 1;
+                        stringIter += 1;
                     }
                 }
             }
-            
-            RulesStorageStructure.Arguments memory functionSignatureArgs = decodeFunctionSignatureArgs(functionSignaturePlaceholders, arguments);
+        }
+        return ruleArgs;
+    }
 
-            RulesStorageStructure.Rule[] memory applicableRules = new RulesStorageStructure.Rule[](policyStorage[_policyId].policy.signatureToRuleIds[functionSignature].length);
-            for(uint256 i = 0; i < applicableRules.length; i++) {
-                if(ruleStorage[policyStorage[_policyId].policy.signatureToRuleIds[functionSignature][i]].set) {
-                    applicableRules[i] = ruleStorage[policyStorage[_policyId].policy.signatureToRuleIds[functionSignature][i]].rule;
+    /**
+     * @dev Evaluates the instruction set and returns an answer to the condition
+     * @param prog The instruction set, with placeholders, to be run.
+     * @param arguments the values to replace the placeholders in the instruction set with.
+     * @return ans the result of evaluating the instruction set
+     */
+    function run(uint256 _policyId, uint256[] calldata prog, RulesStorageStructure.Arguments calldata arguments) public returns (bool ans) {
+        uint256[64] memory mem;
+        uint256 idx = 0;
+        uint256 opi = 0;
+        while (idx < prog.length) {
+            uint256 v = 0;
+            RulesStorageStructure.LC op = RulesStorageStructure.LC(prog[idx]);
+
+            if(op == RulesStorageStructure.LC.PLH) {
+                // Placeholder format will be:
+                // PLH, arguments array index, argument type specific array index
+                // For example if the Placeholder is the 3rd argument in the Arguments structure, which is the first address type argument:
+                // PLH, 2, 0
+                uint256 pli = prog[idx+1];
+                uint256 spci = prog[idx+2];
+                RulesStorageStructure.PT typ = arguments.argumentTypes[pli];
+                if(typ == RulesStorageStructure.PT.ADDR) {
+                    // Convert address to uint256 for direct comparison using == and != operations
+                    v = uint256(uint160(arguments.addresses[spci])); idx += 3;
+                } else if(typ == RulesStorageStructure.PT.UINT) {
+                    v = arguments.ints[spci]; idx += 3;
+                } else if(typ == RulesStorageStructure.PT.STR) {
+                    // Convert string to uint256 for direct comparison using == and != operations
+                    v = uint256(keccak256(abi.encode(arguments.strings[spci]))); idx += 3;
                 }
-            }
-
-
-            // Retrieve placeHolder[] for specific rule to be evaluated and translate function signature argument array 
-            // to rule specific argument array
-
-            for(uint256 i = 0; i < applicableRules.length; i++) { 
-                if(!evaluateIndividualRule(_policyId, applicableRules[i], functionSignatureArgs, contractAddress)) {
-                    EffectProcessor(effectProcessor).doEffects(applicableRules[i].negEffects);
-                } else{
-                    EffectProcessor(effectProcessor).doEffects(applicableRules[i].posEffects);
+            } else if(op == RulesStorageStructure.LC.TRU) {
+                // Tracker Update format will be:
+                // TRU, tracker index, mem index
+                // TODO: Update to account for type
+                if(trackerStorage[_policyId].trackers[prog[idx + 1]].pType == RulesStorageStructure.PT.UINT) {
+                    trackerStorage[_policyId].trackers[prog[idx + 1]].uintTracker = mem[prog[idx+2]];
                 }
-            }
+                idx += 3;
 
+            } else if (op == RulesStorageStructure.LC.NUM) { v = prog[idx+1]; idx += 2; }
+            else if (op == RulesStorageStructure.LC.ADD) { v = mem[prog[idx+1]] + mem[prog[idx+2]]; idx += 3; }
+            else if (op == RulesStorageStructure.LC.SUB) { v = mem[prog[idx+1]] - mem[prog[idx+2]]; idx += 3; }
+            else if (op == RulesStorageStructure.LC.MUL) { v = mem[prog[idx+1]] * mem[prog[idx+2]]; idx += 3; }
+            else if (op == RulesStorageStructure.LC.DIV) { v = mem[prog[idx+1]] / mem[prog[idx+2]]; idx += 3; }
+            else if (op == RulesStorageStructure.LC.LT ) { v = bool2ui(mem[prog[idx+1]] < mem[prog[idx+2]]); idx += 3; }
+            else if (op == RulesStorageStructure.LC.GT ) { v = bool2ui(mem[prog[idx+1]] > mem[prog[idx+2]]); idx += 3; }
+            else if (op == RulesStorageStructure.LC.EQ ) { v = bool2ui(mem[prog[idx+1]] == mem[prog[idx+2]]); idx += 3; }
+            else if (op == RulesStorageStructure.LC.AND) { v = bool2ui(ui2bool(mem[prog[idx+1]]) && ui2bool(mem[prog[idx+2]])); idx += 3; }
+            else if (op == RulesStorageStructure.LC.OR ) { v = bool2ui(ui2bool(mem[prog[idx+1]]) || ui2bool(mem[prog[idx+2]])); idx += 3; }
+            else if (op == RulesStorageStructure.LC.NOT) { v = bool2ui(! ui2bool(mem[prog[idx+1]])); idx += 2; }
+            else { revert("Illegal instruction"); }
+            mem[opi] = v;
+            opi += 1;
+        }
+        return ui2bool(mem[opi - 1]);
     }
 
     /**
@@ -254,7 +443,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param arguments the encoded arguments 
      * @return functionSignatureArgs the Arguments struct containing the decoded function arguments
      */
-    function decodeFunctionSignatureArgs(RulesStorageStructure.PT[] memory functionSignaturePTs, bytes calldata arguments) internal pure returns (RulesStorageStructure.Arguments memory functionSignatureArgs) {
+    function decodeFunctionSignatureArgs(RulesStorageStructure.PT[] memory functionSignaturePTs, bytes calldata arguments) public pure returns (RulesStorageStructure.Arguments memory functionSignatureArgs) {
         uint256 placeIter = 32;
         uint256 addressIter = 0;
         uint256 intIter = 0;
@@ -298,187 +487,29 @@ contract RulesEngineRunLogic is IRulesEngine {
                 stringIter += 1;
             }
         }
-    }
+    } 
 
-    /**
-     * @dev evaluates an individual rules condition(s)
-     * @param _policyId Policy id being evaluated.
-     * @param applicableRule the rule structure containing the instruction set, with placeholders, to execute
-     * @param functionSignatureArgs the values to replace the placeholders in the instruction set with.
-     * @return response the result of the rule condition evaluation 
-     * TODO: Look into the relationship between policy and foreign calls
-     */
-    function evaluateIndividualRule(uint256 _policyId, RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, address contractAddress) internal returns (bool response) {
-        RulesStorageStructure.Arguments memory ruleArgs;
-        ruleArgs.argumentTypes = new RulesStorageStructure.PT[](applicableRule.placeHolders.length);
-        // Initializing each to the max size to avoid the cost of iterating through to determine how many of each type exist
-        ruleArgs.addresses = new address[](applicableRule.placeHolders.length);
-        ruleArgs.ints = new uint256[](applicableRule.placeHolders.length);
-        ruleArgs.strings = new string[](applicableRule.placeHolders.length);
-        uint256 overallIter = 0;
-        uint256 addressIter = 0;
-        uint256 intIter = 0;
-        uint256 stringIter = 0;
 
-        for(uint256 placeholderIndex = 0; placeholderIndex < applicableRule.placeHolders.length; placeholderIndex++) {
-            // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
-            if(applicableRule.placeHolders[placeholderIndex].foreignCall) {
-                // Loop through the foreign call structures associated with the calling contracts address
-                for(uint256 foreignCallsIdx = 0; foreignCallsIdx < foreignCalls[_policyId].foreignCalls.length; foreignCallsIdx++) {
-                    // Check if the index for this placeholder matches the foreign calls index
-                    if(foreignCalls[_policyId].foreignCalls[foreignCallsIdx].foreignCallIndex == applicableRule.placeHolders[placeholderIndex].typeSpecificIndex) {
-                        // Place the foreign call
-                        RulesStorageStructure.ForeignCallReturnValue memory retVal = evaluateForeignCallForRule(foreignCalls[_policyId].foreignCalls[foreignCallsIdx], applicableRule, functionSignatureArgs);
-                        // Set the placeholders value and type based on the value returned by the foreign call
-                        ruleArgs.argumentTypes[overallIter] = retVal.pType;
-                        if(retVal.pType == RulesStorageStructure.PT.ADDR) {
-                            ruleArgs.addresses[addressIter] = retVal.addr;
-                            overallIter += 1;
-                            addressIter += 1;
-                        } else if(retVal.pType == RulesStorageStructure.PT.STR) {
-                            ruleArgs.strings[stringIter] = retVal.str;
-                            overallIter += 1;
-                            stringIter += 1;
-                        } else if(retVal.pType == RulesStorageStructure.PT.UINT) {
-                            ruleArgs.ints[intIter] = retVal.intValue;
-                            overallIter += 1;
-                            intIter += 1;
-                        }
-                    }
-                }
-            } else {
-                // Determine if the placeholder represents the return value of a tracker 
-                if (applicableRule.placeHolders[placeholderIndex].trackerValue) {
-                // Loop through tracker storage for invoking address  
-                for(uint256 trackerValueIndex = 0; trackerValueIndex < trackerStorage[_policyId].trackers.length; trackerValueIndex++) {
-                    // determine pType of tracker
-                    ruleArgs.argumentTypes[overallIter] = trackerStorage[_policyId].trackers[trackerValueIndex].pType;
-                    // replace the placeholder value with the tracker value 
-                    if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.ADDR){
-                        ruleArgs.addresses[addressIter] = trackerStorage[_policyId].trackers[trackerValueIndex].addressTracker;
-                        overallIter += 1;
-                        addressIter += 1;
-                    } else if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.UINT) {
-                        ruleArgs.ints[intIter] = trackerStorage[_policyId].trackers[trackerValueIndex].uintTracker;
-                        overallIter += 1;
-                        intIter += 1;
-                    } else if(ruleArgs.argumentTypes[overallIter] == RulesStorageStructure.PT.STR) {
-                        ruleArgs.strings[stringIter] = trackerStorage[_policyId].trackers[trackerValueIndex].stringTracker;
-                        overallIter += 1;
-                        stringIter += 1;
-                    }
-                }
-            } else {
-                // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
-                if(applicableRule.placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.ADDR) {
-                    ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.ADDR;
-                    ruleArgs.addresses[addressIter] = functionSignatureArgs.addresses[applicableRule.placeHolders[placeholderIndex].typeSpecificIndex];
-                    overallIter += 1;
-                    addressIter += 1;
-                } else if(applicableRule.placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.UINT) {
-                    ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.UINT;
-                    ruleArgs.ints[intIter] = functionSignatureArgs.ints[applicableRule.placeHolders[placeholderIndex].typeSpecificIndex];
-                    overallIter += 1;
-                    intIter += 1;
-                } else if(applicableRule.placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.STR) {
-                    ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.STR;
-                    ruleArgs.strings[stringIter] = functionSignatureArgs.strings[applicableRule.placeHolders[placeholderIndex].typeSpecificIndex];
-                    overallIter += 1;
-                    stringIter += 1;
-                }
+    function evaluateForeignCalls(uint256 _policyId, RulesStorageStructure.Placeholder[] memory placeHolders, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgumentMappings, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256 placeholderIndex) public returns(RulesStorageStructure.ForeignCallReturnValue memory) {
+        // Loop through the foreign call structures associated with the calling contracts address
+        for(uint256 foreignCallsIdx = 0; foreignCallsIdx < foreignCalls[_policyId].foreignCalls.length; foreignCallsIdx++) {
+            // Check if the index for this placeholder matches the foreign calls index
+            if(foreignCalls[_policyId].foreignCalls[foreignCallsIdx].foreignCallIndex == placeHolders[placeholderIndex].typeSpecificIndex) {
+                // Place the foreign call
+                RulesStorageStructure.ForeignCallReturnValue memory retVal = evaluateForeignCallForRule(foreignCalls[_policyId].foreignCalls[foreignCallsIdx], fcArgumentMappings, functionSignatureArgs);
+                return retVal;
             }
-        }
-            response = this.run(applicableRule.instructionSet, ruleArgs);
-        }
-    }
-
-    /**
-     * @dev Evaluates the instruction set and returns an answer to the condition
-     * @param prog The instruction set, with placeholders, to be run.
-     * @param arguments the values to replace the placeholders in the instruction set with.
-     * @return ans the result of evaluating the instruction set
-     */
-    function run(uint256[] calldata prog, RulesStorageStructure.Arguments calldata arguments) public pure returns (bool ans) {
-        uint256[64] memory mem;
-        uint256 idx = 0;
-        uint256 opi = 0;
-        while (idx < prog.length) {
-            uint256 v = 0;
-            RulesStorageStructure.LC op = RulesStorageStructure.LC(prog[idx]);
-
-            if(op == RulesStorageStructure.LC.PLH) {
-                // Placeholder format will be:
-                // PLH, arguments array index, argument type specific array index
-                // For example if the Placeholder is the 3rd argument in the Arguments structure, which is the first address type argument:
-                // PLH, 2, 0
-                uint256 pli = prog[idx+1];
-                uint256 spci = prog[idx+2];
-                RulesStorageStructure.PT typ = arguments.argumentTypes[pli];
-                if(typ == RulesStorageStructure.PT.ADDR) {
-                    // Convert address to uint256 for direct comparison using == and != operations
-                    v = uint256(uint160(arguments.addresses[spci])); idx += 3;
-                } else if(typ == RulesStorageStructure.PT.UINT) {
-                    v = arguments.ints[spci]; idx += 3;
-                } else if(typ == RulesStorageStructure.PT.STR) {
-                    // Convert string to uint256 for direct comparison using == and != operations
-                    v = uint256(keccak256(abi.encode(arguments.strings[spci]))); idx += 3;
-                }
-            } else if (op == RulesStorageStructure.LC.NUM) { v = prog[idx+1]; idx += 2; }
-            else if (op == RulesStorageStructure.LC.ADD) { v = mem[prog[idx+1]] + mem[prog[idx+2]]; idx += 3; }
-            else if (op == RulesStorageStructure.LC.SUB) { v = mem[prog[idx+1]] - mem[prog[idx+2]]; idx += 3; }
-            else if (op == RulesStorageStructure.LC.MUL) { v = mem[prog[idx+1]] * mem[prog[idx+2]]; idx += 3; }
-            else if (op == RulesStorageStructure.LC.DIV) { v = mem[prog[idx+1]] / mem[prog[idx+2]]; idx += 3; }
-            else if (op == RulesStorageStructure.LC.LT ) { v = bool2ui(mem[prog[idx+1]] < mem[prog[idx+2]]); idx += 3; }
-            else if (op == RulesStorageStructure.LC.GT ) { v = bool2ui(mem[prog[idx+1]] > mem[prog[idx+2]]); idx += 3; }
-            else if (op == RulesStorageStructure.LC.EQ ) { v = bool2ui(mem[prog[idx+1]] == mem[prog[idx+2]]); idx += 3; }
-            else if (op == RulesStorageStructure.LC.AND) { v = bool2ui(ui2bool(mem[prog[idx+1]]) && ui2bool(mem[prog[idx+2]])); idx += 3; }
-            else if (op == RulesStorageStructure.LC.OR ) { v = bool2ui(ui2bool(mem[prog[idx+1]]) || ui2bool(mem[prog[idx+2]])); idx += 3; }
-            else if (op == RulesStorageStructure.LC.NOT) { v = bool2ui(! ui2bool(mem[prog[idx+1]])); idx += 2; }
-            else { revert("Illegal instruction"); }
-            mem[opi] = v;
-            opi += 1;
-        }
-        return ui2bool(mem[opi - 1]);
-    }
-
-    /**
-     * @dev Builds a foreign call structure and adds it to the contracts storage, mapped to the contract address it is associated with
-     * @param _policyId the policy Id of the policy the foreign call will be mapped to
-     * @param foreignContractAddress the address of the contract where the foreign call exists
-     * @param functionSignature the string representation of the function signature of the foreign call
-     * @param returnType the parameter type of the foreign calls return value
-     * @param arguments the parameter types of the foreign calls arguments in order
-     * @return fc the foreign call structure 
-     */
-    function updateForeignCall(uint256 _policyId, address foreignContractAddress, string memory functionSignature, RulesStorageStructure.PT returnType, RulesStorageStructure.PT[] memory arguments) public returns (RulesStorageStructure.ForeignCall memory fc) {
-        fc.foreignCallAddress = foreignContractAddress;
-        // Convert the string representation of the function signature to a selector
-        fc.signature = bytes4(keccak256(bytes(functionSignature)));
-        fc.foreignCallIndex = foreignCallIndex;
-        foreignCallIndex += 1;
-        fc.returnType = returnType;
-        fc.parameterTypes = new RulesStorageStructure.PT[](arguments.length);
-        for(uint256 i = 0; i < arguments.length; i++) {
-            fc.parameterTypes[i] = arguments[i];
-        }
-
-        // If the foreign call structure already exists in the mapping update it, otherwise add it
-        if(foreignCalls[_policyId].set) {
-            foreignCalls[_policyId].foreignCalls.push(fc);
-        } else {
-            foreignCalls[_policyId].set = true;
-            foreignCalls[_policyId].foreignCalls.push(fc);
         }
     }
 
     /**
      * @dev encodes the arguments and places a foreign call, returning the calls return value as long as it is successful
      * @param fc the Foreign Call structure
-     * @param rule the Rule that is placing the foreign call
+     * @param functionArguments the argument mappings for the foreign call (function arguments and tracker values)
      * @param functionArguments the arguments of the rules calling funciton (to be passed to the foreign call as needed)
      * @return retVal the foreign calls return value
      */
-    function evaluateForeignCallForRule(RulesStorageStructure.ForeignCall memory fc, RulesStorageStructure.Rule memory rule, RulesStorageStructure.Arguments memory functionArguments) internal returns (RulesStorageStructure.ForeignCallReturnValue memory retVal) {
+    function evaluateForeignCallForRule(RulesStorageStructure.ForeignCall memory fc, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgumentMappings, RulesStorageStructure.Arguments memory functionArguments) internal returns (RulesStorageStructure.ForeignCallReturnValue memory retVal) {
         // Arrays used to hold the parameter types and values to be encoded
         uint256[] memory paramTypeEncode = new uint256[](fc.parameterTypes.length);
         uint256[] memory uintEncode = new uint256[](fc.parameterTypes.length);
@@ -490,23 +521,23 @@ contract RulesEngineRunLogic is IRulesEngine {
         uint256 strIter = 0;
 
         // Iterate over the foreign call argument mappings contained within the rule structure
-        for(uint256 i = 0; i < rule.fcArgumentMappings.length; i++) {
+        for(uint256 i = 0; i < fcArgumentMappings.length; i++) {
             // verify this mappings foreign call index matches that of the foreign call structure
-            if(rule.fcArgumentMappings[i].foreignCallIndex == fc.foreignCallIndex) {
+            if(fcArgumentMappings[i].foreignCallIndex == fc.foreignCallIndex) {
                 // Iterate through the array of mappings between calling function arguments and foreign call arguments
-                for(uint256 j = 0; j < rule.fcArgumentMappings[i].mappings.length; j++) {
+                for(uint256 j = 0; j < fcArgumentMappings[i].mappings.length; j++) {
                     // Check the parameter type and set the values in the encode arrays accordingly 
-                    if(rule.fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.ADDR) {
+                    if(fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.ADDR) {
                         paramTypeEncode[j] = 1; 
-                        addressEncode[addrIter] = functionArguments.addresses[rule.fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
+                        addressEncode[addrIter] = functionArguments.addresses[fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
                         addrIter += 1;
-                    } else if(rule.fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.UINT) {
+                    } else if(fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.UINT) {
                         paramTypeEncode[j] = 0;
-                        uintEncode[uintIter] = functionArguments.ints[rule.fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
+                        uintEncode[uintIter] = functionArguments.ints[fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
                         uintIter += 1;
-                    } else if(rule.fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.STR) {
+                    } else if(fcArgumentMappings[i].mappings[j].functionCallArgumentType == RulesStorageStructure.PT.STR) {
                         paramTypeEncode[j] = 2;
-                        stringEncode[strIter] = functionArguments.strings[rule.fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
+                        stringEncode[strIter] = functionArguments.strings[fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
                         strIter += 1;
                     }
                 }
@@ -543,6 +574,74 @@ contract RulesEngineRunLogic is IRulesEngine {
                 retVal.pType = RulesStorageStructure.PT.VOID;
             }
         }
+    }
+
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+    // Effect Execution Functions
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * @dev Loop through effects for a given rule and execute them
+     * @param _effectIds list of effects
+     */
+    function doEffects(uint256 _policyId, uint256[] calldata _effectIds, RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs) public {
+        for(uint256 i = 0; i < _effectIds.length; i++) {
+            if(_effectIds[i] > 0){// only ref Id's greater than 0 are valid
+                EffectStructures.Effect memory effect = effectStorage[_effectIds[i]];
+                if (effect.effectType == EffectStructures.ET.REVERT) { 
+                    doRevert(effect.text);
+                } else if (effect.effectType == EffectStructures.ET.EVENT) {
+                     doEvent(effect.text);
+                } else {
+                    evaluateExpression(_policyId, applicableRule, functionSignatureArgs, effect.instructionSet);
+                }
+            }
+        }
+    }
+
+    /**
+     * @dev Reverts the transaction
+     * @param _message the reversion message
+     */
+    function doRevert(string memory _message) internal pure{
+        revert(_message);
+    }
+
+    /**
+     * @dev Emit an event
+     * @param _message the reversion message
+     */
+    function doEvent(string memory _message) internal {
+        emit EffectStructures.RulesEngineEvent(_message);
+    }
+
+    function evaluateExpression(uint256 _policyId, RulesStorageStructure.Rule memory applicableRule, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256[] memory instructionSet) public {
+        RulesStorageStructure.Arguments memory effectArguments = buildArguments( _policyId, applicableRule.effectPlaceHolders, applicableRule.fcArgumentMappingsEffects, functionSignatureArgs);
+        if(instructionSet.length > 1) {
+            this.run(_policyId, instructionSet, effectArguments);
+        }
+    }
+
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    // Utility Functions
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+    /**
+     * @dev converts a uint256 to a bool
+     * @param x the uint256 to convert
+     */
+    function ui2bool(uint256 x) public pure returns (bool ans) {
+        return x == 1;
+    }
+
+    /**
+     * @dev converts a bool to an uint256
+     * @param x the bool to convert
+     */
+    function bool2ui(bool x) public pure returns (uint256 ans) {
+        return x ? 1 : 0;
     }
 
     /**
@@ -630,10 +729,5 @@ contract RulesEngineRunLogic is IRulesEngine {
         assembly {
             result := mload(add(source, 32))
         }
-    
-}
-
-    function setEffectProcessor(address _address) external {
-        effectProcessor = _address;
     }
 }

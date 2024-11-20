@@ -6,7 +6,7 @@ import "src/RulesEngineStructures.sol";
 abstract contract EffectStructures {
 
     // Supported Effect Types
-    enum ET { REVERT, EVENT}
+    enum ET { REVERT, EVENT, EXPRESSION}
 
     /// Events 
     event RulesEngineEvent(string _message);
@@ -20,6 +20,8 @@ abstract contract EffectStructures {
         uint256 effectId;
         ET effectType;
         string text;//used for any type of text(revert, event, etc.)
+        // The instruction set that will be run at effect execution
+        uint256[] instructionSet;
     }
 
 }
