@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 import "src/RulesEngineStructures.sol";
 import "src/IRulesEngine.sol";
 import "src/effects/EffectStructures.sol";
-import "forge-std/console.sol";
 
 /**
  * @title Rules Engine Run Logic
@@ -417,99 +416,29 @@ contract RulesEngineRunLogic is IRulesEngine {
      */
     function evaluateForeignCallForRule(RulesStorageStructure.ForeignCall memory fc, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgumentMappings, RulesStorageStructure.Arguments memory functionArguments) internal returns (RulesStorageStructure.ForeignCallReturnValue memory retVal) {
         // First, calculate total size needed and positions of dynamic data
-        uint256 headSize = 0;  // Size of the head (static + offsets)
-        uint256 tailSize = 0;  // Size of the dynamic data
-        
+        uint dynamicVarCount = 0;
+        uint[] memory dynamicVarLengths = new uint[](functionArguments.values.length);
+        bytes[] memory values = new bytes[](functionArguments.values.length);
+        RulesStorageStructure.PT[] memory parameterTypes = new RulesStorageStructure.PT[](functionArguments.values.length);
+
         // First pass: calculate sizes
         for(uint256 i = 0; i < fcArgumentMappings.length; i++) {
             if(fcArgumentMappings[i].foreignCallIndex == fc.foreignCallIndex) {
                 for(uint256 j = 0; j < fcArgumentMappings[i].mappings.length; j++) {
-                    RulesStorageStructure.PT argType = fcArgumentMappings[i].mappings[j].functionCallArgumentType;
-                    
-                    if(argType == RulesStorageStructure.PT.STR) {
-                        headSize += 32;  // offset in head
-                        // Get the string length from the encoded value
-                        bytes memory strValue = functionArguments.values[fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
-                        uint256 strLength = strValue.length;
-                        tailSize += 32 + ((strLength + 31) / 32) * 32;  // length + padded string data
-                    } else {
-                        // Static types (UINT, ADDR) take 32 bytes in the head
-                        headSize += 32;
-                    }
-                }
-            }
-        }
-
-        // Allocate memory for the entire call data
-        bytes memory encodedCall;
-        bytes4 selector = fc.signature;
-        assembly {
-            // Allocate memory for function selector (4 bytes) + arguments
-            let totalSize := add(4, add(headSize, tailSize))
-            encodedCall := mload(0x40)
-            mstore(encodedCall, totalSize)  // Store length
-            
-            // Store function selector in first 4 bytes
-            let ptr := add(encodedCall, 0x20)
-            mstore(ptr, selector)
-            
-            // Update free memory pointer
-            mstore(0x40, add(encodedCall, add(0x20, totalSize)))
-        }
-
-        uint256 headPtr = 4;  // Start after function selector
-        uint256 tailPtr = headSize + 4;  // Dynamic data starts after the head
-
-
-        // Second pass: encode the arguments
-        for(uint256 i = 0; i < fcArgumentMappings.length; i++) {
-            if(fcArgumentMappings[i].foreignCallIndex == fc.foreignCallIndex) {
-                for(uint256 j = 0; j < fcArgumentMappings[i].mappings.length; j++) {
+                    // Check the parameter type and set the values in the encode arrays accordingly 
                     RulesStorageStructure.PT argType = fcArgumentMappings[i].mappings[j].functionCallArgumentType;
                     bytes memory value = functionArguments.values[fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
-
-                    if(argType == RulesStorageStructure.PT.STR) {
-                        // For strings: put offset in head, data in tail
-                        assembly {
-                            // Store offset in head
-                            mstore(add(add(encodedCall, 0x20), headPtr), sub(tailPtr, 4))
-                            
-                            // Copy string data to tail
-                            let strLength := mload(add(value, 0x20))  // Get string length
-                            mstore(add(add(encodedCall, 0x20), tailPtr), strLength)  // Store length
-                            let paddedLength := mul(div(add(strLength, 31), 32), 32)
-                            
-                            // Copy string data
-                            let srcPtr := add(value, 0x40)
-                            let destPtr := add(add(encodedCall, 0x20), add(tailPtr, 0x20))
-                            
-                            // Copy word by word
-                            let words := div(add(strLength, 31), 32)
-                            for { let z := 0 } lt(z, words) { z := add(z, 1) } {
-                                mstore(add(destPtr, mul(z, 32)), mload(add(srcPtr, mul(z, 32))))
-                            }
-                            
-                            tailPtr := add(tailPtr, add(0x20, paddedLength))
-                            headPtr := add(headPtr, 32)
-                        }
-                        
-                    } 
-                    else if(argType == RulesStorageStructure.PT.ADDR) {
-                        assembly {
-                            mstore(add(add(encodedCall, 0x20), headPtr), and(mload(add(value, 0x20)), 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF))
-                            headPtr := add(headPtr, 32)
-                        }
-                    }
-                    else if(argType == RulesStorageStructure.PT.UINT) {
-                        assembly {
-                            mstore(add(add(encodedCall, 0x20), headPtr), mload(add(value, 0x20)))
-                            headPtr := add(headPtr, 32)
-                        }
+                    parameterTypes[j] = argType;
+                    values[j] = value;
+                    if (argType == RulesStorageStructure.PT.STR) {
+                        dynamicVarLengths[dynamicVarCount] = value.length;
+                        ++dynamicVarCount;
                     }
                 }
             }
         }
-        
+
+        bytes memory encodedCall = assemblyEncode(parameterTypes, values, fc.signature, dynamicVarLengths);
         // Place the foreign call
         (bool response, bytes memory data) = fc.foreignCallAddress.call(encodedCall);
     
@@ -603,83 +532,92 @@ contract RulesEngineRunLogic is IRulesEngine {
     /**
      * @dev Uses assembly to encode a variable length array of variable type arguments so they can be used in a foreign call
      * @param parameterTypes the parameter types of the arguments in order
-     * @param ints the uint256 parameters to be encoded
-     * @param addresses the address parameters to be encoded
-     * @param strings the string parameters to be encoded
-     * @return res the encoded arguments
+     * @param values the values to be encoded
+     * @param selector the selector of the function to be called
+     * @param dynamicVarLengths the lengths of the dynamic variables to be encoded
+     * @return encoded the encoded arguments
      */
-    function assemblyEncode(uint256[] memory parameterTypes, uint256[] memory ints, address[] memory addresses, string[] memory strings) internal pure returns (bytes memory res) {
-        uint256 len = parameterTypes.length;
-        uint256 strCount = 0;
-        uint256 remainingCount = 0;
-        uint256[] memory strLengths = new uint256[](strings.length); 
-        bytes32[] memory convertedStrings = new bytes32[](strings.length);
-        for(uint256 i = 0; i < convertedStrings.length; i++) {
-            strLengths[i] = bytes(strings[i]).length;
-            convertedStrings[i] = stringToBytes32(strings[i]);
-            strCount += 1;
+    function assemblyEncode(RulesStorageStructure.PT[] memory parameterTypes, bytes[] memory values, bytes4 selector, uint[] memory dynamicVarLengths) internal pure returns (bytes memory encoded) {
+        assert(parameterTypes.length == values.length);
+        assert(dynamicVarLengths.length <= parameterTypes.length);
+        uint256 headSize = parameterTypes.length * 32;
+        uint256 tailSize = dynamicVarLengths.length * 32;
+        for (uint i; i < dynamicVarLengths.length; ++i) {
+            tailSize += (dynamicVarLengths[i] + 31) / 32 * 32;
         }
-        remainingCount = parameterTypes.length - strCount;
-
-        uint256 strStartLoc = parameterTypes.length;
 
         assembly {
-            // Iterator for the uint256 array
-            let intIter := 1
-            // Iterator for the address array
-            let addrIter := 1
-            // Iterator for the string array
-            let strIter := 1
-            // get free memory pointer
-            res := mload(0x40)        
-            // set length based on size of parameter array                
-            mstore(res, add(mul(0x20, remainingCount), mul(0x60, strCount))) 
+            let totalSize := add(4, add(headSize, tailSize))
+            encoded := mload(0x40)
+            mstore(encoded, totalSize)
+            mstore(add(encoded, 0x20), selector)
+            // Update the free memory pointer to the end of the encoded data
+            mstore(0x40, add(encoded, add(0x20, totalSize)))
 
-            let i := 1
-            for {} lt(i, add(len, 1)) {} {
-                // Retrieve the next parameter type
-                let pType := mload(add(parameterTypes, mul(0x20, i)))
+            let headPtr := 4  // Start after selector
+            let tailPtr := add(headSize, 4)  // Dynamic data starts after head
+            let dynamicValuesIndex := 0
 
-                // If parameter type is integer encode the uint256
-                if eq(pType, 0) {
-                    let value := mload(add(ints, mul(0x20, intIter)))
-                    mstore(add(res, mul(0x20, i)), value)
-                    intIter := add(intIter, 1) 
-                } 
+            // Main encoding loop
+            for { let i := 0 } lt(i, mload(parameterTypes)) { i := add(i, 1) } {
+                // Load the parameter type
+                let pType := mload(add(add(parameterTypes, 0x20), mul(i, 0x20)))
+                
+                // Get the current value pointer
+                let valuePtr := mload(add(add(values, 0x20), mul(i, 0x20)))
 
-                // If parameter type is address encode the address
-                if eq(pType, 1) {
-                    let value := mload(add(addresses, mul(0x20, addrIter)))
-                    value := and(value, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
-                    mstore(add(res, mul(0x20, i)), value)
-                    addrIter := add(addrIter, 1)
+                // Handle each type
+                switch pType
+                // Address (0)
+                case 0 {
+                    mstore(
+                        add(add(encoded, 0x20), headPtr),
+                        and(mload(add(valuePtr, 0x20)), 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+                    )
                 }
-
-                if eq(pType, 2) {
-                    mstore(add(res, mul(0x20, i)), mul(0x20, strStartLoc))
-                    strStartLoc := add(strStartLoc, 2)
-                }
-
-                // Increment global iterators 
-                i := add(i, 1)
-            }
-
-            let j := 0
-            for {} lt(j, strCount) {} {
-                let value := mload(add(convertedStrings, mul(0x20, strIter)))
-                let leng := mload(add(strLengths, mul(0x20, strIter)))
-                mstore(add(res, mul(0x20, i)), leng)   
-                mstore(add(res, add(mul(0x20, i), 0x20)), value)
-                i := add(i, 1)
-                i := add(i, 1)
-                strIter := add(strIter, 1)
-                j := add(j, 1)
-            }
-            // update free memory pointer
-            mstore(0x40, add(res, mul(0x20, i)))
-        }
+                // String (1)
+                case 1 {
+                    // Store offset in head
+                    mstore(add(add(encoded, 0x20), headPtr), sub(tailPtr, 4))
         
+                    // Get the source bytes value
+                    let bytesValue := mload(add(add(values, 0x20), mul(i, 0x20)))
+                    
+                    // Get string length - need to read from the correct position
+                    // bytesValue points to the bytes array which contains our encoded string
+                    // The actual string length is at bytesValue + 0x40 (skip two words)
+                    let strLength := mload(add(bytesValue, 0x40))
+                    
+                    // Store length at tail position
+                    mstore(add(add(encoded, 0x20), tailPtr), strLength)
+                    
+                    // Copy the actual string data
+                    let srcPtr := add(bytesValue, 0x60)  // skip to actual string data
+                    let destPtr := add(add(encoded, 0x20), add(tailPtr, 0x20))
+                    let wordCount := div(add(strLength, 31), 32)
+                    
+                    // Copy each word
+                    for { let j := 0 } lt(j, wordCount) { j := add(j, 1) } {
+                        let word := mload(add(srcPtr, mul(j, 0x20)))
+                        mstore(add(destPtr, mul(j, 0x20)), word)
+                    }
+        
+                    // Update tail pointer
+                    tailPtr := add(tailPtr, add(0x20, mul(wordCount, 0x20)))    
+                    dynamicValuesIndex := add(dynamicValuesIndex, 1)
+                }
+                // Uint (2)
+                case 2 {
+                    mstore(
+                        add(add(encoded, 0x20), headPtr),
+                        mload(add(valuePtr, 0x20))
+                    )
+                }
+                headPtr := add(headPtr, 32)
+            }
+        }
     }
+
 
     function stringToBytes32(string memory source) internal pure returns (bytes32 result) {
         assembly {

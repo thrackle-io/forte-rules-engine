@@ -474,36 +474,35 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
     function testEncodingForeignCall() public {
         string memory functionSig = "testSig(uint256,string,uint256,string,address)";
 
-        uint256[] memory vals = new uint256[](3);
-        vals[0] = 1;
-        vals[1] = 2;
-        vals[2] = 3;
+        RulesStorageStructure.PT[] memory parameterTypes = new RulesStorageStructure.PT[](5);
+        parameterTypes[0] = RulesStorageStructure.PT.UINT;
+        parameterTypes[1] = RulesStorageStructure.PT.STR;
+        parameterTypes[2] = RulesStorageStructure.PT.UINT;
+        parameterTypes[3] = RulesStorageStructure.PT.STR;
+        parameterTypes[4] = RulesStorageStructure.PT.ADDR;
 
-        uint256[] memory params = new uint256[](5);
-        params[0] = 0;
-        params[1] = 2;
-        params[2] = 0;
-        params[3] = 2;
-        params[4] = 1;
+        bytes[] memory vals = new bytes[](5);
+        vals[0] = abi.encode(1);
+        vals[1] = abi.encode("test");
+        vals[2] = abi.encode(2);
+        vals[3] = abi.encode("superduperduperduperduperduperduperduperduperduperlongstring");
+        vals[4] = abi.encode(address(0x1234567));
 
-        address[] memory addresses = new address[](1);
-        addresses[0] = address(0x1234567);
+        uint256[] memory dynamicVarLengths = new uint256[](2);
+        dynamicVarLengths[0] = 4;
+        dynamicVarLengths[1] = 44;
 
-        string[] memory strings = new string[](2);
-        strings[0] = "test";
-        strings[1] = "otherTest";
-        bytes memory argsEncoded = logic.assemblyEncodeExt(params, vals, addresses, strings);
         bytes4 FUNC_SELECTOR = bytes4(keccak256(bytes(functionSig)));
-        bytes memory encoded;
-        encoded = bytes.concat(encoded, FUNC_SELECTOR);
-        encoded = bytes.concat(encoded, argsEncoded);
+
+        bytes memory argsEncoded = logic.assemblyEncodeExt(parameterTypes, vals, FUNC_SELECTOR, dynamicVarLengths);
+        
         ForeignCallTestContract foreignCall = new ForeignCallTestContract();
 
-        (bool response, bytes memory data) = address(foreignCall).call(encoded);
+        (bool response, bytes memory data) = address(foreignCall).call(argsEncoded);
         assertEq(foreignCall.getDecodedIntOne(), 1);
         assertEq(foreignCall.getDecodedIntTwo(), 2);
         assertEq(foreignCall.getDecodedStrOne(), "test");
-        assertEq(foreignCall.getDecodedStrTwo(), "otherTest");
+        assertEq(foreignCall.getDecodedStrTwo(), "superduperduperduperduperduperduperduperduperduperlongstring");
         assertEq(foreignCall.getDecodedAddr(), address(0x1234567));
         response; 
         data; // added to silence warnings - we should have these in an assertion 

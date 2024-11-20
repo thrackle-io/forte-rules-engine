@@ -13,8 +13,8 @@ contract RulesEngineRunLogicWrapper is RulesEngineRunLogic {
         return evaluateForeignCallForRule(fc, fcArgumentMappings, functionArguments);
     }
 
-    function assemblyEncodeExt(uint256[] memory parameterTypes, uint256[] memory ints, address[] memory addresses, string[] memory strings) public pure returns (bytes memory res) {
-        return assemblyEncode(parameterTypes, ints, addresses, strings);
+    function assemblyEncodeExt(RulesStorageStructure.PT[] memory parameterTypes, bytes[] memory values, bytes4 selector, uint[] memory dynamicVarLengths) public pure returns (bytes memory res) {
+        return assemblyEncode(parameterTypes, values, selector, dynamicVarLengths);
     }
 
 }
