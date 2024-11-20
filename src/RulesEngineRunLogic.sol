@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import "src/RulesEngineStructures.sol";
 import "src/IRulesEngine.sol";
 import "src/effects/EffectStructures.sol";
+import "forge-std/console.sol";
 
 /**
  * @title Rules Engine Run Logic
@@ -331,12 +332,12 @@ contract RulesEngineRunLogic is IRulesEngine {
                     // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
                     if(placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.ADDR) {
                         ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.ADDR;
-                    } else if(applicableRule.placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.UINT) {
+                    } else if(placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.UINT) {
                         ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.UINT;
-                    } else if(applicableRule.placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.STR) {
+                    } else if(placeHolders[placeholderIndex].pType == RulesStorageStructure.PT.STR) {
                         ruleArgs.argumentTypes[overallIter] = RulesStorageStructure.PT.STR;
                     }
-                    ruleArgs.values[overallIter] = functionSignatureArgs.values[applicableRule.placeHolders[placeholderIndex].typeSpecificIndex];
+                    ruleArgs.values[overallIter] = functionSignatureArgs.values[placeHolders[placeholderIndex].typeSpecificIndex];
                     ++overallIter;
                 }
             }
@@ -357,11 +358,10 @@ contract RulesEngineRunLogic is IRulesEngine {
         while (idx < prog.length) {
             uint256 v = 0;
             RulesStorageStructure.LC op = RulesStorageStructure.LC(prog[idx]);
-
             if(op == RulesStorageStructure.LC.PLH) {
                 // Placeholder format is: get the index of the argument in the array. For example, PLH 0 is get the first argument in the arguments array and get its type and value
                 uint256 pli = prog[idx+1];
-                uint256 spci = prog[idx+2];
+
                 RulesStorageStructure.PT typ = arguments.argumentTypes[pli];
                 if(typ == RulesStorageStructure.PT.ADDR) {
                     // Convert address to uint256 for direct comparison using == and != operations
@@ -377,7 +377,7 @@ contract RulesEngineRunLogic is IRulesEngine {
                 // TRU, tracker index, mem index
                 // TODO: Update to account for type
                 if(trackerStorage[_policyId].trackers[prog[idx + 1]].pType == RulesStorageStructure.PT.UINT) {
-                    trackerStorage[_policyId].trackers[prog[idx + 1]].uintTracker = mem[prog[idx+2]];
+                    trackerStorage[_policyId].trackers[prog[idx + 1]].trackerValue = abi.encode(mem[prog[idx+2]]);
                 }
                 idx += 3;
 
@@ -419,21 +419,21 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param functionArguments the arguments of the rules calling funciton (to be passed to the foreign call as needed)
      * @return retVal the foreign calls return value
      */
-    function evaluateForeignCallForRule(RulesStorageStructure.ForeignCall memory fc, RulesStorageStructure.Rule memory rule, RulesStorageStructure.Arguments memory functionArguments) internal returns (RulesStorageStructure.ForeignCallReturnValue memory retVal) {
+    function evaluateForeignCallForRule(RulesStorageStructure.ForeignCall memory fc, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgumentMappings, RulesStorageStructure.Arguments memory functionArguments) internal returns (RulesStorageStructure.ForeignCallReturnValue memory retVal) {
         // First, calculate total size needed and positions of dynamic data
         uint256 headSize = 0;  // Size of the head (static + offsets)
         uint256 tailSize = 0;  // Size of the dynamic data
         
         // First pass: calculate sizes
-        for(uint256 i = 0; i < rule.fcArgumentMappings.length; i++) {
-            if(rule.fcArgumentMappings[i].foreignCallIndex == fc.foreignCallIndex) {
-                for(uint256 j = 0; j < rule.fcArgumentMappings[i].mappings.length; j++) {
-                    RulesStorageStructure.PT argType = rule.fcArgumentMappings[i].mappings[j].functionCallArgumentType;
+        for(uint256 i = 0; i < fcArgumentMappings.length; i++) {
+            if(fcArgumentMappings[i].foreignCallIndex == fc.foreignCallIndex) {
+                for(uint256 j = 0; j < fcArgumentMappings[i].mappings.length; j++) {
+                    RulesStorageStructure.PT argType = fcArgumentMappings[i].mappings[j].functionCallArgumentType;
                     
                     if(argType == RulesStorageStructure.PT.STR) {
                         headSize += 32;  // offset in head
                         // Get the string length from the encoded value
-                        bytes memory strValue = functionArguments.values[rule.fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
+                        bytes memory strValue = functionArguments.values[fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
                         uint256 strLength = strValue.length;
                         tailSize += 32 + ((strLength + 31) / 32) * 32;  // length + padded string data
                     } else {
@@ -466,11 +466,11 @@ contract RulesEngineRunLogic is IRulesEngine {
 
 
         // Second pass: encode the arguments
-        for(uint256 i = 0; i < rule.fcArgumentMappings.length; i++) {
-            if(rule.fcArgumentMappings[i].foreignCallIndex == fc.foreignCallIndex) {
-                for(uint256 j = 0; j < rule.fcArgumentMappings[i].mappings.length; j++) {
-                    RulesStorageStructure.PT argType = rule.fcArgumentMappings[i].mappings[j].functionCallArgumentType;
-                    bytes memory value = functionArguments.values[rule.fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
+        for(uint256 i = 0; i < fcArgumentMappings.length; i++) {
+            if(fcArgumentMappings[i].foreignCallIndex == fc.foreignCallIndex) {
+                for(uint256 j = 0; j < fcArgumentMappings[i].mappings.length; j++) {
+                    RulesStorageStructure.PT argType = fcArgumentMappings[i].mappings[j].functionCallArgumentType;
+                    bytes memory value = functionArguments.values[fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
 
                     if(argType == RulesStorageStructure.PT.STR) {
                         // For strings: put offset in head, data in tail

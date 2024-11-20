@@ -172,7 +172,7 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         rule.fcArgumentMappingsEffects[0].mappings[0].functionCallArgumentType = RulesStorageStructure.PT.UINT;
         rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.foreignCall = false;
         rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.pType = RulesStorageStructure.PT.UINT;
-        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.typeSpecificIndex = 0;
+        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
         uint256 ruleId = logic.updateRule(0, rule);
 
         RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
@@ -183,7 +183,7 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         RulesStorageStructure.Trackers memory tracker;  
         /// build the members of the struct: 
         tracker.pType = RulesStorageStructure.PT.UINT; 
-        tracker.uintTracker = 2; 
+        tracker.trackerValue = abi.encode(2); 
 
         
 
@@ -227,7 +227,7 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         rule.fcArgumentMappingsEffects[0].mappings[0].functionCallArgumentType = RulesStorageStructure.PT.UINT;
         rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.foreignCall = false;
         rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.pType = RulesStorageStructure.PT.UINT;
-        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.typeSpecificIndex = 0;
+        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
         uint256 ruleId = logic.updateRule(0, rule);
 
         RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
@@ -270,12 +270,12 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         rule.instructionSet[6] = 1;
 
         // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappings = new RulesStorageStructure.ForeignCallArgumentMappings[](1);
-        rule.fcArgumentMappings[0].mappings = new RulesStorageStructure.IndividualArgumentMapping[](1);
-        rule.fcArgumentMappings[0].mappings[0].functionCallArgumentType = RulesStorageStructure.PT.UINT;
-        rule.fcArgumentMappings[0].mappings[0].functionSignatureArg.foreignCall = false;
-        rule.fcArgumentMappings[0].mappings[0].functionSignatureArg.pType = RulesStorageStructure.PT.UINT;
-        rule.fcArgumentMappings[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
+        rule.fcArgumentMappingsConditions = new RulesStorageStructure.ForeignCallArgumentMappings[](1);
+        rule.fcArgumentMappingsConditions[0].mappings = new RulesStorageStructure.IndividualArgumentMapping[](1);
+        rule.fcArgumentMappingsConditions[0].mappings[0].functionCallArgumentType = RulesStorageStructure.PT.UINT;
+        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.foreignCall = false;
+        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.pType = RulesStorageStructure.PT.UINT;
+        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
         rule.negEffects = new uint256[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
@@ -404,11 +404,10 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         arguments.argumentTypes = new RulesStorageStructure.PT[](2);
         arguments.argumentTypes[0] = RulesStorageStructure.PT.ADDR;
         arguments.argumentTypes[1] = RulesStorageStructure.PT.UINT;
-        arguments.addresses = new address[](1);
-        arguments.addresses[0] = address(0x7654321);
-        arguments.ints = new uint256[](1);
-        arguments.ints[0] = 5;
-        bytes memory retVal = RuleEncodingLibrary.customEncoder(arguments);
+        arguments.values = new bytes[](2);
+        arguments.values[0] = abi.encode(address(0x7654321));
+        arguments.values[1] = abi.encode(5);
+        bytes memory retVal = abi.encode(arguments);
         // The Foreign call will be placed during the effect for the single rule in this policy.
         // The value being set in the foreign contract is then polled to verify that it has been udpated.
         bool response = logic.checkPolicies(address(userContract), bytes(functionSignature), retVal);
@@ -421,17 +420,16 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         arguments.argumentTypes = new RulesStorageStructure.PT[](2);
         arguments.argumentTypes[0] = RulesStorageStructure.PT.ADDR;
         arguments.argumentTypes[1] = RulesStorageStructure.PT.UINT;
-        arguments.addresses = new address[](1);
-        arguments.addresses[0] = address(0x7654321);
-        arguments.ints = new uint256[](1);
-        arguments.ints[0] = 5;
-        bytes memory retVal = RuleEncodingLibrary.customEncoder(arguments);
+        arguments.values = new bytes[](2);
+        arguments.values[0] = abi.encode(address(0x7654321));
+        arguments.values[1] = abi.encode(5);
+        bytes memory retVal = abi.encode(arguments);
         // The tracker will be updated during the effect for the single rule in this policy.
         // It will have the result of the foreign call (simpleCheck) added to it. 
         // original tracker value 2, added value 5, resulting updated tracker value should be 7
         bool response = logic.checkPolicies(address(userContract), bytes(functionSignature), retVal);
-        RulesStorageStructure.Trackers memory trackerValue = logic.getTracker(policyId, 0);
-        assertEq(trackerValue.uintTracker, 7);
+        RulesStorageStructure.Trackers memory tracker = logic.getTracker(policyId, 0);
+        assertEq(tracker.trackerValue, abi.encode(7));
     }
 
     function testCheckRulesExplicitWithForeignCallNegative() public {
@@ -561,27 +559,27 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         rule.fcArgumentMappingsConditions[0].foreignCallIndex = 0;
         rule.fcArgumentMappingsConditions[0].mappings = new RulesStorageStructure.IndividualArgumentMapping[](5);
 
-        rule.fcArgumentMappings[0].mappings[0].functionCallArgumentType = RulesStorageStructure.PT.UINT;
-        rule.fcArgumentMappings[0].mappings[0].functionSignatureArg.pType = RulesStorageStructure.PT.UINT;
-        rule.fcArgumentMappings[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
+        rule.fcArgumentMappingsConditions[0].mappings[0].functionCallArgumentType = RulesStorageStructure.PT.UINT;
+        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.pType = RulesStorageStructure.PT.UINT;
+        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
 
-        rule.fcArgumentMappings[0].mappings[1].functionCallArgumentType = RulesStorageStructure.PT.STR;
-        rule.fcArgumentMappings[0].mappings[1].functionSignatureArg.pType = RulesStorageStructure.PT.STR;
-        rule.fcArgumentMappings[0].mappings[1].functionSignatureArg.typeSpecificIndex = 0;
+        rule.fcArgumentMappingsConditions[0].mappings[1].functionCallArgumentType = RulesStorageStructure.PT.STR;
+        rule.fcArgumentMappingsConditions[0].mappings[1].functionSignatureArg.pType = RulesStorageStructure.PT.STR;
+        rule.fcArgumentMappingsConditions[0].mappings[1].functionSignatureArg.typeSpecificIndex = 0;
 
         rule.fcArgumentMappingsConditions[0].mappings[2].functionCallArgumentType = RulesStorageStructure.PT.UINT;
         rule.fcArgumentMappingsConditions[0].mappings[2].functionSignatureArg.pType = RulesStorageStructure.PT.UINT;
         rule.fcArgumentMappingsConditions[0].mappings[2].functionSignatureArg.typeSpecificIndex = 2;
 
-        rule.fcArgumentMappings[0].mappings[3].functionCallArgumentType = RulesStorageStructure.PT.STR;
-        rule.fcArgumentMappings[0].mappings[3].functionSignatureArg.pType = RulesStorageStructure.PT.STR;
-        rule.fcArgumentMappings[0].mappings[3].functionSignatureArg.typeSpecificIndex = 3;
+        rule.fcArgumentMappingsConditions[0].mappings[3].functionCallArgumentType = RulesStorageStructure.PT.STR;
+        rule.fcArgumentMappingsConditions[0].mappings[3].functionSignatureArg.pType = RulesStorageStructure.PT.STR;
+        rule.fcArgumentMappingsConditions[0].mappings[3].functionSignatureArg.typeSpecificIndex = 3;
 
-        rule.fcArgumentMappings[0].mappings[4].functionCallArgumentType = RulesStorageStructure.PT.ADDR;
-        rule.fcArgumentMappings[0].mappings[4].functionSignatureArg.pType = RulesStorageStructure.PT.ADDR;
-        rule.fcArgumentMappings[0].mappings[4].functionSignatureArg.typeSpecificIndex = 5;
+        rule.fcArgumentMappingsConditions[0].mappings[4].functionCallArgumentType = RulesStorageStructure.PT.ADDR;
+        rule.fcArgumentMappingsConditions[0].mappings[4].functionSignatureArg.pType = RulesStorageStructure.PT.ADDR;
+        rule.fcArgumentMappingsConditions[0].mappings[4].functionSignatureArg.typeSpecificIndex = 5;
 
-        RulesStorageStructure.ForeignCallReturnValue memory retVal = logic.evaluateForeignCallForRuleExt(fc, rule, functionArguments);
+        RulesStorageStructure.ForeignCallReturnValue memory retVal = logic.evaluateForeignCallForRuleExt(fc, rule.fcArgumentMappingsConditions, functionArguments);
         console2.logBytes(retVal.value);
     }
     function _createGTRule(uint256 _amount) public returns(RulesStorageStructure.Rule memory){
@@ -650,21 +648,19 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         effect.effectId = 0;
         effect.effectType = ET.EXPRESSION;
         effect.text = "";
-        effect.instructionSet = new uint256[](12);
+        effect.instructionSet = new uint256[](10);
         // Foreign Call Placeholder
         effect.instructionSet[0] = uint(RulesStorageStructure.LC.PLH);
         effect.instructionSet[1] = 0;
-        effect.instructionSet[2] = 0;
         // Tracker Placeholder
-        effect.instructionSet[3] = uint(RulesStorageStructure.LC.PLH);
-        effect.instructionSet[4] = 1;
-        effect.instructionSet[5] = 1;
-        effect.instructionSet[6] = uint(RulesStorageStructure.LC.ADD);
-        effect.instructionSet[7] = 0;
-        effect.instructionSet[8] = 1;
-        effect.instructionSet[9] = uint(RulesStorageStructure.LC.TRU);
-        effect.instructionSet[10] = 0;
-        effect.instructionSet[11] = 2;
+        effect.instructionSet[2] = uint(RulesStorageStructure.LC.PLH);
+        effect.instructionSet[3] = 1;
+        effect.instructionSet[4] = uint(RulesStorageStructure.LC.ADD);
+        effect.instructionSet[5] = 0;
+        effect.instructionSet[6] = 1;
+        effect.instructionSet[7] = uint(RulesStorageStructure.LC.TRU);
+        effect.instructionSet[8] = 0;
+        effect.instructionSet[9] = 2;
 
         return logic.updateEffect(effect);
     }
