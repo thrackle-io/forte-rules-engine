@@ -185,7 +185,7 @@ contract RulesEngineRunLogic is IRulesEngine {
             effectStorage[_effect.effectId] = _effect;
             _effectId = _effect.effectId;
         } else {
-            effectTotal+=1;
+            effectTotal++;
             effectStorage[effectTotal] = _effect;
             _effectId = effectTotal;
         }
@@ -214,7 +214,7 @@ contract RulesEngineRunLogic is IRulesEngine {
         // Convert the string representation of the function signature to a selector
         fc.signature = bytes4(keccak256(bytes(functionSignature)));
         fc.foreignCallIndex = foreignCallIndex;
-        foreignCallIndex += 1;
+        foreignCallIndex++;
         fc.returnType = returnType;
         fc.parameterTypes = new RulesStorageStructure.PT[](arguments.length);
         for(uint256 i = 0; i < arguments.length; i++) {
@@ -222,12 +222,8 @@ contract RulesEngineRunLogic is IRulesEngine {
         }
 
         // If the foreign call structure already exists in the mapping update it, otherwise add it
-        if(foreignCalls[_policyId].set) {
-            foreignCalls[_policyId].foreignCalls.push(fc);
-        } else {
-            foreignCalls[_policyId].set = true;
-            foreignCalls[_policyId].foreignCalls.push(fc);
-        }
+        foreignCalls[_policyId].foreignCalls.push(fc);
+        foreignCalls[_policyId].set = true;
     }
 
     //-------------------------------------------------------------------------------------------------------------------------------------------------------

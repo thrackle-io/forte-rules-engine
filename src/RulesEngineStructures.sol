@@ -4,7 +4,22 @@ pragma solidity ^0.8.13;
 interface RulesStorageStructure {
 
     /// Enumerated list of Logical operators used in Rule Engine Run 
-    enum LC { NUM, ADD, SUB, MUL, DIV, LT, GT, EQ, AND, OR, NOT, PLH, FC, TRU }
+    /**
+     * NUM - a static value will be in the next slot in the instruction set
+     * ADD - add the values at the memory addresses denoted by the next two slots in the instruction set
+     * SUB - subtract the values at the memory addresses denoted by the next two slots in the instruction set
+     * MUL - multiply the values at the memory addresses denoted by the next two slots in the instruction set
+     * DIV - divide the values at the memory addresses denoted by the next two slots in the instruction set
+     * LT - perform a less than comparison with the values at the memory addresses denoted by the next two slots in the instruction set
+     * GT - perform a greater than comparison with the values at the memory addresses denoted by the next two slots in the instruction set
+     * EQ - perform a equals comparison with the values at the memory addresses denoted by the next two slots in the instruction set
+     * AND - perform a logical AND with the values at the memory addresses denoted by the next two slots in the instruciton set
+     * OR - perform a logical OR with the values at the memory addresses denoted by the next two slots in the instruction set
+     * NOT - perform a logical NOT with the value at the memory address denoted by the next slot in the instruction set
+     * PLH - insert a placeholder value into the next memory slot 
+     * TRU - perform a tracker update, the next two slots in the instruction set will denote the tracker index to update and the memory address of the value to use.
+     */
+    enum LC { NUM, ADD, SUB, MUL, DIV, LT, GT, EQ, AND, OR, NOT, PLH, TRU }
 
     // Supported Parameter Types
     enum PT { ADDR, STR, UINT, BOOL, VOID, BYTES }

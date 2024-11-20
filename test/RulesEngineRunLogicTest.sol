@@ -414,7 +414,8 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         arguments.ints = new uint256[](1);
         arguments.ints[0] = 5;
         bytes memory retVal = RuleEncodingLibrary.customEncoder(arguments);
-
+        // The Foreign call will be placed during the effect for the single rule in this policy.
+        // The value being set in the foreign contract is then polled to verify that it has been udpated.
         bool response = logic.checkPolicies(address(userContract), bytes(functionSignature), retVal);
         assertEq(testContract.getInternalValue(), 5);
     }
@@ -430,7 +431,9 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         arguments.ints = new uint256[](1);
         arguments.ints[0] = 5;
         bytes memory retVal = RuleEncodingLibrary.customEncoder(arguments);
-
+        // The tracker will be updated during the effect for the single rule in this policy.
+        // It will have the result of the foreign call (simpleCheck) added to it. 
+        // original tracker value 2, added value 5, resulting updated tracker value should be 7
         bool response = logic.checkPolicies(address(userContract), bytes(functionSignature), retVal);
         RulesStorageStructure.Trackers memory trackerValue = logic.getTracker(policyId, 0);
         assertEq(trackerValue.uintTracker, 7);
@@ -626,7 +629,7 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         effectId_event2 = _createEffectEvent(event_text2); // effectId = 3
         effectId_revert2 = _createEffectRevert(revert_text2); // effectId = 4
         effectId_expression = _createEffectExpression(); // effectId = 5;
-        effectId_expression2 = _createEffectExpressionTrackerUpdate();
+        effectId_expression2 = _createEffectExpressionTrackerUpdate(); // effectId = 6;
 
     }
 
@@ -654,6 +657,7 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
     }
 
     function _createEffectExpressionTrackerUpdate() public returns(uint256 _effectId) {
+        // Effect: TRU:someTracker += FC:simpleCheck(amount)
         EffectStructures.Effect memory effect;
         effect.effectId = 0;
         effect.effectType = ET.EXPRESSION;
