@@ -348,6 +348,71 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         logic.applyPolicy(address(userContract), policyIds);
     }
 
+    function _setupPolicyWithMultipleRulesWithPosEvents() public {
+        // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
+        // Rule 1: GT 4
+        RulesStorageStructure.Rule memory rule =  _createGTRule(4);
+        rule.posEffects[0] = effectId_event;
+       
+        // Save the rule
+        uint256 ruleId = logic.updateRule(0,rule);
+
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+        // Save the function signature
+        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
+        // Save the Policy
+        signatures.push(bytes(functionSignature));  
+        functionSignatureIds.push(functionSignatureId);
+        ruleIds.push(new uint256[](4));
+        ruleIds[0][0]= ruleId;
+
+        // Rule 2: GT 5
+        rule =  _createGTRule(5);
+        rule.posEffects[0] = effectId_event2;
+       
+        // Save the rule
+        ruleId = logic.updateRule(0,rule);
+
+        pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+        // // Save the fKureIds.push(functionSignatureId);
+        ruleIds[0][1]= ruleId;
+
+        // Rule 3: GT 6
+        rule =  _createGTRule(6);
+        rule.posEffects[0] = effectId_event;
+       
+        // Save the rule
+        ruleId = logic.updateRule(0,rule);
+
+        pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+        // // Save the fKureIds.push(functionSignatureId);
+        ruleIds[0][2]= ruleId;
+
+        // Rule 4: GT 7
+        rule =  _createGTRule(7);
+        rule.posEffects[0] = effectId_event2;
+       
+        // Save the rule
+        ruleId = logic.updateRule(0,rule);
+
+        pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+        // // Save the fKureIds.push(functionSignatureId);
+        ruleIds[0][3]= ruleId;
+
+
+        uint256[] memory policyIds = new uint256[](1); 
+        policyIds[0] = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);        
+        logic.applyPolicy(address(userContract), policyIds);
+    }
+
     function _setupRuleWith2PosEvent() public {
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         RulesStorageStructure.Rule memory rule =  _createGTRule(4);
@@ -467,6 +532,20 @@ contract RulesEngineRunLogicTest is Test,EffectStructures {
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(event_text);
         userContract.transfer(address(0x7654321), 5);
+    }
+
+    // Ensure that a policy with multiple rules with positive events fire in the correct order
+    function testCheckPolicyExecutesRuleOrder() public {
+        _setupPolicyWithMultipleRulesWithPosEvents();
+        vm.expectEmit(true, true, false, false);
+        emit RulesEngineEvent(event_text);
+        vm.expectEmit(true, true, false, false);
+        emit RulesEngineEvent(event_text2);
+        vm.expectEmit(true, true, false, false);
+        emit RulesEngineEvent(event_text);
+        vm.expectEmit(true, true, false, false);
+        emit RulesEngineEvent(event_text2);
+        userContract.transfer(address(0x7654321), 11);
     }
 
     /// Ensure that rule with a positive effect event applied, that passes, will emit the event
