@@ -49,12 +49,8 @@ interface RulesStorageStructure {
     struct Arguments {
         // Parameter types of arguments in order
         PT[] argumentTypes;
-        // Address arguments in order
-        address[] addresses;
-        // uint256 arguments in order
-        uint256[] ints;
-        // string arguments in order
-        string[] strings;
+        // The actual values of the arguments in order
+        bytes[] values;
     }
 
     /**
@@ -92,14 +88,8 @@ interface RulesStorageStructure {
     struct ForeignCallReturnValue {
         // Parameter type of the return value
         PT pType;
-        // Set if Parameter type is address
-        address addr;
-        // Set if Parameter type is string
-        string str;
-        // Set if Parameter type is int
-        uint256 intValue;
-        // Set if Parameter type is bool
-        bool boolValue;
+        // The actual value of the return value
+        bytes value;
     }
 
 
@@ -188,12 +178,8 @@ interface RulesStorageStructure {
         // Define what type of tracker
         PT pType; 
         // tracker types arrays 
-        uint256 uintTracker; 
-        address addressTracker; 
-        string stringTracker; 
-        bytes bytesTracker; 
-        bool boolTracker;
-
+        bytes trackerValue;
+        // to be added: uint lastUpdatedTimestamp;
     }
 
 }

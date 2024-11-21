@@ -14,14 +14,13 @@ contract ExampleUserContract {
 
     function transfer(address _to, uint256 _amount) public returns (bool) {
         RulesStorageStructure.Arguments memory args;
-        args.addresses = new address[](1);
-        args.addresses[0] = _to;
-        args.ints = new uint256[](1);
-        args.ints[0] = _amount;
+        args.values = new bytes[](2);
+        args.values[0] = abi.encode(address(_to));
+        args.values[1] = abi.encode(uint256(_amount));
         args.argumentTypes = new RulesStorageStructure.PT[](2);
         args.argumentTypes[0] = RulesStorageStructure.PT.ADDR;
         args.argumentTypes[1] = RulesStorageStructure.PT.UINT;
-        bytes memory encoded = RuleEncodingLibrary.customEncoder(args);
+        bytes memory encoded = abi.encode(args);
         IRulesEngine rulesEngine = IRulesEngine(rulesEngineAddress);
         bool retVal = rulesEngine.checkPolicies(address(this), bytes("transfer(address,uint256) returns (bool)"), encoded);
         // This is where the overridden transfer would be called
