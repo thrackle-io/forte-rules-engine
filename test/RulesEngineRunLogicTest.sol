@@ -43,7 +43,42 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         _setupEffectProcessor();
     }
 
+    function _createBlankPolicy() internal returns (uint256) {
+        bytes[] memory blankSignatures = new bytes[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        uint256 policyId = logic.updatePolicy(0, blankSignatures, blankFunctionSignatureIds, blankRuleIds);
+        return policyId;
+    }
+
+    function _addFunctionSignatureToPolicy(uint256 policyId, bytes memory _functionSignature, RulesStorageStructure.PT[] memory pTypes) internal returns (uint256) {
+        // Save the function signature
+        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(_functionSignature), pTypes);
+        // Save the Policy
+        signatures.push(_functionSignature);
+        functionSignatureIds.push(functionSignatureId);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        logic.updatePolicy(policyId, signatures, functionSignatureIds, blankRuleIds);
+        return functionSignatureId;
+    }
+
+    function _addRuleIdsToPolicy(uint256 policyId, uint256[][] memory _ruleIds) internal {
+        logic.updatePolicy(policyId, signatures, functionSignatureIds, _ruleIds);
+    }
+
     function setupRuleWithoutForeignCall() public {
+        // Initial setup for what we'll need later
+        uint256[] memory policyIds = new uint256[](1);
+        // blank slate policy
+        policyIds[0] = _createBlankPolicy();
+
+        // Add the function signature to the policy
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+        
+        
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         RulesStorageStructure.Rule memory rule;
         
@@ -66,18 +101,11 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         // Save the rule
         uint256 ruleId = logic.updateRule(0,rule);
 
-        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
-        pTypes[0] = RulesStorageStructure.PT.ADDR;
-        pTypes[1] = RulesStorageStructure.PT.UINT;
-        // Save the function signature
-        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
-        // Save the Policy
-        signatures.push(bytes(functionSignature));  
-        functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        uint256[] memory policyIds = new uint256[](1); 
-        policyIds[0] = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);        
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        
+        // Apply the policy 
         logic.applyPolicy(address(userContract), policyIds);
     }
 
@@ -179,6 +207,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
 
     // Test attempt to add a policy with no signatures saved.
     function testUpdatePolicyInvalidRule() public {
+        uint256 policyId = _createBlankPolicy();
         RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
         pTypes[0] = RulesStorageStructure.PT.ADDR;
         pTypes[1] = RulesStorageStructure.PT.UINT;
@@ -189,17 +218,18 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= 1;
         vm.expectRevert("Invalid Rule");
-        logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);
+        logic.updatePolicy(policyId, signatures, functionSignatureIds, ruleIds);
     }
 
     // Test attempt to add a policy with no signatures saved.
     function testUpdatePolicyInvalidSignature() public {
+        uint256 policyId = _createBlankPolicy();
         signatures.push(bytes(functionSignature));  
         functionSignatureIds.push(1);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= 1;
         vm.expectRevert("Invalid Signature");
-        logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);
+        logic.updatePolicy(policyId, signatures, functionSignatureIds, ruleIds);
     }
 
     // Test attempt to add a policy with valid parts.
@@ -240,6 +270,16 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
     }
 
     function setupEffectWithTrackerUpdate() public returns (uint256) {
+        uint256[] memory policyIds = new uint256[](1);
+        
+        policyIds[0] = _createBlankPolicy();
+
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+
         // Rule: 1 == 1 -> TRU:someTracker += FC:simpleCheck(amount) -> transfer(address _to, uint256 amount) returns (bool)
         RulesStorageStructure.PT[] memory fcArgs = new RulesStorageStructure.PT[](1);
         fcArgs[0] = RulesStorageStructure.PT.UINT;
@@ -269,10 +309,6 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
         uint256 ruleId = logic.updateRule(0, rule);
 
-        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
-        pTypes[0] = RulesStorageStructure.PT.ADDR;
-        pTypes[1] = RulesStorageStructure.PT.UINT;
-
         //build tracker 
         RulesStorageStructure.Trackers memory tracker;  
         /// build the members of the struct: 
@@ -280,24 +316,27 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         tracker.trackerValue = abi.encode(2); 
 
         
-
-        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
-        // // Save the Policy
-        signatures.push(bytes(functionSignature));  
-        functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        uint256[] memory policyIds = new uint256[](1);
-        uint256 policyId = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds); 
-        logic.addTracker(policyId, tracker);      
-        logic.updateForeignCall(policyId, address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);
-        policyIds[0] = policyId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+
+        logic.addTracker(policyIds[0], tracker);      
+        RulesStorageStructure.ForeignCall memory fc = logic.updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);
+
         logic.applyPolicy(address(userContract), policyIds);
-        fc;  //added to silence warnings during testing revamp 
-        return policyId;
+        return policyIds[0];
     }
 
     function setupEffectWithForeignCall() public {
+        uint256[] memory policyIds = new uint256[](1);
+        
+        policyIds[0] = _createBlankPolicy();
+
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
         // Rule: 1 == 1 -> FC:simpleCheck(amount) -> transfer(address _to, uint256 amount) returns (bool)
 
         // build Foreign Call Structure
@@ -325,27 +364,27 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
         uint256 ruleId = logic.updateRule(0, rule);
 
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        RulesStorageStructure.PT[] memory fcArgs = new RulesStorageStructure.PT[](1);
+        fcArgs[0] = RulesStorageStructure.PT.UINT;
+        RulesStorageStructure.ForeignCall memory fc = logic.updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);        
+        logic.applyPolicy(address(userContract), policyIds);
+    }
+
+    function setupRuleWithForeignCall() public {
+        uint256[] memory policyIds = new uint256[](1);
+        
+        policyIds[0] = _createBlankPolicy();
+
         RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
         pTypes[0] = RulesStorageStructure.PT.ADDR;
         pTypes[1] = RulesStorageStructure.PT.UINT;
 
-        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
-        // Save the Policy
-        signatures.push(bytes(functionSignature));  
-        functionSignatureIds.push(functionSignatureId);
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0]= ruleId;
-        uint256[] memory policyIds = new uint256[](1);
-        uint256 policyId = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);
-        RulesStorageStructure.PT[] memory fcArgs = new RulesStorageStructure.PT[](1);
-        fcArgs[0] = RulesStorageStructure.PT.UINT;
-        logic.updateForeignCall(policyId, address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);        
-        policyIds[0] = policyId;
-        logic.applyPolicy(address(userContract), policyIds);      
-        fc;  //added to silence warnings during testing revamp 
-    }
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
 
-    function setupRuleWithForeignCall() public {
+        
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
         RulesStorageStructure.Rule memory rule;
         
@@ -376,49 +415,49 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         // Save the rule
         uint256 ruleId = logic.updateRule(0,rule);
 
-        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
-        pTypes[0] = RulesStorageStructure.PT.UINT;
-        pTypes[1] = RulesStorageStructure.PT.ADDR;
-        // Save the function signature
-        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
-        // Save the Policy
-        signatures.push(bytes(functionSignature));  
-        functionSignatureIds.push(functionSignatureId);
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0]= ruleId;
-        uint256[] memory policyIds = new uint256[](1);
-        uint256 policyId = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);
         RulesStorageStructure.PT[] memory fcArgs = new RulesStorageStructure.PT[](1);
         fcArgs[0] = RulesStorageStructure.PT.UINT;
-        logic.updateForeignCall(policyId, address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);        
-        policyIds[0] = policyId;
+        RulesStorageStructure.ForeignCall memory fc = logic.updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);       
         logic.applyPolicy(address(userContract), policyIds);
         fc;  //added to silence warnings during testing revamp 
     }
 
     function _setupRuleWithRevert() public {
+        uint256[] memory policyIds = new uint256[](1);
+        
+        policyIds[0] = _createBlankPolicy();
+
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         RulesStorageStructure.Rule memory rule =  _createGTRule(4);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
         uint256 ruleId = logic.updateRule(0,rule);
-        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
-        pTypes[0] = RulesStorageStructure.PT.ADDR;
-        pTypes[1] = RulesStorageStructure.PT.UINT;
-        // Save the function signature
-        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
 
-        // Save the Policy
-        signatures.push(bytes(functionSignature));  
-        functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        uint256[] memory policyIds = new uint256[](1); 
-        policyIds[0] = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);        
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
         logic.applyPolicy(address(userContract), policyIds);
     }
 
     function _setupRuleWithPosEvent() public {
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = _createBlankPolicy();
+
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         RulesStorageStructure.Rule memory rule =  _createGTRule(4);
         rule.posEffects[0] = effectId_event;
@@ -426,22 +465,23 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         // Save the rule
         uint256 ruleId = logic.updateRule(0,rule);
 
-        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
-        pTypes[0] = RulesStorageStructure.PT.ADDR;
-        pTypes[1] = RulesStorageStructure.PT.UINT;
-        // Save the function signature
-        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
-        // Save the Policy
-        signatures.push(bytes(functionSignature));  
-        functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        uint256[] memory policyIds = new uint256[](1); 
-        policyIds[0] = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);        
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
         logic.applyPolicy(address(userContract), policyIds);
     }
 
     function _setupPolicyWithMultipleRulesWithPosEvents() public {
+        uint256[] memory policyIds = new uint256[](1);
+        
+        policyIds[0] = _createBlankPolicy();
+
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         // Rule 1: GT 4
         RulesStorageStructure.Rule memory rule =  _createGTRule(4);
@@ -450,14 +490,6 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         // Save the rule
         uint256 ruleId = logic.updateRule(0,rule);
 
-        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
-        pTypes[0] = RulesStorageStructure.PT.ADDR;
-        pTypes[1] = RulesStorageStructure.PT.UINT;
-        // Save the function signature
-        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
-        // Save the Policy
-        signatures.push(bytes(functionSignature));  
-        functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](4));
         ruleIds[0][0]= ruleId;
 
@@ -468,9 +500,6 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         // Save the rule
         ruleId = logic.updateRule(0,rule);
 
-        pTypes = new RulesStorageStructure.PT[](2);
-        pTypes[0] = RulesStorageStructure.PT.ADDR;
-        pTypes[1] = RulesStorageStructure.PT.UINT;
         // // Save the fKureIds.push(functionSignatureId);
         ruleIds[0][1]= ruleId;
 
@@ -481,9 +510,6 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         // Save the rule
         ruleId = logic.updateRule(0,rule);
 
-        pTypes = new RulesStorageStructure.PT[](2);
-        pTypes[0] = RulesStorageStructure.PT.ADDR;
-        pTypes[1] = RulesStorageStructure.PT.UINT;
         // // Save the fKureIds.push(functionSignatureId);
         ruleIds[0][2]= ruleId;
 
@@ -494,19 +520,24 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         // Save the rule
         ruleId = logic.updateRule(0,rule);
 
-        pTypes = new RulesStorageStructure.PT[](2);
-        pTypes[0] = RulesStorageStructure.PT.ADDR;
-        pTypes[1] = RulesStorageStructure.PT.UINT;
         // // Save the fKureIds.push(functionSignatureId);
         ruleIds[0][3]= ruleId;
 
-
-        uint256[] memory policyIds = new uint256[](1); 
-        policyIds[0] = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);        
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
         logic.applyPolicy(address(userContract), policyIds);
     }
 
     function _setupRuleWith2PosEvent() public {
+        uint256[] memory policyIds = new uint256[](1);
+        
+        policyIds[0] = _createBlankPolicy();
+
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         RulesStorageStructure.Rule memory rule =  _createGTRule(4);
         rule.posEffects[0] = effectId_event;
@@ -515,18 +546,9 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         // Save the rule
         uint256 ruleId = logic.updateRule(0,rule);
 
-        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
-        pTypes[0] = RulesStorageStructure.PT.ADDR;
-        pTypes[1] = RulesStorageStructure.PT.UINT;
-        // Save the function signature
-        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
-        // Save the Policy
-        signatures.push(bytes(functionSignature));  
-        functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        uint256[] memory policyIds = new uint256[](1); 
-        policyIds[0] = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);        
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
         logic.applyPolicy(address(userContract), policyIds);
     }
 
@@ -915,6 +937,16 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
 
     // set up a rule with a uint256 tracker value for testing 
      function setupRuleWithTracker(uint256 trackerValue) public returns(uint256 policyId){
+        uint256[] memory policyIds = new uint256[](1);
+        
+        policyIds[0] = _createBlankPolicy();
+
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         RulesStorageStructure.Rule memory rule;
 
@@ -941,31 +973,21 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
 
          // Save the rule
         uint256 ruleId = logic.updateRule(0,rule);
-
-        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
-        pTypes[0] = RulesStorageStructure.PT.ADDR;
-        pTypes[1] = RulesStorageStructure.PT.UINT;
-        // Save the function signature
-        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
-        // Save the Policy
-        signatures.push(bytes(functionSignature));  
-        functionSignatureIds.push(functionSignatureId);
         // Build the tracker
-        RulesStorageStructure.Trackers memory tracker;  
+        RulesStorageStructure.Trackers memory tracker; 
 
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0]= ruleId;
-        uint256[] memory policyIds = new uint256[](1); 
-        policyId = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);  
         /// build the members of the struct: 
         tracker.pType = RulesStorageStructure.PT.UINT; 
         tracker.trackerValue = abi.encode(trackerValue);
         // Add the tracker
-        logic.addTracker(policyId, tracker);
-        functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
-        policyIds[0] = policyId;     
+        logic.addTracker(policyIds[0], tracker); 
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+
         logic.applyPolicy(address(userContract), policyIds);
-        return policyId;
+        return policyIds[0];
     }
 
     function testCheckRulesWithTrackerValue() public {
@@ -1011,5 +1033,71 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         assertTrue(abi.decode(testTracker.trackerValue, (uint256)) == 2); 
         assertFalse(abi.decode(testTracker.trackerValue, (uint256)) == 3); 
 
+    }
+
+    function testUpdatePolicyValidatesForeignCalls() public {
+        uint256[] memory policyIds = new uint256[](1);
+        
+        policyIds[0] = _createBlankPolicy();
+
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+
+        // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        RulesStorageStructure.Rule memory rule;
+        
+        rule.placeHolders = new RulesStorageStructure.Placeholder[](2);
+        rule.placeHolders[0].pType = RulesStorageStructure.PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.placeHolders[1].pType = RulesStorageStructure.PT.UINT;
+        rule.placeHolders[1].foreignCall = true;
+
+        uint256 ruleId = logic.updateRule(0, rule);
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        vm.expectRevert("Foreign Call referenced in rule not set");
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+    }
+
+    function testUpdatePolicyValidatesTrackers() public {
+        uint256[] memory policyIds = new uint256[](1);
+        
+        policyIds[0] = _createBlankPolicy();
+
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+
+        // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        RulesStorageStructure.Rule memory rule;
+
+        // Instruction set: LC.PLH, 1, 0, LC.PLH, 1, 0, LC.GT, 0, 1
+        rule.instructionSet = new uint256[](7);
+        rule.instructionSet[0] = uint(RulesStorageStructure.LC.PLH);
+        rule.instructionSet[1] = 0;
+        rule.instructionSet[2] = uint(RulesStorageStructure.LC.PLH);
+        rule.instructionSet[3] = 1;
+        rule.instructionSet[4] = uint(RulesStorageStructure.LC.GT);
+        rule.instructionSet[5] = 0;
+        rule.instructionSet[6] = 1;
+        
+        rule.placeHolders = new RulesStorageStructure.Placeholder[](2);
+        rule.placeHolders[0].pType = RulesStorageStructure.PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.placeHolders[1].pType = RulesStorageStructure.PT.UINT;
+        rule.placeHolders[1].trackerValue = true;
+
+        uint256 ruleId = logic.updateRule(0, rule);
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        vm.expectRevert("Tracker referenced in rule not set");
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
     }
 }

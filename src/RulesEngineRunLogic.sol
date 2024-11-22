@@ -50,31 +50,49 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
      */
     function updatePolicy(uint256 _policyId, bytes[] calldata _signatures, uint256[] calldata functionSignatureIds, uint256[][] calldata ruleIds) public returns(uint256){
+        // signature length must match the signature id length
+        if (_signatures.length != functionSignatureIds.length) revert("Signatures and signature id's are inconsistent"); 
         // increment the policyId if necessary
         if (_policyId == 0) {
             unchecked{
                 ++policyId;
             }
-        } else {
-            policyId = _policyId;            
+            _policyId = policyId;
+            policyStorage[_policyId].set = true;
         }
-        // validate the policy data 
-        // signature length must match the signature id length
-        if (_signatures.length != functionSignatureIds.length) revert("Signatures and signature id's are inconsistent"); 
-        // Loop through all the passed in signatures for the policy      
-        for (uint256 i = 0; i < _signatures.length; i++) {
-            // make sure that all the function signatures exist
-            if(!functionSignatureStorage[functionSignatureIds[i]].set) revert("Invalid Signature");
-            // Load into the mapping
-            policyStorage[policyId].policy.functionSignatureIdMap[_signatures[i]] = functionSignatureIds[i];
-            // make sure that all the rules attached to each function signature exist
-            for (uint256 j = 0; j < ruleIds[i].length; j++) {
-                if(!ruleStorage[ruleIds[i][j]].set) revert("Invalid Rule");
+
+        if (ruleIds.length > 0) {
+            // Loop through all the passed in signatures for the policy      
+            for (uint256 i = 0; i < _signatures.length; i++) {
+                // make sure that all the function signatures exist
+                if(!functionSignatureStorage[functionSignatureIds[i]].set) revert("Invalid Signature");
+                // Load into the mapping
+                policyStorage[_policyId].policy.functionSignatureIdMap[_signatures[i]] = functionSignatureIds[i];
+                // make sure that all the rules attached to each function signature exist
+                for (uint256 j = 0; j < ruleIds[i].length; j++) {
+                    RulesStorageStructure.RuleStorageStructure memory ruleStore = ruleStorage[ruleIds[i][j]];
+                    if(!ruleStore.set) revert("Invalid Rule");
+                    for (uint256 k = 0; k < ruleStore.rule.placeHolders.length; k++) {
+                        if(ruleStore.rule.placeHolders[k].foreignCall) {
+                            require(foreignCalls[_policyId].set, "Foreign Call referenced in rule not set");
+                        } else if (ruleStore.rule.placeHolders[k].trackerValue) {
+                            require(trackerStorage[_policyId].set, "Tracker referenced in rule not set");
+                        }
+                    }
+                }
+                policyStorage[_policyId].policy.signatureToRuleIds[_signatures[i]] = ruleIds[i];
             }
-            policyStorage[policyId].policy.signatureToRuleIds[_signatures[i]] = ruleIds[i];
-        }        
-        policyStorage[policyId].set = true;
-        return policyId;
+        } else {
+            // Solely loop through and add signatures to the policy
+            for (uint256 i = 0; i < _signatures.length; i++) {
+                // make sure that all the function signatures exist
+                if(!functionSignatureStorage[functionSignatureIds[i]].set) revert("Invalid Signature");
+                // Load into the mapping
+                policyStorage[_policyId].policy.functionSignatureIdMap[_signatures[i]] = functionSignatureIds[i];
+            }
+        }    
+        
+        return _policyId;
     }
 
     /**
@@ -103,11 +121,10 @@ contract RulesEngineRunLogic is IRulesEngine {
             unchecked{
                 ++ruleId;
             }
-        } else {
-            ruleId = _ruleId;            
-        }
-        ruleStorage[ruleId].set = true;
-        ruleStorage[ruleId].rule = rule;
+            _ruleId = ruleId;
+        } 
+        ruleStorage[_ruleId].set = true;
+        ruleStorage[_ruleId].rule = rule;
         return ruleId;        
     }
 
@@ -125,13 +142,12 @@ contract RulesEngineRunLogic is IRulesEngine {
             unchecked{
                 ++functionSignatureId;
             }
-        } else {
-            functionSignatureId = _functionSignatureId;            
+            _functionSignatureId = functionSignatureId;
         }
-        functionSignatureStorage[functionSignatureId].set = true;
-        functionSignatureStorage[functionSignatureId].signature = functionSignature;   
-        functionSignatureStorage[functionSignatureId].parameterTypes = pTypes;
-        return functionSignatureId;
+        functionSignatureStorage[_functionSignatureId].set = true;
+        functionSignatureStorage[_functionSignatureId].signature = functionSignature;   
+        functionSignatureStorage[_functionSignatureId].parameterTypes = pTypes;
+        return _functionSignatureId;
     }
 
     /**
