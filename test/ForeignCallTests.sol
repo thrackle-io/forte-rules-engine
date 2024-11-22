@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "lib/forge-std/src/Test.sol";
 import "src/utils/FCEncodingLib.sol";
-import "src/RulesEngineStructures.sol";
+import "src/RulesStorageStructure.sol";
 
 
 contract ForeignCallTests is Test {

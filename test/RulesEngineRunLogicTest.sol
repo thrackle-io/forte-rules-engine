@@ -18,9 +18,8 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
     ExampleUserContract userContract;
     ForeignCallTestContract testContract;
 
-    address contractAddress = address(0x1234567);
     string functionSignature = "transfer(address,uint256) returns (bool)";
-
+    string functionSignature2 = "updateInfo(address _to, string info) returns (bool)";
     string constant event_text = "Rules Engine Event";
     string constant revert_text = "Rules Engine Revert";
     string constant event_text2 = "Rules Engine Event 2";
@@ -82,6 +81,101 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         logic.applyPolicy(address(userContract), policyIds);
     }
 
+        function setupRuleWithStringComparison() public returns (uint256) {
+        // Rule: info == "Bad Info" -> revert -> updateInfo(address _to, string info) returns (bool)"
+        RulesStorageStructure.Rule memory rule;
+        
+        // Instruction set: LC.PLH, 1, 0, LC.NUM, *uint256 representation of Bad Info*, LC.EQ, 0, 1
+
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = new uint256[](7);
+        rule.instructionSet[0] = uint(RulesStorageStructure.LC.PLH);
+        rule.instructionSet[1] = 0;
+        rule.instructionSet[2] = uint(RulesStorageStructure.LC.NUM);
+        rule.instructionSet[3] = uint256(keccak256(abi.encode("Bad Info")));
+        rule.instructionSet[4] = uint(RulesStorageStructure.LC.EQ);
+        rule.instructionSet[5] = 0;
+        rule.instructionSet[6] = 1;
+
+        rule.rawData.argumentTypes = new RulesStorageStructure.PT[](1);
+        rule.rawData.dataValues = new bytes[](1);
+        rule.rawData.instructionSetIndex = new uint256[](1);
+        rule.rawData.argumentTypes[0] = RulesStorageStructure.PT.STR;
+        rule.rawData.dataValues[0] = abi.encode("Bad Info");
+        rule.rawData.instructionSetIndex[0] = 3;
+
+
+        // Build the calling function argument placeholder 
+        rule.placeHolders = new RulesStorageStructure.Placeholder[](1);
+        rule.placeHolders[0].pType = RulesStorageStructure.PT.STR;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        // Save the rule
+        uint256 ruleId = logic.updateRule(0,rule);
+
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.STR;
+        // Save the function signature
+        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature2)),pTypes);
+        // Save the Policy
+        signatures.push(bytes(functionSignature2));  
+        functionSignatureIds.push(functionSignatureId);
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        uint256[] memory policyIds = new uint256[](1); 
+        policyIds[0] = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);        
+        logic.applyPolicy(address(userContract), policyIds);
+
+        return ruleId;
+    }
+
+        function setupRuleWithAddressComparison() public returns (uint256) {
+        // Rule: _to == 0x1234567 -> revert -> updateInfo(address _to, string info) returns (bool)"
+        RulesStorageStructure.Rule memory rule;
+        
+        // Instruction set: LC.PLH, 1, 0, LC.NUM, *uint256 representation of 0x1234567o*, LC.EQ, 0, 1
+
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = new uint256[](7);
+        rule.instructionSet[0] = uint(RulesStorageStructure.LC.PLH);
+        rule.instructionSet[1] = 0;
+        rule.instructionSet[2] = uint(RulesStorageStructure.LC.NUM);
+        rule.instructionSet[3] = uint256(uint160(address(0x1234567)));
+        rule.instructionSet[4] = uint(RulesStorageStructure.LC.EQ);
+        rule.instructionSet[5] = 0;
+        rule.instructionSet[6] = 1;
+
+        rule.rawData.argumentTypes = new RulesStorageStructure.PT[](1);
+        rule.rawData.dataValues = new bytes[](1);
+        rule.rawData.instructionSetIndex = new uint256[](1);
+        rule.rawData.argumentTypes[0] = RulesStorageStructure.PT.ADDR;
+        rule.rawData.dataValues[0] = abi.encode(0x1234567);
+        rule.rawData.instructionSetIndex[0] = 3;
+
+
+        // Build the calling function argument placeholder 
+        rule.placeHolders = new RulesStorageStructure.Placeholder[](1);
+        rule.placeHolders[0].pType = RulesStorageStructure.PT.ADDR;
+        rule.placeHolders[0].typeSpecificIndex = 0;
+        // Save the rule
+        uint256 ruleId = logic.updateRule(0,rule);
+
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.STR;
+        // Save the function signature
+        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature2)),pTypes);
+        // Save the Policy
+        signatures.push(bytes(functionSignature2));  
+        functionSignatureIds.push(functionSignatureId);
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        uint256[] memory policyIds = new uint256[](1); 
+        policyIds[0] = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);        
+        logic.applyPolicy(address(userContract), policyIds);
+
+        return ruleId;
+    }
 
     // Test attempt to add a policy with no signatures saved.
     function testUpdatePolicyInvalidRule() public {
@@ -196,7 +290,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         uint256[] memory policyIds = new uint256[](1);
         uint256 policyId = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds); 
         logic.addTracker(policyId, tracker);      
-        RulesStorageStructure.ForeignCall memory fc = logic.updateForeignCall(policyId, address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);
+        logic.updateForeignCall(policyId, address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);
         policyIds[0] = policyId;
         logic.applyPolicy(address(userContract), policyIds);
         fc;  //added to silence warnings during testing revamp 
@@ -245,7 +339,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         uint256 policyId = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);
         RulesStorageStructure.PT[] memory fcArgs = new RulesStorageStructure.PT[](1);
         fcArgs[0] = RulesStorageStructure.PT.UINT;
-        RulesStorageStructure.ForeignCall memory fc = logic.updateForeignCall(policyId, address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);        
+        logic.updateForeignCall(policyId, address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);        
         policyIds[0] = policyId;
         logic.applyPolicy(address(userContract), policyIds);      
         fc;  //added to silence warnings during testing revamp 
@@ -296,7 +390,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         uint256 policyId = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);
         RulesStorageStructure.PT[] memory fcArgs = new RulesStorageStructure.PT[](1);
         fcArgs[0] = RulesStorageStructure.PT.UINT;
-        RulesStorageStructure.ForeignCall memory fc = logic.updateForeignCall(policyId, address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);        
+        logic.updateForeignCall(policyId, address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);        
         policyIds[0] = policyId;
         logic.applyPolicy(address(userContract), policyIds);
         fc;  //added to silence warnings during testing revamp 
@@ -445,9 +539,81 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         arguments.values = new bytes[](2);
         arguments.values[0] = abi.encode(address(0x7654321));
         arguments.values[1] = abi.encode(5);
-        bytes memory retVal = RuleEncodingLibrary.customEncoder(arguments);
-        bool response = logic.checkPolicies(contractAddress, bytes(functionSignature), retVal);
+        bytes memory retVal = abi.encode(arguments);
+        bool response = logic.checkPolicies(address(userContract), bytes(functionSignature), retVal);
         assertTrue(response);
+    }
+
+    function testCheckPoliciesExplicitStringComparisonPositive() public {
+        setupRuleWithStringComparison();
+        RulesStorageStructure.Arguments memory arguments;
+        arguments.argumentTypes = new RulesStorageStructure.PT[](2);
+        arguments.argumentTypes[0] = RulesStorageStructure.PT.ADDR;
+        arguments.argumentTypes[1] = RulesStorageStructure.PT.STR;
+        arguments.values = new bytes[](2);
+        arguments.values[0] = abi.encode(address(0x7654321));
+        arguments.values[1] = abi.encode("Bad Info");
+        bytes memory retVal = abi.encode(arguments);
+        bool response = logic.checkPolicies(address(userContract), bytes(functionSignature2), retVal);
+        assertTrue(response);
+    }
+
+        function testCheckPoliciesExplicitStringComparisonNegative() public {
+        setupRuleWithStringComparison();
+        RulesStorageStructure.Arguments memory arguments;
+        arguments.argumentTypes = new RulesStorageStructure.PT[](2);
+        arguments.argumentTypes[0] = RulesStorageStructure.PT.ADDR;
+        arguments.argumentTypes[1] = RulesStorageStructure.PT.STR;
+        arguments.values = new bytes[](2);
+        arguments.values[0] = abi.encode(address(0x7654321));
+        arguments.values[1] = abi.encode("test");
+        bytes memory retVal = abi.encode(arguments);
+        bool response = logic.checkPolicies(address(userContract), bytes(functionSignature2), retVal);
+        assertFalse(response);
+    }
+
+    function testRetrieveRawStringFromInstructionSet() public {
+        uint256 ruleId = setupRuleWithStringComparison();
+        RulesStorageStructure.StringVerificationStruct memory retVal = logic.retrieveRawStringFromInstructionSet(ruleId, 3);
+        console2.log(retVal.instructionSetValue);
+        console2.log(retVal.rawData);
+        assertEq(retVal.instructionSetValue, uint256(keccak256(abi.encode(retVal.rawData))));
+    }
+
+    function testCheckPoliciesExplicitAddressComparisonPositive() public {
+        setupRuleWithAddressComparison();
+        RulesStorageStructure.Arguments memory arguments;
+        arguments.argumentTypes = new RulesStorageStructure.PT[](2);
+        arguments.argumentTypes[0] = RulesStorageStructure.PT.ADDR;
+        arguments.argumentTypes[1] = RulesStorageStructure.PT.STR;
+        arguments.values = new bytes[](2);
+        arguments.values[0] = abi.encode(address(0x1234567));
+        arguments.values[1] = abi.encode("test");
+        bytes memory retVal = abi.encode(arguments);
+        bool response = logic.checkPolicies(address(userContract), bytes(functionSignature2), retVal);
+        assertTrue(response);
+    }
+
+    function testCheckPoliciesExplicitAddressComparisonNegative() public {
+        setupRuleWithAddressComparison();
+        RulesStorageStructure.Arguments memory arguments;
+        arguments.argumentTypes = new RulesStorageStructure.PT[](2);
+        arguments.argumentTypes[0] = RulesStorageStructure.PT.ADDR;
+        arguments.argumentTypes[1] = RulesStorageStructure.PT.STR;
+        arguments.values = new bytes[](2);
+        arguments.values[0] = abi.encode(address(0x7654321));
+        arguments.values[1] = abi.encode("test");
+        bytes memory retVal = abi.encode(arguments);
+        bool response = logic.checkPolicies(address(userContract), bytes(functionSignature2), retVal);
+        assertFalse(response);
+    }
+
+    function testRetrieveRawAddressFromInstructionSet() public {
+        uint256 ruleId = setupRuleWithAddressComparison();
+        RulesStorageStructure.AddressVerificationStruct memory retVal = logic.retrieveRawAddressFromInstructionSet(ruleId, 3);
+        console2.log(retVal.instructionSetValue);
+        console2.log(retVal.rawData);
+        assertEq(retVal.instructionSetValue, uint256(uint160(address(retVal.rawData))));
     }
 
     function testCheckRulesExplicitWithForeignCallPositive() public {

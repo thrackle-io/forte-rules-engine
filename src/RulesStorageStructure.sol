@@ -60,6 +60,9 @@ interface RulesStorageStructure {
         // The instruction set that will be run at rule evaluation
         uint256[] instructionSet;
         
+        // The raw format string and addresses for values in the instruction set that have already been converted to uint256.
+        RawData rawData;
+
         // List of all placeholders used in the rule in order
         // Needs to contain the type, and index (zero based) of the particular type in the function signature 
         // For example if the argument in question is the 2nd address in the function signature the placeHolder would be:
@@ -80,6 +83,32 @@ interface RulesStorageStructure {
         uint256[] posEffects;
         // List of all positive effects
         uint256[] negEffects;
+    }
+
+    // This struct will hold the raw form of strings and addresses that were submitted to the SDK 
+    struct RawData {
+        // The index in the instruction set that contains the "converted" version of this data (converted to uint256)
+        uint256[] instructionSetIndex;
+        // The types for the data values in order (to aid with decoding them)
+        PT[] argumentTypes;
+        // The data (encoded using the viem equivalent of abi.encode, encoded types capture in argumentTypes in order)
+        bytes[] dataValues;
+    }
+
+    // Contains the "converted" uint256 value and the stored original string value for comparison to make sure the conversion can be replicated. 
+    struct StringVerificationStruct {
+        // The "converted" value that exists in the instruction set.
+        uint256 instructionSetValue;
+        // The raw string value that has been stored with the rule.
+        string rawData;
+    }
+
+    // Contains the "converted" uint256 value and the stored original address value for comparison to make sure the conversion can be replicated. 
+    struct AddressVerificationStruct {
+        // The "converted" value that exists in the instruction set.
+        uint256 instructionSetValue;
+        // The raw address value that has been stored with the rule.
+        address rawData;
     }
 
    /**
