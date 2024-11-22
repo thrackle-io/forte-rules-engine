@@ -1,4 +1,7 @@
-import "forge-std/Test.sol";
+/// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.24;
+
+import "lib/forge-std/src/Test.sol";
 import "src/utils/FCEncodingLib.sol";
 import "src/RulesEngineStructures.sol";
 

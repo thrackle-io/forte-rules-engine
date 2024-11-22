@@ -1,50 +1,11 @@
 /// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import "src/RulesEngineRunLogic.sol";
-import "src/ExampleUserContract.sol";
-import "lib/forge-std/src/Test.sol";
-import "test/ForeignCallTestContract.sol";
-import "src/effects/EffectStructures.sol";
-import "test/RulesEngineRunLogicWrapper.sol";
+import "test/utils/RulesEngineCommon.t.sol";
 
-/**
- * @title Test the functionality of the RulesEngineRunLogic contract
- * @author @mpetersoCode55 
- */
-contract RulesEngineRunLogicTest is Test, EffectStructures {
+abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
-    RulesEngineRunLogicWrapper logic;
-    ExampleUserContract userContract;
-    ForeignCallTestContract testContract;
-
-    address contractAddress = address(0x1234567);
-    string functionSignature = "transfer(address,uint256) returns (bool)";
-
-    string constant event_text = "Rules Engine Event";
-    string constant revert_text = "Rules Engine Revert";
-    string constant event_text2 = "Rules Engine Event 2";
-    string constant revert_text2 = "Rules Engine Revert 2";
-    uint256 effectId_revert;
-    uint256 effectId_revert2;
-    uint256 effectId_event;
-    uint256 effectId_event2;
-    bytes[] signatures;        
-    uint256[] functionSignatureIds;
-    uint256[][] ruleIds;
-
-    uint256 effectId_expression;
-    uint256 effectId_expression2;
-
-    function setUp() public{
-        logic = new RulesEngineRunLogicWrapper();
-        userContract = new ExampleUserContract();
-        userContract.setRulesEngineAddress(address(logic));
-        testContract = new ForeignCallTestContract();
-        _setupEffectProcessor();
-    }
-
-    function setupRuleWithoutForeignCall() public {
+    function setupRuleWithoutForeignCall() public ifDeploymentTestsEnabled endWithStopPrank {
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         RulesStorageStructure.Rule memory rule;
         
@@ -84,7 +45,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
 
 
     // Test attempt to add a policy with no signatures saved.
-    function testUpdatePolicyInvalidRule() public {
+    function testUpdatePolicyInvalidRule() public ifDeploymentTestsEnabled endWithStopPrank {
         RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
         pTypes[0] = RulesStorageStructure.PT.ADDR;
         pTypes[1] = RulesStorageStructure.PT.UINT;
@@ -99,7 +60,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
     }
 
     // Test attempt to add a policy with no signatures saved.
-    function testUpdatePolicyInvalidSignature() public {
+    function testUpdatePolicyInvalidSignature() public ifDeploymentTestsEnabled endWithStopPrank {
         signatures.push(bytes(functionSignature));  
         functionSignatureIds.push(1);
         ruleIds.push(new uint256[](1));
@@ -109,7 +70,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
     }
 
     // Test attempt to add a policy with valid parts.
-    function testUpdatePolicyPositive() public {
+    function testUpdatePolicyPositive() public ifDeploymentTestsEnabled endWithStopPrank {
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         RulesStorageStructure.Rule memory rule;
         
@@ -145,7 +106,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
 
     }
 
-    function setupEffectWithTrackerUpdate() public returns (uint256) {
+    function setupEffectWithTrackerUpdate() public ifDeploymentTestsEnabled endWithStopPrank returns (uint256 policyId) {
         // Rule: 1 == 1 -> TRU:someTracker += FC:simpleCheck(amount) -> transfer(address _to, uint256 amount) returns (bool)
         RulesStorageStructure.PT[] memory fcArgs = new RulesStorageStructure.PT[](1);
         fcArgs[0] = RulesStorageStructure.PT.UINT;
@@ -200,10 +161,11 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         policyIds[0] = policyId;
         logic.applyPolicy(address(userContract), policyIds);
         fc;  //added to silence warnings during testing revamp 
+        //TODO add validation vs silenced warning 
         return policyId;
     }
 
-    function setupEffectWithForeignCall() public {
+    function setupEffectWithForeignCall() public ifDeploymentTestsEnabled endWithStopPrank {
         // Rule: 1 == 1 -> FC:simpleCheck(amount) -> transfer(address _to, uint256 amount) returns (bool)
 
         // build Foreign Call Structure
@@ -249,9 +211,10 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         policyIds[0] = policyId;
         logic.applyPolicy(address(userContract), policyIds);      
         fc;  //added to silence warnings during testing revamp 
+        //TODO add validation vs silenced warning 
     }
 
-    function setupRuleWithForeignCall() public {
+    function setupRuleWithForeignCall() public ifDeploymentTestsEnabled endWithStopPrank {
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
         RulesStorageStructure.Rule memory rule;
         
@@ -300,9 +263,10 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         policyIds[0] = policyId;
         logic.applyPolicy(address(userContract), policyIds);
         fc;  //added to silence warnings during testing revamp 
+        //TODO add validation vs silenced warning 
     }
 
-    function _setupRuleWithRevert() public {
+    function _setupRuleWithRevert() public ifDeploymentTestsEnabled endWithStopPrank {
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         RulesStorageStructure.Rule memory rule =  _createGTRule(4);
         rule.negEffects[0] = effectId_revert;
@@ -324,7 +288,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         logic.applyPolicy(address(userContract), policyIds);
     }
 
-    function _setupRuleWithPosEvent() public {
+    function _setupRuleWithPosEvent() public ifDeploymentTestsEnabled endWithStopPrank {
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         RulesStorageStructure.Rule memory rule =  _createGTRule(4);
         rule.posEffects[0] = effectId_event;
@@ -347,7 +311,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         logic.applyPolicy(address(userContract), policyIds);
     }
 
-    function _setupPolicyWithMultipleRulesWithPosEvents() public {
+    function _setupPolicyWithMultipleRulesWithPosEvents() public ifDeploymentTestsEnabled endWithStopPrank {
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         // Rule 1: GT 4
         RulesStorageStructure.Rule memory rule =  _createGTRule(4);
@@ -412,7 +376,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         logic.applyPolicy(address(userContract), policyIds);
     }
 
-    function _setupRuleWith2PosEvent() public {
+    function _setupRuleWith2PosEvent() public ifDeploymentTestsEnabled endWithStopPrank {
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         RulesStorageStructure.Rule memory rule =  _createGTRule(4);
         rule.posEffects[0] = effectId_event;
@@ -436,7 +400,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         logic.applyPolicy(address(userContract), policyIds);
     }
 
-    function testCheckRulesExplicit() public {
+    function testCheckRulesExplicit() public ifDeploymentTestsEnabled endWithStopPrank {
         setupRuleWithoutForeignCall();
         RulesStorageStructure.Arguments memory arguments;
         arguments.argumentTypes = new RulesStorageStructure.PT[](2);
@@ -450,7 +414,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         assertTrue(response);
     }
 
-    function testCheckRulesExplicitWithForeignCallPositive() public {
+    function testCheckRulesExplicitWithForeignCallPositive() public ifDeploymentTestsEnabled endWithStopPrank {
         setupRuleWithForeignCall();
         RulesStorageStructure.Arguments memory arguments;
         arguments.argumentTypes = new RulesStorageStructure.PT[](2);
@@ -465,7 +429,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         assertTrue(response);
     }
 
-    function testCheckRulesExplicitWithForeignCallEffect() public {
+    function testCheckRulesExplicitWithForeignCallEffect() public ifDeploymentTestsEnabled endWithStopPrank {
         setupEffectWithForeignCall();
         RulesStorageStructure.Arguments memory arguments;
         arguments.argumentTypes = new RulesStorageStructure.PT[](2);
@@ -481,7 +445,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         assertEq(testContract.getInternalValue(), 5);
     }
 
-    function testCheckRulesExplicitWithTrackerUpdateEffect() public {
+    function testCheckRulesExplicitWithTrackerUpdateEffect() public ifDeploymentTestsEnabled endWithStopPrank {
         uint256 policyId = setupEffectWithTrackerUpdate();
         RulesStorageStructure.Arguments memory arguments;
         arguments.argumentTypes = new RulesStorageStructure.PT[](2);
@@ -499,7 +463,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         assertEq(tracker.trackerValue, abi.encode(7));
     }
 
-    function testCheckRulesExplicitWithForeignCallNegative() public {
+    function testCheckRulesExplicitWithForeignCallNegative() public ifDeploymentTestsEnabled endWithStopPrank {
         setupRuleWithForeignCall();
         RulesStorageStructure.Arguments memory arguments;
         arguments.argumentTypes = new RulesStorageStructure.PT[](2);
@@ -514,14 +478,14 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
     }
 
     /// Ensure that rule with a negative effect revert applied, that passes, will revert
-    function testCheckRulesWithExampleContractNegativeRevert() public {
+    function testCheckRulesWithExampleContractNegativeRevert() public ifDeploymentTestsEnabled endWithStopPrank {
         _setupRuleWithRevert();
         vm.expectRevert(abi.encodePacked(revert_text)); 
         userContract.transfer(address(0x7654321), 3);
     }
 
     /// Ensure that rule with a positive effect event applied, that passes, will emit the event
-    function testCheckRulesWithExampleContractPositiveEvent() public {
+    function testCheckRulesWithExampleContractPositiveEvent() public ifDeploymentTestsEnabled endWithStopPrank {
         _setupRuleWithPosEvent();
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(event_text);
@@ -529,7 +493,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
     }
 
     // Ensure that a policy with multiple rules with positive events fire in the correct order
-    function testCheckPolicyExecutesRuleOrder() public {
+    function testCheckPolicyExecutesRuleOrder() public ifDeploymentTestsEnabled endWithStopPrank {
         _setupPolicyWithMultipleRulesWithPosEvents();
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(event_text);
@@ -543,7 +507,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
     }
 
     /// Ensure that rule with a positive effect event applied, that passes, will emit the event
-    function testCheckRulesWithExampleContractMultiplePositiveEvent() public {
+    function testCheckRulesWithExampleContractMultiplePositiveEvent() public ifDeploymentTestsEnabled endWithStopPrank {
         _setupRuleWith2PosEvent();
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(event_text);
@@ -552,7 +516,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         userContract.transfer(address(0x7654321), 11);
     }
 
-    function testEncodingForeignCall() public {
+    function testEncodingForeignCall() public ifDeploymentTestsEnabled endWithStopPrank {
         string memory functionSig = "testSig(uint256,string,uint256,string,address)";
 
         RulesStorageStructure.PT[] memory parameterTypes = new RulesStorageStructure.PT[](5);
@@ -587,9 +551,10 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         assertEq(foreignCall.getDecodedAddr(), address(0x1234567));
         response; 
         data; // added to silence warnings - we should have these in an assertion 
+        //TODO add validation vs silenced warning 
     }
 
-    function testEvaluateForeignCallForRule() public {
+    function testEvaluateForeignCallForRule() public ifDeploymentTestsEnabled endWithStopPrank {
         RulesStorageStructure.ForeignCall memory fc;
         ForeignCallTestContract foreignCall = new ForeignCallTestContract();
         string memory functionSig = "testSig(uint256,string,uint256,string,address)";
@@ -662,7 +627,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         RulesStorageStructure.ForeignCallReturnValue memory retVal = logic.evaluateForeignCallForRuleExt(fc, rule.fcArgumentMappingsConditions, functionArguments);
         console2.logBytes(retVal.value);
     }
-    function _createGTRule(uint256 _amount) public returns(RulesStorageStructure.Rule memory){
+    function _createGTRule(uint256 _amount) public ifDeploymentTestsEnabled endWithStopPrank returns(RulesStorageStructure.Rule memory rule){
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         RulesStorageStructure.Rule memory rule;
         // Set up some effects.
@@ -685,70 +650,9 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         return rule;
     }
 
-    function _setupEffectProcessor() public {
-        _createAllEffects();
-    }
-
-    function _createAllEffects() public {
-        effectId_event = _createEffectEvent(event_text); // effectId = 1
-        effectId_revert = _createEffectRevert(revert_text); // effectId = 2
-        effectId_event2 = _createEffectEvent(event_text2); // effectId = 3
-        effectId_revert2 = _createEffectRevert(revert_text2); // effectId = 4
-        effectId_expression = _createEffectExpression(); // effectId = 5;
-        effectId_expression2 = _createEffectExpressionTrackerUpdate(); // effectId = 6;
-
-    }
-
-    function _createEffectEvent(string memory _text) public returns(uint256 _effectId){
-        uint256[] memory emptyArray = new uint256[](1);
-        // Create a event effect
-        return logic.updateEffect(Effect({effectId: 0, effectType: ET.EVENT, text: _text, instructionSet: emptyArray}));
-    }
-
-    function _createEffectRevert(string memory _text) public returns(uint256 _effectId) {
-        uint256[] memory emptyArray = new uint256[](1);
-        // Create a revert effect
-        return logic.updateEffect(Effect({effectId: 0, effectType: ET.REVERT, text: _text, instructionSet: emptyArray}));
-    }
-
-    function _createEffectExpression() public returns(uint256 _effectId) {
-        EffectStructures.Effect memory effect;
-
-        effect.effectId = 0;
-        effect.effectType = ET.EXPRESSION;
-        effect.text = "";
-        effect.instructionSet = new uint256[](1);
-
-        return logic.updateEffect(effect);
-    }
-
-    function _createEffectExpressionTrackerUpdate() public returns(uint256 _effectId) {
-        // Effect: TRU:someTracker += FC:simpleCheck(amount)
-        EffectStructures.Effect memory effect;
-        effect.effectId = 0;
-        effect.effectType = ET.EXPRESSION;
-        effect.text = "";
-        effect.instructionSet = new uint256[](10);
-        // Foreign Call Placeholder
-        effect.instructionSet[0] = uint(RulesStorageStructure.LC.PLH);
-        effect.instructionSet[1] = 0;
-        // Tracker Placeholder
-        effect.instructionSet[2] = uint(RulesStorageStructure.LC.PLH);
-        effect.instructionSet[3] = 1;
-        effect.instructionSet[4] = uint(RulesStorageStructure.LC.ADD);
-        effect.instructionSet[5] = 0;
-        effect.instructionSet[6] = 1;
-        effect.instructionSet[7] = uint(RulesStorageStructure.LC.TRU);
-        effect.instructionSet[8] = 0;
-        effect.instructionSet[9] = 2;
-
-        return logic.updateEffect(effect);
-    }
-
     /// Tracker Tests 
-
     // set up a rule with a uint256 tracker value for testing 
-     function setupRuleWithTracker(uint256 trackerValue) public returns(uint256 policyId){
+     function setupRuleWithTracker(uint256 trackerValue) public ifDeploymentTestsEnabled endWithStopPrank returns(uint256 policyId){
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         RulesStorageStructure.Rule memory rule;
 
@@ -802,7 +706,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         return policyId;
     }
 
-    function testCheckRulesWithTrackerValue() public {
+    function testCheckRulesWithTrackerValue() public ifDeploymentTestsEnabled endWithStopPrank {
         setupRuleWithTracker(2);
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(event_text);
@@ -810,13 +714,13 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         assertTrue(retVal);
     }
 
-    function testCheckRulesWithTrackerValueNegative() public {
+    function testCheckRulesWithTrackerValueNegative() public ifDeploymentTestsEnabled endWithStopPrank {
         setupRuleWithTracker(7);
         vm.expectRevert(abi.encodePacked(revert_text)); 
         userContract.transfer(address(0x7654321), 6);
     }
 
-    function testManualUpdateToTrackerThenCheckRules() public {
+    function testManualUpdateToTrackerThenCheckRules() public ifDeploymentTestsEnabled endWithStopPrank {
         uint256 policyId = setupRuleWithTracker(4);
         bool retVal = userContract.transfer(address(0x7654321), 5);
         assertTrue(retVal); 
@@ -826,24 +730,87 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         /// manually update the tracker here to higher value so that rule fails
         //                  calling contract,  updated uint, empty address, empty string, bool, empty bytes 
         logic.updateTracker(policyId, 7, address(0x00), "", true, ""); 
-
         vm.expectRevert(abi.encodePacked(revert_text)); 
         retVal = userContract.transfer(address(0x7654321), 4);
-
         retVal = userContract.transfer(address(0x7654321), 9);
         assertTrue(retVal);
 
     }
 
-    function testGetTrackerValue() public {
+    function testGetTrackerValue() public ifDeploymentTestsEnabled endWithStopPrank {
         uint256 policyId = setupRuleWithTracker(2);
         bool retVal = userContract.transfer(address(0x7654321), 3);
         assertTrue(retVal);
-
         RulesStorageStructure.Trackers memory testTracker = logic.getTracker(policyId, 0); 
-
         assertTrue(abi.decode(testTracker.trackerValue, (uint256)) == 2); 
         assertFalse(abi.decode(testTracker.trackerValue, (uint256)) == 3); 
 
     }
+
+    /// Foreign call tests
+    function test_getFCAddress() public ifDeploymentTestsEnabled endWithStopPrank {
+        RulesStorageStructure.ForeignCallReturnValue memory retVal;
+        retVal.pType = RulesStorageStructure.PT.ADDR;
+        retVal.value = abi.encode(address(1));
+        address addr = FCEncodingLib.getFCAddress(retVal);
+        assertEq(addr, address(1));
+    }
+
+    function test_getFCAddress_wrongType() public ifDeploymentTestsEnabled endWithStopPrank {
+        RulesStorageStructure.ForeignCallReturnValue memory retVal;
+        retVal.pType = RulesStorageStructure.PT.UINT;
+        retVal.value = abi.encode(uint256(1));
+        vm.expectRevert();
+        FCEncodingLib.getFCAddress(retVal);
+    }
+
+    function test_getFCString() public ifDeploymentTestsEnabled endWithStopPrank {
+        RulesStorageStructure.ForeignCallReturnValue memory retVal;
+        retVal.pType = RulesStorageStructure.PT.STR;
+        retVal.value = abi.encode("hello");
+        string memory str = FCEncodingLib.getFCString(retVal);
+        assertEq(str, "hello");
+    }
+
+    function test_getFCString_negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        RulesStorageStructure.ForeignCallReturnValue memory retVal;
+        retVal.pType = RulesStorageStructure.PT.UINT;
+        retVal.value = abi.encode(uint256(1));
+        vm.expectRevert();
+        FCEncodingLib.getFCString(retVal);
+    }
+
+    function test_getFCUint() public ifDeploymentTestsEnabled endWithStopPrank {
+        RulesStorageStructure.ForeignCallReturnValue memory retVal;
+        retVal.pType = RulesStorageStructure.PT.UINT;
+        retVal.value = abi.encode(uint256(1));
+        uint256 uintVal = FCEncodingLib.getFCUint(retVal);
+        assertEq(uintVal, 1);
+    }
+
+    function test_getFCUint_negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        RulesStorageStructure.ForeignCallReturnValue memory retVal;
+        retVal.pType = RulesStorageStructure.PT.STR;
+        retVal.value = abi.encode("hello");
+        vm.expectRevert();
+        FCEncodingLib.getFCUint(retVal);
+    }
+
+    function test_getFCBool() public ifDeploymentTestsEnabled endWithStopPrank {
+        RulesStorageStructure.ForeignCallReturnValue memory retVal;
+        retVal.pType = RulesStorageStructure.PT.BOOL;
+        retVal.value = abi.encode(true);
+        bool boolVal = FCEncodingLib.getFCBool(retVal);
+        assertEq(boolVal, true);
+    }
+
+    function test_getFCBool_negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        RulesStorageStructure.ForeignCallReturnValue memory retVal;
+        retVal.pType = RulesStorageStructure.PT.UINT;
+        retVal.value = abi.encode(uint256(1));
+        vm.expectRevert();
+        FCEncodingLib.getFCBool(retVal);
+    }
+
+
 }
