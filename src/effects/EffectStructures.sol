@@ -1,7 +1,7 @@
  // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import "src/RulesEngineStructures.sol";
+import "src/RulesStorageStructure.sol";
 
 abstract contract EffectStructures {
 

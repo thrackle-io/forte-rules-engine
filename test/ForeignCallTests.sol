@@ -1,6 +1,6 @@
 import "forge-std/Test.sol";
 import "src/utils/FCEncodingLib.sol";
-import "src/RulesEngineStructures.sol";
+import "src/RulesStorageStructure.sol";
 
 
 contract ForeignCallTests is Test {

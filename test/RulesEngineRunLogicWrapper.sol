@@ -1,6 +1,6 @@
 pragma solidity ^0.8.13;
 
-import "src/RulesEngineStructures.sol";
+import "src/RulesStorageStructure.sol";
 import "src/RulesEngineRunLogic.sol";
 
 /**
