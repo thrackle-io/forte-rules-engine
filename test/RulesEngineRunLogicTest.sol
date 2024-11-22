@@ -324,6 +324,7 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         RulesStorageStructure.ForeignCall memory fc = logic.updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);
 
         logic.applyPolicy(address(userContract), policyIds);
+        fc;  //added to silence warnings during testing revamp 
         return policyIds[0];
     }
 
@@ -369,8 +370,10 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
         RulesStorageStructure.PT[] memory fcArgs = new RulesStorageStructure.PT[](1);
         fcArgs[0] = RulesStorageStructure.PT.UINT;
-        RulesStorageStructure.ForeignCall memory fc = logic.updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);        
-        logic.applyPolicy(address(userContract), policyIds);
+        RulesStorageStructure.ForeignCall memory fc = logic.updateForeignCall(policyId, address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);        
+        policyIds[0] = policyId;
+        logic.applyPolicy(address(userContract), policyIds);      
+        fc;  //added to silence warnings during testing revamp 
     }
 
     function setupRuleWithForeignCall() public {
