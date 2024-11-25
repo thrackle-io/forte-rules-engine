@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "src/RulesEngineStructures.sol";
+import "src/RulesStorageStructure.sol";
 import "src/IRulesEngine.sol";
 import "src/effects/EffectStructures.sol";
 
@@ -238,15 +238,14 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param arguments function arguments
      * TODO: refine the parameters to this function. contractAddress is not necessary as it's the message caller
      */
-    function checkPolicies(address contractAddress, bytes calldata functionSignature, bytes calldata arguments) public returns (bool retVal) {  
-        retVal = true; 
+    function checkPolicies(address contractAddress, bytes calldata functionSignature, bytes calldata arguments) public returns (uint256 retVal) {  
+        retVal = 1; 
         // loop through all the active policies
         for(uint256 policyIdx = 0; policyIdx < contractPolicyIdMap[contractAddress].length; policyIdx++) {
             if(!_checkPolicy(contractPolicyIdMap[contractAddress][policyIdx], contractAddress, functionSignature, arguments)) {
-                retVal = false;
+                retVal = 0;
             }
         }
-        return retVal;
     }
 
     function _checkPolicy(uint256 _policyId, address contractAddress, bytes calldata functionSignature, bytes calldata arguments) internal returns (bool retVal) {
@@ -622,6 +621,52 @@ contract RulesEngineRunLogic is IRulesEngine {
     function stringToBytes32(string memory source) internal pure returns (bytes32 result) {
         assembly {
             result := mload(add(source, 32))
+        }
+    }
+
+    /**
+     * @dev Retrieves the instruction set and raw string representations of a value 
+     * @param _ruleId the id of the rule the values belong to
+     * @param instructionSetId the index into the instruction set where the converted value lives
+     */
+    function retrieveRawStringFromInstructionSet(uint256 _ruleId, uint256 instructionSetId) public view returns (RulesStorageStructure.StringVerificationStruct memory retVal) {
+        (uint256 instructionSetValue, bytes memory encoded) = retreiveRawEncodedFromInstructionSet(_ruleId, instructionSetId, RulesStorageStructure.PT.STR);
+        retVal.rawData = abi.decode(encoded, (string));
+        retVal.instructionSetValue = instructionSetValue;
+    }
+
+
+    /**
+     * @dev Retrieves the instruction set and raw address representations of a value 
+     * @param _ruleId the id of the rule the values belong to
+     * @param instructionSetId the index into the instruction set where the converted value lives
+     */
+    function retrieveRawAddressFromInstructionSet(uint256 _ruleId, uint256 instructionSetId) public view returns (RulesStorageStructure.AddressVerificationStruct memory retVal) {
+        (uint256 instructionSetValue, bytes memory encoded) = retreiveRawEncodedFromInstructionSet(_ruleId, instructionSetId, RulesStorageStructure.PT.ADDR);
+        retVal.rawData = abi.decode(encoded, (address));
+        retVal.instructionSetValue = instructionSetValue;
+    }
+
+    /**
+     * @dev Retrieves the instruction set and raw representations of a value (raw data abi encoded)
+     * @param _ruleId the id of the rule the values belong to
+     * @param instructionSetId the index into the instruction set where the converted value lives
+     * @param pType the parameter type of the value
+     */
+    function retreiveRawEncodedFromInstructionSet(uint256 _ruleId, uint256 instructionSetId, RulesStorageStructure.PT pType) internal view returns (uint256 instructionSetValue, bytes memory encoded) {
+        RulesStorageStructure.RuleStorageStructure memory _ruleStorage = ruleStorage[_ruleId];
+        if(!_ruleStorage.set) {
+            revert("Unknown Rule");
+        }
+        for(uint256 i = 0; i < _ruleStorage.rule.rawData.instructionSetIndex.length; i++) {
+            if(_ruleStorage.rule.rawData.instructionSetIndex[i] == instructionSetId) {
+                if(_ruleStorage.rule.rawData.argumentTypes[i] != pType) {
+                    revert("Incorrect type");
+                }
+                encoded = _ruleStorage.rule.rawData.dataValues[i];
+                instructionSetValue = _ruleStorage.rule.instructionSet[instructionSetId];
+                break;
+            }
         }
     }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "src/RulesEngineStructures.sol";
+import "src/RulesStorageStructure.sol";
 
 /**
  * @title Library for users to encode their rule enabled functions arguments
