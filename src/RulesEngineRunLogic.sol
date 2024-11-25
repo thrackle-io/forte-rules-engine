@@ -238,12 +238,12 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param arguments function arguments
      * TODO: refine the parameters to this function. contractAddress is not necessary as it's the message caller
      */
-    function checkPolicies(address contractAddress, bytes calldata functionSignature, bytes calldata arguments) public returns (bool retVal) {  
-        retVal = true; 
+    function checkPolicies(address contractAddress, bytes calldata functionSignature, bytes calldata arguments) public returns (uint256 retVal) {  
+        retVal = 1; 
         // loop through all the active policies
         for(uint256 policyIdx = 0; policyIdx < contractPolicyIdMap[contractAddress].length; policyIdx++) {
             if(!_checkPolicy(contractPolicyIdMap[contractAddress][policyIdx], contractAddress, functionSignature, arguments)) {
-                retVal = false;
+                retVal = 0;
             }
         }
     }
@@ -653,7 +653,7 @@ contract RulesEngineRunLogic is IRulesEngine {
      * @param instructionSetId the index into the instruction set where the converted value lives
      * @param pType the parameter type of the value
      */
-    function retreiveRawEncodedFromInstructionSet(uint256 _ruleId, uint256 instructionSetId, RulesStorageStructure.PT pType) public view returns (uint256 instructionSetValue, bytes memory encoded) {
+    function retreiveRawEncodedFromInstructionSet(uint256 _ruleId, uint256 instructionSetId, RulesStorageStructure.PT pType) internal view returns (uint256 instructionSetValue, bytes memory encoded) {
         RulesStorageStructure.RuleStorageStructure memory _ruleStorage = ruleStorage[_ruleId];
         if(!_ruleStorage.set) {
             revert("Unknown Rule");

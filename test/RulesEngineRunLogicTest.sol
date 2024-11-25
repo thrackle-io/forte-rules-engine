@@ -540,8 +540,8 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         arguments.values[0] = abi.encode(address(0x7654321));
         arguments.values[1] = abi.encode(5);
         bytes memory retVal = abi.encode(arguments);
-        bool response = logic.checkPolicies(address(userContract), bytes(functionSignature), retVal);
-        assertTrue(response);
+        uint256 response = logic.checkPolicies(address(userContract), bytes(functionSignature), retVal);
+        assertEq(response, 1);
     }
 
     function testCheckPoliciesExplicitStringComparisonPositive() public {
@@ -554,8 +554,8 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         arguments.values[0] = abi.encode(address(0x7654321));
         arguments.values[1] = abi.encode("Bad Info");
         bytes memory retVal = abi.encode(arguments);
-        bool response = logic.checkPolicies(address(userContract), bytes(functionSignature2), retVal);
-        assertTrue(response);
+        uint256 response = logic.checkPolicies(address(userContract), bytes(functionSignature2), retVal);
+        assertEq(response, 1);
     }
 
         function testCheckPoliciesExplicitStringComparisonNegative() public {
@@ -568,8 +568,8 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         arguments.values[0] = abi.encode(address(0x7654321));
         arguments.values[1] = abi.encode("test");
         bytes memory retVal = abi.encode(arguments);
-        bool response = logic.checkPolicies(address(userContract), bytes(functionSignature2), retVal);
-        assertFalse(response);
+        uint256 response = logic.checkPolicies(address(userContract), bytes(functionSignature2), retVal);
+        assertEq(response, 0);
     }
 
     function testRetrieveRawStringFromInstructionSet() public {
@@ -590,8 +590,8 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         arguments.values[0] = abi.encode(address(0x1234567));
         arguments.values[1] = abi.encode("test");
         bytes memory retVal = abi.encode(arguments);
-        bool response = logic.checkPolicies(address(userContract), bytes(functionSignature2), retVal);
-        assertTrue(response);
+        uint256 response = logic.checkPolicies(address(userContract), bytes(functionSignature2), retVal);
+        assertEq(response, 1);
     }
 
     function testCheckPoliciesExplicitAddressComparisonNegative() public {
@@ -604,8 +604,8 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         arguments.values[0] = abi.encode(address(0x7654321));
         arguments.values[1] = abi.encode("test");
         bytes memory retVal = abi.encode(arguments);
-        bool response = logic.checkPolicies(address(userContract), bytes(functionSignature2), retVal);
-        assertFalse(response);
+        uint256 response = logic.checkPolicies(address(userContract), bytes(functionSignature2), retVal);
+        assertEq(response, 0);
     }
 
     function testRetrieveRawAddressFromInstructionSet() public {
@@ -627,8 +627,8 @@ contract RulesEngineRunLogicTest is Test, EffectStructures {
         arguments.values[1] = abi.encode(5);
         bytes memory retVal = abi.encode(arguments);
 
-        bool response = logic.checkPolicies(address(userContract), bytes(functionSignature), retVal);
-        assertTrue(response);
+        uint256 response = logic.checkPolicies(address(userContract), bytes(functionSignature), retVal);
+        assertEq(response, 1);
     }
 
     function testCheckRulesExplicitWithForeignCallEffect() public {
