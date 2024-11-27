@@ -982,7 +982,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
 
     /// Test utility functions within ExampleUserContract.sol and RulesEngineRunLogic.sol 
-    
+
     function testRulesEngine_Utils_UserContract_setRulesEngineAddress() public ifDeploymentTestsEnabled endWithStopPrank {
         userContract.setRulesEngineAddress(address(logic));
         assertTrue(userContract.rulesEngineAddress() == address(logic)); 
@@ -1069,26 +1069,31 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         logic.evaluateExpression(0, rule, arguments, rule.instructionSet);
     }
 
+    function testRulesEngine_Utils_customEncoder() public ifDeploymentTestsEnabled endWithStopPrank {
+
+        RulesStorageStructure.Arguments memory arguments;
+        arguments.argumentTypes = new RulesStorageStructure.PT[](2);
+        arguments.argumentTypes[0] = RulesStorageStructure.PT.ADDR;
+        arguments.argumentTypes[1] = RulesStorageStructure.PT.UINT;
+        arguments.values = new bytes[](2);
+        arguments.values[0] = abi.encode(address(0x7654321));
+        arguments.values[1] = abi.encode(5);
+        RuleEncodingLibrary.customEncoder(arguments);
+    }
+
     function testRulesEngine_Utils_buildArguments() public ifDeploymentTestsEnabled endWithStopPrank {
         uint256[] memory policyIds = new uint256[](1);
-        
         policyIds[0] = _createBlankPolicy();
-
         RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
         pTypes[0] = RulesStorageStructure.PT.ADDR;
         pTypes[1] = RulesStorageStructure.PT.UINT;
-
         _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
-
-        
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
         RulesStorageStructure.Rule memory rule;
-        
         // Build the foreign call placeholder
         rule.placeHolders = new RulesStorageStructure.Placeholder[](1); 
         rule.placeHolders[0].foreignCall = true;
         rule.placeHolders[0].typeSpecificIndex = 0;
-
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = new uint256[](7);
         rule.instructionSet[0] = uint(RulesStorageStructure.LC.PLH);
@@ -1098,7 +1103,6 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.instructionSet[4] = uint(RulesStorageStructure.LC.GT);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
-
         // Build the mapping between calling function arguments and foreign call arguments
         rule.fcArgumentMappingsConditions = new RulesStorageStructure.ForeignCallArgumentMappings[](1);
         rule.fcArgumentMappingsConditions[0].mappings = new RulesStorageStructure.IndividualArgumentMapping[](1);
@@ -1118,8 +1122,6 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ruleIds[0][0]= ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);       
         logic.applyPolicy(address(userContract), policyIds);
-
-        
         RulesStorageStructure.Arguments memory arguments;
         arguments.argumentTypes = new RulesStorageStructure.PT[](2);
         arguments.argumentTypes[0] = RulesStorageStructure.PT.ADDR;
@@ -1129,6 +1131,58 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         arguments.values[1] = abi.encode(5);
 
         logic.buildArguments(0, rule.placeHolders, rule.fcArgumentMappingsConditions, arguments);
+    }
+
+    function testRulesEngine_Utils_evaluateForeignCalls() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = _createBlankPolicy();
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+        // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
+        RulesStorageStructure.Rule memory rule;
+        // Build the foreign call placeholder
+        rule.placeHolders = new RulesStorageStructure.Placeholder[](1); 
+        rule.placeHolders[0].foreignCall = true;
+        rule.placeHolders[0].typeSpecificIndex = 0;
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = new uint256[](7);
+        rule.instructionSet[0] = uint(RulesStorageStructure.LC.PLH);
+        rule.instructionSet[1] = 0;
+        rule.instructionSet[2] = uint(RulesStorageStructure.LC.NUM);
+        rule.instructionSet[3] = 4;
+        rule.instructionSet[4] = uint(RulesStorageStructure.LC.GT);
+        rule.instructionSet[5] = 0;
+        rule.instructionSet[6] = 1;
+        // Build the mapping between calling function arguments and foreign call arguments
+        rule.fcArgumentMappingsConditions = new RulesStorageStructure.ForeignCallArgumentMappings[](1);
+        rule.fcArgumentMappingsConditions[0].mappings = new RulesStorageStructure.IndividualArgumentMapping[](1);
+        rule.fcArgumentMappingsConditions[0].mappings[0].functionCallArgumentType = RulesStorageStructure.PT.UINT;
+        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.foreignCall = false;
+        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.pType = RulesStorageStructure.PT.UINT;
+        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
+        rule.negEffects = new uint256[](1);
+        rule.negEffects[0] = effectId_revert;
+        // Save the rule
+        uint256 ruleId = logic.updateRule(0,rule);
+
+        RulesStorageStructure.PT[] memory fcArgs = new RulesStorageStructure.PT[](1);
+        fcArgs[0] = RulesStorageStructure.PT.UINT;
+        logic.updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);       
+        logic.applyPolicy(address(userContract), policyIds);
+        RulesStorageStructure.Arguments memory arguments;
+        arguments.argumentTypes = new RulesStorageStructure.PT[](2);
+        arguments.argumentTypes[0] = RulesStorageStructure.PT.ADDR;
+        arguments.argumentTypes[1] = RulesStorageStructure.PT.UINT;
+        arguments.values = new bytes[](2);
+        arguments.values[0] = abi.encode(address(0x7654321));
+        arguments.values[1] = abi.encode(5);
+
+        logic.evaluateForeignCalls(0, rule.placeHolders, rule.fcArgumentMappingsConditions, arguments, 0);
     }
 
     function testRulesEngine_Utils_doEffects() public ifDeploymentTestsEnabled endWithStopPrank {
@@ -1170,6 +1224,48 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         arguments.values[1] = abi.encode(5);
 
         logic.doEffects(0, effectIDs, rule, arguments);
+    }
+
+    function testRulesEngine_Utils_run() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = _createBlankPolicy();
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+        // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
+        RulesStorageStructure.Rule memory rule =  _createGTRule(4);
+        rule.posEffects[0] = effectId_event;
+
+        rule.instructionSet = new uint256[](7);
+        rule.instructionSet[0] = uint(RulesStorageStructure.LC.NUM);
+        rule.instructionSet[1] = 0;
+        rule.instructionSet[2] = uint(RulesStorageStructure.LC.NUM);
+        rule.instructionSet[3] = 1;
+        rule.instructionSet[4] = uint(RulesStorageStructure.LC.GT);
+        rule.instructionSet[5] = 0;
+        rule.instructionSet[6] = 1;
+        // Save the rule
+        uint256 ruleId = logic.updateRule(0,rule);
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        logic.applyPolicy(address(userContract), policyIds);
+
+        uint256[] memory effectIDs = new uint256[](2);
+        effectIDs[0] = 0;
+        effectIDs[1] = 1;
+
+
+        RulesStorageStructure.Arguments memory arguments;
+        arguments.argumentTypes = new RulesStorageStructure.PT[](2);
+        arguments.argumentTypes[0] = RulesStorageStructure.PT.ADDR;
+        arguments.argumentTypes[1] = RulesStorageStructure.PT.UINT;
+        arguments.values = new bytes[](2);
+        arguments.values[0] = abi.encode(address(0x7654321));
+        arguments.values[1] = abi.encode(5);
+
+        logic.run(0, rule.instructionSet, arguments);
     }
 
 
