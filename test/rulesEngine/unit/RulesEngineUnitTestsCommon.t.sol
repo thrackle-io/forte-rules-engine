@@ -980,7 +980,20 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
     }
 
+    function testRulesEngine_UserContract_setRulesEngineAddress() public ifDeploymentTestsEnabled endWithStopPrank {
+        userContract.setRulesEngineAddress(address(logic));
+        assertTrue(userContract.rulesEngineAddress() == address(logic)); 
+    }
 
+    function testRulesEngine_Utils_uintToBool() public ifDeploymentTestsEnabled endWithStopPrank {
+        bool success = logic.ui2bool(1); 
+        assertTrue(success); 
+    }
+
+    function testRulesEngine_Utils_BoolToUint() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 success = logic.bool2ui(false); 
+        assertTrue(success == 0);
+    }
 
     /// Foreign call tests
     function testRulesEngine_ForeignCalls_getFCAddress() public ifDeploymentTestsEnabled endWithStopPrank {
