@@ -5,11 +5,12 @@
   "main": "index.js",
   "directories": {
     "lib": "lib",
+    "src": "src",
     "test": "test"
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "files": [
+    "artifacts"
+  ],
   "keywords": [],
   "author": "",
   "license": "ISC",
