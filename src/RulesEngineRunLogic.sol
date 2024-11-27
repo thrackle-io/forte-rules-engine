@@ -258,8 +258,8 @@ contract RulesEngineRunLogic is IRulesEngine {
         retVal = 1; 
         // loop through all the active policies
         for(uint256 policyIdx = 0; policyIdx < contractPolicyIdMap[contractAddress].length; policyIdx++) {
-            if(!_checkPolicy(contractPolicyIdMap[contractAddress][policyIdx], contractAddress, functionSignature, arguments)) {
-                retVal = false;
+            if(!_checkPolicy(contractPolicyIdMap[contractAddress][policyIdx], functionSignature, arguments)) {
+                retVal = 0;
             }
         }
     }
