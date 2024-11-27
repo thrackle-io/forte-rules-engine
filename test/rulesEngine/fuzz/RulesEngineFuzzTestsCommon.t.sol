@@ -9,7 +9,7 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
 
     // Rule creation 
     function testRulesEngine_Fuzz_createRule_simple(uint256 ruleValue, uint256 transferValue) public {
-        bool response;
+        uint256 response;
         // create a rule without foreign call or tracker 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         RulesStorageStructure.Rule memory rule;
@@ -47,16 +47,21 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         bytes memory retVal = abi.encode(arguments);
         if (ruleValue < transferValue) {
             response = logic.checkPolicies(address(userContract), bytes(functionSignature), retVal);
-            assertTrue(response);
+            assertEq(response, 1);
         } else if (ruleValue > transferValue){ 
             response = logic.checkPolicies(address(userContract), bytes(functionSignature), retVal);
-            assertFalse(response);
+            assertFalse(response == 1);
         }
     }
 
     // Foreign Call creation 
     function testRulesEngine_Fuzz_createRule_ForeignCall(uint256 ruleValue, uint256 transferValue) public {
-        bool response;
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = _createBlankPolicy();
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
         RulesStorageStructure.Rule memory rule;
         // Build the foreign call placeholder
@@ -76,25 +81,13 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         rule.negEffects[0] = effectId_revert;
         // Save the rule
         uint256 ruleId = logic.updateRule(0,rule);
-
-        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
-        pTypes[0] = RulesStorageStructure.PT.UINT;
-        pTypes[1] = RulesStorageStructure.PT.ADDR;
-        // Save the function signature
-        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
-        // Save the Policy
-        signatures.push(bytes(functionSignature));  
-        functionSignatureIds.push(functionSignatureId);
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0]= ruleId;
-        uint256[] memory policyIds = new uint256[](1);
-        uint256 policyId = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);
         RulesStorageStructure.PT[] memory fcArgs = new RulesStorageStructure.PT[](1);
         fcArgs[0] = RulesStorageStructure.PT.UINT;
-        RulesStorageStructure.ForeignCall memory fc = logic.updateForeignCall(policyId, address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);        
-        policyIds[0] = policyId;
-        logic.applyPolicy(address(userContract), policyIds);
-        fc;  //added to silence warnings during testing revamp 
+        logic.updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);       
+        logic.applyPolicy(address(userContract), policyIds); 
 
         RulesStorageStructure.Arguments memory arguments;
         arguments.argumentTypes = new RulesStorageStructure.PT[](2);
@@ -106,8 +99,8 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         bytes memory retVal = abi.encode(arguments);
 
         if (ruleValue < transferValue) {
-            response = logic.checkPolicies(address(userContract), bytes(functionSignature), retVal);
-            assertTrue(response);
+            uint256 response = logic.checkPolicies(address(userContract), bytes(functionSignature), retVal);
+            assertEq(response, 1);
         } else if (ruleValue >= transferValue){ 
             vm.expectRevert(abi.encodePacked(revert_text)); 
             logic.checkPolicies(address(userContract), bytes(functionSignature), retVal);
@@ -116,12 +109,17 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
 
     // Tracker creation 
     function testRulesEngine_Fuzz_createRule_Tracker(uint256 trackerValue, uint256 transferValue) public {
-        uint256 policyId;
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = _createBlankPolicy();
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         RulesStorageStructure.Rule memory rule;
         // Instruction set: LC.PLH, 1, 0, LC.PLH, 1, 0, LC.GT, 0, 1
         rule.instructionSet = _createInstructionSet(0,1);
-
         rule.placeHolders = new RulesStorageStructure.Placeholder[](2);
         rule.placeHolders[0].pType = RulesStorageStructure.PT.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
@@ -134,29 +132,18 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         rule.posEffects[0] = effectId_event;
         // Save the rule
         uint256 ruleId = logic.updateRule(0,rule);
-
-        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
-        pTypes[0] = RulesStorageStructure.PT.ADDR;
-        pTypes[1] = RulesStorageStructure.PT.UINT;
-        // Save the function signature
-        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
-        // Save the Policy
-        signatures.push(bytes(functionSignature));  
-        functionSignatureIds.push(functionSignatureId);
         // Build the tracker
-        RulesStorageStructure.Trackers memory tracker;  
-
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0]= ruleId;
-        uint256[] memory policyIds = new uint256[](1); 
-        policyId = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);  
+        RulesStorageStructure.Trackers memory tracker; 
         /// build the members of the struct: 
         tracker.pType = RulesStorageStructure.PT.UINT; 
         tracker.trackerValue = abi.encode(trackerValue);
         // Add the tracker
-        logic.addTracker(policyId, tracker);
-        functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
-        policyIds[0] = policyId;     
+        logic.addTracker(policyIds[0], tracker); 
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+
         logic.applyPolicy(address(userContract), policyIds);
         RulesStorageStructure.Arguments memory arguments;
         arguments.argumentTypes = new RulesStorageStructure.PT[](2);
@@ -167,22 +154,14 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         arguments.values[1] = abi.encode(transferValue);
         bytes memory retVal = abi.encode(arguments);
         if (trackerValue < transferValue) {
-            bool response = logic.checkPolicies(address(userContract), bytes(functionSignature), retVal);
-            assertTrue(response);
+            uint256 response = logic.checkPolicies(address(userContract), bytes(functionSignature), retVal);
+            assertEq(response, 1);
         } else if (trackerValue >= transferValue){ 
             vm.expectRevert(abi.encodePacked(revert_text)); 
             logic.checkPolicies(address(userContract), bytes(functionSignature), retVal);
         }
     }
     // Policy creation 
-    function _createBlankPolicy() internal returns (uint256) {
-        bytes[] memory blankSignatures = new bytes[](0);
-        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
-        uint256[][] memory blankRuleIds = new uint256[][](0);
-        uint256 policyId = logic.updatePolicy(0, blankSignatures, blankFunctionSignatureIds, blankRuleIds);
-        return policyId;
-    }
-
     function testRulesEngine_Fuzz_createRule_CreatePolicy(uint256 _iterator) public {
         // create a number of blank policies so that rules engine has more than 1 
         _iterator = bound(_iterator, 1, 1000);
@@ -256,6 +235,12 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
     }
     // check rule with Foreign Call  
     function testRulesEngine_Fuzz_checkRule_ForeignCall(uint256 ruleValue, uint256 transferValue) public {
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = _createBlankPolicy();
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
         RulesStorageStructure.Rule memory rule;
         // Build the foreign call placeholder
@@ -276,22 +261,12 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         // Save the rule
         uint256 ruleId = logic.updateRule(0,rule);
 
-        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
-        pTypes[0] = RulesStorageStructure.PT.UINT;
-        pTypes[1] = RulesStorageStructure.PT.ADDR;
-        // Save the function signature
-        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
-        // Save the Policy
-        signatures.push(bytes(functionSignature));  
-        functionSignatureIds.push(functionSignatureId);
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0]= ruleId;
-        uint256[] memory policyIds = new uint256[](1);
-        uint256 policyId = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);
         RulesStorageStructure.PT[] memory fcArgs = new RulesStorageStructure.PT[](1);
         fcArgs[0] = RulesStorageStructure.PT.UINT;
-        logic.updateForeignCall(policyId, address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);        
-        policyIds[0] = policyId;
+        logic.updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", RulesStorageStructure.PT.UINT, fcArgs);
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);       
         logic.applyPolicy(address(userContract), policyIds);
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly 
         if (ruleValue < transferValue) {
@@ -304,8 +279,14 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
     }
 
     // check rule with Tracker 
-function testRulesEngine_Fuzz_checkRule_Tracker(uint256 trackerValue, uint256 transferValue) public {
-        uint256 policyId;
+    function testRulesEngine_Fuzz_checkRule_Tracker(uint256 trackerValue, uint256 transferValue) public {
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = _createBlankPolicy();
+        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
+        pTypes[0] = RulesStorageStructure.PT.ADDR;
+        pTypes[1] = RulesStorageStructure.PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         RulesStorageStructure.Rule memory rule;
         // Instruction set: LC.PLH, 1, 0, LC.PLH, 1, 0, LC.GT, 0, 1
@@ -322,29 +303,18 @@ function testRulesEngine_Fuzz_checkRule_Tracker(uint256 trackerValue, uint256 tr
         rule.posEffects[0] = effectId_event;
         // Save the rule
         uint256 ruleId = logic.updateRule(0,rule);
-
-        RulesStorageStructure.PT[] memory pTypes = new RulesStorageStructure.PT[](2);
-        pTypes[0] = RulesStorageStructure.PT.ADDR;
-        pTypes[1] = RulesStorageStructure.PT.UINT;
-        // Save the function signature
-        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
-        // Save the Policy
-        signatures.push(bytes(functionSignature));  
-        functionSignatureIds.push(functionSignatureId);
         // Build the tracker
-        RulesStorageStructure.Trackers memory tracker;  
-
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0]= ruleId;
-        uint256[] memory policyIds = new uint256[](1); 
-        policyId = logic.updatePolicy(0, signatures, functionSignatureIds, ruleIds);  
+        RulesStorageStructure.Trackers memory tracker; 
         /// build the members of the struct: 
         tracker.pType = RulesStorageStructure.PT.UINT; 
         tracker.trackerValue = abi.encode(trackerValue);
         // Add the tracker
-        logic.addTracker(policyId, tracker);
-        functionSignatureId = logic.updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
-        policyIds[0] = policyId;     
+        logic.addTracker(policyIds[0], tracker); 
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+
         logic.applyPolicy(address(userContract), policyIds);
         if (trackerValue < transferValue) {
             bool retVal = userContract.transfer(address(0x7654321), transferValue);

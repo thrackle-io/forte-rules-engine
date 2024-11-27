@@ -9,7 +9,7 @@ import "test/utils/RulesEngineLogicWrapper.sol";
 
 import "src/effects/EffectStructures.sol";
 import "src/utils/FCEncodingLib.sol";
-import "src/RulesEngineStructures.sol";
+import "src/RulesStorageStructure.sol";
 import "src/RulesEngineRunLogic.sol";
 import "src/ExampleUserContract.sol";
 
@@ -25,9 +25,8 @@ contract RulesEngineCommon is Test, EffectStructures {
     ForeignCallTestContract testContract; 
     RulesEngineRunLogic rulesEngine; 
 
-    address contractAddress = address(0x1234567);
     string functionSignature = "transfer(address,uint256) returns (bool)";
-
+    string functionSignature2 = "updateInfo(address _to, string info) returns (bool)";
     string constant event_text = "Rules Engine Event";
     string constant revert_text = "Rules Engine Revert";
     string constant event_text2 = "Rules Engine Event 2";
@@ -57,7 +56,30 @@ contract RulesEngineCommon is Test, EffectStructures {
         vm.stopPrank();
     }
 
-    /// Set up helper functions 
+    /// Test helper functions 
+    function _createBlankPolicy() internal returns (uint256) {
+        bytes[] memory blankSignatures = new bytes[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        uint256 policyId = logic.updatePolicy(0, blankSignatures, blankFunctionSignatureIds, blankRuleIds);
+        return policyId;
+    }
+
+    function _addFunctionSignatureToPolicy(uint256 policyId, bytes memory _functionSignature, RulesStorageStructure.PT[] memory pTypes) internal returns (uint256) {
+        // Save the function signature
+        uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(_functionSignature), pTypes);
+        // Save the Policy
+        signatures.push(_functionSignature);
+        functionSignatureIds.push(functionSignatureId);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        logic.updatePolicy(policyId, signatures, functionSignatureIds, blankRuleIds);
+        return functionSignatureId;
+    }
+
+    function _addRuleIdsToPolicy(uint256 policyId, uint256[][] memory _ruleIds) internal {
+        logic.updatePolicy(policyId, signatures, functionSignatureIds, _ruleIds);
+    }
+    
     function _setupEffectProcessor() public {
         _createAllEffects();
     }
