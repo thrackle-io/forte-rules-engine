@@ -10,7 +10,7 @@ import "src/IRulesEngine.sol";
  * @author @mpetersoCode55 
  */
 contract ExampleUserContract {
-    address rulesEngineAddress;
+    address public rulesEngineAddress;
 
     function transfer(address _to, uint256 _amount) public returns (bool) {
         RulesStorageStructure.Arguments memory args;

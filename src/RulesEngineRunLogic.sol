@@ -264,7 +264,8 @@ contract RulesEngineRunLogic is IRulesEngine {
         }
     }
 
-    function _checkPolicy(uint256 _policyId, address contractAddress, bytes calldata functionSignature, bytes calldata arguments) internal returns (bool retVal) {
+    function _checkPolicy(uint256 _policyId, address _contractAddress, bytes calldata functionSignature, bytes calldata arguments) internal returns (bool retVal) {
+        _contractAddress; // added to remove wanring. TODO remove this once msg.sender testing is complete 
         // Decode arguments from function signature
         RulesStorageStructure.PT[] memory functionSignaturePlaceholders;
         if(policyStorage[_policyId].set) {
@@ -293,7 +294,6 @@ contract RulesEngineRunLogic is IRulesEngine {
     function evaluateRulesAndExecuteEffects(uint256 _policyId, RulesStorageStructure.Rule[] memory applicableRules, RulesStorageStructure.Arguments memory functionSignatureArgs) public returns (bool retVal) {
         retVal = true;
         for(uint256 i = 0; i < applicableRules.length; i++) { 
-            RulesStorageStructure.ForeignCallStorage memory foreignStorage = foreignCalls[_policyId];
             if(!evaluateIndividualRule(_policyId, applicableRules[i], functionSignatureArgs)) {
                 retVal = false;
                 this.doEffects(_policyId, applicableRules[i].negEffects, applicableRules[i], functionSignatureArgs);
@@ -410,7 +410,12 @@ contract RulesEngineRunLogic is IRulesEngine {
     }
 
 
-    function evaluateForeignCalls(uint256 _policyId, RulesStorageStructure.Placeholder[] memory placeHolders, RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgumentMappings, RulesStorageStructure.Arguments memory functionSignatureArgs, uint256 placeholderIndex) public returns(RulesStorageStructure.ForeignCallReturnValue memory) {
+    function evaluateForeignCalls(
+        uint256 _policyId, RulesStorageStructure.Placeholder[] memory placeHolders, 
+        RulesStorageStructure.ForeignCallArgumentMappings[] memory fcArgumentMappings, 
+        RulesStorageStructure.Arguments memory functionSignatureArgs, 
+        uint256 placeholderIndex) 
+        public returns(RulesStorageStructure.ForeignCallReturnValue memory returnValue) {
         // Loop through the foreign call structures associated with the calling contracts address
         for(uint256 foreignCallsIdx = 0; foreignCallsIdx < foreignCalls[_policyId].foreignCalls.length; foreignCallsIdx++) {
             // Check if the index for this placeholder matches the foreign calls index
