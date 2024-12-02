@@ -5,6 +5,7 @@ import "test/rulesEngine/unit/RulesEngineUnitTestsCommon.t.sol";
 
 /** 
  * Deployment set Up function that inherits from RulesEngineUnitTestCommon and set rules engine addresses within the file to remove need for local env 
+ * This test suite is intended to be used to test a newly deployed Rules Engine and ensure the deployment was successful and configuration is complete. 
  */
 
 

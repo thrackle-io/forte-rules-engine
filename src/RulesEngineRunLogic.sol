@@ -258,13 +258,14 @@ contract RulesEngineRunLogic is IRulesEngine {
         retVal = 1; 
         // loop through all the active policies
         for(uint256 policyIdx = 0; policyIdx < contractPolicyIdMap[contractAddress].length; policyIdx++) {
-            if(!_checkPolicy(contractPolicyIdMap[contractAddress][policyIdx], functionSignature, arguments)) {
+            if(!_checkPolicy(contractPolicyIdMap[contractAddress][policyIdx], contractAddress, functionSignature, arguments)) {
                 retVal = 0;
             }
         }
     }
 
-    function _checkPolicy(uint256 _policyId, bytes calldata functionSignature, bytes calldata arguments) internal returns (bool retVal) {
+    function _checkPolicy(uint256 _policyId, address _contractAddress, bytes calldata functionSignature, bytes calldata arguments) internal returns (bool retVal) {
+        _contractAddress; // added to remove wanring. TODO remove this once msg.sender testing is complete 
         // Decode arguments from function signature
         RulesStorageStructure.PT[] memory functionSignaturePlaceholders;
         if(policyStorage[_policyId].set) {

@@ -65,6 +65,23 @@ contract RulesEngineCommon is Test, EffectStructures {
         return policyId;
     }
 
+    // internal rule builder 
+    function _createGTRule(uint256 _amount) public returns(RulesStorageStructure.Rule memory){
+        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        RulesStorageStructure.Rule memory rule;
+        // Set up some effects.
+        _setupEffectProcessor();
+        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+        rule.instructionSet = rule.instructionSet = _createInstructionSet(_amount);
+        rule.placeHolders = new RulesStorageStructure.Placeholder[](1);
+        rule.placeHolders[0].pType = RulesStorageStructure.PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        // Add a negative/positive effects
+        rule.negEffects = new uint256[](1);
+        rule.posEffects = new uint256[](2);
+        return rule;
+    }
+
     function _addFunctionSignatureToPolicy(uint256 policyId, bytes memory _functionSignature, RulesStorageStructure.PT[] memory pTypes) internal returns (uint256) {
         // Save the function signature
         uint256 functionSignatureId = logic.updateFunctionSignature(0, bytes4(_functionSignature), pTypes);
@@ -141,6 +158,17 @@ contract RulesEngineCommon is Test, EffectStructures {
     }
 
     // internal instruction set builder: overload as needed 
+    function _createInstructionSet() public pure returns (uint256[] memory instructionSet) {
+        instructionSet = new uint256[](7);
+        instructionSet[0] = uint(RulesStorageStructure.LC.NUM);
+        instructionSet[1] = 0;
+        instructionSet[2] = uint(RulesStorageStructure.LC.NUM);
+        instructionSet[3] = 1;
+        instructionSet[4] = uint(RulesStorageStructure.LC.GT);
+        instructionSet[5] = 0;
+        instructionSet[6] = 1;
+    }
+
     function _createInstructionSet(uint256 plh1) public pure returns (uint256[] memory instructionSet) {
         instructionSet = new uint256[](7);
         instructionSet[0] = uint(RulesStorageStructure.LC.PLH);

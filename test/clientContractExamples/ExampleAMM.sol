@@ -99,22 +99,6 @@ contract NftMarketplace {
         _;
     }
 
-    // IsNotOwner Modifier - Nft Owner can't buy his/her NFT
-    // Modifies buyItem function
-    // Owner should only list, cancel listing or update listing
-    /* modifier isNotOwner(
-        address nftAddress,
-        uint256 tokenId,
-        address spender
-    ) {
-        IERC721 nft = IERC721(nftAddress);
-        address owner = nft.ownerOf(tokenId);
-        if (spender == owner) {
-            revert IsNotOwner();
-        }
-        _;
-    } */
-
     /////////////////////
     // Main Functions //
     /////////////////////
