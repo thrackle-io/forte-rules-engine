@@ -63,8 +63,8 @@ Always make sure your commits messages are informative and describe the changes 
 2. [Upgrade Submodules][upgradeSubmodules-url]
 
 <!-- These are the body links -->
-[checkoutRepo-url]: docs/contributorGuides/CHECKOUT-REPO.md
-[upgradeSubmodules-url]: docs/contributorGuides/SUBMODULE-UPGRADE.md
+[checkoutRepo-url]: contributorGuides/CHECKOUT-REPO.md
+[upgradeSubmodules-url]: contributorGuides/SUBMODULE-UPGRADE.md
 
 <!-- These are the header links -->
 [version-image]: https://img.shields.io/badge/Version-2.2.1-brightgreen?style=for-the-badge&logo=appveyor
