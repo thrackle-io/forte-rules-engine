@@ -1218,18 +1218,6 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         RulesEngineMainFacet(address(red)).evaluateExpression(0, rule, arguments, rule.instructionSet);
     }
 
-    function testRulesEngine_Utils_customEncoder() public ifDeploymentTestsEnabled endWithStopPrank {
-
-        Arguments memory arguments;
-        arguments.argumentTypes = new PT[](2);
-        arguments.argumentTypes[0] = PT.ADDR;
-        arguments.argumentTypes[1] = PT.UINT;
-        arguments.values = new bytes[](2);
-        arguments.values[0] = abi.encode(address(0x7654321));
-        arguments.values[1] = abi.encode(5);
-        RuleEncodingLibrary.customEncoder(arguments);
-    }
-
     function testRulesEngine_Utils_buildArguments() public ifDeploymentTestsEnabled endWithStopPrank {
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicy();

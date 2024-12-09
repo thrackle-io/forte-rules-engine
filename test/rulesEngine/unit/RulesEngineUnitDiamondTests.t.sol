@@ -18,7 +18,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine {
         red = _createRulesEngineDiamond();        
     }
 
-    function testDiamondOwner() public {
+    function testDiamondOwner() public view {
         assertEq(NativeFacet(address(red)).owner(), OWNER);
     }
 

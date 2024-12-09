@@ -42,5 +42,5 @@ jobs:
 
       - name: Run Forge tests
         run: |
-          forge test --ffi -vvv
+          forge test --ffi -vvv --sizes
         id: test
