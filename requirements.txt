@@ -1,0 +1,2 @@
+eth-abi==5.1.0
+python-dotenv==1.0.1

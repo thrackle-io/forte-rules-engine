@@ -25,9 +25,9 @@ contract RulesEngineDeploymentTests is RulesEngineUnitTestsCommon {
 
     function setUp() public{
         if (deploymentOwner != address(0x0)) {
-            logic = new RulesEngineLogicWrapper();
+            red = _createRulesEngineDiamond();        
             userContract = new ExampleUserContract();
-            userContract.setRulesEngineAddress(address(logic));
+            userContract.setRulesEngineAddress(address(red));
             testContract = new ForeignCallTestContract();
             _setupEffectProcessor();
             testDeployments = true;

@@ -27,8 +27,14 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
-
-      - name: Run Forge build
+      - name: Install dependencies
+        run: |
+          git config user.email "cloudops@thrackle.io"
+          git config user.name "CloudOps Thrackle"
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+          pip3 install -r requirements.txt
+      - name: Run Forge build --sizes
         run: |
           forge --version
           forge build
@@ -36,5 +42,5 @@ jobs:
 
       - name: Run Forge tests
         run: |
-          forge test -vvv
+          forge test --ffi -vvv 
         id: test
