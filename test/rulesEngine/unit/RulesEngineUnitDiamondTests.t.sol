@@ -18,11 +18,11 @@ contract RulesEngineUnitDiamondTests is DiamondMine {
         red = _createRulesEngineDiamond();        
     }
 
-    function testDiamondOwner() public view {
+    function testRulesEngine_Unit_Diamond_diamondOwner_Positive() public view {
         assertEq(NativeFacet(address(red)).owner(), OWNER);
     }
 
-    function testEffectStorage() public {
+    function testRulesEngine_Unit_Diamond_EffectStorage_Positive() public {
         string memory text = "Does this really work?";
         uint256[] memory emptyArray = new uint256[](1);
         uint256 effectId = RulesEngineDataFacet(address(red)).updateEffect(
@@ -40,7 +40,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine {
         assertEq(effect.text, text);
     }
 
-    function testForeignCallStorage() public {
+    function testRulesEngine_Unit_Diamond_ForeignCallStorage_Positive() public {
         address _address = address(22);
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
@@ -60,7 +60,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine {
         assertEq(fc.foreignCallAddress, _address);
     }
 
-    function testTrackerStorage() public {
+    function testRulesEngine_Unit_Diamond_TrackerStorage_Positive() public {
         // Build the tracker
         Trackers memory tracker;
         uint256 trackerValue = 5150;
@@ -81,7 +81,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine {
         );
     }
 
-    function testFunctionSignatureStorage() public {
+    function testRulesEngine_Unit_Diamond_FunctionSignatureStorage_Positive() public {
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
@@ -90,7 +90,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine {
         assertEq(sig.signature, bytes4(bytes(functionSignature)));
     }
 
-    function testRuleStorage() public {
+    function testRulesEngine_Unit_Diamond_RuleStorage_Positive() public {
         Rule memory rule;
         // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
         // Build the instruction set for the rule (including placeholders)
@@ -105,7 +105,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine {
         assertEq(rss.rule.placeHolders[0].typeSpecificIndex, 1);
     }
 
-    function testPolicyStorage() public {
+    function testRulesEngine_Unit_Diamond_PolicyStorage_Positive() public {
         // Initial setup for what we'll need later
         uint256[] memory policyIds = new uint256[](1);
         // blank slate policy
