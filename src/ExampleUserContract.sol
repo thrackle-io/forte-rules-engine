@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "src/RuleEncodingLibrary.sol";
 import "src/IRulesEngine.sol";
+import "src/engine/RulesEngineStorageStructure.sol";
 
 /**
  * @title Example contract for testing the Rules Engine

@@ -35,7 +35,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
 
     function getEffect(
         uint256 _effectId
-    ) external returns (Effect memory _effect) {
+    ) external view returns (Effect memory _effect) {
         // Load the Effect data from storage
         EffectS storage data = lib.getEffectStorage();
         return data.effectStorage[_effectId];
@@ -94,7 +94,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
     function getForeignCall(
         uint256 _policyId,
         uint256 _foreignCallId
-    ) public returns (ForeignCall memory fc) {
+    ) public view returns (ForeignCall memory fc) {
         // Load the Foreign Call data from storage
         ForeignCallS storage data = lib.getForeignCallStorage();
         ForeignCall[] memory foreignCalls = data
@@ -111,7 +111,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _policyId the policy Id of the foreign call to retrieve
      * @return fc the foreign call set structure
      */
-    function getForeignCall(uint256 _policyId) public returns (ForeignCallSet memory fc) {
+    function getForeignCall(uint256 _policyId) public view returns (ForeignCallSet memory fc) {
         // Return the Foreign Call Set data from storage
         return lib.getForeignCallStorage().foreignCallSets[_policyId];
     }
@@ -207,7 +207,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _policyId the policyId the trackerStorage is associated with
      * @return trackerValuesSet
      */
-    function getTracker(uint256 _policyId) public returns (TrackerValuesSet memory trackerValuesSet) {
+    function getTracker(uint256 _policyId) public view returns (TrackerValuesSet memory trackerValuesSet) {
         // return the TrackerValuesSet data from storage
         return lib.getTrackerStorage().trackerValueSets[_policyId];
     }
@@ -253,7 +253,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      */
     function getFunctionSignature(
         uint256 _functionSignatureId
-    ) public returns (FunctionSignatureStorageSet memory) {
+    ) public view returns (FunctionSignatureStorageSet memory) {
         // Load the function signature data from storage
         return
             lib.getFunctionSignatureStorage().functionSignatureStorageSets[
@@ -292,7 +292,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _ruleId ruleId
      * @return ruleStorageSets rule
      */
-    function getRule(uint256 _ruleId) public returns (RuleStorageSet memory) {
+    function getRule(uint256 _ruleId) public view returns (RuleStorageSet memory) {
         // Load the function signature data from storage
         return lib.getRuleStorage().ruleStorageSets[_ruleId];
     }
@@ -360,7 +360,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _policyId policyId
      * @return policyStorageSet policy
      */
-    function getPolicy(uint256 _policyId) internal returns (PolicyStorageSet storage) {
+    function getPolicy(uint256 _policyId) internal view returns(PolicyStorageSet storage) {
         // Load the policy data from storage
         return lib.getPolicyStorage().policyStorageSets[_policyId];
     }
@@ -385,7 +385,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _contractAddress contract address
      * @return policyId policyId
      */
-    function getAppliedPolicyIds(address _contractAddress) public returns (uint256[] memory) {
+    function getAppliedPolicyIds(address _contractAddress) public view returns (uint256[] memory) {
         // Load the policy association data from storage
         return lib.getPolicyAssociationStorage().contractPolicyIdMap[_contractAddress];
     }

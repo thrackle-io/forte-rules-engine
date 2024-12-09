@@ -70,7 +70,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @param functionSignature the signature of the function that initiated the transaction, used to pull the applicable rules.
      * @return rules applicable rules.
      */
-    function _loadApplicableRules(uint256 _policyId, bytes calldata functionSignature) internal returns(Rule[] memory){
+    function _loadApplicableRules(uint256 _policyId, bytes calldata functionSignature) internal view returns(Rule[] memory){
         // Load the policy data from storage
         PolicyS storage data = lib.getPolicyStorage();
         Rule[] memory applicableRules = new Rule[](data.policyStorageSets[_policyId].policy.signatureToRuleIds[functionSignature].length);
