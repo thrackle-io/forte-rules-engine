@@ -7,11 +7,11 @@ import "test/rulesEngine/unit/RulesEngineUnitTestsCommon.t.sol";
 contract RulesEngineUnitTests is RulesEngineUnitTestsCommon {
 
   function setUp() public{
-        logic = new RulesEngineLogicWrapper();
+        red = _createRulesEngineDiamond(); 
         userContract = new ExampleUserContract();
-        userContract.setRulesEngineAddress(address(logic));
+        userContract.setRulesEngineAddress(address(red));
         testContract = new ForeignCallTestContract();
-        _setupEffectProcessor();
+        _setupEffectProcessor();        
     }
 
 }

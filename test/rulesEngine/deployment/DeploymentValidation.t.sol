@@ -12,14 +12,14 @@ import "test/rulesEngine/unit/RulesEngineUnitTestsCommon.t.sol";
 contract RulesEngineDeploymentTests is RulesEngineUnitTestsCommon {
     // Set your Deployed Rules Engine address 
     address rulesEngineAddress = address(0x0000); 
-    address deploymentOwner = address(0x0000); 
+    address deploymentOwner = address(0x0000);  
 
 
     function setUp() public{
         if (deploymentOwner != address(0x0)) {
-            rulesEngine = RulesEngineRunLogic(rulesEngineAddress);
+            red = _createRulesEngineDiamond();        
             userContract = new ExampleUserContract();
-            userContract.setRulesEngineAddress(address(logic));
+            userContract.setRulesEngineAddress(address(red));
             testContract = new ForeignCallTestContract();
             _setupEffectProcessor();
             testDeployments = true;

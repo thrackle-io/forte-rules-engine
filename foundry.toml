@@ -4,6 +4,7 @@ out = "out"
 libs = ["lib"]
 
 remappings = ["forge-std/=lib/forge-std/src/",
-"@openzeppelin/=lib/openzeppelin-contracts/",]
+"@openzeppelin/=lib/openzeppelin-contracts/",
+"diamond-std/=lib/diamond-std/",]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

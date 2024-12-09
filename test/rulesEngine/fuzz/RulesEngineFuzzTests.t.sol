@@ -7,9 +7,9 @@ import "test/rulesEngine/fuzz/RulesEngineFuzzTestsCommon.t.sol";
 contract RulesEngineFuzzTests is RulesEngineFuzzTestsCommon {
 
   function setUp() public{
-        logic = new RulesEngineLogicWrapper(); 
+        red = _createRulesEngineDiamond(); 
         userContract = new ExampleUserContract();
-        userContract.setRulesEngineAddress(address(logic));
+        userContract.setRulesEngineAddress(address(red));
         testContract = new ForeignCallTestContract();
         _setupEffectProcessor();
     }

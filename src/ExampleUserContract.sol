@@ -13,13 +13,13 @@ contract ExampleUserContract {
     address public rulesEngineAddress;
 
     function transfer(address _to, uint256 _amount) public returns (bool) {
-        RulesStorageStructure.Arguments memory args;
+        Arguments memory args;
         args.values = new bytes[](2);
         args.values[0] = abi.encode(address(_to));
         args.values[1] = abi.encode(uint256(_amount));
-        args.argumentTypes = new RulesStorageStructure.PT[](2);
-        args.argumentTypes[0] = RulesStorageStructure.PT.ADDR;
-        args.argumentTypes[1] = RulesStorageStructure.PT.UINT;
+        args.argumentTypes = new PT[](2);
+        args.argumentTypes[0] = PT.ADDR;
+        args.argumentTypes[1] = PT.UINT;
         bytes memory encoded = abi.encode(args);
         IRulesEngine rulesEngine = IRulesEngine(rulesEngineAddress);
         uint256 retVal = rulesEngine.checkPolicies(address(this), bytes("transfer(address,uint256) returns (bool)"), encoded);
