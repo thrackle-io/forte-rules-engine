@@ -73,11 +73,11 @@ jobs:
         run: |
           forge coverage --ffi --report lcov --no-match-path "*invariant*" --fuzz-runs 1
 
-      #- name: Filter the coverage reports and reformat them
-      #shell: bash
-      #run: |
-      #  lcov --extract lcov.info 'src/*' --rc branch_coverage=1 derive_function_end_line=0 --rc derive_function_end_line=0 -o lcov.info --ignore-errors unused
-      #  lcov -r lcov.info 'example' --rc lcov_branch_coverage=1 --rc derive_function_end_line=0 -o lcov.info
+      - name: Filter the coverage reports and reformat them
+        shell: bash
+        run: |
+          lcov --extract lcov.info 'src/*' -o lcov.info
+        #  lcov -r lcov.info 'example' --rc lcov_branch_coverage=1 --rc derive_function_end_line=0 -o lcov.info
 
       - name: Report the code coverage if pull request
         if: ${{github.event_name}} == 'pull_request'
