@@ -64,8 +64,8 @@ For complete usage information and documentation, please visit our [User Guide][
 ### Example Application
 
 To deploy the Forte Rules Engine and an example application, perform the following steps: 
-1. Deploy the [Forte Rules Engine](docs/userGuides/deployment/DEPLOY-PROTOCOL.md) locally.
-2. Deploy the [Example Application](docs/userGuides/deployment/DEPLOY-EXAMPLE.md) locally.
+1. Deploy the [Forte Rules Engine](https://thrackle.mintlify.app/deployment/deploy-protocol) locally.
+2. Deploy the [Example Application](https://thrackle.mintlify.app/deployment/deploy-example) locally.
 
 ## Contributing
 
@@ -87,8 +87,4 @@ Other Exceptions
 <!-- These are the body links -->
 
 [contributorGuide-url]: ./CONTRIBUTING.md
-[userGuide-url]: ./docs/userGuides/README.md
-[deploymentGuide-url]: ./docs/userGuides/deployment/NFT-DEPLOYMENT.md
-[archOverview-url]: ./docs/userGuides/ARCHITECTURE-OVERVIEW.md
-[ruleGuide-url]: ./docs/userGuides/rules/RULE-GUIDE.md
-[glossary-url]: ./docs/userGuides/GLOSSARY.md
+[userGuide-url]: https://thrackle.mintlify.app/v2.2.0/introduction
