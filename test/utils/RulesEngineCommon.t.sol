@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "lib/forge-std/src/Test.sol";
 
 import "test/utils/ForeignCallTestCommon.sol";
-import "test/utils/DiamondMine.sol";
+import "src/utils/DiamondMine.sol";
 import "src/utils/FCEncodingLib.sol";
 import "src/ExampleUserContract.sol";
 
@@ -13,7 +13,7 @@ import "src/ExampleUserContract.sol";
  * Code used across multiple testing directories belogns here 
  */
 
-contract RulesEngineCommon is DiamondMine { 
+contract RulesEngineCommon is DiamondMine, Test { 
     
     ExampleUserContract userContract;
     ForeignCallTestContract testContract; 
