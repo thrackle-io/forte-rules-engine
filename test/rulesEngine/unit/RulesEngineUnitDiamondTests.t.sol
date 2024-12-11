@@ -1,12 +1,13 @@
 /// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import "test/utils/DiamondMine.sol";
+import "src/utils/DiamondMine.sol";
+import "lib/forge-std/src/Test.sol";
 import "src/engine/facets/NativeFacet.sol";
 import "src/engine/facets/RulesEngineDataFacet.sol";
 import "src/engine/RulesEngineStorageStructure.sol";
 
-contract RulesEngineUnitDiamondTests is DiamondMine {
+contract RulesEngineUnitDiamondTests is DiamondMine, Test {
     
     string functionSignature = "transfer(address,uint256) returns (bool)";
     bytes[] signatures;        

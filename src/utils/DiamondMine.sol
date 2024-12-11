@@ -2,10 +2,10 @@
 pragma solidity ^0.8.24;
 
 import "src/engine/RulesEngineDiamond.sol";
+import "forge-std/Script.sol";
 import "src/engine/facets/NativeFacet.sol";
 import "src/engine/facets/RulesEngineMainFacet.sol";
 import "src/engine/facets/RulesEngineDataFacet.sol";
-import "lib/forge-std/src/Test.sol";
 import {IDiamondInit} from "diamond-std/initializers/IDiamondInit.sol";
 import {DiamondInit} from "diamond-std/initializers/DiamondInit.sol";
 import {FacetCut, FacetCutAction} from "diamond-std/core/DiamondCut/DiamondCutLib.sol";
@@ -19,7 +19,7 @@ import {FacetCut, FacetCutAction} from "diamond-std/core/DiamondCut/DiamondCutLi
  * create = set to proper user, deploy contracts, reset user, return the contract
  * _create = deploy contract, return the contract
  */
-abstract contract DiamondMine is Test {
+contract DiamondMine is Script {
     FacetCut[] _ruleProcessorFacetCuts;
     RulesEngineDiamond red;
     address constant OWNER = address(0xB0b);
