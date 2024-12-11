@@ -1,0 +1,12 @@
+{
+    "84532": {
+        "Kraken_WeaponsHandlerDiamond": {
+            "2024-11-21": {
+                "ERC721TaggedRuleFacet": "0x1a2b49Ec6e44E5A3929c84E7a48AF7edb9E7AA85",
+                "ERC721NonTaggedRuleFacet": "0x65F2F3D6a9Fdd2D1220a3CBC7DF670EB580AACD5",
+                "TradingRuleFacet": "0x994DC59A6aee10b0591ea72bE3872fF8292873eA",
+                "OracleRulesFacet": "0x407A261cFb57cf257aFc460754BA017bc584Bd87"
+            }
+        }
+    }
+}

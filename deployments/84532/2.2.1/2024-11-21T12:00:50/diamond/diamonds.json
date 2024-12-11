@@ -1,0 +1,13 @@
+{
+    "84532": {
+        "Pearl_CoinHandlerDiamond": {
+            "2024-11-21": {
+                "ERC20TaggedRuleFacet": "0x6Ec21b7EB7aF3EF3236C1EE843872b9E4d8E424E",
+                "ERC20NonTaggedRuleFacet": "0xF076E6Eb0DeaF25533a80F5CC1093965D7Fe272B",
+                "TradingRuleFacet": "0xE768B77E27cf41568bcF42CdB945Af47107f3222",
+                "OracleRulesFacet": "0xe39BE6D33beb9F38EAf0a3e03454493453ffaF86",
+                "FeesFacet": "0x147791D817A9Ebb267206011e29417608B796a81"
+            }
+        }
+    }
+}

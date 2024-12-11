@@ -1,0 +1,13 @@
+{
+    "84532": {
+        "Kraken_HeroHandlerDiamond": {
+            "2024-11-21": {
+                "HandlerVersionFacet": "0x7000Ca02C8C0bC69C07F881f614EaC986c61005f",
+                "ProtocolNativeFacet": "0x549E3F8A680521978fFA9DB65596A62C096f3b4B",
+                "ProtocolRawFacet": "0x8C8f0307B7632422Bd23eA3b237F9F97F117D869",
+                "ERC721HandlerMainFacet": "0x5A88a89a8DFd7732055f6e21B39f40838543D64d",
+                "diamond": "0x07ae93147400a8223199aC81592cf603C279C877"
+            }
+        }
+    }
+}

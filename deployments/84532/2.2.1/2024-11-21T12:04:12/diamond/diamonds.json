@@ -1,0 +1,13 @@
+{
+    "84532": {
+        "Kraken_WeaponsHandlerDiamond": {
+            "2024-11-21": {
+                "HandlerVersionFacet": "0x157db4ADcf626C7038B0e4E2BDb9E97aB0d340a1",
+                "ProtocolNativeFacet": "0x61819154cc5c9eAFa98e972b49A7aF5b7d43b862",
+                "ProtocolRawFacet": "0xe3358025959DC98F36F31333ed19BA1A7D59885f",
+                "ERC721HandlerMainFacet": "0xeB5d70436e5747d4B3e47Fc1a54041635bBF062B",
+                "diamond": "0x5Ee1F6450a4A7b7AB45843e61c06610c59389262"
+            }
+        }
+    }
+}

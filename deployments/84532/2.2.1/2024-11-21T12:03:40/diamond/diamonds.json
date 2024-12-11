@@ -1,0 +1,12 @@
+{
+    "84532": {
+        "Kraken_HeroHandlerDiamond": {
+            "2024-11-21": {
+                "ERC721TaggedRuleFacet": "0x4eb02976F3bdfe32eEfFB9B9E164E79ae2649e21",
+                "ERC721NonTaggedRuleFacet": "0x877A9896c49Ea9868bc590ADfF391dabFAE45A18",
+                "TradingRuleFacet": "0xca1460Ae6f158E1dD110dCED3722d648a598b499",
+                "OracleRulesFacet": "0x18aA398EAd82f568fc948e5bffC92d42CA3cd563"
+            }
+        }
+    }
+}

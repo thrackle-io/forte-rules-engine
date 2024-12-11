@@ -1,0 +1,13 @@
+{
+    "84532": {
+        "Pearl_CoinHandlerDiamond": {
+            "2024-11-21": {
+                "HandlerVersionFacet": "0xA3E075defa46056368bD55d384f558397d8d6C45",
+                "ProtocolNativeFacet": "0xb48A3A928B1A0516A07D2fD82d7F540B80ca2760",
+                "ProtocolRawFacet": "0xe2255A48C9dd997F74B58898FfaC538c139bE5c6",
+                "ERC20HandlerMainFacet": "0x0ed1c519C5f4759b3C7dD46C4ef583b5a3B8E438",
+                "diamond": "0x45954903a840A70C15E13D668152F36F87535cA5"
+            }
+        }
+    }
+}
