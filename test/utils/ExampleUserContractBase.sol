@@ -10,7 +10,9 @@ pragma solidity ^0.8.13;
 contract ExampleUserContractBase {
     event RulesEngineEvent(string _message);
 
-    function transfer(address _to, uint256 _amount) public returns (bool _return) {
+    function transfer(address _to, uint256 _amount) public pure returns (bool _return) {
+        _to;
+        _amount;
         return false;
     }
 
