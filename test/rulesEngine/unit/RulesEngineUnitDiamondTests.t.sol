@@ -16,7 +16,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
     address constant CONTRACT_ADDRESS = address(22);
 
     function setUp() public {
-        red = _createRulesEngineDiamond();        
+        red = _createRulesEngineDiamond(address(0xB0b));        
     }
 
     function testRulesEngine_Unit_Diamond_diamondOwner_Positive() public view {

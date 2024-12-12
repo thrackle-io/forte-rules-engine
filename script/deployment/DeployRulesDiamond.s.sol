@@ -9,16 +9,16 @@ import {DiamondInit} from "diamond-std/initializers/DiamondInit.sol";
 import {FacetCut, FacetCutAction} from "diamond-std/core/DiamondCut/DiamondCutLib.sol";
 import {IDiamondCut} from "diamond-std/core/DiamondCut/IDiamondCut.sol";
 
-contract DeployRulesDiamond is Script {
+contract DeployRulesDiamond is DiamondMine {
 
     function run() external {
         // Address and Private Key used for deployment
+        address owner = vm.envAddress("DEPLOYMENT_OWNER");
         uint256 privateKey = vm.envUint("DEPLOYMENT_OWNER_KEY");
-        DiamondMine mine = new DiamondMine();
         
         vm.startBroadcast(privateKey);
 
-        RulesEngineDiamond diamond = mine._createRulesEngineDiamond();
+        RulesEngineDiamond diamond = _createRulesEngineDiamond(owner);
         string memory diamondAddress = vm.toString(address(diamond));
         setENVAddress("DIAMOND_ADDRESS", diamondAddress);
 
