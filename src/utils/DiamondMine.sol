@@ -11,7 +11,7 @@ import {DiamondInit} from "diamond-std/initializers/DiamondInit.sol";
 import {FacetCut, FacetCutAction} from "diamond-std/core/DiamondCut/DiamondCutLib.sol";
 
 /**
- * @title Test Common Foundry
+ * @title DiamondMine
  * @author @ShaneDuncan602 
  * @dev This contract is an abstract template to be reused by all the Foundry tests. NOTE: function prefixes and their usages are as follows:
  * setup = set to proper user, deploy contracts, set global variables, reset user
