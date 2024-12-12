@@ -47,6 +47,11 @@ contract RulesEngineCommon is DiamondMine, Test {
     modifier endWithStopPrank() {
         _;
         vm.stopPrank();
+    } 
+
+    modifier resetsGlobalVariables() {
+        _resetGlobalVariables();
+        _;
     }
 
     /// Set up functions 
@@ -170,7 +175,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         return ruleId;
     }
 
-    function setupEffectWithTrackerUpdate() public ifDeploymentTestsEnabled endWithStopPrank returns (uint256 ruleId) {
+    function setupEffectWithTrackerUpdate() public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns (uint256 ruleId) {
         uint256[] memory policyIds = new uint256[](1);
         
         policyIds[0] = _createBlankPolicy();
@@ -228,7 +233,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         return policyIds[0];
     }
 
-    function setupEffectWithForeignCall() public ifDeploymentTestsEnabled endWithStopPrank {
+    function setupEffectWithForeignCall() public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
         uint256[] memory policyIds = new uint256[](1);
         
         policyIds[0] = _createBlankPolicy();
@@ -273,7 +278,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEngineDataFacet(address(red)).applyPolicy(address(userContract), policyIds);
     }
 
-    function setupRuleWithForeignCall(uint256 _amount, ET _effectType, bool isPositive) public ifDeploymentTestsEnabled endWithStopPrank {
+    function setupRuleWithForeignCall(uint256 _amount, ET _effectType, bool isPositive) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
         uint256[] memory policyIds = new uint256[](1);
         
         policyIds[0] = _createBlankPolicy();
@@ -337,7 +342,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         return rule;
     }
 
-    function _setupRuleWithRevert() public ifDeploymentTestsEnabled endWithStopPrank {
+    function _setupRuleWithRevert() public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
         uint256[] memory policyIds = new uint256[](1);
         
         policyIds[0] = _createBlankPolicy();
@@ -360,7 +365,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEngineDataFacet(address(red)).applyPolicy(address(userContract), policyIds);
     }
 
-    function _setupRuleWithPosEvent() public ifDeploymentTestsEnabled endWithStopPrank {
+    function _setupRuleWithPosEvent() public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicy();
 
@@ -384,8 +389,7 @@ contract RulesEngineCommon is DiamondMine, Test {
     }
 
 
-    function _setupMinTransferWithPosEvent(uint256 threshold, address contractAddress) public ifDeploymentTestsEnabled endWithStopPrank {
-        _resetGlobalVariables();
+    function _setupMinTransferWithPosEvent(uint256 threshold, address contractAddress) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicy();
 
@@ -414,7 +418,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         delete ruleIds;
     }
 
-    function _setupPolicyWithMultipleRulesWithPosEvents() public ifDeploymentTestsEnabled endWithStopPrank {
+    function _setupPolicyWithMultipleRulesWithPosEvents() public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
         uint256[] memory policyIds = new uint256[](1);
         
         policyIds[0] = _createBlankPolicy();
@@ -470,7 +474,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEngineDataFacet(address(red)).applyPolicy(address(userContract), policyIds);
     }
 
-    function _setupRuleWith2PosEvent() public ifDeploymentTestsEnabled endWithStopPrank {
+    function _setupRuleWith2PosEvent() public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
         uint256[] memory policyIds = new uint256[](1);
         
         policyIds[0] = _createBlankPolicy();
@@ -496,7 +500,7 @@ contract RulesEngineCommon is DiamondMine, Test {
     }
 
     // set up a rule with a uint256 tracker value for testing 
-     function setupRuleWithTracker(uint256 trackerValue) public ifDeploymentTestsEnabled endWithStopPrank returns(uint256 policyId){
+     function setupRuleWithTracker(uint256 trackerValue) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256 policyId){
         uint256[] memory policyIds = new uint256[](1);
         
         policyIds[0] = _createBlankPolicy();
