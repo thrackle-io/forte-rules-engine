@@ -12,7 +12,7 @@ import {FacetCut, FacetCutAction} from "diamond-std/core/DiamondCut/DiamondCutLi
 
 /**
  * @title Test Common Foundry
- * @author @ShaneDuncan602 @oscarsernarosero @TJ-Everett
+ * @author @ShaneDuncan602 
  * @dev This contract is an abstract template to be reused by all the Foundry tests. NOTE: function prefixes and their usages are as follows:
  * setup = set to proper user, deploy contracts, set global variables, reset user
  * create = set to proper user, deploy contracts, reset user, return the contract
