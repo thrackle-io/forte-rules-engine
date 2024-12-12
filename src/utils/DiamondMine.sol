@@ -28,10 +28,9 @@ contract DiamondMine is Script {
      * @dev Deploy and set up the Rules Engine Diamond
      * @return diamond fully configured rules engine diamond
      */
-    function _createRulesEngineDiamond() public returns (RulesEngineDiamond diamond) {
+    function _createRulesEngineDiamond(address owner) public returns (RulesEngineDiamond) {
         // Start by deploying the DiamonInit contract.
         DiamondInit diamondInit = new DiamondInit();
-        
 
         // Build the DiamondArgs.
         RulesEngineDiamondArgs memory diamondArgs = RulesEngineDiamondArgs({
@@ -54,7 +53,7 @@ contract DiamondMine is Script {
         /// Build the diamond
         // Deploy the diamond.
         RulesEngineDiamond rulesEngineInternal = new RulesEngineDiamond(_ruleProcessorFacetCuts, diamondArgs);
-        RulesEngineMainFacet(address(rulesEngineInternal)).initialize(OWNER);
+        RulesEngineMainFacet(address(rulesEngineInternal)).initialize(owner);
         return rulesEngineInternal;
     }
 

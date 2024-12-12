@@ -25,7 +25,7 @@ contract RulesEngineDeploymentTests is RulesEngineUnitTestsCommon {
 
     function setUp() public{
         if (deploymentOwner != address(0x0)) {
-            red = _createRulesEngineDiamond();        
+            red = _createRulesEngineDiamond(deploymentOwner);        
             userContract = new ExampleUserContract();
             userContract.setRulesEngineAddress(address(red));
             testContract = new ForeignCallTestContract();
