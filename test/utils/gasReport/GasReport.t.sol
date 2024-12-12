@@ -5,6 +5,7 @@ import "./GasHelpers.sol";
 import "test/utils/RulesEngineCommon.t.sol";
 import "test/utils/ExampleUserContractWithMinTransfer.sol";
 import "test/utils/ExampleUserContractWithMinTransferFC.sol";
+import "test/utils/ExampleUserContractBase.sol";
 
 contract GasReports is GasHelpers, RulesEngineCommon {
 
@@ -34,6 +35,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
 /**********  All gas tests should run through this function to keep results together **********/
     function testGasReport() public {
+        _testGasExampleContract_Primer();
+        _testGasExampleContract_Base();
         _testGasExampleContract_NoPoliciesActive();
         _testGasExampleHardcodedMinTransferNotTriggered();
         _testGasExampleSimpleMinTransferNotTriggered();
@@ -51,6 +54,18 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         _exampleContractGasReport(1, address(userContract), "Using REv2 No Policies Active");   
     }
 
+/**********  BASELINE gas test with no integrations or rules **********/
+    function _testGasExampleContract_Base() internal resets{
+        ExampleUserContractBase hardCodedContract = new ExampleUserContractBase();
+        _testExampleContractPrep(1, address(hardCodedContract));
+        _exampleContractGasReport(1, address(hardCodedContract), "Base");   
+    }
+    function _testGasExampleContract_Primer() internal resets{
+        ExampleUserContractBase hardCodedContract = new ExampleUserContractBase();
+        _testExampleContractPrep(1, address(hardCodedContract));
+        _exampleContractGasReport(1, address(hardCodedContract), "Primer -- disregard");   
+    }
+
 /**********  Simple Minimum Transfer Rule Checks **********/
 
     function _testGasExampleSimpleMinTransferNotTriggered() internal endWithStopPrank resets{
@@ -64,7 +79,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Create a minimum transaction(GT 4) rule with positive event
         _setupMinTransferWithPosEvent(4, address(userContract));
         _testExampleContractPrep(5, address(userContract));
-        _exampleContractGasReport(5, address(userContract), "Using REv2 Min Transfer Triggered With Effect"); 
+        _exampleContractGasReport(5, address(userContract), "Using REv2 Min Transfer Triggered With Event Effect"); 
     }
 
     function _testGasExampleSimpleMinTransferWithForeignCallNotTriggered() internal endWithStopPrank resets{
@@ -78,7 +93,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Create a minimum transaction(GT 4) rule with positive event
         setupRuleWithForeignCall(4, ET.EVENT, true);
         _testExampleContractPrep(5, address(userContract));
-        _exampleContractGasReport(5, address(userContract), "Using REv2 Min Transfer With Foreign Call Triggered With Event"); 
+        _exampleContractGasReport(5, address(userContract), "Using REv2 Min Transfer With Foreign Call Triggered With Event Effect"); 
     }
 
 /**********  Hard-coded MinTransfer with positive effect **********/
@@ -86,14 +101,14 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         ExampleUserContractWithMinTransfer hardCodedContract = new ExampleUserContractWithMinTransfer();
         // Create a minimum transaction(GT 4) rule with positive event
         _testExampleContractPrep(1, address(hardCodedContract));
-        _exampleContractGasReport(1, address(hardCodedContract), "Hardcoding Min Transfer Not Triggered"); 
+        _exampleContractGasReport(2, address(hardCodedContract), "Hardcoding Min Transfer Not Triggered"); 
     }
 
     function _testGasExampleHardcodedMinTransferTriggered() public endWithStopPrank resets{
         ExampleUserContractWithMinTransfer hardCodedContract = new ExampleUserContractWithMinTransfer();
         // Create a minimum transaction(GT 4) rule with positive event
         _testExampleContractPrep(5, address(hardCodedContract));
-        _exampleContractGasReport(5, address(hardCodedContract), "Hardcoding Min Transfer Triggered With Effect"); 
+        _exampleContractGasReport(5, address(hardCodedContract), "Hardcoding Min Transfer Triggered With Event Effect"); 
     }
 
 /**********  Hard-coded MinTransfer with foreign call and positive effect **********/
@@ -108,7 +123,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         ExampleUserContractWithMinTransferFC hardCodedContract = new ExampleUserContractWithMinTransferFC();
         // Create a minimum transaction(GT 4) rule with positive event
         _testExampleContractPrep(5, address(hardCodedContract));
-        _exampleContractGasReport(5, address(hardCodedContract), "Hardcoding Min Transfer With Foreign Call Triggered With Effect"); 
+        _exampleContractGasReport(5, address(hardCodedContract), "Hardcoding Min Transfer With Foreign Call Triggered With Event Effect"); 
     }
 
 /**********  Prep functions to ensure warm storage comparisons **********/

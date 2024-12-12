@@ -21,12 +21,13 @@ Column Definitions
 ---
 | Rule | Gas |
 |:-|:-|
-| Using REv2 No Policies Active | 12339 |
+| Base | 800 |
+| Using REv2 No Policies Active | 7439 |
 | Hardcoding Min Transfer Not Triggered | 844 |
 | Using REv2 Min Transfer Not Triggered | 47774 |
-| Hardcoding Min Transfer Triggered With Effect | 2477 |
-| Using REv2 Min Transfer Triggered With Effect | 51821 |
+| Hardcoding Min Transfer Triggered With Event Effect | 2477 |
+| Using REv2 Min Transfer Triggered With Event Effect | 51821 |
 | Hardcoding Min Transfer With Foreign Call Not Triggered | 1729 |
 | Using REv2 Min Transfer With Foreign Call Not Triggered | 57433 |
-| Hardcoding Min Transfer With Foreign Call Triggered With Effect | 3362 |
-| Using REv2 Min Transfer With Foreign Call Triggered With Event | 61480 |
+| Hardcoding Min Transfer With Foreign Call Triggered With Event Effect | 3362 |
+| Using REv2 Min Transfer With Foreign Call Triggered With Event Effect | 61480 |
