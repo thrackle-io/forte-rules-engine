@@ -52,5 +52,33 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         }
     }
 
+    function testRulesEngine_Fuzz_createPolicyAndAdmin_simple(uint8 addrIndex) public {
+        testAddressArray.push(policyAdmin); 
+        testAddressArray.push(newPolicyAdmin);
+
+        vm.startPrank(policyAdmin); 
+        bytes[] memory blankSignatures = new bytes[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(0, blankSignatures, blankFunctionSignatureIds, blankRuleIds);
+
+        address sender = testAddressArray[addrIndex % testAddressArray.length];
+        vm.stopPrank();
+        vm.startPrank(sender);
+
+        if(sender == policyAdmin) {
+            RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID); 
+            vm.stopPrank();
+            vm.startPrank(newPolicyAdmin); 
+            RulesEngineAdminRolesFacet(address(red)).confirmNewPolicyAdmin(policyID);
+            RulesEngineDataFacet(address(red)).createPolicy(0, blankSignatures, blankFunctionSignatureIds, blankRuleIds);
+        } else {
+            vm.expectRevert(abi.encodeWithSignature("NotPolicyAdmin()"));
+            RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID);
+        }
+
+
+    }
+
 
 }
