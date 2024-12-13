@@ -47,7 +47,506 @@ contract RulesEngineCommon is DiamondMine, Test {
     modifier endWithStopPrank() {
         _;
         vm.stopPrank();
+    } 
+
+    modifier resetsGlobalVariables() {
+        _resetGlobalVariables();
+        _;
     }
+
+    /// Set up functions 
+    function setupRuleWithoutForeignCall() public ifDeploymentTestsEnabled endWithStopPrank {
+        // Initial setup for what we'll need later
+        uint256[] memory policyIds = new uint256[](1);
+        // blank slate policy
+        policyIds[0] = _createBlankPolicy();
+        // Add the function signature to the policy
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        Rule memory rule;
+        // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = _createInstructionSet(4);
+        // Build the calling function argument placeholder 
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        // Save the rule
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        
+        // Apply the policy 
+        RulesEngineDataFacet(address(red)).applyPolicy(address(userContract), policyIds);
+    }
+
+    function setupRuleWithStringComparison() public ifDeploymentTestsEnabled endWithStopPrank returns (uint256 ruleId) {
+        // Rule: info == "Bad Info" -> revert -> updateInfo(address _to, string info) returns (bool)"
+        Rule memory rule;
+        // Instruction set: LC.PLH, 0, LC.NUM, *uint256 representation of Bad Info*, LC.EQ, 0, 1
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = new uint256[](7);
+        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[1] = 0;
+        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[3] = uint256(keccak256(abi.encode("Bad Info")));
+        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[5] = 0;
+        rule.instructionSet[6] = 1;
+
+        rule.rawData.argumentTypes = new PT[](1);
+        rule.rawData.dataValues = new bytes[](1);
+        rule.rawData.instructionSetIndex = new uint256[](1);
+        rule.rawData.argumentTypes[0] = PT.STR;
+        rule.rawData.dataValues[0] = abi.encode("Bad Info");
+        rule.rawData.instructionSetIndex[0] = 3;
+
+        // Build the calling function argument placeholder 
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = PT.STR;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        // Save the rule
+        ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
+
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.STR;
+        // Save the function signature
+        uint256 functionSignatureId = RulesEngineDataFacet(address(red)).updateFunctionSignature(0, bytes4(bytes(functionSignature2)),pTypes);
+        // Save the Policy
+        signatures.push(bytes(functionSignature2));  
+        functionSignatureIds.push(functionSignatureId);
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        uint256[] memory policyIds = new uint256[](1); 
+        policyIds[0] = RulesEngineDataFacet(address(red)).updatePolicy(0, signatures, functionSignatureIds, ruleIds);        
+        RulesEngineDataFacet(address(red)).applyPolicy(address(userContract), policyIds);
+
+        return ruleId;
+    }
+
+    function setupRuleWithAddressComparison() public ifDeploymentTestsEnabled endWithStopPrank returns (uint256 ruleId) {
+        // Rule: _to == 0x1234567 -> revert -> updateInfo(address _to, string info) returns (bool)"
+        Rule memory rule;
+        // Instruction set: LC.PLH, 0, LC.NUM, *uint256 representation of 0x1234567o*, LC.EQ, 0, 1
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = new uint256[](7);
+        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[1] = 0;
+        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[3] = uint256(uint160(address(0x1234567)));
+        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[5] = 0;
+        rule.instructionSet[6] = 1;
+
+        rule.rawData.argumentTypes = new PT[](1);
+        rule.rawData.dataValues = new bytes[](1);
+        rule.rawData.instructionSetIndex = new uint256[](1);
+        rule.rawData.argumentTypes[0] = PT.ADDR;
+        rule.rawData.dataValues[0] = abi.encode(0x1234567);
+        rule.rawData.instructionSetIndex[0] = 3;
+
+        // Build the calling function argument placeholder 
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = PT.ADDR;
+        rule.placeHolders[0].typeSpecificIndex = 0;
+        // Save the rule
+        ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
+
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.STR;
+        // Save the function signature
+        uint256 functionSignatureId = RulesEngineDataFacet(address(red)).updateFunctionSignature(0, bytes4(bytes(functionSignature2)),pTypes);
+        // Save the Policy
+        signatures.push(bytes(functionSignature2));  
+        functionSignatureIds.push(functionSignatureId);
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        uint256[] memory policyIds = new uint256[](1); 
+        policyIds[0] = RulesEngineDataFacet(address(red)).updatePolicy(0, signatures, functionSignatureIds, ruleIds);        
+        RulesEngineDataFacet(address(red)).applyPolicy(address(userContract), policyIds);
+
+        return ruleId;
+    }
+
+    function setupEffectWithTrackerUpdate() public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns (uint256 ruleId) {
+        uint256[] memory policyIds = new uint256[](1);
+        
+        policyIds[0] = _createBlankPolicy();
+
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+
+        // Rule: 1 == 1 -> TRU:someTracker += FC:simpleCheck(amount) -> transfer(address _to, uint256 amount) returns (bool)
+        PT[] memory fcArgs = new PT[](1);
+        fcArgs[0] = PT.UINT;
+        Rule memory rule;
+        rule.posEffects = new uint256[](1);
+        rule.posEffects[0] = effectId_expression2;
+        rule.instructionSet = new uint256[](7);
+        rule.instructionSet[0] = uint(LC.NUM);
+        rule.instructionSet[1] = 1;
+        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[3] = 1;
+        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[5] = 0;
+        rule.instructionSet[6] = 1;
+
+        rule.effectPlaceHolders = new Placeholder[](2); 
+        rule.effectPlaceHolders[0].foreignCall = true;
+        rule.effectPlaceHolders[0].typeSpecificIndex = 0;
+        rule.effectPlaceHolders[1].pType = PT.UINT;
+        rule.effectPlaceHolders[1].trackerValue = true;
+
+        rule.fcArgumentMappingsEffects = new ForeignCallArgumentMappings[](1);
+        rule.fcArgumentMappingsEffects[0].mappings = new IndividualArgumentMapping[](1);
+        rule.fcArgumentMappingsEffects[0].mappings[0].functionCallArgumentType = PT.UINT;
+        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.foreignCall = false;
+        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.pType = PT.UINT;
+        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
+        ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
+
+        //build tracker 
+        Trackers memory tracker;  
+        /// build the members of the struct: 
+        tracker.pType = PT.UINT; 
+        tracker.trackerValue = abi.encode(2); 
+        
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+
+        RulesEngineDataFacet(address(red)).addTracker(policyIds[0], tracker);      
+        ForeignCall memory fc = RulesEngineDataFacet(address(red)).updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", PT.UINT, fcArgs);
+
+        RulesEngineDataFacet(address(red)).applyPolicy(address(userContract), policyIds);
+        fc;  //added to silence warnings during testing revamp 
+        return policyIds[0];
+    }
+
+    function setupEffectWithForeignCall() public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
+        uint256[] memory policyIds = new uint256[](1);
+        
+        policyIds[0] = _createBlankPolicy();
+
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+        // Rule: 1 == 1 -> FC:simpleCheck(amount) -> transfer(address _to, uint256 amount) returns (bool)
+        // build Foreign Call Structure
+        Rule memory rule;
+        rule.posEffects = new uint256[](1);
+        rule.posEffects[0] = effectId_expression;
+        rule.instructionSet = new uint256[](7);
+        rule.instructionSet[0] = uint(LC.NUM);
+        rule.instructionSet[1] = 1;
+        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[3] = 1;
+        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[5] = 0;
+        rule.instructionSet[6] = 1;
+
+        rule.effectPlaceHolders = new Placeholder[](1); 
+        rule.effectPlaceHolders[0].foreignCall = true;
+        rule.effectPlaceHolders[0].typeSpecificIndex = 0;
+
+        rule.fcArgumentMappingsEffects = new ForeignCallArgumentMappings[](1);
+        rule.fcArgumentMappingsEffects[0].mappings = new IndividualArgumentMapping[](1);
+        rule.fcArgumentMappingsEffects[0].mappings[0].functionCallArgumentType = PT.UINT;
+        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.foreignCall = false;
+        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.pType = PT.UINT;
+        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        PT[] memory fcArgs = new PT[](1);
+        fcArgs[0] = PT.UINT;
+        RulesEngineDataFacet(address(red)).updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", PT.UINT, fcArgs);        
+        RulesEngineDataFacet(address(red)).applyPolicy(address(userContract), policyIds);
+    }
+
+    function setupRuleWithForeignCall(uint256 _amount, ET _effectType, bool isPositive) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
+        uint256[] memory policyIds = new uint256[](1);
+        
+        policyIds[0] = _createBlankPolicy();
+
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+
+        // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
+        Rule memory rule;
+        
+        // Build the foreign call placeholder
+        rule.placeHolders = new Placeholder[](1); 
+        rule.placeHolders[0].foreignCall = true;
+        rule.placeHolders[0].typeSpecificIndex = 0;
+
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = _createInstructionSet(_amount);
+
+        // Build the mapping between calling function arguments and foreign call arguments
+        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](1);
+        rule.fcArgumentMappingsConditions[0].mappings = new IndividualArgumentMapping[](1);
+        rule.fcArgumentMappingsConditions[0].mappings[0].functionCallArgumentType = PT.UINT;
+        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.foreignCall = false;
+        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.pType = PT.UINT;
+        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
+        rule = _setUpEffect(rule, _effectType, isPositive);
+        // Save the rule
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
+
+        PT[] memory fcArgs = new PT[](1);
+        fcArgs[0] = PT.UINT;
+        ForeignCall memory fc = RulesEngineDataFacet(address(red)).updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", PT.UINT, fcArgs);
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);       
+        RulesEngineDataFacet(address(red)).applyPolicy(address(userContract), policyIds);
+        fc;  //added to silence warnings during testing revamp 
+    }
+
+    function _setUpEffect(Rule memory rule, ET _effectType, bool isPositive) public view returns(Rule memory _rule) {
+        if (isPositive){
+            rule.posEffects = new uint256[](1);
+            if(_effectType == ET.REVERT){
+                rule.posEffects[0] = effectId_revert;
+            }
+            if(_effectType == ET.EVENT){
+                rule.posEffects[0] = effectId_event;
+            }
+        } else {
+          rule.negEffects = new uint256[](1);
+            if(_effectType == ET.REVERT){
+                rule.negEffects[0] = effectId_revert;
+            }
+            if(_effectType == ET.EVENT){
+                rule.negEffects[0] = effectId_event;
+            }
+        }
+        return rule;
+    }
+
+    function _setupRuleWithRevert() public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
+        uint256[] memory policyIds = new uint256[](1);
+        
+        policyIds[0] = _createBlankPolicy();
+
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+
+        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        Rule memory rule =  _createGTRule(4);
+        rule.negEffects[0] = effectId_revert;
+        // Save the rule
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        RulesEngineDataFacet(address(red)).applyPolicy(address(userContract), policyIds);
+    }
+
+    function _setupRuleWithPosEvent() public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = _createBlankPolicy();
+
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+
+        // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
+        Rule memory rule =  _createGTRule(4);
+        rule.posEffects[0] = effectId_event;
+       
+        // Save the rule
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        RulesEngineDataFacet(address(red)).applyPolicy(address(userContract), policyIds);
+    }
+
+
+    function _setupMinTransferWithPosEvent(uint256 threshold, address contractAddress) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = _createBlankPolicy();
+
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+
+        // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
+        Rule memory rule =  _createGTRule(threshold);
+        rule.posEffects[0] = effectId_event;
+       
+        // Save the rule
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
+
+        if(ruleIds.length == 0) ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        RulesEngineDataFacet(address(red)).applyPolicy(address(contractAddress), policyIds);
+    }
+
+    function _resetGlobalVariables() public {
+        delete signatures;
+        delete functionSignatureIds;
+        delete ruleIds;
+    }
+
+    function _setupPolicyWithMultipleRulesWithPosEvents() public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
+        uint256[] memory policyIds = new uint256[](1);
+        
+        policyIds[0] = _createBlankPolicy();
+
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+
+        // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
+        // Rule 1: GT 4
+        Rule memory rule =  _createGTRule(4);
+        rule.posEffects[0] = effectId_event;
+       
+        // Save the rule
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
+
+        ruleIds.push(new uint256[](4));
+        ruleIds[0][0]= ruleId;
+
+        // Rule 2: GT 5
+        rule =  _createGTRule(5);
+        rule.posEffects[0] = effectId_event2;
+       
+        // Save the rule
+        ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
+
+        // // Save the fKureIds.push(functionSignatureId);
+        ruleIds[0][1]= ruleId;
+
+        // Rule 3: GT 6
+        rule =  _createGTRule(6);
+        rule.posEffects[0] = effectId_event;
+       
+        // Save the rule
+        ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
+
+        // // Save the fKureIds.push(functionSignatureId);
+        ruleIds[0][2]= ruleId;
+
+        // Rule 4: GT 7
+        rule =  _createGTRule(7);
+        rule.posEffects[0] = effectId_event2;
+       
+        // Save the rule
+        ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
+
+        // // Save the fKureIds.push(functionSignatureId);
+        ruleIds[0][3]= ruleId;
+
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        RulesEngineDataFacet(address(red)).applyPolicy(address(userContract), policyIds);
+    }
+
+    function _setupRuleWith2PosEvent() public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
+        uint256[] memory policyIds = new uint256[](1);
+        
+        policyIds[0] = _createBlankPolicy();
+
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+
+        // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
+        Rule memory rule =  _createGTRule(4);
+        rule.posEffects[0] = effectId_event;
+        rule.posEffects[1] = effectId_event2;
+       
+        // Save the rule
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        RulesEngineDataFacet(address(red)).applyPolicy(address(userContract), policyIds);
+    }
+
+    // set up a rule with a uint256 tracker value for testing 
+     function setupRuleWithTracker(uint256 trackerValue) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256 policyId){
+        uint256[] memory policyIds = new uint256[](1);
+        
+        policyIds[0] = _createBlankPolicy();
+
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
+
+        // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        Rule memory rule;
+
+        // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
+        rule.instructionSet = _createInstructionSet(0,1);
+        
+        rule.placeHolders = new Placeholder[](2);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].trackerValue = true;
+        // Add a negative/positive effects
+        rule.negEffects = new uint256[](1);
+        rule.posEffects = new uint256[](2);
+        rule.negEffects[0] = effectId_revert;
+        rule.posEffects[0] = effectId_event;
+
+         // Save the rule
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
+        // Build the tracker
+        Trackers memory tracker; 
+
+        /// build the members of the struct: 
+        tracker.pType = PT.UINT; 
+        tracker.trackerValue = abi.encode(trackerValue);
+        // Add the tracker
+        RulesEngineDataFacet(address(red)).addTracker(policyIds[0], tracker); 
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+
+        RulesEngineDataFacet(address(red)).applyPolicy(address(userContract), policyIds);
+        return policyIds[0];
+    }
+
 
     /// Test helper functions 
     function _createBlankPolicy() internal returns (uint256) {
