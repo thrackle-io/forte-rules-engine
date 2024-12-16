@@ -273,6 +273,8 @@ struct Policy {
     mapping(bytes => uint256) functionSignatureIdMap;
     // function signatures to ruleIds
     mapping(bytes => uint256[]) signatureToRuleIds;
+    // Array to hold the function sigs for iterating
+    bytes[] signatures;
 }
 
 /// Policy Association Storage Structures
