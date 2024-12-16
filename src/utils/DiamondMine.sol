@@ -14,10 +14,7 @@ import {FacetCut, FacetCutAction} from "diamond-std/core/DiamondCut/DiamondCutLi
 /**
  * @title DiamondMine
  * @author @ShaneDuncan602 
- * @dev This contract is an abstract template to be reused by all the Foundry tests. NOTE: function prefixes and their usages are as follows:
- * setup = set to proper user, deploy contracts, set global variables, reset user
- * create = set to proper user, deploy contracts, reset user, return the contract
- * _create = deploy contract, return the contract
+ * @dev This contract is an abstract template to be reused contracts that need to create the Diamond. 
  */
 contract DiamondMine is Script {
     FacetCut[] _ruleProcessorFacetCuts;
