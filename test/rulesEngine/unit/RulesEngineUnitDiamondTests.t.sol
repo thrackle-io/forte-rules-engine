@@ -29,6 +29,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         uint256 effectId = RulesEngineDataFacet(address(red)).updateEffect(
             Effect({
                 effectId: 0,
+                valid: true,
                 effectType: ET.EVENT,
                 text: text,
                 instructionSet: emptyArray

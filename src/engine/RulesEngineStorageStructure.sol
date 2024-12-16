@@ -81,6 +81,7 @@ struct EffectS {
 // Effect Structure
 struct Effect {
     uint256 effectId;
+    bool valid;
     ET effectType;
     string text; //used for any type of text(revert, event, etc.)
     // The instruction set that will be run at effect execution
@@ -230,9 +231,9 @@ struct Rule {
     // (for foreign calls used in the rules effect execution)
     ForeignCallArgumentMappings[] fcArgumentMappingsEffects;
     // List of all positive effects
-    uint256[] posEffects;
+    Effect[] posEffects;
     // List of all positive effects
-    uint256[] negEffects;
+    Effect[] negEffects;
 }
 
 // This struct will hold the raw form of strings and addresses that were submitted to the SDK

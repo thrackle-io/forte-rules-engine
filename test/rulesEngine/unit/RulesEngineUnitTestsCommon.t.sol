@@ -114,7 +114,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.foreignCall = false;
         rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.pType = PT.UINT;
         rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
-        rule.negEffects = new uint256[](1);
+        rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
@@ -164,7 +164,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.foreignCall = false;
         rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.pType = PT.UINT;
         rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
-        rule.negEffects = new uint256[](1);
+        rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
@@ -213,7 +213,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.foreignCall = false;
         rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.pType = PT.UINT;
         rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
-        rule.negEffects = new uint256[](1);
+        rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
@@ -254,7 +254,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.foreignCall = false;
         rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.pType = PT.UINT;
         rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
-        rule.negEffects = new uint256[](1);
+        rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
@@ -713,8 +713,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     }
 
     function testRulesEngine_Utils_deleteEffect() public ifDeploymentTestsEnabled endWithStopPrank {
-        uint256 effectIdToDelete = _createEffectEvent("Event"); 
-        RulesEngineDataFacet(address(red)).deleteEffect(effectIdToDelete);
+        Effect memory effectIdToDelete = _createEffectEvent("Event"); 
+        RulesEngineDataFacet(address(red)).deleteEffect(effectIdToDelete.effectId);
     }
 
     function testRulesEngine_Utils_evaluateRulesAndExecuteEffects() public ifDeploymentTestsEnabled endWithStopPrank {
@@ -798,7 +798,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.foreignCall = false;
         rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.pType = PT.UINT;
         rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
-        rule.negEffects = new uint256[](1);
+        rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
@@ -843,7 +843,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.foreignCall = false;
         rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.pType = PT.UINT;
         rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
-        rule.negEffects = new uint256[](1);
+        rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
@@ -892,9 +892,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
         RulesEngineDataFacet(address(red)).applyPolicy(address(userContract), policyIds);
 
-        uint256[] memory effectIDs = new uint256[](2);
-        effectIDs[0] = 0;
-        effectIDs[1] = 1;
+        Effect[] memory effectIDs = new Effect[](2);
+        effectIDs[0] = effectId_event;
+        effectIDs[1] = effectId_event2;
 
         Arguments memory arguments;
         arguments.argumentTypes = new PT[](2);

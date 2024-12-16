@@ -288,20 +288,18 @@ contract RulesEngineMainFacet is FacetCommonImports{
 
     /**
      * @dev Loop through effects for a given rule and execute them
-     * @param _effectIds list of effects
+     * @param _effects list of effects
      */
-    function doEffects(uint256 _policyId, uint256[] calldata _effectIds, Rule memory applicableRule, Arguments memory functionSignatureArgs) public {
+    function doEffects(uint256 _policyId, Effect[] calldata _effects, Rule memory applicableRule, Arguments memory functionSignatureArgs) public {
         // Load the Effect data from storage
-        EffectS storage data = lib.getEffectStorage();
-        for(uint256 i = 0; i < _effectIds.length; i++) {
-            if(_effectIds[i] > 0){// only ref Id's greater than 0 are valid
-                Effect memory effect = data.effectStorage[_effectIds[i]];
-                if (effect.effectType == ET.REVERT) { 
-                    doRevert(effect.text);
-                } else if (effect.effectType == ET.EVENT) {
-                     doEvent(effect.text);
+        for(uint256 i = 0; i < _effects.length; i++) {
+            if(_effects[i].valid) {
+                if (_effects[i].effectType == ET.REVERT) { 
+                    doRevert(_effects[i].text);
+                } else if (_effects[i].effectType == ET.EVENT) {
+                     doEvent(_effects[i].text);
                 } else {
-                    evaluateExpression(_policyId, applicableRule, functionSignatureArgs, effect.instructionSet);
+                    evaluateExpression(_policyId, applicableRule, functionSignatureArgs, _effects[i].instructionSet);
                 }
             }
         }

@@ -24,16 +24,16 @@ contract RulesEngineCommon is DiamondMine, Test {
     string constant revert_text = "Rules Engine Revert";
     string constant event_text2 = "Rules Engine Event 2";
     string constant revert_text2 = "Rules Engine Revert 2";
-    uint256 effectId_revert;
-    uint256 effectId_revert2;
-    uint256 effectId_event;
-    uint256 effectId_event2;
+    Effect effectId_revert;
+    Effect effectId_revert2;
+    Effect effectId_event;
+    Effect effectId_event2;
     bytes[] signatures;        
     uint256[] functionSignatureIds;
     uint256[][] ruleIds;
 
-    uint256 effectId_expression;
-    uint256 effectId_expression2;
+    Effect effectId_expression;
+    Effect effectId_expression2;
 
     bool public testDeployments = true;
 
@@ -190,7 +190,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
         Rule memory rule;
-        rule.posEffects = new uint256[](1);
+        rule.posEffects = new Effect[](1);
         rule.posEffects[0] = effectId_expression2;
         rule.instructionSet = new uint256[](7);
         rule.instructionSet[0] = uint(LC.NUM);
@@ -246,7 +246,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Rule: 1 == 1 -> FC:simpleCheck(amount) -> transfer(address _to, uint256 amount) returns (bool)
         // build Foreign Call Structure
         Rule memory rule;
-        rule.posEffects = new uint256[](1);
+        rule.posEffects = new Effect[](1);
         rule.posEffects[0] = effectId_expression;
         rule.instructionSet = new uint256[](7);
         rule.instructionSet[0] = uint(LC.NUM);
@@ -323,7 +323,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
     function _setUpEffect(Rule memory rule, ET _effectType, bool isPositive) public view returns(Rule memory _rule) {
         if (isPositive){
-            rule.posEffects = new uint256[](1);
+            rule.posEffects = new Effect[](1);
             if(_effectType == ET.REVERT){
                 rule.posEffects[0] = effectId_revert;
             }
@@ -331,7 +331,7 @@ contract RulesEngineCommon is DiamondMine, Test {
                 rule.posEffects[0] = effectId_event;
             }
         } else {
-          rule.negEffects = new uint256[](1);
+          rule.negEffects = new Effect[](1);
             if(_effectType == ET.REVERT){
                 rule.negEffects[0] = effectId_revert;
             }
@@ -487,6 +487,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule =  _createGTRule(4);
+        rule.posEffects = new Effect[](2);
         rule.posEffects[0] = effectId_event;
         rule.posEffects[1] = effectId_event2;
        
@@ -523,8 +524,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders[1].pType = PT.UINT;
         rule.placeHolders[1].trackerValue = true;
         // Add a negative/positive effects
-        rule.negEffects = new uint256[](1);
-        rule.posEffects = new uint256[](2);
+        rule.negEffects = new Effect[](1);
+        rule.posEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         rule.posEffects[0] = effectId_event;
 
@@ -569,8 +570,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders[0].pType = PT.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Add a negative/positive effects
-        rule.negEffects = new uint256[](1);
-        rule.posEffects = new uint256[](2);
+        rule.negEffects = new Effect[](1);
+        rule.posEffects = new Effect[](1);
         return rule;
     }
 
@@ -603,33 +604,35 @@ contract RulesEngineCommon is DiamondMine, Test {
 
     }
 
-    function _createEffectEvent(string memory _text) public returns(uint256 _effectId){
+    function _createEffectEvent(string memory _text) public returns(Effect memory){
         uint256[] memory emptyArray = new uint256[](1);
         // Create a event effect
-        return RulesEngineDataFacet(address(red)).updateEffect(Effect({effectId: 0, effectType: ET.EVENT, text: _text, instructionSet: emptyArray}));
+        return Effect({effectId: 0, valid: true, effectType: ET.EVENT, text: _text, instructionSet: emptyArray});
     }
 
-    function _createEffectRevert(string memory _text) public returns(uint256 _effectId) {
+    function _createEffectRevert(string memory _text) public returns(Effect memory) {
         uint256[] memory emptyArray = new uint256[](1);
         // Create a revert effect
-        return RulesEngineDataFacet(address(red)).updateEffect(Effect({effectId: 0, effectType: ET.REVERT, text: _text, instructionSet: emptyArray}));
+        return Effect({effectId: 0, valid: true, effectType: ET.REVERT, text: _text, instructionSet: emptyArray});
     }
 
-    function _createEffectExpression() public returns(uint256 _effectId) {
+    function _createEffectExpression() public returns(Effect memory) {
         Effect memory effect;
 
         effect.effectId = 0;
+        effect.valid = true;
         effect.effectType = ET.EXPRESSION;
         effect.text = "";
         effect.instructionSet = new uint256[](1);
 
-        return RulesEngineDataFacet(address(red)).updateEffect(effect);
+        return effect;
     }
 
-    function _createEffectExpressionTrackerUpdate() public returns(uint256 _effectId) {
+    function _createEffectExpressionTrackerUpdate() public returns(Effect memory) {
         // Effect: TRU:someTracker += FC:simpleCheck(amount)
         Effect memory effect;
         effect.effectId = 0;
+        effect.valid = true;
         effect.effectType = ET.EXPRESSION;
         effect.text = "";
         effect.instructionSet = new uint256[](10);
@@ -646,7 +649,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         effect.instructionSet[8] = 0;
         effect.instructionSet[9] = 2;
 
-        return RulesEngineDataFacet(address(red)).updateEffect(effect);
+        return effect;
     }
 
     // internal instruction set builder: overload as needed 
