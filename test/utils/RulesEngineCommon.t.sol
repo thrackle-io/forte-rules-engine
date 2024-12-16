@@ -607,19 +607,18 @@ contract RulesEngineCommon is DiamondMine, Test {
     function _createEffectEvent(string memory _text) public returns(Effect memory){
         uint256[] memory emptyArray = new uint256[](1);
         // Create a event effect
-        return Effect({effectId: 0, valid: true, effectType: ET.EVENT, text: _text, instructionSet: emptyArray});
+        return Effect({valid: true, effectType: ET.EVENT, text: _text, instructionSet: emptyArray});
     }
 
     function _createEffectRevert(string memory _text) public returns(Effect memory) {
         uint256[] memory emptyArray = new uint256[](1);
         // Create a revert effect
-        return Effect({effectId: 0, valid: true, effectType: ET.REVERT, text: _text, instructionSet: emptyArray});
+        return Effect({valid: true, effectType: ET.REVERT, text: _text, instructionSet: emptyArray});
     }
 
     function _createEffectExpression() public returns(Effect memory) {
         Effect memory effect;
 
-        effect.effectId = 0;
         effect.valid = true;
         effect.effectType = ET.EXPRESSION;
         effect.text = "";
@@ -631,7 +630,6 @@ contract RulesEngineCommon is DiamondMine, Test {
     function _createEffectExpressionTrackerUpdate() public returns(Effect memory) {
         // Effect: TRU:someTracker += FC:simpleCheck(amount)
         Effect memory effect;
-        effect.effectId = 0;
         effect.valid = true;
         effect.effectType = ET.EXPRESSION;
         effect.text = "";

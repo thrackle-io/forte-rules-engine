@@ -712,11 +712,6 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertTrue(success == 0);
     }
 
-    function testRulesEngine_Utils_deleteEffect() public ifDeploymentTestsEnabled endWithStopPrank {
-        Effect memory effectIdToDelete = _createEffectEvent("Event"); 
-        RulesEngineDataFacet(address(red)).deleteEffect(effectIdToDelete.effectId);
-    }
-
     function testRulesEngine_Utils_evaluateRulesAndExecuteEffects() public ifDeploymentTestsEnabled endWithStopPrank {
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicy();

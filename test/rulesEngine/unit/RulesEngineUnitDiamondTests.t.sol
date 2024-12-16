@@ -23,25 +23,6 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         assertEq(NativeFacet(address(red)).owner(), OWNER);
     }
 
-    function testRulesEngine_Unit_Diamond_EffectStorage_Positive() public {
-        string memory text = "Does this really work?";
-        uint256[] memory emptyArray = new uint256[](1);
-        uint256 effectId = RulesEngineDataFacet(address(red)).updateEffect(
-            Effect({
-                effectId: 0,
-                valid: true,
-                effectType: ET.EVENT,
-                text: text,
-                instructionSet: emptyArray
-            })
-        );
-        Effect memory effect = RulesEngineDataFacet(address(red)).getEffect(
-            effectId
-        );
-        assertTrue(effect.effectType == ET.EVENT);
-        assertEq(effect.text, text);
-    }
-
     function testRulesEngine_Unit_Diamond_ForeignCallStorage_Positive() public {
         address _address = address(22);
         PT[] memory fcArgs = new PT[](1);

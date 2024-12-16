@@ -72,15 +72,8 @@ struct Placeholder {
 // Effect Events
 event RulesEngineEvent(string _message);
 
-// Effect Storage
-struct EffectS {
-    uint256 effectTotal;
-    mapping(uint256 => Effect) effectStorage;
-}
-
 // Effect Structure
 struct Effect {
-    uint256 effectId;
     bool valid;
     ET effectType;
     string text; //used for any type of text(revert, event, etc.)

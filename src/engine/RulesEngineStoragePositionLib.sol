@@ -13,8 +13,6 @@ library RulesEngineStoragePositionLib {
         bytes32(uint256(keccak256("diamond-cut.storage-engine")) - 1);
     bytes32 constant INITIALIZED_POSITION =
         bytes32(uint256(keccak256("initialized-position")) - 1);
-    bytes32 constant EFFECT_POSITION =
-        bytes32(uint256(keccak256("effect-position")) - 1);
     bytes32 constant FOREIGN_CALL_POSITION =
         bytes32(uint256(keccak256("foreign-call-position")) - 1);
     bytes32 constant TRACKER_POSITION =
@@ -38,17 +36,6 @@ library RulesEngineStoragePositionLib {
         returns (InitializedS storage ds)
     {
         bytes32 position = INITIALIZED_POSITION;
-        assembly {
-            ds.slot := position
-        }
-    }
-
-    /**
-     * @dev Function to retrieve Effect Storage from its diamond storage slot
-     * @return ds Data Storage of the Effect Map
-     */
-    function getEffectStorage() internal pure returns (EffectS storage ds) {
-        bytes32 position = EFFECT_POSITION;
         assembly {
             ds.slot := position
         }
