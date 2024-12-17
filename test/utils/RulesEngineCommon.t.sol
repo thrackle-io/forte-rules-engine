@@ -37,6 +37,11 @@ contract RulesEngineCommon is DiamondMine, Test {
 
     bool public testDeployments = true;
 
+    address policyAdmin = address(0x54321); 
+    address newPolicyAdmin = address(0x0Add); 
+
+    address[] testAddressArray = [address(0xFF1), address(0xFF2), address(0xFF3), address(0xFF4), address(0xFF5), address(0xFF6), address(0xFF7), address(0xFF8)];
+
     //test modifiers 
     modifier ifDeploymentTestsEnabled() {
         if (testDeployments) {
@@ -556,6 +561,14 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256[][] memory blankRuleIds = new uint256[][](0);
         uint256 policyId = RulesEngineDataFacet(address(red)).updatePolicy(0, blankSignatures, blankFunctionSignatureIds, blankRuleIds);
         return policyId;
+    }
+
+    function _createBlankPolicyWithAdminRoleString() internal returns (uint256) {
+        bytes[] memory blankSignatures = new bytes[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(0, blankSignatures, blankFunctionSignatureIds, blankRuleIds);
+        return policyID; 
     }
 
     // internal rule builder 

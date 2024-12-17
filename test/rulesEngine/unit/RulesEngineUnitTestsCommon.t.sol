@@ -5,7 +5,6 @@ import "test/utils/RulesEngineCommon.t.sol";
 
 abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
-    
     /// TestRulesEngine: 
     // Test attempt to add a policy with no signatures saved.
     function testRulesEngine_Unit_UpdatePolicy_InvalidRule() public ifDeploymentTestsEnabled endWithStopPrank {
@@ -1010,6 +1009,72 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         vm.expectRevert();
         FCEncodingLib.getFCBool(retVal);
     }
+
+    function testRulesEngine_unit_adminRoles_GeneratePolicyAdminRole_ThroughRulesEngine() public ifDeploymentTestsEnabled endWithStopPrank {
+        // policy admin role bytes string for policy 0: 0x35f49fd04fdc3104e07cf8040d0ede098e2a5ac11af26093ebea3a88e5ef9e2c 
+        vm.startPrank(policyAdmin); 
+        _createBlankPolicyWithAdminRoleString(); 
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(1, policyAdmin);
+        assertTrue(hasAdminRole); 
+    }
+
+    function testRulesEngine_unit_adminRoles_GeneratePolicyAdminRole_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.startPrank(policyAdmin); 
+        bytes[] memory blankSignatures = new bytes[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        uint256 policyID = RulesEngineDataFacet(address(red)).updatePolicy(0, blankSignatures, blankFunctionSignatureIds, blankRuleIds);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(1, policyAdmin);
+        assertFalse(hasAdminRole); 
+        vm.expectRevert(abi.encodeWithSignature("NotPolicyAdmin()"));
+        RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID);
+
+    }
+
+    function testRulesEngine_unit_adminRoles_ProposedPolicyAdminRole_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.startPrank(policyAdmin); 
+        uint256 policyID = _createBlankPolicyWithAdminRoleString(); 
+        RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID); 
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin); 
+        RulesEngineAdminRolesFacet(address(red)).confirmNewPolicyAdmin(policyID); 
+
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(1, newPolicyAdmin);
+
+        assertTrue(hasAdminRole); 
+
+    }
+
+    function testRulesEngine_unit_adminRoles_ProposedPolicyAdminRole_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.startPrank(policyAdmin); 
+        uint256 policyID = _createBlankPolicyWithAdminRoleString(); 
+        RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID); 
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin); 
+        vm.expectRevert(abi.encodeWithSignature("NotPolicyAdmin()"));
+        RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID);
+    }
+
+    function testRulesEngine_unit_adminRoles_RevokePolicyAdminRole_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.startPrank(policyAdmin); 
+        _createBlankPolicyWithAdminRoleString(); 
+        bytes32 adminRole = bytes32(abi.encodePacked(keccak256(bytes(string.concat(string(abi.encode(1)), "TestString")))));
+        vm.expectRevert(); 
+        RulesEngineAdminRolesFacet(address(red)).revokeRole(adminRole, policyAdmin); 
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(1, policyAdmin);
+        assertTrue(hasAdminRole); 
+    }
+
+    function testRulesEngine_unit_adminRoles_RenouncePolicyAdminRole_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.startPrank(policyAdmin); 
+        _createBlankPolicyWithAdminRoleString(); 
+        bytes32 adminRole = bytes32(abi.encodePacked(keccak256(bytes(string.concat(string(abi.encode(1)), "TestString")))));
+        vm.expectRevert(); 
+        RulesEngineAdminRolesFacet(address(red)).renounceRole(adminRole, policyAdmin); 
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(1, policyAdmin);
+        assertTrue(hasAdminRole); 
+    }
+
 
 
 }

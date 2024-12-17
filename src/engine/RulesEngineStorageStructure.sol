@@ -5,6 +5,7 @@ struct InitializedS {
     bool initialized;
 }
 
+
 /// Enumerated list of Logical operators used in Rule Engine Run
 /**
  * NUM - a static value will be in the next slot in the instruction set
@@ -278,3 +279,5 @@ struct Policy {
 struct PolicyAssociationS {
     mapping(address contractAddress => uint256[]) contractPolicyIdMap;
 }
+
+

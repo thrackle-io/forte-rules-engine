@@ -2,11 +2,12 @@
 pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
+import "src/engine/facets/RulesEngineAdminRolesFacet.sol";
 
 /**
  * @title Rules Engine Data Facet
  * @author @ShaneDuncan602 
- * @dev This contract serves as the primary storage facet for the rules engine. It is responsible for mutating and serving all the policy data.
+ * @dev This contract serves as the primary data facet for the rules engine. It is responsible for mutating and serving all the policy data.
  * @notice Data facet for the Rules Engine
  */
 contract RulesEngineDataFacet is FacetCommonImports {
@@ -315,6 +316,24 @@ contract RulesEngineDataFacet is FacetCommonImports {
         }    
         
         return _policyId;
+    }
+
+
+    /**
+     * Add a Policy to Storage and create the policy admin for the policy 
+     * @param _policyId id of of the policy 
+     * @param _signatures all signatures in the policy
+     * @param functionSignatureIds corresponding signature ids in the policy. The elements in this array are one to one matches of the elements in _signatures array. They store the functionSignatureId for each of the signatures in _signatures array.
+     * @param ruleIds two dimensional array of the rules. This array contains a simple count at first level and the second level is the array of ruleId's within the policy.
+     * @return policyId generated policyId
+     * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
+     */
+    function createPolicy(uint256 _policyId, bytes[] calldata _signatures, uint256[] calldata functionSignatureIds, uint256[][] calldata ruleIds) public returns(uint256) {
+        uint256 policyId = updatePolicy(_policyId, _signatures, functionSignatureIds, ruleIds);
+        //This function is called as an external call intentionally. This allows for proper gating on the generatePolicyAdminRole fn to only be callable by the RulesEngine address. 
+        RulesEngineAdminRolesFacet(address(this)).generatePolicyAdminRole(policyId, address(msg.sender));
+
+        return policyId; 
     }
 
     /**
