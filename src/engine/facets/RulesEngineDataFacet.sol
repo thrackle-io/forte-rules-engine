@@ -270,7 +270,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @return policyId generated policyId
      * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
      */
-    function updatePolicy(uint256 _policyId, bytes[] calldata _signatures, uint256[] calldata functionSignatureIds, uint256[][] calldata ruleIds) public returns(uint256){
+    function updatePolicy(uint256 _policyId, bytes4[] calldata _signatures, uint256[] calldata functionSignatureIds, uint256[][] calldata ruleIds) public returns(uint256){
         // Load the policy data from storage
         PolicyS storage data = lib.getPolicyStorage();
         // signature length must match the signature id length
@@ -348,12 +348,12 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @return functionSigIds function signature ids corresponding to each function sig in functionSigs(from Policy.functionSignatureIdMap)
      * @return ruleIds rule ids corresponding to each function signature in functionSigs(from Policy.signatureToRuleIds)
      */
-    function getPolicy(uint256 _policyId) external view returns(bytes[] memory functionSigs, uint256[] memory functionSigIds, uint256[][] memory ruleIds) {
+    function getPolicy(uint256 _policyId) external view returns(bytes4[] memory functionSigs, uint256[] memory functionSigIds, uint256[][] memory ruleIds) {
         // Load the policy data from storage
         Policy storage policy = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
         // Initialize the return arrays if necessary
         if(policy.signatures.length > 0){
-            functionSigs = new bytes[](policy.signatures.length);
+            functionSigs = new bytes4[](policy.signatures.length);
             functionSigIds = new uint256[](policy.signatures.length);
             ruleIds = new uint256[][](policy.signatures.length);
         }

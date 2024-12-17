@@ -1782,7 +1782,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         uint256[] memory policyIds = new uint256[](1);
-        bytes[] memory _functionSigs;
+        bytes4[] memory _functionSigs;
         uint256[] memory _functionSigIds;
         uint256[][] memory _ruleIds;
 
@@ -1798,7 +1798,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         uint256[] memory policyIds = new uint256[](1);
-        bytes[] memory _functionSigs;
+        bytes4[] memory _functionSigs;
         uint256[] memory _functionSigIds;
         uint256[][] memory _ruleIds;
 

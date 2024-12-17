@@ -22,7 +22,7 @@ contract ExampleUserContract {
         args.argumentTypes[1] = PT.UINT;
         bytes memory encoded = abi.encode(args);
         IRulesEngine rulesEngine = IRulesEngine(rulesEngineAddress);
-        uint256 retVal = rulesEngine.checkPolicies(address(this), bytes("transfer(address,uint256) returns (bool)"), encoded);
+        uint256 retVal = rulesEngine.checkPolicies(address(this), bytes4(bytes("transfer(address,uint256) returns (bool)")), encoded);
         // This is where the overridden transfer would be called
 
         return retVal == 1;
