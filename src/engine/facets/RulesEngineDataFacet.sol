@@ -11,44 +11,6 @@ import "src/engine/facets/FacetCommonImports.sol";
  */
 contract RulesEngineDataFacet is FacetCommonImports {
 
-    /// Effect Storage
-
-    /**
-     * @dev Update an effect
-     * @param _effect the Effect to update
-     */
-    function updateEffect(
-        Effect calldata _effect
-    ) external returns (uint256 _effectId) {
-        // Load the Effect data from storage
-        EffectS storage data = lib.getEffectStorage();
-        if (_effect.effectId > 0) {
-            data.effectStorage[_effect.effectId] = _effect;
-            _effectId = _effect.effectId;
-        } else {
-            data.effectTotal++;
-            data.effectStorage[data.effectTotal] = _effect;
-            _effectId = data.effectTotal;
-        }
-        return _effectId;
-    }
-
-    function getEffect(
-        uint256 _effectId
-    ) external view returns (Effect memory _effect) {
-        // Load the Effect data from storage
-        EffectS storage data = lib.getEffectStorage();
-        return data.effectStorage[_effectId];
-    }
-
-    /**
-     * @dev Delete an effect
-     * @param _effectId the id of the effect to delete
-     */
-    function deleteEffect(uint256 _effectId) external {
-        delete lib.getEffectStorage().effectStorage[_effectId];
-    }
-
     /// Foreign Call Storage
 
     /**
