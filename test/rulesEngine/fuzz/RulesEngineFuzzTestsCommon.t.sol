@@ -57,7 +57,7 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         testAddressArray.push(newPolicyAdmin);
 
         vm.startPrank(policyAdmin); 
-        bytes[] memory blankSignatures = new bytes[](0);
+        bytes4[] memory blankSignatures = new bytes4[](0);
         uint256[] memory blankFunctionSignatureIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(0, blankSignatures, blankFunctionSignatureIds, blankRuleIds);

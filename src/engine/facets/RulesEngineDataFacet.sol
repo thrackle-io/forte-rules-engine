@@ -333,7 +333,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @return policyId generated policyId
      * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
      */
-    function createPolicy(uint256 _policyId, bytes[] calldata _signatures, uint256[] calldata functionSignatureIds, uint256[][] calldata ruleIds) public returns(uint256) {
+    function createPolicy(uint256 _policyId, bytes4[] calldata _signatures, uint256[] calldata functionSignatureIds, uint256[][] calldata ruleIds) public returns(uint256) {
         uint256 policyId = updatePolicy(_policyId, _signatures, functionSignatureIds, ruleIds);
         //This function is called as an external call intentionally. This allows for proper gating on the generatePolicyAdminRole fn to only be callable by the RulesEngine address. 
         RulesEngineAdminRolesFacet(address(this)).generatePolicyAdminRole(policyId, address(msg.sender));

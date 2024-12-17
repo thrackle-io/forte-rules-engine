@@ -812,7 +812,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         internal
         returns (uint256)
     {
-        bytes[] memory blankSignatures = new bytes[](0);
+        bytes4[] memory blankSignatures = new bytes4[](0);
         uint256[] memory blankFunctionSignatureIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(
@@ -891,7 +891,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
     function _createEffectEvent(
         string memory _text
-    ) public returns (Effect memory) {
+    ) public pure returns (Effect memory) {
         uint256[] memory emptyArray = new uint256[](1);
         // Create a event effect
         return
@@ -905,7 +905,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
     function _createEffectRevert(
         string memory _text
-    ) public returns (Effect memory) {
+    ) public pure returns (Effect memory) {
         uint256[] memory emptyArray = new uint256[](1);
         // Create a revert effect
         return
@@ -917,7 +917,7 @@ contract RulesEngineCommon is DiamondMine, Test {
             });
     }
 
-    function _createEffectExpression() public returns (Effect memory) {
+    function _createEffectExpression() public pure returns (Effect memory) {
         Effect memory effect;
 
         effect.valid = true;
@@ -929,7 +929,7 @@ contract RulesEngineCommon is DiamondMine, Test {
     }
 
     function _createEffectExpressionTrackerUpdate()
-        public
+        public pure
         returns (Effect memory)
     {
         // Effect: TRU:someTracker += FC:simpleCheck(amount)
