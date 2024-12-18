@@ -270,9 +270,11 @@ struct PolicyStorageSet {
 
 struct Policy {
     // function signatures to function signature Id
-    mapping(bytes => uint256) functionSignatureIdMap;
+    mapping(bytes4 => uint256) functionSignatureIdMap;
     // function signatures to ruleIds
-    mapping(bytes => uint256[]) signatureToRuleIds;
+    mapping(bytes4 => uint256[]) signatureToRuleIds;
+    // Array to hold the function sigs for iterating
+    bytes4[] signatures;
 }
 
 /// Policy Association Storage Structures

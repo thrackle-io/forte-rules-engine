@@ -11,7 +11,7 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
     function testRulesEngine_Fuzz_createRule_simple(uint256 ruleValue, uint256 transferValue) public {
         uint256 response;
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-       Rule memory rule;
+        Rule memory rule;
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(ruleValue);
         // Build the calling function argument placeholder 
@@ -21,13 +21,13 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
 
-       PT[] memory pTypes = new PT[](2);
+        PT[] memory pTypes = new PT[](2);
         pTypes[0] =PT.ADDR;
         pTypes[1] =PT.UINT;
         // Save the function signature
         uint256 functionSignatureId = RulesEngineDataFacet(address(red)).updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
         // Save the Policy
-        signatures.push(bytes(functionSignature));  
+        signatures.push(bytes4(bytes(functionSignature)));  
         functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
@@ -44,10 +44,10 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         arguments.values[1] = abi.encode(transferValue);
         bytes memory retVal = abi.encode(arguments);
         if (ruleValue < transferValue) {
-            response = RulesEngineMainFacet(address(red)).checkPolicies(address(userContract), bytes(functionSignature), retVal);
+            response = RulesEngineMainFacet(address(red)).checkPolicies(address(userContract), bytes4(bytes(functionSignature)), retVal);
             assertEq(response, 1);
         } else if (ruleValue > transferValue){ 
-            response = RulesEngineMainFacet(address(red)).checkPolicies(address(userContract), bytes(functionSignature), retVal);
+            response = RulesEngineMainFacet(address(red)).checkPolicies(address(userContract), bytes4(bytes(functionSignature)), retVal);
             assertFalse(response == 1);
         }
     }
@@ -57,7 +57,7 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         testAddressArray.push(newPolicyAdmin);
 
         vm.startPrank(policyAdmin); 
-        bytes[] memory blankSignatures = new bytes[](0);
+        bytes4[] memory blankSignatures = new bytes4[](0);
         uint256[] memory blankFunctionSignatureIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(0, blankSignatures, blankFunctionSignatureIds, blankRuleIds);

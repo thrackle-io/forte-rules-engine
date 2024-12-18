@@ -270,7 +270,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @return policyId generated policyId
      * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
      */
-    function updatePolicy(uint256 _policyId, bytes[] calldata _signatures, uint256[] calldata functionSignatureIds, uint256[][] calldata ruleIds) public returns(uint256){
+    function updatePolicy(uint256 _policyId, bytes4[] calldata _signatures, uint256[] calldata functionSignatureIds, uint256[][] calldata ruleIds) public returns(uint256){
         // Load the policy data from storage
         PolicyS storage data = lib.getPolicyStorage();
         // signature length must match the signature id length
@@ -283,7 +283,8 @@ contract RulesEngineDataFacet is FacetCommonImports {
             _policyId = data.policyId;
             data.policyStorageSets[_policyId].set = true;
         }
-
+        // clear the iterator array
+        delete data.policyStorageSets[_policyId].policy.signatures;
         if (ruleIds.length > 0) {
             // Loop through all the passed in signatures for the policy      
             for (uint256 i = 0; i < _signatures.length; i++) {
@@ -291,6 +292,8 @@ contract RulesEngineDataFacet is FacetCommonImports {
                 if(!getFunctionSignature(functionSignatureIds[i]).set) revert("Invalid Signature");
                 // Load into the mapping
                 data.policyStorageSets[_policyId].policy.functionSignatureIdMap[_signatures[i]] = functionSignatureIds[i];
+                // load the iterator array
+                data.policyStorageSets[_policyId].policy.signatures.push(_signatures[i]);
                 // make sure that all the rules attached to each function signature exist
                 for (uint256 j = 0; j < ruleIds[i].length; j++) {
                     RuleStorageSet memory ruleStore = getRule(ruleIds[i][j]);
@@ -312,6 +315,8 @@ contract RulesEngineDataFacet is FacetCommonImports {
                 if(!getFunctionSignature(functionSignatureIds[i]).set) revert("Invalid Signature");
                 // Load into the mapping
                 data.policyStorageSets[_policyId].policy.functionSignatureIdMap[_signatures[i]] = functionSignatureIds[i];
+                // load the iterator array
+                data.policyStorageSets[_policyId].policy.signatures.push(_signatures[i]);
             }
         }    
         
@@ -328,7 +333,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @return policyId generated policyId
      * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
      */
-    function createPolicy(uint256 _policyId, bytes[] calldata _signatures, uint256[] calldata functionSignatureIds, uint256[][] calldata ruleIds) public returns(uint256) {
+    function createPolicy(uint256 _policyId, bytes4[] calldata _signatures, uint256[] calldata functionSignatureIds, uint256[][] calldata ruleIds) public returns(uint256) {
         uint256 policyId = updatePolicy(_policyId, _signatures, functionSignatureIds, ruleIds);
         //This function is called as an external call intentionally. This allows for proper gating on the generatePolicyAdminRole fn to only be callable by the RulesEngine address. 
         RulesEngineAdminRolesFacet(address(this)).generatePolicyAdminRole(policyId, address(msg.sender));
@@ -337,13 +342,33 @@ contract RulesEngineDataFacet is FacetCommonImports {
     }
 
     /**
-     * Get a policy from storage. Can only be an internal function due to the nested mapping.
+     * Get a policy from storage. Since Policy contains nested mappings, they must be broken into arrays to return the data externally. 
      * @param _policyId policyId
-     * @return policyStorageSet policy
+     * @return functionSigs function signatures within the policy(from Policy.functionSignatureIdMap)
+     * @return functionSigIds function signature ids corresponding to each function sig in functionSigs(from Policy.functionSignatureIdMap)
+     * @return ruleIds rule ids corresponding to each function signature in functionSigs(from Policy.signatureToRuleIds)
      */
-    function getPolicy(uint256 _policyId) internal view returns(PolicyStorageSet storage) {
+    function getPolicy(uint256 _policyId) external view returns(bytes4[] memory functionSigs, uint256[] memory functionSigIds, uint256[][] memory ruleIds) {
         // Load the policy data from storage
-        return lib.getPolicyStorage().policyStorageSets[_policyId];
+        Policy storage policy = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
+        // Initialize the return arrays if necessary
+        if(policy.signatures.length > 0){
+            functionSigs = new bytes4[](policy.signatures.length);
+            functionSigIds = new uint256[](policy.signatures.length);
+            ruleIds = new uint256[][](policy.signatures.length);
+        }
+        // Loop through the function signatures and load the return arrays
+        for (uint256 i = 0; i < policy.signatures.length; i++) {
+            functionSigs[i] = policy.signatures[i];
+            functionSigIds[i] = policy.functionSignatureIdMap[policy.signatures[i]];
+            // Initialize the ruleId return array if necessary
+            if(policy.signatureToRuleIds[policy.signatures[i]].length >0 && policy.signatureToRuleIds[policy.signatures[i]][0]> 0){
+                ruleIds[i] = new uint256[](policy.signatureToRuleIds[policy.signatures[i]].length);
+            } 
+            for (uint256 ruleIndex; ruleIndex < policy.signatureToRuleIds[policy.signatures[i]].length; ruleIndex++) {
+                ruleIds[i][ruleIndex] = policy.signatureToRuleIds[policy.signatures[i]][ruleIndex];
+            }
+        }
     }
 
     /**
