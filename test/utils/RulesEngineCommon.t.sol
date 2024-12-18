@@ -28,7 +28,7 @@ contract RulesEngineCommon is DiamondMine, Test {
     Effect effectId_revert2;
     Effect effectId_event;
     Effect effectId_event2;
-    bytes4[] signatures;
+    bytes[] signatures;
     uint256[] functionSignatureIds;
     uint256[][] ruleIds;
 
@@ -84,7 +84,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[1] = PT.UINT;
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
@@ -150,11 +150,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256 functionSignatureId = RulesEngineDataFacet(address(red))
             .updateFunctionSignature(
                 0,
-                bytes4(bytes(functionSignature2)),
+                bytes(functionSignature2),
                 pTypes
             );
         // Save the Policy
-        signatures.push(bytes4(bytes(functionSignature2)));
+        signatures.push(bytes(functionSignature2));
         functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -213,11 +213,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256 functionSignatureId = RulesEngineDataFacet(address(red))
             .updateFunctionSignature(
                 0,
-                bytes4(bytes(functionSignature2)),
+                bytes(functionSignature2),
                 pTypes
             );
         // Save the Policy
-        signatures.push(bytes4(bytes(functionSignature2)));
+        signatures.push(bytes(functionSignature2));
         functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -253,7 +253,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
 
@@ -347,7 +347,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
         // Rule: 1 == 1 -> FC:simpleCheck(amount) -> transfer(address _to, uint256 amount) returns (bool)
@@ -426,7 +426,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
 
@@ -532,7 +532,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
 
@@ -566,7 +566,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
 
@@ -599,7 +599,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
 
@@ -641,7 +641,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
 
@@ -709,7 +709,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
 
@@ -751,7 +751,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
 
@@ -796,7 +796,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
     /// Test helper functions
     function _createBlankPolicy() internal returns (uint256) {
-        bytes4[] memory blankSignatures = new bytes4[](0);
+        bytes[] memory blankSignatures = new bytes[](0);
         uint256[] memory blankFunctionSignatureIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         uint256 policyId = RulesEngineDataFacet(address(red)).updatePolicy(
@@ -812,7 +812,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         internal
         returns (uint256)
     {
-        bytes4[] memory blankSignatures = new bytes4[](0);
+        bytes[] memory blankSignatures = new bytes[](0);
         uint256[] memory blankFunctionSignatureIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(
@@ -845,12 +845,13 @@ contract RulesEngineCommon is DiamondMine, Test {
 
     function _addFunctionSignatureToPolicy(
         uint256 policyId,
-        bytes4 _functionSignature,
+        bytes memory _functionSignature,
         PT[] memory pTypes
     ) internal returns (uint256) {
         // Save the function signature
         uint256 functionSignatureId = RulesEngineDataFacet(address(red))
-            .updateFunctionSignature(0, bytes4(_functionSignature), pTypes);
+            .updateFunctionSignature(0, _functionSignature, pTypes);
+
         // Save the Policy
         signatures.push(_functionSignature);
         functionSignatureIds.push(functionSignatureId);

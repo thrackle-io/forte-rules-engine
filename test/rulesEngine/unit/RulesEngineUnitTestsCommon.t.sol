@@ -19,10 +19,11 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         uint256 functionSignatureId = RulesEngineDataFacet(address(red))
             .updateFunctionSignature(
                 0,
-                bytes4(bytes(functionSignature)),
+                bytes(functionSignature),
                 pTypes
             );
-        signatures.push(bytes4(bytes(functionSignature)));
+        signatures.push(bytes(functionSignature));
+
         functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = 1;
@@ -42,7 +43,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         uint256 policyId = _createBlankPolicy();
-        signatures.push(bytes4(bytes(functionSignature)));
+        signatures.push(bytes(functionSignature));
         functionSignatureIds.push(1);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = 1;
@@ -80,11 +81,12 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         uint256 functionSignatureId = RulesEngineDataFacet(address(red))
             .updateFunctionSignature(
                 0,
-                bytes4(bytes(functionSignature)),
+                bytes(functionSignature),
                 pTypes
             );
+
         // Save the Policy
-        signatures.push(bytes4(bytes(functionSignature)));
+        signatures.push(bytes(functionSignature));
         functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -115,7 +117,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         bytes memory retVal = abi.encode(arguments);
         uint256 response = RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             retVal
         );
         assertEq(response, 1);
@@ -157,7 +159,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[1] = PT.UINT;
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
@@ -226,7 +228,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         uint256 response = RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             retVal
         );
         assertEq(response, 1);
@@ -246,7 +248,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[1] = PT.UINT;
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
@@ -316,7 +318,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         vm.expectRevert(abi.encodePacked(revert_text));
         RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             retVal
         );
     }
@@ -335,7 +337,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[1] = PT.UINT;
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
@@ -415,7 +417,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[1] = PT.UINT;
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
@@ -494,7 +496,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         bytes memory retVal = abi.encode(arguments);
         uint256 response = RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(bytes(functionSignature2)),
+            bytes(functionSignature2),
             retVal
         );
         assertEq(response, 1);
@@ -516,7 +518,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         bytes memory retVal = abi.encode(arguments);
         uint256 response = RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(bytes(functionSignature2)),
+            bytes(functionSignature2),
             retVal
         );
         assertEq(response, 0);
@@ -555,7 +557,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         bytes memory retVal = abi.encode(arguments);
         uint256 response = RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(bytes(functionSignature2)),
+            bytes(functionSignature2),
             retVal
         );
         assertEq(response, 1);
@@ -577,7 +579,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         bytes memory retVal = abi.encode(arguments);
         uint256 response = RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(bytes(functionSignature2)),
+            bytes(functionSignature2),
             retVal
         );
         assertEq(response, 0);
@@ -617,7 +619,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         uint256 response = RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             retVal
         );
         assertEq(response, 1);
@@ -641,7 +643,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // The value being set in the foreign contract is then polled to verify that it has been udpated.
         RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             retVal
         );
         assertEq(testContract.getInternalValue(), 5);
@@ -666,7 +668,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // original tracker value 2, added value 5, resulting updated tracker value should be 7
         RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             retVal
         );
         Trackers memory tracker = RulesEngineDataFacet(address(red)).getTracker(
@@ -693,7 +695,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         vm.expectRevert(abi.encodePacked(revert_text));
         RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             retVal
         );
     }
@@ -1023,7 +1025,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         uint256 response = RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             retVal
         );
         assertEq(response, 1);
@@ -1049,7 +1051,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         vm.expectRevert(abi.encodePacked(revert_text));
         RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             retVal
         );
     }
@@ -1085,7 +1087,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
 
@@ -1121,7 +1123,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
 
@@ -1185,7 +1187,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[1] = PT.UINT;
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
@@ -1229,7 +1231,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[1] = PT.UINT;
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
@@ -1275,7 +1277,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[1] = PT.UINT;
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
@@ -1361,7 +1363,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[1] = PT.UINT;
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
@@ -1448,7 +1450,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[1] = PT.UINT;
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
@@ -1505,7 +1507,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[1] = PT.UINT;
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
@@ -1665,7 +1667,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         vm.startPrank(policyAdmin);
-        bytes4[] memory blankSignatures = new bytes4[](0);
+        bytes[] memory blankSignatures = new bytes[](0);
         uint256[] memory blankFunctionSignatureIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         uint256 policyID = RulesEngineDataFacet(address(red)).updatePolicy(
@@ -1782,7 +1784,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         uint256[] memory policyIds = new uint256[](1);
-        bytes4[] memory _functionSigs;
+        bytes[] memory _functionSigs;
         uint256[] memory _functionSigIds;
         uint256[][] memory _ruleIds;
 
@@ -1798,7 +1800,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         uint256[] memory policyIds = new uint256[](1);
-        bytes4[] memory _functionSigs;
+        bytes[] memory _functionSigs;
         uint256[] memory _functionSigIds;
         uint256[][] memory _ruleIds;
 
@@ -1810,7 +1812,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
         (_functionSigs, _functionSigIds, _ruleIds) = RulesEngineDataFacet(
@@ -1826,7 +1828,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         uint256[] memory policyIds = new uint256[](1);
-        bytes4[] memory _functionSigs;
+        bytes[] memory _functionSigs;
         uint256[] memory _functionSigIds;
         uint256[][] memory _ruleIds;
 
@@ -1838,7 +1840,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         _addFunctionSignatureToPolicy(
             policyIds[0],
-            bytes4(bytes(functionSignature)),
+            bytes(functionSignature),
             pTypes
         );
 

@@ -28,7 +28,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @param arguments function arguments
      * TODO: refine the parameters to this function. contractAddress is not necessary as it's the message caller
      */
-    function checkPolicies(address contractAddress, bytes4 functionSignature, bytes calldata arguments) public returns (uint256 retVal) {  
+    function checkPolicies(address contractAddress, bytes calldata functionSignature, bytes calldata arguments) public returns (uint256 retVal) {  
         retVal = 1; 
         // Load the function signature data from storage
         PolicyAssociationS storage data = lib.getPolicyAssociationStorage();
@@ -40,7 +40,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
         }
     }
 
-    function _checkPolicy(uint256 _policyId, address _contractAddress, bytes4 functionSignature, bytes calldata arguments) internal returns (bool retVal) {
+    function _checkPolicy(uint256 _policyId, address _contractAddress, bytes calldata functionSignature, bytes calldata arguments) internal returns (bool retVal) {
         _contractAddress; // added to remove wanring. TODO remove this once msg.sender testing is complete 
         // Load the policy data from storage
         PolicyS storage data = lib.getPolicyStorage();
@@ -70,7 +70,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @param functionSignature the signature of the function that initiated the transaction, used to pull the applicable rules.
      * @return rules applicable rules.
      */
-    function _loadApplicableRules(uint256 _policyId, bytes4 functionSignature) internal view returns(Rule[] memory){
+    function _loadApplicableRules(uint256 _policyId, bytes memory functionSignature) internal view returns(Rule[] memory){
         // Load the policy data from storage
         PolicyS storage data = lib.getPolicyStorage();
         Rule[] memory applicableRules = new Rule[](data.policyStorageSets[_policyId].policy.signatureToRuleIds[functionSignature].length);

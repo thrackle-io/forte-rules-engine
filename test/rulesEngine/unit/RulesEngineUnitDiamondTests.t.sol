@@ -10,7 +10,7 @@ import "src/engine/RulesEngineStorageStructure.sol";
 contract RulesEngineUnitDiamondTests is DiamondMine, Test {
     
     string functionSignature = "transfer(address,uint256) returns (bool)";
-    bytes4[] signatures;        
+    bytes[] signatures;        
     uint256[] functionSignatureIds;
     uint256[][] ruleIds;
     address constant CONTRACT_ADDRESS = address(22);
@@ -68,9 +68,9 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-        uint256 functionSignatureId = RulesEngineDataFacet(address(red)).updateFunctionSignature(0, bytes4(bytes(functionSignature)), pTypes);
+        uint256 functionSignatureId = RulesEngineDataFacet(address(red)).updateFunctionSignature(0, bytes(functionSignature), pTypes);
         FunctionSignatureStorageSet memory sig = RulesEngineDataFacet(address(red)).getFunctionSignature(functionSignatureId);
-        assertEq(sig.signature, bytes4(bytes(functionSignature)));
+        assertEq(sig.signature, bytes(functionSignature));
     }
 
     function testRulesEngine_Unit_Diamond_RuleStorage_Positive() public {
@@ -97,7 +97,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-        _addFunctionSignatureToPolicy(policyIds[0], bytes4(bytes(functionSignature)), pTypes);
+        _addFunctionSignatureToPolicy(policyIds[0], bytes(functionSignature), pTypes);
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
@@ -132,16 +132,16 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         instructionSet[6] = 1;
     }
      function _createBlankPolicy() internal returns (uint256) {
-        bytes4[] memory blankSignatures = new bytes4[](0);
+        bytes[] memory blankSignatures = new bytes[](0);
         uint256[] memory blankFunctionSignatureIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         uint256 policyId = RulesEngineDataFacet(address(red)).updatePolicy(0, blankSignatures, blankFunctionSignatureIds, blankRuleIds);
         return policyId;
     }
 
-    function _addFunctionSignatureToPolicy(uint256 policyId, bytes4 _functionSignature, PT[] memory pTypes) internal returns (uint256) {
+    function _addFunctionSignatureToPolicy(uint256 policyId, bytes memory _functionSignature, PT[] memory pTypes) internal returns (uint256) {
         // Save the function signature
-        uint256 functionSignatureId = RulesEngineDataFacet(address(red)).updateFunctionSignature(0, bytes4(_functionSignature), pTypes);
+        uint256 functionSignatureId = RulesEngineDataFacet(address(red)).updateFunctionSignature(0, _functionSignature, pTypes);
         // Save the Policy
         signatures.push(_functionSignature);
         functionSignatureIds.push(functionSignatureId);

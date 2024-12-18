@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import "forge-std/Script.sol";
 import "src/engine/RulesEngineDiamond.sol";
+import "src/ExampleUserContract.sol";
 import "src/utils/DiamondMine.sol";
 import {IDiamondInit} from "diamond-std/initializers/IDiamondInit.sol";
 import {DiamondInit} from "diamond-std/initializers/DiamondInit.sol";
@@ -21,6 +22,10 @@ contract DeployRulesDiamond is DiamondMine {
         RulesEngineDiamond diamond = _createRulesEngineDiamond(owner);
         string memory diamondAddress = vm.toString(address(diamond));
         setENVAddress("DIAMOND_ADDRESS", diamondAddress);
+
+        ExampleUserContract cont = new ExampleUserContract();
+        string memory contractAddress = vm.toString(address(cont));
+        setENVAddress("EXAMPLE_CONTRACT_ADDRESS", contractAddress);
 
         vm.stopBroadcast();
     }

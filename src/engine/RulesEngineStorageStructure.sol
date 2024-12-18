@@ -186,7 +186,7 @@ struct FunctionSignatureS {
 
 struct FunctionSignatureStorageSet {
     bool set;
-    bytes4 signature;
+    bytes signature;
     PT[] parameterTypes;
 }
 
@@ -270,11 +270,11 @@ struct PolicyStorageSet {
 
 struct Policy {
     // function signatures to function signature Id
-    mapping(bytes4 => uint256) functionSignatureIdMap;
+    mapping(bytes => uint256) functionSignatureIdMap;
     // function signatures to ruleIds
-    mapping(bytes4 => uint256[]) signatureToRuleIds;
+    mapping(bytes => uint256[]) signatureToRuleIds;
     // Array to hold the function sigs for iterating
-    bytes4[] signatures;
+    bytes[] signatures;
 }
 
 /// Policy Association Storage Structures
