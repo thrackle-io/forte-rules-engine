@@ -8,6 +8,7 @@ import {IDiamondInit} from "diamond-std/initializers/IDiamondInit.sol";
 import {DiamondInit} from "diamond-std/initializers/DiamondInit.sol";
 import {FacetCut, FacetCutAction} from "diamond-std/core/DiamondCut/DiamondCutLib.sol";
 import {IDiamondCut} from "diamond-std/core/DiamondCut/IDiamondCut.sol";
+import "src/ExampleUserContract.sol";
 
 contract DeployRulesDiamond is DiamondMine {
 
@@ -21,6 +22,10 @@ contract DeployRulesDiamond is DiamondMine {
         RulesEngineDiamond diamond = _createRulesEngineDiamond(owner);
         string memory diamondAddress = vm.toString(address(diamond));
         setENVAddress("DIAMOND_ADDRESS", diamondAddress);
+
+        ExampleUserContract cont = new ExampleUserContract();
+        string memory contractAddress = vm.toString(address(cont));
+        setENVAddress("EXAMPLE_CONTRACT_ADDRESS", contractAddress);
 
         vm.stopBroadcast();
     }

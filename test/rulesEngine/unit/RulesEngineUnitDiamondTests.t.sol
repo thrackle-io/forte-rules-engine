@@ -68,9 +68,9 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-        uint256 functionSignatureId = RulesEngineDataFacet(address(red)).updateFunctionSignature(0, bytes4(bytes(functionSignature)), pTypes);
+        uint256 functionSignatureId = RulesEngineDataFacet(address(red)).updateFunctionSignature(0, bytes4(keccak256(bytes(functionSignature))), pTypes);
         FunctionSignatureStorageSet memory sig = RulesEngineDataFacet(address(red)).getFunctionSignature(functionSignatureId);
-        assertEq(sig.signature, bytes4(bytes(functionSignature)));
+        assertEq(sig.signature, bytes4(keccak256(bytes(functionSignature))));
     }
 
     function testRulesEngine_Unit_Diamond_RuleStorage_Positive() public {
@@ -97,7 +97,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-        _addFunctionSignatureToPolicy(policyIds[0], bytes4(bytes(functionSignature)), pTypes);
+        _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(functionSignature))), pTypes);
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1

@@ -25,9 +25,9 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         pTypes[0] =PT.ADDR;
         pTypes[1] =PT.UINT;
         // Save the function signature
-        uint256 functionSignatureId = RulesEngineDataFacet(address(red)).updateFunctionSignature(0, bytes4(bytes(functionSignature)),pTypes);
+        uint256 functionSignatureId = RulesEngineDataFacet(address(red)).updateFunctionSignature(0, bytes4(keccak256(bytes(functionSignature))),pTypes);
         // Save the Policy
-        signatures.push(bytes4(bytes(functionSignature)));  
+        signatures.push(bytes4(keccak256(bytes(functionSignature))));  
         functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
@@ -44,10 +44,10 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         arguments.values[1] = abi.encode(transferValue);
         bytes memory retVal = abi.encode(arguments);
         if (ruleValue < transferValue) {
-            response = RulesEngineMainFacet(address(red)).checkPolicies(address(userContract), bytes4(bytes(functionSignature)), retVal);
+            response = RulesEngineMainFacet(address(red)).checkPolicies(address(userContract), bytes4(keccak256(bytes(functionSignature))), retVal);
             assertEq(response, 1);
         } else if (ruleValue > transferValue){ 
-            response = RulesEngineMainFacet(address(red)).checkPolicies(address(userContract), bytes4(bytes(functionSignature)), retVal);
+            response = RulesEngineMainFacet(address(red)).checkPolicies(address(userContract), bytes4(keccak256(bytes(functionSignature))), retVal);
             assertFalse(response == 1);
         }
     }
