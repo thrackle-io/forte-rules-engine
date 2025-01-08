@@ -6,6 +6,17 @@ pragma solidity ^0.8.13;
  * @author @mpetersoCode55 
  */
 interface IRulesEngine {
+
+    // Supported Parameter Types
+    enum PT {
+        ADDR,
+        STR,
+        UINT,
+        BOOL,
+        VOID,
+        BYTES
+    }
+    
     /**
      * @dev evaluates the conditions associated with all applicable rules and returns the result
      * @param contractAddress the address of the rules-enabled contract, used to pull the applicable rules
