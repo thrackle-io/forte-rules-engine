@@ -28,4 +28,8 @@ contract ExampleUserContractWithMinTransferAndDenyList {
         }
     }
 
+    function addToDenyList(address _to) public {
+        fc.addToNaughtyList(_to);
+    }
+
 }
