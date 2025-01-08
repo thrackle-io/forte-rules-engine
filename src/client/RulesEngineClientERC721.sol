@@ -7,6 +7,10 @@ import "./IRulesEngine.sol";
  * @title Rules Engine Client ERC721
  * @author @ShaneDuncan602
  * @dev The abstract contract containing modifiers used by Rules Engine clients. It is intended to be inherited and implemented by client contracts. It is self-contained and requires no additional imports.
+ * It contains before and after modifiers for the following functions: 
+ *          transferFrom(address,address,uint256)
+ *          safeTransferFrom(address,address,uint256,bytes)
+ *          safeMint(address)
  */
 abstract contract RulesEngineClientERC721 {
     struct Arguments {
