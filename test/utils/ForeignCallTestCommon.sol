@@ -58,3 +58,10 @@ contract ForeignCallTestContract {
     }
 
 }
+
+contract ForeignCallTestContractOFAC {
+    mapping(address => bool) public onTheNaughtyList;
+    function addToNaughtyList(address addr) public {
+        onTheNaughtyList[addr] = true;
+    }
+}
