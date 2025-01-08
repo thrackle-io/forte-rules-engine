@@ -89,9 +89,9 @@ contract RulesEngineMainFacet is FacetCommonImports{
         for(uint256 i = 0; i < applicableRules.length; i++) { 
             if(!evaluateIndividualRule(_policyId, applicableRules[i], functionSignatureArgs)) {
                 retVal = false;
-                this.doEffects(_policyId, applicableRules[i].negEffects, applicableRules[i], functionSignatureArgs);
+                doEffects(_policyId, applicableRules[i].negEffects, applicableRules[i], functionSignatureArgs);
             } else{
-                this.doEffects(_policyId, applicableRules[i].posEffects, applicableRules[i], functionSignatureArgs);
+                doEffects(_policyId, applicableRules[i].posEffects, applicableRules[i], functionSignatureArgs);
             }
         }
     }
@@ -106,7 +106,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
      */
     function evaluateIndividualRule(uint256 _policyId, Rule memory applicableRule, Arguments memory functionSignatureArgs) internal returns (bool response) {
             Arguments memory ruleArgs = buildArguments(_policyId, applicableRule.placeHolders, applicableRule.fcArgumentMappingsConditions, functionSignatureArgs);
-            response = this.run(_policyId, applicableRule.instructionSet, ruleArgs);
+            response = run(_policyId, applicableRule.instructionSet, ruleArgs);
     }
 
     function buildArguments(uint256 _policyId, Placeholder[] memory placeHolders, ForeignCallArgumentMappings[] memory fcArgs, Arguments memory functionSignatureArgs) public returns (Arguments memory) {
@@ -156,7 +156,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @param arguments the values to replace the placeholders in the instruction set with.
      * @return ans the result of evaluating the instruction set
      */
-    function run(uint256 _policyId, uint256[] calldata prog, Arguments calldata arguments) public returns (bool ans) {
+    function run(uint256 _policyId, uint256[] memory prog, Arguments memory arguments) public returns (bool ans) {
         uint256[64] memory mem;
         uint256 idx = 0;
         uint256 opi = 0;
@@ -290,7 +290,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @dev Loop through effects for a given rule and execute them
      * @param _effects list of effects
      */
-    function doEffects(uint256 _policyId, Effect[] calldata _effects, Rule memory applicableRule, Arguments memory functionSignatureArgs) public {
+    function doEffects(uint256 _policyId, Effect[] memory _effects, Rule memory applicableRule, Arguments memory functionSignatureArgs) public {
         // Load the Effect data from storage
         for(uint256 i = 0; i < _effects.length; i++) {
             if(_effects[i].valid) {
@@ -324,7 +324,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
     function evaluateExpression(uint256 _policyId, Rule memory applicableRule, Arguments memory functionSignatureArgs, uint256[] memory instructionSet) public {
         Arguments memory effectArguments = buildArguments( _policyId, applicableRule.effectPlaceHolders, applicableRule.fcArgumentMappingsEffects, functionSignatureArgs);
         if(instructionSet.length > 1) {
-            this.run(_policyId, instructionSet, effectArguments);
+            run(_policyId, instructionSet, effectArguments);
         }
     }
 
