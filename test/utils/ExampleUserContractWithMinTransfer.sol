@@ -9,10 +9,15 @@ pragma solidity ^0.8.13;
  */
 contract ExampleUserContractWithMinTransfer {
     event RulesEngineEvent(string _message);
+    uint256 predefinedMinTransfer;
+
+    constructor () {
+        predefinedMinTransfer = 4;
+    }
 
     function transfer(address _to, uint256 _amount) public returns (bool _return) {
         _to;
-        if (_amount > 4) {
+        if (_amount > predefinedMinTransfer) {
             emit RulesEngineEvent("Min Transfer triggered");
             return true;
         } else {

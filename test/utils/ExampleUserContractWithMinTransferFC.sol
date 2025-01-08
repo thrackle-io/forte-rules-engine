@@ -11,15 +11,17 @@ import "test/utils/ForeignCallTestCommon.sol";
 contract ExampleUserContractWithMinTransferFC {
     event RulesEngineEvent(string _message);
     ForeignCallTestContract fc;
+    uint256 predefinedMinTransfer;
 
     constructor () {
         fc = new ForeignCallTestContract();
+        predefinedMinTransfer = 4;
     }
 
     function transfer(address _to, uint256 _amount) public returns (bool _return) {
         _to;
         uint256 internalAmount = fc.simpleCheck(_amount);
-        if (internalAmount > 4) {
+        if (internalAmount > predefinedMinTransfer) {
             emit RulesEngineEvent("Min Transfer triggered");
             return true;
         } else {
