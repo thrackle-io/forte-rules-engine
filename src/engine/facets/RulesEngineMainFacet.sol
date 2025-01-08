@@ -204,12 +204,13 @@ contract RulesEngineMainFacet is FacetCommonImports{
         public returns(ForeignCallReturnValue memory returnValue) {
         // Load the Foreign Call data from storage
         ForeignCallS storage data = lib.getForeignCallStorage();
+        ForeignCall[] memory foreignCalls = data.foreignCallSets[_policyId].foreignCalls;
         // Loop through the foreign call structures associated with the calling contracts address
-        for(uint256 foreignCallsIdx = 0; foreignCallsIdx < data.foreignCallSets[_policyId].foreignCalls.length; foreignCallsIdx++) {
+        for(uint256 foreignCallsIdx = 0; foreignCallsIdx < foreignCalls.length; foreignCallsIdx++) {
             // Check if the index for this placeholder matches the foreign calls index
-            if(data.foreignCallSets[_policyId].foreignCalls[foreignCallsIdx].foreignCallIndex == placeHolders[placeholderIndex].typeSpecificIndex) {
+            if(foreignCalls[foreignCallsIdx].foreignCallIndex == placeHolders[placeholderIndex].typeSpecificIndex) {
                 // Place the foreign call
-                ForeignCallReturnValue memory retVal = evaluateForeignCallForRule(data.foreignCallSets[_policyId].foreignCalls[foreignCallsIdx], fcArgumentMappings, functionSignatureArgs);
+                ForeignCallReturnValue memory retVal = evaluateForeignCallForRule(foreignCalls[foreignCallsIdx], fcArgumentMappings, functionSignatureArgs);
                 return retVal;
             }
         }
