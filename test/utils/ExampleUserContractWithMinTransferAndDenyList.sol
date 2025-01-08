@@ -21,7 +21,7 @@ contract ExampleUserContractWithMinTransferAndDenyList {
     function transfer(address _to, uint256 _amount) public returns (bool _return) {
         _to;
         bool isOnDenyList = fc.onTheNaughtyList(_to);
-        if (isOnDenyList || _amount < predefinedMinTransfer) {
+        if (isOnDenyList && _amount < predefinedMinTransfer) {
             revert();
         } else {
             return true;
