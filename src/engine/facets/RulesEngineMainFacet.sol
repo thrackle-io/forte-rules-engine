@@ -32,9 +32,10 @@ contract RulesEngineMainFacet is FacetCommonImports{
         retVal = 1; 
         // Load the function signature data from storage
         PolicyAssociationS storage data = lib.getPolicyAssociationStorage();
+        uint256[] memory policyIds = data.contractPolicyIdMap[contractAddress];
         // loop through all the active policies
-        for(uint256 policyIdx = 0; policyIdx < data.contractPolicyIdMap[contractAddress].length; policyIdx++) {
-            if(!_checkPolicy(data.contractPolicyIdMap[contractAddress][policyIdx], contractAddress, functionSignature, arguments)) {
+        for(uint256 policyIdx = 0; policyIdx < policyIds.length; policyIdx++) {
+            if(!_checkPolicy(policyIds[policyIdx], contractAddress, functionSignature, arguments)) {
                 retVal = 0;
             }
         }
@@ -43,42 +44,29 @@ contract RulesEngineMainFacet is FacetCommonImports{
     function _checkPolicy(uint256 _policyId, address _contractAddress, bytes4 functionSignature, bytes calldata arguments) internal returns (bool retVal) {
         _contractAddress; // added to remove wanring. TODO remove this once msg.sender testing is complete 
         // Load the policy data from storage
-        PolicyS storage data = lib.getPolicyStorage();
-        // Load the function signature data from storage
-        FunctionSignatureS storage sigData = lib.getFunctionSignatureStorage();
-        // Decode arguments from function signature
-        PT[] memory functionSignaturePlaceholders;
-        if(data.policyStorageSets[_policyId].set) {
-            if(sigData.functionSignatureStorageSets[data.policyStorageSets[_policyId].policy.functionSignatureIdMap[functionSignature]].set) {
-                functionSignaturePlaceholders = new PT[](sigData.functionSignatureStorageSets[data.policyStorageSets[_policyId].policy.functionSignatureIdMap[functionSignature]].parameterTypes.length);
-                for(uint256 i = 0; i < functionSignaturePlaceholders.length; i++) {
-                    functionSignaturePlaceholders[i] = sigData.functionSignatureStorageSets[data.policyStorageSets[_policyId].policy.functionSignatureIdMap[functionSignature]].parameterTypes[i];
-                }
-            }
-        }
+        PolicyStorageSet storage policyStorageSet = lib.getPolicyStorage().policyStorageSets[_policyId];
         
         Arguments memory functionSignatureArgs = abi.decode(arguments, (Arguments));    
 
         // Retrieve placeHolder[] for specific rule to be evaluated and translate function signature argument array 
         // to rule specific argument array
-        retVal = evaluateRulesAndExecuteEffects(_policyId, _loadApplicableRules(_policyId, functionSignature), functionSignatureArgs);
+        retVal = evaluateRulesAndExecuteEffects(_policyId, _loadApplicableRules(policyStorageSet.policy, functionSignature), functionSignatureArgs);
     }
 
     /**
      * @dev Loads the applicable rules for a policy. This was broken out of _checkPolicy to address stack too deep issue
-     * @param _policyId policy id
+     * @param policy the policy to load the rules from
      * @param functionSignature the signature of the function that initiated the transaction, used to pull the applicable rules.
      * @return rules applicable rules.
      */
-    function _loadApplicableRules(uint256 _policyId, bytes4 functionSignature) internal view returns(Rule[] memory){
-        // Load the policy data from storage
-        PolicyS storage data = lib.getPolicyStorage();
-        Rule[] memory applicableRules = new Rule[](data.policyStorageSets[_policyId].policy.signatureToRuleIds[functionSignature].length);
+    function _loadApplicableRules(Policy storage policy, bytes4 functionSignature) internal view returns(Rule[] memory){
         // Load the function signature data from storage
         RuleS storage ruleData = lib.getRuleStorage();
+        Rule[] memory applicableRules = new Rule[](policy.signatureToRuleIds[functionSignature].length);
         for(uint256 i = 0; i < applicableRules.length; i++) {
-            if(ruleData.ruleStorageSets[data.policyStorageSets[_policyId].policy.signatureToRuleIds[functionSignature][i]].set) {
-                applicableRules[i] = ruleData.ruleStorageSets[data.policyStorageSets[_policyId].policy.signatureToRuleIds[functionSignature][i]].rule;
+            RuleStorageSet memory ruleStorageSet = ruleData.ruleStorageSets[policy.signatureToRuleIds[functionSignature][i]];
+            if(ruleStorageSet.set) {
+                applicableRules[i] = ruleStorageSet.rule;
             }
         }
         return applicableRules;
@@ -105,8 +93,8 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * TODO: Look into the relationship between policy and foreign calls
      */
     function evaluateIndividualRule(uint256 _policyId, Rule memory applicableRule, Arguments memory functionSignatureArgs) internal returns (bool response) {
-            Arguments memory ruleArgs = buildArguments(_policyId, applicableRule.placeHolders, applicableRule.fcArgumentMappingsConditions, functionSignatureArgs);
-            response = run(_policyId, applicableRule.instructionSet, ruleArgs);
+        Arguments memory ruleArgs = buildArguments(_policyId, applicableRule.placeHolders, applicableRule.fcArgumentMappingsConditions, functionSignatureArgs);
+        response = run(_policyId, applicableRule.instructionSet, ruleArgs);
     }
 
     function buildArguments(uint256 _policyId, Placeholder[] memory placeHolders, ForeignCallArgumentMappings[] memory fcArgs, Arguments memory functionSignatureArgs) public returns (Arguments memory) {
@@ -152,6 +140,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
 
     /**
      * @dev Evaluates the instruction set and returns an answer to the condition
+     * @param _policyId the id of the policy the instruction set belongs to
      * @param prog The instruction set, with placeholders, to be run.
      * @param arguments the values to replace the placeholders in the instruction set with.
      * @return ans the result of evaluating the instruction set
