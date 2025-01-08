@@ -42,11 +42,13 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         _testGasExampleHardcodedMinTransferNotTriggered();
         _testGasExampleSimpleMinTransferNotTriggered();
         _testGasExampleHardcodedMinTransferTriggered();
+        _testGasExampleSimpleMinTransferTriggeredWithRevertEffect();
         _testGasExampleSimpleMinTransferTriggeredWithEffect();
         _testGasExampleHardcodedMinTransferWithForeignCallNotTriggered();
         _testGasExampleSimpleMinTransferWithForeignCallNotTriggered();
         _testGasExampleHardcodedMinTransferWithForeignCallTriggered();
         _testGasExampleSimpleMinTransferWithForeignCallTriggeredWithEvent();
+        _testGasExampleSimpleMinTransferWithForeignCallTriggeredWithRevert();
         _testGasExampleOFAC();
     }
 
@@ -84,6 +86,15 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         _exampleContractGasReport(5, address(userContract), "Using REv2 Min Transfer Triggered With Event Effect"); 
     }
 
+    function _testGasExampleSimpleMinTransferTriggeredWithRevertEffect() internal endWithStopPrank resets{
+        // Create a minimum transaction(GT 4) rule with positive event
+        _setupRuleWithRevert();
+        vm.expectRevert();
+        _testExampleContractPrep(3, address(userContract));
+        vm.expectRevert();
+        _exampleContractGasReport(3, address(userContract), "Using REv2 Min Transfer Triggered With Revert Effect"); 
+    }
+
     function _testGasExampleSimpleMinTransferWithForeignCallNotTriggered() internal endWithStopPrank resets{
         // Create a minimum transaction(GT 4) rule with positive event
         setupRuleWithForeignCall(4, ET.EVENT, true);
@@ -96,6 +107,15 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         setupRuleWithForeignCall(4, ET.EVENT, true);
         _testExampleContractPrep(5, address(userContract));
         _exampleContractGasReport(5, address(userContract), "Using REv2 Min Transfer With Foreign Call Triggered With Event Effect"); 
+    }
+
+    function _testGasExampleSimpleMinTransferWithForeignCallTriggeredWithRevert() internal endWithStopPrank resets{
+        // Create a minimum transaction(GT 4) rule with positive event
+        setupRuleWithForeignCall(5, ET.REVERT, false);
+        vm.expectRevert();
+        _testExampleContractPrep(4, address(userContract));
+        vm.expectRevert();
+        _exampleContractGasReport(4, address(userContract), "Using REv2 Min Transfer With Foreign Call Triggered With Revert Effect"); 
     }
 
 /**********  Hard-coded MinTransfer with positive effect **********/
