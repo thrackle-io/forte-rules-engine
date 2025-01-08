@@ -171,9 +171,9 @@ contract RulesEngineMainFacet is FacetCommonImports{
                 // TRU, tracker index, mem index
                 // TODO: Update to account for type
                 // Load the Tracker data from storage
-                TrackerS storage data = lib.getTrackerStorage();
-                if(data.trackerValueSets[_policyId].trackers[prog[idx + 1]].pType == PT.UINT) {
-                    data.trackerValueSets[_policyId].trackers[prog[idx + 1]].trackerValue = abi.encode(mem[prog[idx+2]]);
+                TrackerValuesSet storage set = lib.getTrackerStorage().trackerValueSets[_policyId];
+                if(set.trackers[prog[idx + 1]].pType == PT.UINT) {
+                    set.trackers[prog[idx + 1]].trackerValue = abi.encode(mem[prog[idx+2]]);
                 }
                 idx += 3;
 
