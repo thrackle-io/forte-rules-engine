@@ -103,7 +103,7 @@ abstract contract RulesEngineClientERC721 {
         args.argumentTypes[0] = IRulesEngine.PT.ADDR;
         args.argumentTypes[1] = IRulesEngine.PT.ADDR;
         bytes memory encoded = abi.encode(args);
-        _invokeRulesEngine(bytes("safeMint(address)"), encoded);
+        _invokeRulesEngine(bytes4(keccak256("safeMint(address)")), encoded);
     }
 
     /**
@@ -128,7 +128,7 @@ abstract contract RulesEngineClientERC721 {
         args.argumentTypes[3] = IRulesEngine.PT.BYTES;
         args.argumentTypes[4] = IRulesEngine.PT.ADDR;
         bytes memory encoded = abi.encode(args);
-        _invokeRulesEngine(bytes("safeTransferFrom(address,address,uint256,bytes)"), encoded);
+        _invokeRulesEngine(bytes4(keccak256("safeTransferFrom(address,address,uint256,bytes)")), encoded);
     }
 
     /**
@@ -150,7 +150,7 @@ abstract contract RulesEngineClientERC721 {
         args.argumentTypes[2] = IRulesEngine.PT.UINT;
         args.argumentTypes[3] = IRulesEngine.PT.ADDR;
         bytes memory encoded = abi.encode(args);
-        _invokeRulesEngine(bytes("transferFrom(address,address,uint256)"), encoded);
+        _invokeRulesEngine(bytes4(keccak256("transferFrom(address,address,uint256)")), encoded);
     }
 
     /**
@@ -159,7 +159,7 @@ abstract contract RulesEngineClientERC721 {
      * @param args function signature's arguments
      * @return retval return value from the rules engine
      */
-    function _invokeRulesEngine(bytes memory signature, bytes memory args) internal returns (uint256 retval) {
+    function _invokeRulesEngine(bytes4 signature, bytes memory args) internal returns (uint256 retval) {
         if (rulesEngineAddress != address(0)) return IRulesEngine(rulesEngineAddress).checkPolicies(address(this), signature, args);
     }
 }

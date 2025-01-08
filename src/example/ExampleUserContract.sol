@@ -21,7 +21,7 @@ contract ExampleUserContract is RulesEngineClient {
         args.argumentTypes[0] = IRulesEngine.PT.ADDR;
         args.argumentTypes[1] = IRulesEngine.PT.UINT;
         bytes memory encoded = abi.encode(args);
-        uint256 retval = _invokeRulesEngine(bytes("transfer(address,uint256) returns (bool)"), encoded);
+        uint256 retval = _invokeRulesEngine(bytes4(keccak256("transfer(address,uint256)")), encoded);
         if (retval > 0) return true;
     }
 

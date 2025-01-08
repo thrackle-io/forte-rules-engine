@@ -104,7 +104,7 @@ abstract contract RulesEngineClient {
         args.argumentTypes[1] = IRulesEngine.PT.UINT;
         args.argumentTypes[2] = IRulesEngine.PT.ADDR;
         bytes memory encoded = abi.encode(args);
-        _invokeRulesEngine(bytes("transfer(address,uint256) returns (bool)"), encoded);
+        _invokeRulesEngine(bytes4(keccak256(bytes("transfer(address,uint256)"))), encoded);
     }
 
     /**
@@ -126,7 +126,7 @@ abstract contract RulesEngineClient {
         args.argumentTypes[2] = IRulesEngine.PT.UINT;
         args.argumentTypes[3] = IRulesEngine.PT.ADDR;
         bytes memory encoded = abi.encode(args);
-        _invokeRulesEngine(bytes("transferFrom(address,address,uint256) returns (bool)"), encoded);
+        _invokeRulesEngine(bytes4(keccak256(bytes("transferFrom(address,address,uint256)"))), encoded);
     }
 
     /**
@@ -145,7 +145,7 @@ abstract contract RulesEngineClient {
         args.argumentTypes[1] = IRulesEngine.PT.UINT;
         args.argumentTypes[2] = IRulesEngine.PT.ADDR;
         bytes memory encoded = abi.encode(args);
-        _invokeRulesEngine(bytes("mint(address,uint256)"), encoded);
+        _invokeRulesEngine(bytes4(keccak256(bytes("mint(address,uint256)"))), encoded);
     }
 
     /**
@@ -154,7 +154,7 @@ abstract contract RulesEngineClient {
      * @param args function signature's arguments
      * @return retval return value from the rules engine
      */
-    function _invokeRulesEngine(bytes memory signature, bytes memory args) internal returns (uint256 retval) {
+    function _invokeRulesEngine(bytes4 signature, bytes memory args) internal returns (uint256 retval) {
         if (rulesEngineAddress != address(0)) return IRulesEngine(rulesEngineAddress).checkPolicies(address(this), signature, args);
     }
 }

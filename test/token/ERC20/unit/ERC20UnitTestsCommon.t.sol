@@ -7,8 +7,8 @@ import "src/example/ExampleERC20.sol";
 abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
 
     ExampleERC20 userContract;
-    string constant ERC20_TRANSFER_SIGNATURE = "transfer(address,uint256) returns (bool)";
-    string constant ERC20_TRANSFER_FROM_SIGNATURE = "transferFrom(address,address,uint256) returns (bool)";
+    string constant ERC20_TRANSFER_SIGNATURE = "transfer(address,uint256)";
+    string constant ERC20_TRANSFER_FROM_SIGNATURE = "transferFrom(address,address,uint256)";
     string constant ERC20_MINT_SIGNATURE = "mint(address,uint256)";
 
     function testERC20_Transfer_Before_Unit_checkRule_ForeignCall_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
@@ -122,7 +122,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         
         policyIds[0] = _createBlankPolicy();
 
-        _addFunctionSignatureToPolicy(policyIds[0], bytes(_functionSignature), pTypes);
+        _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule =  _createGTRuleTransferFrom(4);
@@ -142,7 +142,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         
         policyIds[0] = _createBlankPolicy();
 
-        _addFunctionSignatureToPolicy(policyIds[0], bytes(_functionSignature), pTypes);
+        _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule =  _createGTRuleMint(4);
