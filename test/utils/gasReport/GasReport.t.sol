@@ -243,44 +243,23 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
         // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.ADDR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.ADDR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 0;
+
         rule = _setUpEffect(rule, _effectType, isPositive);
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 0;
         ForeignCall memory fc = RulesEngineDataFacet(address(red))
             .updateForeignCall(
                 policyIds[0],
                 address(_contractAddress),
                 "getNaughty(address)",
                 PT.UINT,
-                fcArgs
+                fcArgs,
+                typeSpecificIndices
             );
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -343,31 +322,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule1.instructionSet[5] = 0;
         rule1.instructionSet[6] = 1;
         // Build the mapping between calling function arguments and foreign call arguments
-        rule1.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.ADDR;
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.ADDR;
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 0;
+
         rule1 = _setUpEffect(rule1, _effectType, isPositive);
         // Save the rule
         uint256 ruleId1 = RulesEngineDataFacet(address(red)).updateRule(0, rule1);
@@ -377,13 +332,16 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 0;
         ForeignCall memory fc = RulesEngineDataFacet(address(red))
             .updateForeignCall(
                 policyIds[0],
                 address(_contractAddress),
                 "getNaughty(address)",
                 PT.UINT,
-                fcArgs
+                fcArgs,
+                typeSpecificIndices
             );
         ruleIds.push(new uint256[](2));
         ruleIds[0][0] = ruleId1;
