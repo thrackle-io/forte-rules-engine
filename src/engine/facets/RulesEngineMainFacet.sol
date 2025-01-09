@@ -236,11 +236,13 @@ contract RulesEngineMainFacet is FacetCommonImports{
 
         // First pass: calculate sizes
         for(uint256 i = 0; i < fcArgumentMappings.length; i++) {
-            if(fcArgumentMappings[i].foreignCallIndex == fc.foreignCallIndex) {
-                for(uint256 j = 0; j < fcArgumentMappings[i].mappings.length; j++) {
+            ForeignCallArgumentMappings memory fcmapping = fcArgumentMappings[i];
+            if(fcmapping.foreignCallIndex == fc.foreignCallIndex) {
+                for(uint256 j = 0; j < fcmapping.mappings.length; j++) {
                     // Check the parameter type and set the values in the encode arrays accordingly 
-                    PT argType = fcArgumentMappings[i].mappings[j].functionCallArgumentType;
-                    bytes memory value = functionArguments.values[fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
+                    IndividualArgumentMapping memory individualMapping = fcmapping.mappings[j];
+                    PT argType = individualMapping.functionCallArgumentType;
+                    bytes memory value = functionArguments.values[individualMapping.functionSignatureArg.typeSpecificIndex];
                     parameterTypes[j] = argType;
                     values[j] = value;
                     if (argType == PT.STR) {
