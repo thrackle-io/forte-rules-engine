@@ -39,8 +39,11 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
 /**********  All gas tests should run through this function to keep results together **********/
     function testGasReport() public {
-        // _testGasExampleContract_Primer();
-        // _testGasExampleContract_Base();
+        _testGasExampleContract_Primer();
+        // Only uncomment the Primer and the individual test you are intending to run to avoid coloring the data.
+        // This default configuration only runs the Base test
+        _testGasExampleContract_Base();
+        
         // _testGasExampleContract_NoPoliciesActive();
         // _testGasExampleHardcodedMinTransferNotTriggered();
         // _testGasExampleSimpleMinTransferNotTriggered();
@@ -53,7 +56,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // _testGasExampleHardcodedMinTransferWithForeignCallTriggered();
         // _testGasExampleSimpleMinTransferWithForeignCallTriggeredWithEvent();
         // _testGasExampleSimpleMinTransferWithForeignCallTriggeredWithRevert();
-        _testGasExampleOFAC();
+        // _testGasExampleOFAC();
         // _testGasExampleHardcodedOFAC();
         // _testGasExampleHardcodedOFACWithMinTransfer();
         // _testGasExampleOFACWithMinTransfer();
@@ -193,8 +196,10 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 /**********  OFAC Prep functions to ensure warm storage comparisons **********/
     function _testGasExampleOFAC() public {
         testContract2 = new ForeignCallTestContractOFAC();
-        setupRuleWithForeignCall2(address(testContract2), ET.REVERT, false);
+        setupRuleWithForeignCall2(address(testContract2), ET.REVERT, true);
         testContract2.addToNaughtyList(address(0x7654321));
+        vm.expectRevert();
+        _testExampleContractPrep(5, address(userContract));
         vm.expectRevert();
         _exampleContractGasReport(5, address(userContract), "Using REv2 OFAC gas report"); 
     }
@@ -233,7 +238,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule.instructionSet[0] = uint(LC.PLH);
         rule.instructionSet[1] = 0;
         rule.instructionSet[2] = uint(LC.NUM);
-        rule.instructionSet[3] = 0;
+        rule.instructionSet[3] = 1;
         rule.instructionSet[4] = uint(LC.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
@@ -290,8 +295,10 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
     function _testGasExampleOFACWithMinTransfer() public {
         testContract2 = new ForeignCallTestContractOFAC();
-        setupRulesWithForeignCallAndMinTransfer(address(testContract2), ET.REVERT, false);
+        setupRulesWithForeignCallAndMinTransfer(address(testContract2), ET.REVERT, true);
         testContract2.addToNaughtyList(address(0x7654321));
+        vm.expectRevert();
+        _testExampleContractPrep(5, address(userContract));
         vm.expectRevert();
         _exampleContractGasReport(5, address(userContract), "Using REv2 OFAC with min transfer gas report"); 
     }
@@ -325,7 +332,9 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule1.placeHolders[1].pType = PT.UINT;
         rule1.placeHolders[1].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
-        rule1.instructionSet = new uint256[](14);
+        // We don't want this one to trigger the revert effect, we want both rules to be captured in the gas test
+        // forcing this rule to fail
+        rule1.instructionSet = new uint256[](7);
         rule1.instructionSet[0] = uint(LC.PLH);
         rule1.instructionSet[1] = 0;
         rule1.instructionSet[2] = uint(LC.NUM);
@@ -333,13 +342,6 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule1.instructionSet[4] = uint(LC.EQ);
         rule1.instructionSet[5] = 0;
         rule1.instructionSet[6] = 1;
-        rule1.instructionSet[7] = uint(LC.PLH);
-        rule1.instructionSet[8] = 1;
-        rule1.instructionSet[9] = uint(LC.NUM);
-        rule1.instructionSet[10] = 4;
-        rule1.instructionSet[11] = uint(LC.GT);
-        rule1.instructionSet[12] = 0;
-        rule1.instructionSet[13] = 1;
         // Build the mapping between calling function arguments and foreign call arguments
         rule1.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
             1
@@ -370,7 +372,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Save the rule
         uint256 ruleId1 = RulesEngineDataFacet(address(red)).updateRule(0, rule1);
         rule2 = _createGTRule(4);
-        rule2.negEffects[0] = effectId_revert;
+        rule2.posEffects[0] = effectId_revert;
         uint256 ruleId2 = RulesEngineDataFacet(address(red)).updateRule(0, rule2);
 
         PT[] memory fcArgs = new PT[](1);
@@ -379,7 +381,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             .updateForeignCall(
                 policyIds[0],
                 address(_contractAddress),
-                "onTheNaughtyList(address)",
+                "getNaughty(address)",
                 PT.UINT,
                 fcArgs
             );
