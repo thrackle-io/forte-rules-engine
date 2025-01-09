@@ -85,12 +85,7 @@ struct Effect {
 /// Foreign Call Structures
 struct ForeignCallS {
     uint256 foreignCallIndex;
-    mapping(uint256 policyId => ForeignCallSet) foreignCallSets;
-}
-
-struct ForeignCallSet {
-    bool set;
-    ForeignCall[] foreignCalls;
+    mapping(uint256 policyId => mapping(uint256 foreignCallIndex => ForeignCall)) foreignCalls;
 }
 
 /**
@@ -149,6 +144,8 @@ struct ForeignCall {
     address foreignCallAddress;
     // Unique identifier for the foreign contract structure (used by the rule to reference it)
     uint256 foreignCallIndex;
+    // Used to determine if the foreign call structure has been initialized
+    bool set;
     // The function signature of the foreign call
     bytes4 signature;
     // The parameter type of the foreign calls return
