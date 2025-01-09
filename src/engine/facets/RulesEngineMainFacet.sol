@@ -113,13 +113,14 @@ contract RulesEngineMainFacet is FacetCommonImports{
 
         for(uint256 placeholderIndex = 0; placeholderIndex < placeHolders.length; placeholderIndex++) {
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
-            if(placeHolders[placeholderIndex].foreignCall) {
+            Placeholder memory placeholder = placeHolders[placeholderIndex];
+            if(placeholder.foreignCall) {
                     ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, placeHolders, ruleData.ruleStorageSets[applicableRule].rule.fcArgumentMappingsConditions, functionSignatureArgs, placeholderIndex);
                     // Set the placeholders value and type based on the value returned by the foreign call
                     ruleArgs.argumentTypes[overallIter] = retVal.pType;
                     ruleArgs.values[overallIter] = retVal.value;
                     ++overallIter;
-            } else if (placeHolders[placeholderIndex].trackerValue) {
+            } else if (placeholder.trackerValue) {
                 // Load the Tracker data from storage
                 TrackerS storage data = lib.getTrackerStorage();
                 // Loop through tracker storage for invoking address  
@@ -132,14 +133,14 @@ contract RulesEngineMainFacet is FacetCommonImports{
                 }
             } else {
                 // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
-                if(placeHolders[placeholderIndex].pType == PT.ADDR) {
+                if(placeholder.pType == PT.ADDR) {
                     ruleArgs.argumentTypes[overallIter] = PT.ADDR;
-                } else if(placeHolders[placeholderIndex].pType == PT.UINT) {
+                } else if(placeholder.pType == PT.UINT) {
                     ruleArgs.argumentTypes[overallIter] = PT.UINT;
-                } else if(placeHolders[placeholderIndex].pType == PT.STR) {
+                } else if(placeholder.pType == PT.STR) {
                     ruleArgs.argumentTypes[overallIter] = PT.STR;
                 }
-                ruleArgs.values[overallIter] = functionSignatureArgs.values[placeHolders[placeholderIndex].typeSpecificIndex];
+                ruleArgs.values[overallIter] = functionSignatureArgs.values[placeholder.typeSpecificIndex];
                 ++overallIter;
             }
         }
