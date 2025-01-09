@@ -66,7 +66,6 @@ contract ForeignCallTestContractOFAC {
     }
 
     function getNaughty(address addr) public returns(bool) {
-        console.log("I MADE IT HERE");
         return onTheNaughtyList[addr];
     }
 }
