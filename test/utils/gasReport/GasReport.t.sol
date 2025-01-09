@@ -42,7 +42,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         _testGasExampleContract_Primer();
         // Only uncomment the Primer and the individual test you are intending to run to avoid coloring the data.
         // This default configuration only runs the Base test
-        // _testGasExampleContract_Base();
+        //_testGasExampleContract_Base();
         
         // _testGasExampleContract_NoPoliciesActive();
         // _testGasExampleHardcodedMinTransferNotTriggered();
