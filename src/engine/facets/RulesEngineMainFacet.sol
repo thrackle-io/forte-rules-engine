@@ -48,23 +48,22 @@ contract RulesEngineMainFacet is FacetCommonImports{
         //PolicyStorageSet storage policyStorageSet = lib.getPolicyStorage().policyStorageSets[_policyId];
         
         Arguments memory functionSignatureArgs = abi.decode(arguments, (Arguments));    
-
+        PolicyStorageSet storage policyStorageSet = lib.getPolicyStorage().policyStorageSets[_policyId];
         // Retrieve placeHolder[] for specific rule to be evaluated and translate function signature argument array 
         // to rule specific argument array
-        retVal = evaluateRulesAndExecuteEffects(_policyId, _loadApplicableRules(_policyId, functionSignature), functionSignatureArgs);
+        retVal = evaluateRulesAndExecuteEffects(_policyId, _loadApplicableRules(policyStorageSet.policy, functionSignature), functionSignatureArgs);
     }
 
-    function _loadApplicableRules(uint256 _policyId, bytes4 functionSignature) internal view returns(uint256[] memory){
+    function _loadApplicableRules(Policy storage policy, bytes4 functionSignature) internal view returns(uint256[] memory){
         // Load the policy data from storage
-        PolicyS storage data = lib.getPolicyStorage();
-        uint256[] memory applicableRules = new uint256[](data.policyStorageSets[_policyId].policy.signatureToRuleIds[functionSignature].length);
+        uint256[] memory applicableRules = new uint256[](policy.signatureToRuleIds[functionSignature].length);
 
         // Load the function signature data from storage
         RuleS storage ruleData = lib.getRuleStorage();
 
         for(uint256 i = 0; i < applicableRules.length; i++) {
-            if(ruleData.ruleStorageSets[data.policyStorageSets[_policyId].policy.signatureToRuleIds[functionSignature][i]].set) {
-                applicableRules[i] = data.policyStorageSets[_policyId].policy.signatureToRuleIds[functionSignature][i];
+            if(ruleData.ruleStorageSets[policy.signatureToRuleIds[functionSignature][i]].set) {
+                applicableRules[i] = policy.signatureToRuleIds[functionSignature][i];
 
             }
         }
