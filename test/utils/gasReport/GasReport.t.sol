@@ -57,9 +57,9 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // _testGasExampleSimpleMinTransferWithForeignCallTriggeredWithRevert();
         // _testGasExampleHardcodedOFAC();
         // _testGasExampleHardcodedOFACWithMinTransfer();
-        _testGasExampleSimpleMinTransferTriggeredWithRevertEffect();
+        //_testGasExampleSimpleMinTransferTriggeredWithRevertEffect();
         //_testGasExampleOFAC();
-        //_testGasExampleOFACWithMinTransfer();
+        _testGasExampleOFACWithMinTransfer();
     }
 
 /**********  BASELINE gas test with Integration but no policies active **********/

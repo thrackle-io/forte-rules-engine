@@ -254,7 +254,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
 
         bytes memory encodedCall = assemblyEncode(parameterTypes, values, fc.signature, dynamicVarLengths);
         // Place the foreign call
-        (bool response, bytes memory data) = fc.foreignCallAddress.call(encodedCall);
+        (bool response, bytes memory data) = fc.foreignCallAddress.staticcall(encodedCall);
     
 
         // Verify that the foreign call was successful
