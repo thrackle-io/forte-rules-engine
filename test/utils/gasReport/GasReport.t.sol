@@ -8,6 +8,7 @@ import "test/utils/ExampleUserContractWithMinTransferFC.sol";
 import "test/utils/ExampleUserContractBase.sol";
 import "test/utils/ExampleUserContractWithDenyList.sol";
 import "test/utils/ExampleUserContractWithMinTransferAndDenyList.sol";
+import "test/utils/ExampleUserContractWithMinTransferRevert.sol";
 
 contract GasReports is GasHelpers, RulesEngineCommon {
 
@@ -44,6 +45,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         _testGasExampleHardcodedMinTransferNotTriggered();
         _testGasExampleSimpleMinTransferNotTriggered();
         _testGasExampleHardcodedMinTransferTriggered();
+        _testGasExampleHardcodedMinTransferRevert();
         _testGasExampleSimpleMinTransferTriggeredWithRevertEffect();
         _testGasExampleSimpleMinTransferTriggeredWithEffect();
         _testGasExampleHardcodedMinTransferWithForeignCallNotTriggered();
@@ -131,6 +133,15 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         _exampleContractGasReport(2, address(hardCodedContract), "Hardcoding Min Transfer Not Triggered"); 
     }
 
+    function _testGasExampleHardcodedMinTransferRevert() public endWithStopPrank resets{
+        ExampleUserContractWithMinTransferRevert hardCodedContract = new ExampleUserContractWithMinTransferRevert();
+        // Create a minimum transaction(GT 4) rule with positive event
+        vm.expectRevert();
+        _testExampleContractPrep(2, address(hardCodedContract));
+        vm.expectRevert();
+        _exampleContractGasReport(2, address(hardCodedContract), "Hardcoding Min Transfer Revert"); 
+    }
+
     function _testGasExampleHardcodedMinTransferTriggered() public endWithStopPrank resets{
         ExampleUserContractWithMinTransfer hardCodedContract = new ExampleUserContractWithMinTransfer();
         // Create a minimum transaction(GT 4) rule with positive event
@@ -155,18 +166,22 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
     function _testGasExampleHardcodedOFAC() internal endWithStopPrank resets{
         ExampleUserContractWithDenyList hardCodedContract = new ExampleUserContractWithDenyList();
-        // hardCodedContract.addToDenyList(address(0x7654321));
-        // Create a minimum transaction(GT 4) rule with positive event
-        _testExampleContractPrep(5, address(hardCodedContract));
-        _exampleContractGasReport(5, address(hardCodedContract), "Hardcoding OFAC deny list"); 
+        hardCodedContract.addToDenyList(address(0x7654321));
+        // Create a deny list rule
+        vm.expectRevert();
+        _testExampleContractPrep(3, address(hardCodedContract));
+        vm.expectRevert();
+        _exampleContractGasReport(3, address(hardCodedContract), "Hardcoding OFAC deny list"); 
     }
 
     function _testGasExampleHardcodedOFACWithMinTransfer() internal endWithStopPrank resets{
         ExampleUserContractWithMinTransferAndDenyList hardCodedContract = new ExampleUserContractWithMinTransferAndDenyList();
-        // hardCodedContract.addToDenyList(address(0x7654321));
-        // Create a minimum transaction(GT 4) rule with positive event
-        _testExampleContractPrep(5, address(hardCodedContract));
-        _exampleContractGasReport(5, address(hardCodedContract), "Hardcoding OFAC deny list with min transfer"); 
+        hardCodedContract.addToDenyList(address(0x7654321));
+        // Create a minimum transaction(GT 4) rule with negative revert
+        vm.expectRevert();
+        _testExampleContractPrep(3, address(hardCodedContract));
+        vm.expectRevert();
+        _exampleContractGasReport(3, address(hardCodedContract), "Hardcoding OFAC deny list with min transfer"); 
     }
 
 /**********  Prep functions to ensure warm storage comparisons **********/
@@ -272,13 +287,13 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
     function _testGasExampleOFACWithMinTransfer() public {
         testContract2 = new ForeignCallTestContractOFAC();
-        setupRuleWithForeignCall3(ET.REVERT, false);
+        setupRulesWithForeignCallAndMinTransfer(ET.REVERT, false);
         testContract2.addToNaughtyList(address(0x7654321));
         vm.expectRevert();
         _exampleContractGasReport(5, address(userContract), "Using REv2 OFAC with min transfer gas report"); 
     }
 
-    function setupRuleWithForeignCall3(
+    function setupRulesWithForeignCallAndMinTransfer(
         ET _effectType,
         bool isPositive
     ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables {
@@ -297,59 +312,62 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         );
 
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-
+        Rule memory rule1;
+        Rule memory rule2;
         // Build the foreign call placeholder
-        rule.placeHolders = new Placeholder[](2);
-        rule.placeHolders[0].foreignCall = true;
-        rule.placeHolders[0].typeSpecificIndex = 0;
-        rule.placeHolders[1].pType = PT.UINT;
-        rule.placeHolders[1].typeSpecificIndex = 1;
+        rule1.placeHolders = new Placeholder[](2);
+        rule1.placeHolders[0].foreignCall = true;
+        rule1.placeHolders[0].typeSpecificIndex = 0;
+        rule1.placeHolders[1].pType = PT.UINT;
+        rule1.placeHolders[1].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = new uint256[](14);
-        rule.instructionSet[0] = uint(LC.PLH);
-        rule.instructionSet[1] = 0;
-        rule.instructionSet[2] = uint(LC.NUM);
-        rule.instructionSet[3] = 0;
-        rule.instructionSet[4] = uint(LC.EQ);
-        rule.instructionSet[5] = 0;
-        rule.instructionSet[6] = 1;
-        rule.instructionSet[7] = uint(LC.PLH);
-        rule.instructionSet[8] = 1;
-        rule.instructionSet[9] = uint(LC.NUM);
-        rule.instructionSet[10] = 4;
-        rule.instructionSet[11] = uint(LC.GT);
-        rule.instructionSet[12] = 0;
-        rule.instructionSet[13] = 1;
+        rule1.instructionSet = new uint256[](14);
+        rule1.instructionSet[0] = uint(LC.PLH);
+        rule1.instructionSet[1] = 0;
+        rule1.instructionSet[2] = uint(LC.NUM);
+        rule1.instructionSet[3] = 0;
+        rule1.instructionSet[4] = uint(LC.EQ);
+        rule1.instructionSet[5] = 0;
+        rule1.instructionSet[6] = 1;
+        rule1.instructionSet[7] = uint(LC.PLH);
+        rule1.instructionSet[8] = 1;
+        rule1.instructionSet[9] = uint(LC.NUM);
+        rule1.instructionSet[10] = 4;
+        rule1.instructionSet[11] = uint(LC.GT);
+        rule1.instructionSet[12] = 0;
+        rule1.instructionSet[13] = 1;
         // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
+        rule1.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
             1
         );
-        rule
+        rule1
             .fcArgumentMappingsConditions[0]
             .mappings = new IndividualArgumentMapping[](1);
-        rule
+        rule1
             .fcArgumentMappingsConditions[0]
             .mappings[0]
             .functionCallArgumentType = PT.ADDR;
-        rule
+        rule1
             .fcArgumentMappingsConditions[0]
             .mappings[0]
             .functionSignatureArg
             .foreignCall = false;
-        rule
+        rule1
             .fcArgumentMappingsConditions[0]
             .mappings[0]
             .functionSignatureArg
             .pType = PT.ADDR;
-        rule
+        rule1
             .fcArgumentMappingsConditions[0]
             .mappings[0]
             .functionSignatureArg
             .typeSpecificIndex = 0;
-        rule = _setUpEffect(rule, _effectType, isPositive);
+        rule1 = _setUpEffect(rule1, _effectType, isPositive);
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
+        uint256 ruleId1 = RulesEngineDataFacet(address(red)).updateRule(0, rule1);
+        rule2 = _createGTRule(4);
+        rule2.negEffects[0] = effectId_revert;
+        uint256 ruleId2 = RulesEngineDataFacet(address(red)).updateRule(0, rule2);
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
@@ -361,8 +379,9 @@ contract GasReports is GasHelpers, RulesEngineCommon {
                 PT.UINT,
                 fcArgs
             );
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
+        ruleIds.push(new uint256[](2));
+        ruleIds[0][0] = ruleId1;
+        ruleIds[0][1] = ruleId2;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
         RulesEngineDataFacet(address(red)).applyPolicy(
             address(userContract),
