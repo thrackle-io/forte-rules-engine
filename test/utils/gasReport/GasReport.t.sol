@@ -42,24 +42,24 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         _testGasExampleContract_Primer();
         // Only uncomment the Primer and the individual test you are intending to run to avoid coloring the data.
         // This default configuration only runs the Base test
-        _testGasExampleContract_Base();
+        // _testGasExampleContract_Base();
         
-        _testGasExampleContract_NoPoliciesActive();
-        _testGasExampleHardcodedMinTransferNotTriggered();
-        _testGasExampleSimpleMinTransferNotTriggered();
-        _testGasExampleHardcodedMinTransferTriggered();
-        _testGasExampleHardcodedMinTransferRevert();
-        _testGasExampleSimpleMinTransferTriggeredWithRevertEffect();
-        _testGasExampleSimpleMinTransferTriggeredWithEffect();
-        _testGasExampleHardcodedMinTransferWithForeignCallNotTriggered();
-        _testGasExampleSimpleMinTransferWithForeignCallNotTriggered();
-        _testGasExampleHardcodedMinTransferWithForeignCallTriggered();
-        _testGasExampleSimpleMinTransferWithForeignCallTriggeredWithEvent();
-        _testGasExampleSimpleMinTransferWithForeignCallTriggeredWithRevert();
-        _testGasExampleOFAC();
-        _testGasExampleHardcodedOFAC();
-        _testGasExampleHardcodedOFACWithMinTransfer();
-        _testGasExampleOFACWithMinTransfer();
+        // _testGasExampleContract_NoPoliciesActive();
+        // _testGasExampleHardcodedMinTransferNotTriggered();
+        // _testGasExampleSimpleMinTransferNotTriggered();
+        // _testGasExampleHardcodedMinTransferTriggered();
+        // _testGasExampleHardcodedMinTransferRevert();
+        // _testGasExampleSimpleMinTransferTriggeredWithEffect();
+        // _testGasExampleHardcodedMinTransferWithForeignCallNotTriggered();
+        // _testGasExampleSimpleMinTransferWithForeignCallNotTriggered();
+        // _testGasExampleHardcodedMinTransferWithForeignCallTriggered();
+        // _testGasExampleSimpleMinTransferWithForeignCallTriggeredWithEvent();
+        // _testGasExampleSimpleMinTransferWithForeignCallTriggeredWithRevert();
+        // _testGasExampleHardcodedOFAC();
+        // _testGasExampleHardcodedOFACWithMinTransfer();
+         _testGasExampleSimpleMinTransferTriggeredWithRevertEffect();
+         //_testGasExampleOFAC();
+        //_testGasExampleOFACWithMinTransfer();
     }
 
 /**********  BASELINE gas test with Integration but no policies active **********/

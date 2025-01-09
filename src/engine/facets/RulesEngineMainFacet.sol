@@ -288,13 +288,14 @@ contract RulesEngineMainFacet is FacetCommonImports{
 
         // Load the Effect data from storage
         for(uint256 i = 0; i < _effects.length; i++) {
-            if(_effects[i].valid) {
-                if (_effects[i].effectType == ET.REVERT) { 
-                    doRevert(_effects[i].text);
-                } else if (_effects[i].effectType == ET.EVENT) {
-                     doEvent(_effects[i].text);
+            Effect memory effect = _effects[i];
+            if(effect.valid) {
+                if (effect.effectType == ET.REVERT) { 
+                    doRevert(effect.text);
+                } else if (effect.effectType == ET.EVENT) {
+                     doEvent(effect.text);
                 } else {
-                    evaluateExpression(_policyId, applicableRule, functionSignatureArgs, _effects[i].instructionSet);
+                    evaluateExpression(_policyId, applicableRule, functionSignatureArgs, effect.instructionSet);
                 }
             }
         }
