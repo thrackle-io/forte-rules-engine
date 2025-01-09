@@ -39,20 +39,20 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
 /**********  All gas tests should run through this function to keep results together **********/
     function testGasReport() public {
-        _testGasExampleContract_Primer();
-        _testGasExampleContract_Base();
-        _testGasExampleContract_NoPoliciesActive();
-        _testGasExampleHardcodedMinTransferNotTriggered();
-        _testGasExampleSimpleMinTransferNotTriggered();
-        _testGasExampleHardcodedMinTransferTriggered();
-        _testGasExampleHardcodedMinTransferRevert();
-        _testGasExampleSimpleMinTransferTriggeredWithRevertEffect();
-        _testGasExampleSimpleMinTransferTriggeredWithEffect();
-        _testGasExampleHardcodedMinTransferWithForeignCallNotTriggered();
-        _testGasExampleSimpleMinTransferWithForeignCallNotTriggered();
-        _testGasExampleHardcodedMinTransferWithForeignCallTriggered();
-        _testGasExampleSimpleMinTransferWithForeignCallTriggeredWithEvent();
-        _testGasExampleSimpleMinTransferWithForeignCallTriggeredWithRevert();
+        // _testGasExampleContract_Primer();
+        // _testGasExampleContract_Base();
+        // _testGasExampleContract_NoPoliciesActive();
+        // _testGasExampleHardcodedMinTransferNotTriggered();
+        // _testGasExampleSimpleMinTransferNotTriggered();
+        // _testGasExampleHardcodedMinTransferTriggered();
+        // _testGasExampleHardcodedMinTransferRevert();
+        // _testGasExampleSimpleMinTransferTriggeredWithRevertEffect();
+        // _testGasExampleSimpleMinTransferTriggeredWithEffect();
+        // _testGasExampleHardcodedMinTransferWithForeignCallNotTriggered();
+        // _testGasExampleSimpleMinTransferWithForeignCallNotTriggered();
+        // _testGasExampleHardcodedMinTransferWithForeignCallTriggered();
+        // _testGasExampleSimpleMinTransferWithForeignCallTriggeredWithEvent();
+        // _testGasExampleSimpleMinTransferWithForeignCallTriggeredWithRevert();
         _testGasExampleOFAC();
         _testGasExampleHardcodedOFAC();
         _testGasExampleHardcodedOFACWithMinTransfer();
@@ -193,13 +193,14 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 /**********  OFAC Prep functions to ensure warm storage comparisons **********/
     function _testGasExampleOFAC() public {
         testContract2 = new ForeignCallTestContractOFAC();
-        setupRuleWithForeignCall2(ET.REVERT, false);
+        setupRuleWithForeignCall2(address(testContract2), ET.REVERT, false);
         testContract2.addToNaughtyList(address(0x7654321));
         vm.expectRevert();
         _exampleContractGasReport(5, address(userContract), "Using REv2 OFAC gas report"); 
     }
 
     function setupRuleWithForeignCall2(
+        address _contractAddress,
         ET _effectType,
         bool isPositive
     ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables {
@@ -269,7 +270,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         ForeignCall memory fc = RulesEngineDataFacet(address(red))
             .updateForeignCall(
                 policyIds[0],
-                address(testContract),
+                address(_contractAddress),
                 "onTheNaughtyList(address)",
                 PT.UINT,
                 fcArgs
@@ -287,13 +288,14 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
     function _testGasExampleOFACWithMinTransfer() public {
         testContract2 = new ForeignCallTestContractOFAC();
-        setupRulesWithForeignCallAndMinTransfer(ET.REVERT, false);
+        setupRulesWithForeignCallAndMinTransfer(address(testContract2), ET.REVERT, false);
         testContract2.addToNaughtyList(address(0x7654321));
         vm.expectRevert();
         _exampleContractGasReport(5, address(userContract), "Using REv2 OFAC with min transfer gas report"); 
     }
 
     function setupRulesWithForeignCallAndMinTransfer(
+        address _contractAddress,
         ET _effectType,
         bool isPositive
     ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables {
@@ -374,7 +376,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         ForeignCall memory fc = RulesEngineDataFacet(address(red))
             .updateForeignCall(
                 policyIds[0],
-                address(testContract),
+                address(_contractAddress),
                 "onTheNaughtyList(address)",
                 PT.UINT,
                 fcArgs

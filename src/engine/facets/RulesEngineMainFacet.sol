@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
+import "forge-std/console.sol";
 
 contract RulesEngineMainFacet is FacetCommonImports{
 
@@ -159,8 +160,9 @@ contract RulesEngineMainFacet is FacetCommonImports{
             if(op == LC.PLH) {
                 // Placeholder format is: get the index of the argument in the array. For example, PLH 0 is get the first argument in the arguments array and get its type and value
                 uint256 pli = prog[idx+1];
-
+                console.log("pli", pli);
                 PT typ = arguments.argumentTypes[pli];
+                console.log("typ", uint8(typ));
                 if(typ == PT.ADDR) {
                     // Convert address to uint256 for direct comparison using == and != operations
                     v = uint256(uint160(address(abi.decode(arguments.values[pli], (address))))); idx += 2;
@@ -196,6 +198,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
             mem[opi] = v;
             opi += 1;
         }
+        console.log("mem[opi - 1]: ", mem[opi - 1]);
         return ui2bool(mem[opi - 1]);
     }
 
