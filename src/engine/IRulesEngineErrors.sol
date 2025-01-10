@@ -9,5 +9,5 @@ interface IRulesEngineErrors {
     error BelowMinAdminThreshold();
     error ZeroAddressCannotBeAdmin(); 
     error PolicyAdminAlreadyCreated(); 
-
+    
 }

@@ -71,15 +71,24 @@ struct Placeholder {
 }
 
 // Effect Events
-event RulesEngineEvent(string _message);
+event RulesEngineEvent(uint256 indexed _eventKey, bytes32 _eventString, string _message);
+event RulesEngineEvent(uint256 indexed _eventKey, bytes32 _eventString, bytes32 _bytes);
+event RulesEngineEvent(uint256 indexed _eventKey, bytes32 _eventString, uint256 indexed _num);
+event RulesEngineEvent(uint256 indexed _eventKey, bytes32 _eventString, address indexed _address);
+event RulesEngineEvent(uint256 indexed _eventKey, bytes32 _eventString, bool indexed _bool);
 
 // Effect Structure
 struct Effect {
     bool valid;
+    bool dynamicParam; //bool to determine if event requires  
     ET effectType;
-    string text; //used for any type of text(revert, event, etc.)
+    // event data 
+    PT pType;
+    bytes param;
+    bytes32 text; // This is used by events to "Name" the event. It is an unindexed bytes32 param in RulesEngineEvent: _eventString. Bytes32 is used to reduce gas costs
+    string errorMessage;
     // The instruction set that will be run at effect execution
-    uint256[] instructionSet;
+    uint256[] instructionSet;    
 }
 
 /// Foreign Call Structures

@@ -8,4 +8,4 @@ import "src/engine/facets/FacetUtils.sol";
 import "src/engine/IRulesEngineErrors.sol";
 
 
-abstract contract FacetCommonImports is AccessModifiers{}
+abstract contract FacetCommonImports is AccessModifiers, IRulesEngineErrors{}
