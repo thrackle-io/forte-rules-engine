@@ -13,6 +13,7 @@ import "test/utils/ExampleUserContractWithMinTransferRevert.sol";
 import "test/utils/ExampleUserContractWithMinTransferMaxTransferAndDenyList.sol";
 import "test/utils/ExampleERC20WithMinTransfer.sol"; 
 import "test/utils/ExampleERC20WithDenyList.sol"; 
+import "test/utils/ExampleERC20WithDenyListAndMinTransfer.sol";
 import "src/example/ExampleERC20.sol";
 
 contract GasReports is GasHelpers, RulesEngineCommon {
@@ -68,8 +69,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Hard coded
         // _testGasExampleContract_Base();
         // _testGasExampleHardcodedMinTransferRevert();
-        _testGasExampleHardcodedOFAC();
-        // _testGasExampleHardcodedOFACWithMinTransfer();
+        // _testGasExampleHardcodedOFAC();
+        _testGasExampleHardcodedOFACWithMinTransfer();
         // _testGasExampleHardcodedOFACWithMinTransferAndMaxTransfer();
         //-----------------------------------------------------------------------------
 
@@ -205,13 +206,12 @@ contract GasReports is GasHelpers, RulesEngineCommon {
     }
 
     function _testGasExampleHardcodedOFACWithMinTransfer() internal endWithStopPrank resets{
-        ExampleUserContractWithMinTransferAndDenyList hardCodedContract = new ExampleUserContractWithMinTransferAndDenyList();
+        ExampleERC20WithDenyListAndMinTransfer hardCodedContract = new ExampleERC20WithDenyListAndMinTransfer("Token Name", "SYMB");
+        ExampleERC20WithDenyList(address(hardCodedContract)).mint(USER_ADDRESS, 1_000_000 * ATTO);
         hardCodedContract.addToDenyList(address(0x7654321));
         // Create a minimum transaction(GT 4) rule with negative revert
-        vm.expectRevert();
-        _testExampleContractPrep(3, address(hardCodedContract));
-        vm.expectRevert();
-        _exampleContractGasReport(3, address(hardCodedContract), "Hardcoding OFAC deny list with min transfer"); 
+        _testExampleContractPrep(5, address(hardCodedContract));
+        _exampleContractGasReport(5, address(hardCodedContract), "Hardcoding OFAC deny list with min transfer"); 
     }
 
     function _testGasExampleHardcodedOFACWithMinTransferAndMaxTransfer() internal endWithStopPrank resets{
