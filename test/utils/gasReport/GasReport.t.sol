@@ -11,6 +11,8 @@ import "test/utils/ExampleUserContractWithDenyList.sol";
 import "test/utils/ExampleUserContractWithMinTransferAndDenyList.sol";
 import "test/utils/ExampleUserContractWithMinTransferRevert.sol";
 import "test/utils/ExampleUserContractWithMinTransferMaxTransferAndDenyList.sol";
+import "test/utils/ExampleERC20WithMinTransfer.sol"; 
+import "test/utils/ExampleERC20WithDenyList.sol"; 
 import "src/example/ExampleERC20.sol";
 
 contract GasReports is GasHelpers, RulesEngineCommon {
@@ -57,7 +59,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         //-----------------------------------------------------------------------------
         // _testGasExampleContract_NoPoliciesActive();
         // _testGasExampleSimpleMinTransferTriggeredWithRevertEffect();
-        _testGasExampleOFAC();
+        // _testGasExampleOFAC();
         // _testGasExampleOFACWithMinTransfer();
         // _testGasExampleOFACWithMinTransferAndMaxTransfer();
         // _testGasExampleOFACWithMinTransferInOneRule();
@@ -66,7 +68,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Hard coded
         // _testGasExampleContract_Base();
         // _testGasExampleHardcodedMinTransferRevert();
-        // _testGasExampleHardcodedOFAC();
+        _testGasExampleHardcodedOFAC();
         // _testGasExampleHardcodedOFACWithMinTransfer();
         // _testGasExampleHardcodedOFACWithMinTransferAndMaxTransfer();
         //-----------------------------------------------------------------------------
@@ -93,14 +95,14 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
 /**********  BASELINE gas test with no integrations or rules **********/
     function _testGasExampleContract_Base() internal resets{
-        ExampleUserContractBase hardCodedContract = new ExampleUserContractBase();
-        _testExampleContractPrep(1, address(hardCodedContract));
-        _exampleContractGasReport(1, address(hardCodedContract), "Base");   
+        // ExampleERC20 hardCodedContract = new ExampleERC20("Token Name", "SYMB");
+        _testExampleContractPrep(1, address(userContract));
+        _exampleContractGasReport(1, address(userContract), "Base");   
     }
     function _testGasExampleContract_Primer() internal resets{
         ExampleUserContractBase hardCodedContract = new ExampleUserContractBase();
-        _testExampleContractPrep(1, address(hardCodedContract));
-        _exampleContractGasReport(1, address(hardCodedContract), "Primer -- disregard");   
+        _testExampleContractPrep(1, address(userContract));
+        _exampleContractGasReport(1, address(userContract), "Primer -- disregard");   
     }
 
 /**********  Simple Minimum Transfer Rule Checks **********/
@@ -160,12 +162,13 @@ contract GasReports is GasHelpers, RulesEngineCommon {
     }
 
     function _testGasExampleHardcodedMinTransferRevert() public endWithStopPrank resets{
-        ExampleUserContractWithMinTransferRevert hardCodedContract = new ExampleUserContractWithMinTransferRevert();
+        ExampleERC20WithMinTransfer hardCodedContract = new ExampleERC20WithMinTransfer("Token Name", "SYMB");
+        ExampleERC20WithMinTransfer(address(hardCodedContract)).mint(USER_ADDRESS, 1_000_000 * ATTO);
         // Create a minimum transaction(GT 4) rule with positive event
-        vm.expectRevert();
-        _testExampleContractPrep(2, address(hardCodedContract));
-        vm.expectRevert();
-        _exampleContractGasReport(2, address(hardCodedContract), "Hardcoding Min Transfer Revert"); 
+        // vm.expectRevert();
+        _testExampleContractPrep(5, address(hardCodedContract));
+        // vm.expectRevert();
+        _exampleContractGasReport(5, address(hardCodedContract), "Hardcoding Min Transfer Revert"); 
     }
 
     function _testGasExampleHardcodedMinTransferTriggered() public endWithStopPrank resets{
@@ -191,12 +194,13 @@ contract GasReports is GasHelpers, RulesEngineCommon {
     }
 
     function _testGasExampleHardcodedOFAC() internal endWithStopPrank resets{
-        ExampleUserContractWithDenyList hardCodedContract = new ExampleUserContractWithDenyList();
-        hardCodedContract.addToDenyList(address(0x7654321));
+        ExampleERC20WithDenyList hardCodedContract = new ExampleERC20WithDenyList("Token Name", "SYMB");
+        ExampleERC20WithDenyList(address(hardCodedContract)).mint(USER_ADDRESS, 1_000_000 * ATTO);
+        hardCodedContract.addToDenyList(address(0x7000000));
         // Create a deny list rule
-        vm.expectRevert();
+        // vm.expectRevert();
         _testExampleContractPrep(3, address(hardCodedContract));
-        vm.expectRevert();
+        // vm.expectRevert();
         _exampleContractGasReport(3, address(hardCodedContract), "Hardcoding OFAC deny list"); 
     }
 
