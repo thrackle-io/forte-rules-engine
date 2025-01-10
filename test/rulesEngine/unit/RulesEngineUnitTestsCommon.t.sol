@@ -2,9 +2,13 @@
 pragma solidity ^0.8.24;
 
 import "test/utils/RulesEngineCommon.t.sol";
+import "src/example/ExampleUserContract.sol";
 
 abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
-    /// TestRulesEngine:
+
+    ExampleUserContract userContract;
+    
+    /// TestRulesEngine: 
     // Test attempt to add a policy with no signatures saved.
     function testRulesEngine_Unit_UpdatePolicy_InvalidRule()
         public
@@ -131,12 +135,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         bool response = userContract.transfer(address(0x7654321), 47);
         assertTrue(response);
     }
-
-    function testRulesEngine_Unit_checkRule_simple_Negative()
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-    {
+    
+    function testRulesEngine_Unit_checkRule_simple_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
         setupRuleWithoutForeignCall();
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly
         bool response = userContract.transfer(address(0x7654321), 3);
@@ -321,83 +321,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         );
     }
 
-    function testRulesEngine_Unit_checkRule_ForeignCall_Positive()
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-    {
-        uint256 ruleValue = 10;
+    function testRulesEngine_Unit_checkRule_ForeignCall_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
+        // set up the ERC20
+        uint256 ruleValue = 10; 
         uint256 transferValue = 15;
-        uint256[] memory policyIds = new uint256[](1);
-        policyIds[0] = _createBlankPolicy();
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
-        // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-        // Build the foreign call placeholder
-        rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].foreignCall = true;
-        rule.placeHolders[0].typeSpecificIndex = 0;
-        // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet(ruleValue);
-        // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 1;
-        rule.negEffects = new Effect[](1);
-        rule.negEffects[0] = effectId_revert;
-        // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
-
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
-        RulesEngineDataFacet(address(red)).updateForeignCall(
-            policyIds[0],
-            address(testContract),
-            "simpleCheck(uint256)",
-            PT.UINT,
-            fcArgs
-        );
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-        RulesEngineDataFacet(address(red)).applyPolicy(
-            address(userContract),
-            policyIds
-        );
-        // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly
-        bool response = userContract.transfer(
-            address(0x7654321),
-            transferValue
-        );
+        _setup_checkRule_ForeignCall_Positive(ruleValue, functionSignature);
+        // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly 
+        bool response = userContract.transfer(address(0x7654321), transferValue);
         assertTrue(response);
     }
 
@@ -408,73 +338,12 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         uint256 ruleValue = 15;
         uint256 transferValue = 10;
-        uint256[] memory policyIds = new uint256[](1);
-        policyIds[0] = _createBlankPolicy();
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
-        // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-        // Build the foreign call placeholder
-        rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].foreignCall = true;
-        rule.placeHolders[0].typeSpecificIndex = 0;
-        // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet(ruleValue);
-        // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 1;
-        rule.negEffects = new Effect[](1);
-        rule.negEffects[0] = effectId_revert;
-        // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
-
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
-        RulesEngineDataFacet(address(red)).updateForeignCall(
-            policyIds[0],
-            address(testContract),
-            "simpleCheck(uint256)",
-            PT.UINT,
-            fcArgs
-        );
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-        RulesEngineDataFacet(address(red)).applyPolicy(
-            address(userContract),
-            policyIds
-        );
-        // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly
-        vm.expectRevert(abi.encodePacked(revert_text));
+        _setup_checkRule_ForeignCall_Negative(ruleValue, functionSignature, pTypes);
+        // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly 
+        vm.expectRevert(abi.encodePacked(revert_text)); 
         userContract.transfer(address(0x7654321), transferValue);
     }
 

@@ -6,13 +6,17 @@ import "test/utils/RulesEngineCommon.t.sol";
 import "test/utils/ExampleUserContractWithMinTransfer.sol";
 import "test/utils/ExampleUserContractWithMinTransferFC.sol";
 import "test/utils/ExampleUserContractBase.sol";
+import "src/example/ExampleUserContract.sol";
 
 contract GasReports is GasHelpers, RulesEngineCommon {
 
     uint256 gasUsed;
+    ExampleUserContract userContract;
+    
     function setUp() public {
         red = _createRulesEngineDiamond(address(0xB0b));
         userContract = new ExampleUserContract();
+        userContractAddress = address(userContract);
         userContract.setRulesEngineAddress(address(red));
         testContract = new ForeignCallTestContract();
         _setupEffectProcessor(); 

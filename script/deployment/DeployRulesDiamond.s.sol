@@ -8,7 +8,7 @@ import {IDiamondInit} from "diamond-std/initializers/IDiamondInit.sol";
 import {DiamondInit} from "diamond-std/initializers/DiamondInit.sol";
 import {FacetCut, FacetCutAction} from "diamond-std/core/DiamondCut/DiamondCutLib.sol";
 import {IDiamondCut} from "diamond-std/core/DiamondCut/IDiamondCut.sol";
-import "src/ExampleUserContract.sol";
+import "src/example/ExampleUserContract.sol";
 
 contract DeployRulesDiamond is DiamondMine {
 

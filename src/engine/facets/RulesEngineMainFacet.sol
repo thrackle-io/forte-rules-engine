@@ -57,7 +57,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
             }
         }
         
-        Arguments memory functionSignatureArgs = abi.decode(arguments, (Arguments));    
+        Arguments memory functionSignatureArgs = abi.decode(arguments, (Arguments));   
 
         // Retrieve placeHolder[] for specific rule to be evaluated and translate function signature argument array 
         // to rule specific argument array

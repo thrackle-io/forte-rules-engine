@@ -33,7 +33,7 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         ruleIds[0][0]= ruleId;
         uint256[] memory policyIds = new uint256[](1); 
         policyIds[0] = RulesEngineDataFacet(address(red)).updatePolicy(0, signatures, functionSignatureIds, ruleIds);        
-        RulesEngineDataFacet(address(red)).applyPolicy(address(userContract), policyIds);
+        RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly 
        Arguments memory arguments;
         arguments.argumentTypes = new PT[](2);
@@ -44,10 +44,10 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         arguments.values[1] = abi.encode(transferValue);
         bytes memory retVal = abi.encode(arguments);
         if (ruleValue < transferValue) {
-            response = RulesEngineMainFacet(address(red)).checkPolicies(address(userContract), bytes4(keccak256(bytes(functionSignature))), retVal);
+            response = RulesEngineMainFacet(address(red)).checkPolicies(userContractAddress, bytes4(keccak256(bytes(functionSignature))), retVal);
             assertEq(response, 1);
         } else if (ruleValue > transferValue){ 
-            response = RulesEngineMainFacet(address(red)).checkPolicies(address(userContract), bytes4(keccak256(bytes(functionSignature))), retVal);
+            response = RulesEngineMainFacet(address(red)).checkPolicies(userContractAddress, bytes4(keccak256(bytes(functionSignature))), retVal);
             assertFalse(response == 1);
         }
     }
