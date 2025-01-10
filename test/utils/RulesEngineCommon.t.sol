@@ -483,7 +483,6 @@ contract RulesEngineCommon is DiamondMine, Test {
     function _setupRuleWithRevert()
         public
         ifDeploymentTestsEnabled
-        endWithStopPrank
         resetsGlobalVariables
     {
         uint256[] memory policyIds = new uint256[](1);
@@ -502,7 +501,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule = _createGTRule(4);
-        rule.negEffects[0] = effectId_revert;
+        rule.posEffects[0] = effectId_revert;
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
 
