@@ -265,28 +265,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.effectPlaceHolders[1].trackerValue = true;
 
         rule.fcArgumentMappingsEffects = new ForeignCallArgumentMappings[](1);
-        rule
-            .fcArgumentMappingsEffects[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule
-            .fcArgumentMappingsEffects[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsEffects[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule
-            .fcArgumentMappingsEffects[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsEffects[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 1;
+        rule.fcArgumentMappingsEffects[0].mappings = new IndividualArgumentMapping[](1);
+        rule.fcArgumentMappingsEffects[0].mappings[0].functionCallArgumentType = PT.UINT;
+        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.foreignCall = false;
+        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.pType = PT.UINT;
+        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
         ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
 
         //build tracker
@@ -305,77 +288,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
         fc;  //added to silence warnings during testing revamp 
         return policyIds[0];
-    }
-
-    function setupEffectWithForeignCall()
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        resetsGlobalVariables
-    {
-        uint256[] memory policyIds = new uint256[](1);
-
-        policyIds[0] = _createBlankPolicy();
-
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
-        // Rule: 1 == 1 -> FC:simpleCheck(amount) -> transfer(address _to, uint256 amount) returns (bool)
-        // build Foreign Call Structure
-        Rule memory rule;
-        rule.posEffects = new Effect[](1);
-        rule.posEffects[0] = effectId_expression;
-        rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.NUM);
-        rule.instructionSet[1] = 1;
-        rule.instructionSet[2] = uint(LC.NUM);
-        rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.EQ);
-        rule.instructionSet[5] = 0;
-        rule.instructionSet[6] = 1;
-
-        rule.effectPlaceHolders = new Placeholder[](1);
-        rule.effectPlaceHolders[0].foreignCall = true;
-        rule.effectPlaceHolders[0].typeSpecificIndex = 0;
-
-        rule.fcArgumentMappingsEffects = new ForeignCallArgumentMappings[](1);
-        rule
-            .fcArgumentMappingsEffects[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule
-            .fcArgumentMappingsEffects[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsEffects[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule
-            .fcArgumentMappingsEffects[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsEffects[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 1;
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
-
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
-        RulesEngineDataFacet(address(red)).updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", PT.UINT, fcArgs);        
-        RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
     function setupRuleWithForeignCall(
@@ -502,6 +414,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule = _createGTRule(4);
         rule.posEffects[0] = effectId_revert;
+        rule.negEffects[0] = effectId_revert;
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
 
