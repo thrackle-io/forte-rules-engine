@@ -792,7 +792,29 @@ contract RulesEngineCommon is DiamondMine, Test {
         return rule;
     }
 
-    
+    function _createLTRule(uint256 _amount) public returns (Rule memory) {
+        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        Rule memory rule;
+        // Set up some effects.
+        _setupEffectProcessor();
+        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+        rule.instructionSet = new uint256[](7);
+        rule.instructionSet[0] = uint(LC.NUM);
+        rule.instructionSet[1] = 0;
+        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[3] = 2;
+        rule.instructionSet[4] = uint(LC.LT);
+        rule.instructionSet[5] = 0;
+        rule.instructionSet[6] = 1;
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        // Add a negative/positive effects
+        rule.negEffects = new Effect[](1);
+        rule.posEffects = new Effect[](1);
+        return rule;
+    }
+
 
     function _addFunctionSignatureToPolicy(
         uint256 policyId,

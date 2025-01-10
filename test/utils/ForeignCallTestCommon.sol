@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-
 /**
  * @title Example contract for testing the Foreign Call Encoding
  * @author @mpetersoCode55 
@@ -57,4 +56,15 @@ contract ForeignCallTestContract {
         return decodedAddr;
     }
 
+}
+
+contract ForeignCallTestContractOFAC {
+    mapping(address => bool) public onTheNaughtyList;
+    function addToNaughtyList(address addr) public {
+        onTheNaughtyList[addr] = true;
+    }
+
+    function getNaughty(address addr) public returns(bool) {
+        return onTheNaughtyList[addr];
+    }
 }

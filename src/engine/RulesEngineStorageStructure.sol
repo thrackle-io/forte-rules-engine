@@ -63,7 +63,7 @@ struct Placeholder {
     // The type of parameter the placeholder represents
     PT pType;
     // The index in the specific array for the specified type;
-    uint256 typeSpecificIndex;
+    uint8 typeSpecificIndex;
     /// Determine if the index of value to replace the placeholder is a tracker value
     bool trackerValue;
     // Used to determine whether this Placeholder represents the value returned from a foreign call
@@ -99,7 +99,7 @@ struct ForeignCallSet {
  */
 struct ForeignCallArgumentMappings {
     // Index of the foreign call structure
-    uint256 foreignCallIndex;
+    uint8 foreignCallIndex;
     // Mappings of individual arguments (Function Signature -> Foreign Call)
     IndividualArgumentMapping[] mappings;
 }
