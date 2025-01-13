@@ -11,7 +11,7 @@ import "src/client/RulesEngineClientERC20.sol";
  * @author @ShaneDuncan602
  * @notice This is an example implementation for ERC20
  */
-contract ExampleERC20 is ERC20, ERC20Burnable, ReentrancyGuard, RulesEngineClientERC20 {
+contract ExampleERC20Hardcoded is ERC20, ERC20Burnable, ReentrancyGuard, RulesEngineClientERC20 {
 
     /**
      * @dev Constructor sets params
@@ -25,7 +25,7 @@ contract ExampleERC20 is ERC20, ERC20Burnable, ReentrancyGuard, RulesEngineClien
      * @param to recipient address
      * @param amount number of tokens to mint
      */
-    function mint(address to, uint256 amount) public virtual checksPoliciesERC20MintBefore(to, amount) {
+    function mint(address to, uint256 amount) public virtual  {
         _mint(to, amount);
     }
 
@@ -43,7 +43,7 @@ contract ExampleERC20 is ERC20, ERC20Burnable, ReentrancyGuard, RulesEngineClien
     function transfer(
         address to,
         uint256 amount
-    ) public virtual override nonReentrant checksPoliciesERC20TransferBefore(to, amount) returns (bool) {
+    ) public virtual override nonReentrant returns (bool) {
         address owner = _msgSender();
         _transfer(owner, to, amount);
         return true;
@@ -65,7 +65,7 @@ contract ExampleERC20 is ERC20, ERC20Burnable, ReentrancyGuard, RulesEngineClien
      * - the caller must have allowance for ``from``'s tokens of at least
      * `amount`.
      */
-    function transferFrom(address from, address to, uint256 amount) public virtual override nonReentrant checksPoliciesERC20TransferFromBefore(from, to, amount) returns (bool) {
+    function transferFrom(address from, address to, uint256 amount) public virtual override nonReentrant returns (bool) {
         address spender = _msgSender();
         _spendAllowance(from, spender, amount);       
         _transfer(from, to, amount);
