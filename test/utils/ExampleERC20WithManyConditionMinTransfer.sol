@@ -44,7 +44,7 @@ contract ExampleERC20WithManyConditionMinTransfer is ExampleERC20 {
      * @param to recipient address
      * @param amount number of tokens to mint
      */
-    function mint(address to, uint256 amount) public virtual override checksPoliciesERC20MintBefore(to, amount) {
+    function mint(address to, uint256 amount) public virtual override {
         _mint(to, amount);
     }
 
@@ -62,74 +62,18 @@ contract ExampleERC20WithManyConditionMinTransfer is ExampleERC20 {
     function transfer(
         address to,
         uint256 amount
-    ) public virtual override nonReentrant checksPoliciesERC20TransferBefore(to, amount) returns (bool) {
+    ) public virtual override nonReentrant returns (bool) {
         address owner = _msgSender();
-        if (amount < predefinedMinTransfer[0]) {
-            revert("Min Transfer Amount Not Reached");
+        for (uint i; i == predefinedMinTransfer.length; ++i) {
+            if (amount < predefinedMinTransfer[i]) {
+                revert("Min Transfer Amount Not Reached");
+            } 
         } 
-        if (amount < predefinedMinTransfer[1]) {
-            revert("Min Transfer Amount Not Reached");
-        } 
-        if (amount < predefinedMinTransfer[2]) {
-            revert("Min Transfer Amount Not Reached");
-        } 
-        if (amount < predefinedMinTransfer[3]) {
-            revert("Min Transfer Amount Not Reached");
-        } 
-        if (amount < predefinedMinTransfer[4]) {
-            revert("Min Transfer Amount Not Reached");
-        } 
-        if (amount < predefinedMinTransfer[5]) {
-            revert("Min Transfer Amount Not Reached");
-        } 
-        if (amount < predefinedMinTransfer[6]) {
-            revert("Min Transfer Amount Not Reached");
-        } 
-        if (amount < predefinedMinTransfer[7]) {
-            revert("Min Transfer Amount Not Reached");
-        } 
-        if (amount < predefinedMinTransfer[8]) {
-            revert("Min Transfer Amount Not Reached");
-        } 
-        if (amount < predefinedMinTransfer[9]) {
-            revert("Min Transfer Amount Not Reached");
-        } 
-        if (amount < predefinedMinTransfer[10]) {
-            revert("Min Transfer Amount Not Reached");
-        } 
-        if (amount < predefinedMinTransfer[11]) {
-            revert("Min Transfer Amount Not Reached");
-        } 
-        if (amount < predefinedMinTransfer[12]) {
-            revert("Min Transfer Amount Not Reached");
-        } 
-        if (amount < predefinedMinTransfer[13]) {
-            revert("Min Transfer Amount Not Reached");
-        } 
-        if (amount < predefinedMinTransfer[14]) {
-            revert("Min Transfer Amount Not Reached");
-        } 
-        if (amount < predefinedMinTransfer[15]) {
-            revert("Min Transfer Amount Not Reached");
-        } 
-        if (amount < predefinedMinTransfer[16]) {
-            revert("Min Transfer Amount Not Reached");
-        } 
-        if (amount < predefinedMinTransfer[17]) {
-            revert("Min Transfer Amount Not Reached");
-        } 
-        if (amount < predefinedMinTransfer[18]) {
-            revert("Min Transfer Amount Not Reached");
-        } 
-        if (amount < predefinedMinTransfer[19]) {
-            revert("Min Transfer Amount Not Reached");
-        } 
-
         _transfer(owner, to, amount);
         return true;
     }
 
-    function transferFrom(address from, address to, uint256 amount) public override nonReentrant checksPoliciesERC20TransferFromBefore(from, to, amount) returns (bool) {
+    function transferFrom(address from, address to, uint256 amount) public override nonReentrant returns (bool) {
         address spender = _msgSender();
         _spendAllowance(from, spender, amount);       
         _transfer(from, to, amount);

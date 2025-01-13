@@ -301,7 +301,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
                 if (effect.effectType == ET.REVERT) { 
                     doRevert(effect.text);
                 } else if (effect.effectType == ET.EVENT) {
-                     doEvent(effect.text);
+                    doEvent(effect.text);
                 } else {
                     evaluateExpression(ruleData, _policyId, applicableRule, functionSignatureArgs, effect.instructionSet);
                 }

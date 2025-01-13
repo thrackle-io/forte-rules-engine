@@ -30,7 +30,7 @@ contract ExampleERC20WithDenyListMinAndMax is ExampleERC20 {
      * @param to recipient address
      * @param amount number of tokens to mint
      */
-    function mint(address to, uint256 amount) public virtual override checksPoliciesERC20MintBefore(to, amount) {
+    function mint(address to, uint256 amount) public virtual override {
         _mint(to, amount);
     }
 
@@ -48,7 +48,7 @@ contract ExampleERC20WithDenyListMinAndMax is ExampleERC20 {
     function transfer(
         address to,
         uint256 amount
-    ) public virtual override nonReentrant checksPoliciesERC20TransferBefore(to, amount) returns (bool) {
+    ) public virtual override nonReentrant returns (bool) {
         address owner = _msgSender();
         bool isOnDenyList = fc.onTheNaughtyList(to);
         if (isOnDenyList && amount < predefinedMinTransfer && amount > predefinedMaxTransfer) {
@@ -58,7 +58,7 @@ contract ExampleERC20WithDenyListMinAndMax is ExampleERC20 {
         return true;
     }
 
-    function transferFrom(address from, address to, uint256 amount) public override nonReentrant checksPoliciesERC20TransferFromBefore(from, to, amount) returns (bool) {
+    function transferFrom(address from, address to, uint256 amount) public override nonReentrant returns (bool) {
         address spender = _msgSender();
         _spendAllowance(from, spender, amount);       
         _transfer(from, to, amount);
