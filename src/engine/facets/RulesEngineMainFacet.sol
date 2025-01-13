@@ -45,8 +45,6 @@ contract RulesEngineMainFacet is FacetCommonImports{
     function _checkPolicy(uint256 _policyId, address _contractAddress, bytes4 functionSignature, bytes calldata arguments) internal returns (bool retVal) {
         _contractAddress; // added to remove wanring. TODO remove this once msg.sender testing is complete 
         // Load the policy data from storage
-        //PolicyStorageSet storage policyStorageSet = lib.getPolicyStorage().policyStorageSets[_policyId];
-        
         Arguments memory functionSignatureArgs = abi.decode(arguments, (Arguments));    
         PolicyStorageSet storage policyStorageSet = lib.getPolicyStorage().policyStorageSets[_policyId];
         RuleS storage ruleData = lib.getRuleStorage();
@@ -95,7 +93,6 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * TODO: Look into the relationship between policy and foreign calls
      */
     function evaluateIndividualRule(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, Arguments memory functionSignatureArgs) internal returns (bool response) {
-            // Arguments memory ruleArgs = buildArguments(_policyId, applicableRule.placeHolders, applicableRule.fcArgumentMappingsConditions, functionSignatureArgs);
             Arguments memory ruleArgs = buildArguments(ruleData, _policyId, applicableRule, functionSignatureArgs, false);
             response = run(ruleData.ruleStorageSets[applicableRule].rule.instructionSet, _policyId, ruleArgs);
 
@@ -157,7 +154,6 @@ contract RulesEngineMainFacet is FacetCommonImports{
         return ruleArgs;
     }
 
-    // function run(uint256 _policyId, uint256[] calldata prog, Arguments calldata arguments) public returns (bool ans) {
     function run(uint256[] memory prog, uint256 _policyId, Arguments memory arguments) internal returns (bool ans) {
 
         uint256[90] memory mem;
