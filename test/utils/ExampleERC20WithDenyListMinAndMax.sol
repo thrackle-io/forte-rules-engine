@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.24;
 import "src/example/ExampleERC20.sol";
+import "test/utils/ForeignCallTestCommon.sol";
 
 /**
  * @title Example ERC20
  * @author @ShaneDuncan602
  * @notice This is an example implementation for ERC20
  */
-contract ExampleERC20WithMinTransfer is ExampleERC20 {
+contract ExampleERC20WithDenyListMinAndMax is ExampleERC20 {
     event RulesEngineEvent(string _message);
+    ForeignCallTestContractOFAC fc;
     uint256 predefinedMinTransfer;
+    uint256 predefinedMaxTransfer;
+    
     /**
      * @dev Constructor sets params
      * @param _name Name of the token
@@ -17,6 +21,8 @@ contract ExampleERC20WithMinTransfer is ExampleERC20 {
      */
     constructor(string memory _name, string memory _symbol) ExampleERC20(_name, _symbol) {
         predefinedMinTransfer = 4;
+        predefinedMaxTransfer = 6;
+        fc = new ForeignCallTestContractOFAC();
     }
 
     /**
@@ -44,10 +50,10 @@ contract ExampleERC20WithMinTransfer is ExampleERC20 {
         uint256 amount
     ) public virtual override nonReentrant checksPoliciesERC20TransferBefore(to, amount) returns (bool) {
         address owner = _msgSender();
-        if (amount < predefinedMinTransfer) {
-            revert("Min Transfer Amount Not Reached");
+        bool isOnDenyList = fc.onTheNaughtyList(to);
+        if (isOnDenyList && amount < predefinedMinTransfer && amount > predefinedMaxTransfer) {
+            revert();
         } 
-
         _transfer(owner, to, amount);
         return true;
     }
@@ -57,6 +63,10 @@ contract ExampleERC20WithMinTransfer is ExampleERC20 {
         _spendAllowance(from, spender, amount);       
         _transfer(from, to, amount);
         return true;
+    }
+
+    function addToDenyList(address _to) public {
+        fc.addToNaughtyList(_to);
     }
 
 }

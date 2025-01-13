@@ -150,7 +150,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
     function run(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, Arguments memory arguments) internal returns (bool ans) {
         uint256[] memory prog = ruleData.ruleStorageSets[applicableRule].rule.instructionSet;
 
-        uint256[64] memory mem;
+        uint256[90] memory mem;
         uint256 idx = 0;
         uint256 opi = 0;
         while (idx < prog.length) {

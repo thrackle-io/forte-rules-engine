@@ -15,6 +15,8 @@ import "test/utils/ExampleERC20WithMinTransfer.sol";
 import "test/utils/ExampleERC20WithDenyList.sol"; 
 import "test/utils/ExampleERC20WithDenyListAndMinTransfer.sol";
 import "src/example/ExampleERC20.sol";
+import "test/utils/ExampleERC20WithDenyListMinAndMax.sol";
+import "test/utils/ExampleERC20WithManyConditionMinTransfer.sol";
 
 contract GasReports is GasHelpers, RulesEngineCommon {
 
@@ -50,158 +52,109 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
 
 /**********  All gas tests should run through this function to keep results together **********/
-    function testGasReport() public {
+    function testGasReport() public endWithStopPrank {
         vm.startPrank(USER_ADDRESS);
         _testGasExampleContract_Primer();
         // Only uncomment the Primer and the individual test you are intending to run to avoid coloring the data.
         // This default configuration only runs the Base test
 
-        // We care about these tests
         //-----------------------------------------------------------------------------
+        // Hard coded
+        _testGasExampleContract_Base();
+        // _testGasExampleHardcodedMinTransferRevert();
+        // _testGasExampleHardcodedManyMinTransferRevert();
+        // _testGasExampleHardcodedOFAC();
+        // _testGasExampleHardcodedOFACWithMinTransfer();
+        // _testGasExampleHardcodedOFACWithMinTransferAndMaxTransfer();
+        //-----------------------------------------------------------------------------
+        // R2V2
         // _testGasExampleContract_NoPoliciesActive();
         // _testGasExampleSimpleMinTransferTriggeredWithRevertEffect();
+        // _testGasExampleManyMinTransferTriggeredWithRevertEffect();
         // _testGasExampleOFAC();
         // _testGasExampleOFACWithMinTransfer();
         // _testGasExampleOFACWithMinTransferAndMaxTransfer();
         // _testGasExampleOFACWithMinTransferInOneRule();
         // _testGasExampleOFACWithMinTransferInSeparatePolicies();
 
-        // Hard coded
-        // _testGasExampleContract_Base();
-        // _testGasExampleHardcodedMinTransferRevert();
-        // _testGasExampleHardcodedOFAC();
-        _testGasExampleHardcodedOFACWithMinTransfer();
-        // _testGasExampleHardcodedOFACWithMinTransferAndMaxTransfer();
         //-----------------------------------------------------------------------------
-
-
-        // _testGasExampleHardcodedMinTransferNotTriggered();
-        // _testGasExampleSimpleMinTransferNotTriggered();
-        // _testGasExampleHardcodedMinTransferTriggered();
-
-        // _testGasExampleSimpleMinTransferTriggeredWithEffect();
-        // _testGasExampleHardcodedMinTransferWithForeignCallNotTriggered();
-        // _testGasExampleSimpleMinTransferWithForeignCallNotTriggered();
-        // _testGasExampleHardcodedMinTransferWithForeignCallTriggered();
-        // _testGasExampleSimpleMinTransferWithForeignCallTriggeredWithEvent();
-        // _testGasExampleSimpleMinTransferWithForeignCallTriggeredWithRevert();
         vm.stopPrank();
     }
 
-/**********  BASELINE gas test with Integration but no policies active **********/
-    function _testGasExampleContract_NoPoliciesActive() internal resets{
-        _testExampleContractPrep(1, address(userContract));
-        _exampleContractGasReport(1, address(userContract), "Using REv2 No Policies Active");   
-    }
-
-/**********  BASELINE gas test with no integrations or rules **********/
-    function _testGasExampleContract_Base() internal resets{
-        // ExampleERC20 hardCodedContract = new ExampleERC20("Token Name", "SYMB");
-        _testExampleContractPrep(1, address(userContract));
-        _exampleContractGasReport(1, address(userContract), "Base");   
-    }
     function _testGasExampleContract_Primer() internal resets{
         ExampleUserContractBase hardCodedContract = new ExampleUserContractBase();
         _testExampleContractPrep(1, address(userContract));
         _exampleContractGasReport(1, address(userContract), "Primer -- disregard");   
     }
 
-/**********  Simple Minimum Transfer Rule Checks **********/
+/**********  HARD CODED, No Rules Engine Integration **********/
+//---------------------------------------------------------------------------------------------
+    /**********  BASELINE gas test with no integrations or rules **********/
+    function _testGasExampleContract_Base() internal resets{
+        ExampleERC20 hardCodedContract = new ExampleERC20("Token Name", "SYMB");
+        hardCodedContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
+        _testExampleContractPrep(1, address(hardCodedContract));
+        _exampleContractGasReport(1, address(hardCodedContract), "Base");   
+    }
 
-    function _testGasExampleSimpleMinTransferNotTriggered() internal endWithStopPrank resets{
-        // Create a minimum transaction(GT 4) rule with positive event
-        _setupMinTransferWithPosEvent(4, address(userContract));
+    
+//---------------------------------------------------------------------------------------------
+
+/**********  Rules Engine Integration **********/
+//---------------------------------------------------------------------------------------------
+
+
+
+//---------------------------------------------------------------------------------------------
+/**********  BASELINE gas test with Integration but no policies active **********/
+    function _testGasExampleContract_NoPoliciesActive() internal resets{
         _testExampleContractPrep(1, address(userContract));
-        _exampleContractGasReport(1, address(userContract), "Using REv2 Min Transfer Not Triggered"); 
+        _exampleContractGasReport(1, address(userContract), "Using REv2 No Policies Active");   
     }
 
-    function _testGasExampleSimpleMinTransferTriggeredWithEffect() internal endWithStopPrank resets{
-        // Create a minimum transaction(GT 4) rule with positive event
-        _setupMinTransferWithPosEvent(4, address(userContract));
-        _testExampleContractPrep(5, address(userContract));
-        _exampleContractGasReport(5, address(userContract), "Using REv2 Min Transfer Triggered With Event Effect"); 
-    }
+
+/**********  Simple Minimum Transfer Rule Checks **********/
 
     function _testGasExampleSimpleMinTransferTriggeredWithRevertEffect() internal endWithStopPrank resets{
         // Create a minimum transaction(GT 4) rule with positive event
         _setupRuleWithRevert();
-        // vm.expectRevert();
         _testExampleContractPrep(3, address(userContract));
-        // vm.expectRevert();
         _exampleContractGasReport(3, address(userContract), "Using REv2 Min Transfer Triggered With Revert Effect"); 
     }
 
-    function _testGasExampleSimpleMinTransferWithForeignCallNotTriggered() internal endWithStopPrank resets{
+    function _testGasExampleManyMinTransferTriggeredWithRevertEffect() internal endWithStopPrank resets{
         // Create a minimum transaction(GT 4) rule with positive event
-        setupRuleWithForeignCall(4, ET.EVENT, true);
-        _testExampleContractPrep(5, address(userContract));
-        _exampleContractGasReport(1, address(userContract), "Using REv2 Min Transfer With Foreign Call Not Triggered"); 
-    }
-
-    function _testGasExampleSimpleMinTransferWithForeignCallTriggeredWithEvent() internal endWithStopPrank resets{
-        // Create a minimum transaction(GT 4) rule with positive event
-        setupRuleWithForeignCall(4, ET.EVENT, true);
-        _testExampleContractPrep(5, address(userContract));
-        _exampleContractGasReport(5, address(userContract), "Using REv2 Min Transfer With Foreign Call Triggered With Event Effect"); 
-    }
-
-    function _testGasExampleSimpleMinTransferWithForeignCallTriggeredWithRevert() internal endWithStopPrank resets{
-        // Create a minimum transaction(GT 4) rule with positive event
-        setupRuleWithForeignCall(5, ET.REVERT, false);
-        vm.expectRevert();
-        _testExampleContractPrep(4, address(userContract));
-        vm.expectRevert();
-        _exampleContractGasReport(4, address(userContract), "Using REv2 Min Transfer With Foreign Call Triggered With Revert Effect"); 
+        _setupRuleWithRevertManyCondition();
+        _testExampleContractPrep(3, address(userContract));
+        _exampleContractGasReport(3, address(userContract), "Using REv2 Min Transfer Triggered With Revert Effect"); 
     }
 
 /**********  Hard-coded MinTransfer with positive effect **********/
-    function _testGasExampleHardcodedMinTransferNotTriggered() public endWithStopPrank resets{
-        ExampleUserContractWithMinTransfer hardCodedContract = new ExampleUserContractWithMinTransfer();
-        // Create a minimum transaction(GT 4) rule with positive event
-        _testExampleContractPrep(1, address(hardCodedContract));
-        _exampleContractGasReport(2, address(hardCodedContract), "Hardcoding Min Transfer Not Triggered"); 
-    }
 
     function _testGasExampleHardcodedMinTransferRevert() public endWithStopPrank resets{
         ExampleERC20WithMinTransfer hardCodedContract = new ExampleERC20WithMinTransfer("Token Name", "SYMB");
         ExampleERC20WithMinTransfer(address(hardCodedContract)).mint(USER_ADDRESS, 1_000_000 * ATTO);
         // Create a minimum transaction(GT 4) rule with positive event
-        // vm.expectRevert();
         _testExampleContractPrep(5, address(hardCodedContract));
-        // vm.expectRevert();
         _exampleContractGasReport(5, address(hardCodedContract), "Hardcoding Min Transfer Revert"); 
     }
 
-    function _testGasExampleHardcodedMinTransferTriggered() public endWithStopPrank resets{
-        ExampleUserContractWithMinTransfer hardCodedContract = new ExampleUserContractWithMinTransfer();
+    function _testGasExampleHardcodedManyMinTransferRevert() public endWithStopPrank resets{
+        ExampleERC20WithManyConditionMinTransfer hardCodedContract = new ExampleERC20WithManyConditionMinTransfer("Token Name", "SYMB");
+        ExampleERC20WithMinTransfer(address(hardCodedContract)).mint(USER_ADDRESS, 1_000_000 * ATTO);
         // Create a minimum transaction(GT 4) rule with positive event
         _testExampleContractPrep(5, address(hardCodedContract));
-        _exampleContractGasReport(5, address(hardCodedContract), "Hardcoding Min Transfer Triggered With Event Effect"); 
+        _exampleContractGasReport(5, address(hardCodedContract), "Hardcoding Min Transfer Revert"); 
     }
 
 /**********  Hard-coded MinTransfer with foreign call and positive effect **********/
-    function _testGasExampleHardcodedMinTransferWithForeignCallNotTriggered() internal endWithStopPrank resets{
-        ExampleUserContractWithMinTransferFC hardCodedContract = new ExampleUserContractWithMinTransferFC();
-        // Create a minimum transaction(GT 4) rule with positive event
-        _testExampleContractPrep(1, address(hardCodedContract));
-        _exampleContractGasReport(1, address(hardCodedContract), "Hardcoding Min Transfer With Foreign Call Not Triggered"); 
-    }
-
-    function _testGasExampleHardcodedMinTransferWithForeignCallTriggered() internal endWithStopPrank resets{
-        ExampleUserContractWithMinTransferFC hardCodedContract = new ExampleUserContractWithMinTransferFC();
-        // Create a minimum transaction(GT 4) rule with positive event
-        _testExampleContractPrep(5, address(hardCodedContract));
-        _exampleContractGasReport(5, address(hardCodedContract), "Hardcoding Min Transfer With Foreign Call Triggered With Event Effect"); 
-    }
 
     function _testGasExampleHardcodedOFAC() internal endWithStopPrank resets{
         ExampleERC20WithDenyList hardCodedContract = new ExampleERC20WithDenyList("Token Name", "SYMB");
         ExampleERC20WithDenyList(address(hardCodedContract)).mint(USER_ADDRESS, 1_000_000 * ATTO);
         hardCodedContract.addToDenyList(address(0x7000000));
         // Create a deny list rule
-        // vm.expectRevert();
         _testExampleContractPrep(3, address(hardCodedContract));
-        // vm.expectRevert();
         _exampleContractGasReport(3, address(hardCodedContract), "Hardcoding OFAC deny list"); 
     }
 
@@ -215,13 +168,53 @@ contract GasReports is GasHelpers, RulesEngineCommon {
     }
 
     function _testGasExampleHardcodedOFACWithMinTransferAndMaxTransfer() internal endWithStopPrank resets{
-        ExampleUserContractWithMinTransferMaxTransferAndDenyList hardCodedContract = new ExampleUserContractWithMinTransferMaxTransferAndDenyList();
+        ExampleERC20WithDenyListMinAndMax hardCodedContract = new ExampleERC20WithDenyListMinAndMax("Token Name", "SYMB");
+        ExampleERC20WithDenyList(address(hardCodedContract)).mint(USER_ADDRESS, 1_000_000 * ATTO);
         hardCodedContract.addToDenyList(address(0x7654321));
         // Create a minimum transaction(GT 4) rule with negative revert
-        vm.expectRevert();
-        _testExampleContractPrep(3, address(hardCodedContract));
-        vm.expectRevert();
-        _exampleContractGasReport(3, address(hardCodedContract), "Hardcoding OFAC deny list with min transfer"); 
+        _testExampleContractPrep(5, address(hardCodedContract));
+        _exampleContractGasReport(5, address(hardCodedContract), "Hardcoding OFAC deny list with min transfer"); 
+    }
+
+/**********  OFAC Prep functions to ensure warm storage comparisons **********/
+    function _testGasExampleOFAC() public {
+        testContract2 = new ForeignCallTestContractOFAC();
+        setupRuleWithOFACForeignCall(address(testContract2), ET.REVERT, true);
+        testContract2.addToNaughtyList(address(0x7654321));
+        _testExampleContractPrep(5, address(userContract));
+        _exampleContractGasReport(5, address(userContract), "Using REv2 OFAC gas report"); 
+    }
+
+    function _testGasExampleOFACWithMinTransfer() public {
+        testContract2 = new ForeignCallTestContractOFAC();
+        setupRulesWithForeignCallAndMinTransfer(address(testContract2), ET.REVERT, true);
+        testContract2.addToNaughtyList(address(0x7654321));
+        _testExampleContractPrep(5, address(userContract));
+        _exampleContractGasReport(5, address(userContract), "Using REv2 OFAC with min transfer gas report"); 
+    }
+
+    function _testGasExampleOFACWithMinTransferAndMaxTransfer() public {
+        testContract2 = new ForeignCallTestContractOFAC();
+        setupRulesWithForeignCallPlusMinTransferAndMaxTransfer(address(testContract2), ET.REVERT, true);
+        testContract2.addToNaughtyList(address(0x7654321));
+        _testExampleContractPrep(1, address(userContract));
+        _exampleContractGasReport(1, address(userContract), "Using REv2 OFAC with min transfer gas report"); 
+    }
+
+    function _testGasExampleOFACWithMinTransferInOneRule() public {
+        testContract2 = new ForeignCallTestContractOFAC();
+        setupRulesWithForeignCallPlusMinTransferAndMaxTransferInOneRule(address(testContract2), ET.REVERT, true);
+        testContract2.addToNaughtyList(address(0x7654321));
+        _testExampleContractPrep(5, address(userContract));
+        _exampleContractGasReport(5, address(userContract), "Using REv2 OFAC with min transfer gas report"); 
+    }
+
+    function _testGasExampleOFACWithMinTransferInSeparatePolicies() public {
+        testContract2 = new ForeignCallTestContractOFAC();
+        setupRulesWithForeignCallAndMinTransferSeparatePolicies(address(testContract2), ET.REVERT, true);
+        testContract2.addToNaughtyList(address(0x7654321));
+        _testExampleContractPrep(5, address(userContract));
+        _exampleContractGasReport(5, address(userContract), "Using REv2 OFAC with min transfer gas report"); 
     }
 
 /**********  Prep functions to ensure warm storage comparisons **********/
@@ -230,18 +223,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         ExampleERC20(contractAddress).transfer(address(0x7654321), _amount);
     }
 
-/**********  OFAC Prep functions to ensure warm storage comparisons **********/
-    function _testGasExampleOFAC() public {
-        testContract2 = new ForeignCallTestContractOFAC();
-        setupRuleWithForeignCall2(address(testContract2), ET.REVERT, true);
-        testContract2.addToNaughtyList(address(0x7654321));
-        // vm.expectRevert();
-        _testExampleContractPrep(5, address(userContract));
-        // vm.expectRevert();
-        _exampleContractGasReport(5, address(userContract), "Using REv2 OFAC gas report"); 
-    }
-
-    function setupRuleWithForeignCall2(
+    function setupRuleWithOFACForeignCall(
         address _contractAddress,
         ET _effectType,
         bool isPositive
@@ -279,6 +261,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule.instructionSet[4] = uint(LC.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
+
+
         // Build the mapping between calling function arguments and foreign call arguments
         rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
             1
@@ -330,52 +314,11 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fc; //added to silence warnings during testing revamp
     }
 
-
-    function _testGasExampleOFACWithMinTransfer() public {
-        testContract2 = new ForeignCallTestContractOFAC();
-        setupRulesWithForeignCallAndMinTransfer(address(testContract2), ET.REVERT, true);
-        testContract2.addToNaughtyList(address(0x7654321));
-        vm.expectRevert();
-        _testExampleContractPrep(5, address(userContract));
-        vm.expectRevert();
-        _exampleContractGasReport(5, address(userContract), "Using REv2 OFAC with min transfer gas report"); 
-    }
-
-    function _testGasExampleOFACWithMinTransferAndMaxTransfer() public {
-        testContract2 = new ForeignCallTestContractOFAC();
-        setupRulesWithForeignCallPlusMinTransferAndMaxTransfer(address(testContract2), ET.REVERT, true);
-        testContract2.addToNaughtyList(address(0x7654321));
-        vm.expectRevert();
-        _testExampleContractPrep(1, address(userContract));
-        vm.expectRevert();
-        _exampleContractGasReport(1, address(userContract), "Using REv2 OFAC with min transfer gas report"); 
-    }
-
-    function _testGasExampleOFACWithMinTransferInOneRule() public {
-        testContract2 = new ForeignCallTestContractOFAC();
-        setupRulesWithForeignCallPlusMinTransferAndMaxTransferInOneRule(address(testContract2), ET.REVERT, true);
-        testContract2.addToNaughtyList(address(0x7654321));
-        vm.expectRevert();
-        _testExampleContractPrep(5, address(userContract));
-        vm.expectRevert();
-        _exampleContractGasReport(5, address(userContract), "Using REv2 OFAC with min transfer gas report"); 
-    }
-
-    function _testGasExampleOFACWithMinTransferInSeparatePolicies() public {
-        testContract2 = new ForeignCallTestContractOFAC();
-        setupRulesWithForeignCallAndMinTransferSeparatePolicies(address(testContract2), ET.REVERT, true);
-        testContract2.addToNaughtyList(address(0x7654321));
-        vm.expectRevert();
-        _testExampleContractPrep(5, address(userContract));
-        vm.expectRevert();
-        _exampleContractGasReport(5, address(userContract), "Using REv2 OFAC with min transfer gas report"); 
-    }
-
     function setupRulesWithForeignCallAndMinTransfer(
         address _contractAddress,
         ET _effectType,
         bool isPositive
-    ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables {
+    ) public ifDeploymentTestsEnabled resetsGlobalVariables {
         uint256[] memory policyIds = new uint256[](1);
 
         policyIds[0] = _createBlankPolicy();
@@ -440,7 +383,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Save the rule
         uint256 ruleId1 = RulesEngineDataFacet(address(red)).updateRule(0, rule1);
         rule2 = _createGTRule(4);
-        rule2.posEffects[0] = effectId_revert;
+        // Swapping from posEffect to negEffects to make sure the revert doesn't trigger (for comparison with V1 numbers)
+        rule2.negEffects[0] = effectId_revert;
         uint256 ruleId2 = RulesEngineDataFacet(address(red)).updateRule(0, rule2);
 
         PT[] memory fcArgs = new PT[](1);
@@ -468,7 +412,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         address _contractAddress,
         ET _effectType,
         bool isPositive
-    ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables {
+    ) public ifDeploymentTestsEnabled resetsGlobalVariables {
         uint256[] memory policyIds = new uint256[](1);
 
         policyIds[0] = _createBlankPolicy();
@@ -536,7 +480,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             .mappings[0]
             .functionSignatureArg
             .typeSpecificIndex = 0;
-        rule1 = _setUpEffect(rule1, _effectType, isPositive);
+            // Swapping isPositive to make sure the revert doesn't trigger (for comparison with V1 numbers)
+        rule1 = _setUpEffect(rule1, _effectType, !isPositive);
         // Save the rule
         uint256 ruleId1 = RulesEngineDataFacet(address(red)).updateRule(0, rule1);
         PT[] memory fcArgs = new PT[](1);
@@ -563,7 +508,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         address _contractAddress,
         ET _effectType,
         bool isPositive
-    ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables {
+    ) public ifDeploymentTestsEnabled resetsGlobalVariables {
         uint256[] memory policyIds = new uint256[](2);
 
         policyIds[0] = _createBlankPolicy();
@@ -637,7 +582,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Save the rule
         uint256 ruleId1 = RulesEngineDataFacet(address(red)).updateRule(0, rule1);
         rule2 = _createGTRule(4);
-        rule2.posEffects[0] = effectId_revert;
+        // Swapping from posEffects to negEffects to make sure the revert doesn't trigger (for comparison with V1 numbers)
+        rule2.negEffects[0] = effectId_revert;
         uint256 ruleId2 = RulesEngineDataFacet(address(red)).updateRule(0, rule2);
 
         PT[] memory fcArgs = new PT[](1);
@@ -670,7 +616,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         address _contractAddress,
         ET _effectType,
         bool isPositive
-    ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables {
+    ) public ifDeploymentTestsEnabled resetsGlobalVariables {
         uint256[] memory policyIds = new uint256[](1);
 
         policyIds[0] = _createBlankPolicy();
@@ -738,7 +684,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule2 = _createGTRule(4);
         rule3 = _createLTRule(4);
         rule2.posEffects[0] = effectId_revert;
-        rule3.posEffects[0] = effectId_revert;
+        // Swapping from posEffect to negEffects to make sure the revert doesn't trigger (for comparison with V1 numbers)
+        rule3.negEffects[0] = effectId_revert;
         uint256 ruleId2 = RulesEngineDataFacet(address(red)).updateRule(0, rule2);
         uint256 ruleId3 = RulesEngineDataFacet(address(red)).updateRule(0, rule3);
         PT[] memory fcArgs = new PT[](1);
