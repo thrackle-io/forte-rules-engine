@@ -3,6 +3,9 @@ src = "src"
 out = "out"
 libs = ["lib"]
 
+optimize = true
+optimizer_runs = 2000000000000000000
+
 remappings = ["forge-std/=lib/forge-std/src/",
 "@openzeppelin/=lib/openzeppelin-contracts/",
 "diamond-std/=lib/diamond-std/",]

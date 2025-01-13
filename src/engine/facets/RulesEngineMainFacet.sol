@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
+import "lib/forge-std/src/console.sol";
 
 contract RulesEngineMainFacet is FacetCommonImports{
 
@@ -32,9 +33,10 @@ contract RulesEngineMainFacet is FacetCommonImports{
         retVal = 1; 
         // Load the function signature data from storage
         PolicyAssociationS storage data = lib.getPolicyAssociationStorage();
+        uint256[] memory policyIds = data.contractPolicyIdMap[contractAddress];
         // loop through all the active policies
-        for(uint256 policyIdx = 0; policyIdx < data.contractPolicyIdMap[contractAddress].length; policyIdx++) {
-            if(!_checkPolicy(data.contractPolicyIdMap[contractAddress][policyIdx], contractAddress, functionSignature, arguments)) {
+        for(uint256 policyIdx = 0; policyIdx < policyIds.length; policyIdx++) {
+            if(!_checkPolicy(policyIds[policyIdx], contractAddress, functionSignature, arguments)) {
                 retVal = 0;
             }
         }
@@ -43,55 +45,43 @@ contract RulesEngineMainFacet is FacetCommonImports{
     function _checkPolicy(uint256 _policyId, address _contractAddress, bytes4 functionSignature, bytes calldata arguments) internal returns (bool retVal) {
         _contractAddress; // added to remove wanring. TODO remove this once msg.sender testing is complete 
         // Load the policy data from storage
-        PolicyS storage data = lib.getPolicyStorage();
-        // Load the function signature data from storage
-        FunctionSignatureS storage sigData = lib.getFunctionSignatureStorage();
-        // Decode arguments from function signature
-        PT[] memory functionSignaturePlaceholders;
-        if(data.policyStorageSets[_policyId].set) {
-            if(sigData.functionSignatureStorageSets[data.policyStorageSets[_policyId].policy.functionSignatureIdMap[functionSignature]].set) {
-                functionSignaturePlaceholders = new PT[](sigData.functionSignatureStorageSets[data.policyStorageSets[_policyId].policy.functionSignatureIdMap[functionSignature]].parameterTypes.length);
-                for(uint256 i = 0; i < functionSignaturePlaceholders.length; i++) {
-                    functionSignaturePlaceholders[i] = sigData.functionSignatureStorageSets[data.policyStorageSets[_policyId].policy.functionSignatureIdMap[functionSignature]].parameterTypes[i];
-                }
-            }
-        }
+        //PolicyStorageSet storage policyStorageSet = lib.getPolicyStorage().policyStorageSets[_policyId];
         
-        Arguments memory functionSignatureArgs = abi.decode(arguments, (Arguments));   
+        Arguments memory functionSignatureArgs = abi.decode(arguments, (Arguments));    
+        PolicyStorageSet storage policyStorageSet = lib.getPolicyStorage().policyStorageSets[_policyId];
+        RuleS storage ruleData = lib.getRuleStorage();
 
         // Retrieve placeHolder[] for specific rule to be evaluated and translate function signature argument array 
         // to rule specific argument array
-        retVal = evaluateRulesAndExecuteEffects(_policyId, _loadApplicableRules(_policyId, functionSignature), functionSignatureArgs);
+        retVal = evaluateRulesAndExecuteEffects(ruleData ,_policyId, _loadApplicableRules(ruleData,policyStorageSet.policy, functionSignature), functionSignatureArgs);
     }
 
-    /**
-     * @dev Loads the applicable rules for a policy. This was broken out of _checkPolicy to address stack too deep issue
-     * @param _policyId policy id
-     * @param functionSignature the signature of the function that initiated the transaction, used to pull the applicable rules.
-     * @return rules applicable rules.
-     */
-    function _loadApplicableRules(uint256 _policyId, bytes4 functionSignature) internal view returns(Rule[] memory){
+    function _loadApplicableRules(RuleS storage ruleData, Policy storage policy, bytes4 functionSignature) internal view returns(uint256[] memory){
         // Load the policy data from storage
-        PolicyS storage data = lib.getPolicyStorage();
-        Rule[] memory applicableRules = new Rule[](data.policyStorageSets[_policyId].policy.signatureToRuleIds[functionSignature].length);
+        uint256[] memory applicableRules = new uint256[](policy.signatureToRuleIds[functionSignature].length);
+
         // Load the function signature data from storage
-        RuleS storage ruleData = lib.getRuleStorage();
+        // RuleS storage ruleData = lib.getRuleStorage();
+
         for(uint256 i = 0; i < applicableRules.length; i++) {
-            if(ruleData.ruleStorageSets[data.policyStorageSets[_policyId].policy.signatureToRuleIds[functionSignature][i]].set) {
-                applicableRules[i] = ruleData.ruleStorageSets[data.policyStorageSets[_policyId].policy.signatureToRuleIds[functionSignature][i]].rule;
+            if(ruleData.ruleStorageSets[policy.signatureToRuleIds[functionSignature][i]].set) {
+                applicableRules[i] = policy.signatureToRuleIds[functionSignature][i];
             }
         }
         return applicableRules;
     }
-
-    function evaluateRulesAndExecuteEffects(uint256 _policyId, Rule[] memory applicableRules, Arguments memory functionSignatureArgs) public returns (bool retVal) {
+    
+    
+    function evaluateRulesAndExecuteEffects(RuleS storage ruleData, uint256 _policyId, uint256[] memory applicableRules, Arguments memory functionSignatureArgs) internal returns (bool retVal) {
         retVal = true;
+        
         for(uint256 i = 0; i < applicableRules.length; i++) { 
-            if(!evaluateIndividualRule(_policyId, applicableRules[i], functionSignatureArgs)) {
+            if(!evaluateIndividualRule(ruleData, _policyId, applicableRules[i], functionSignatureArgs)) {
                 retVal = false;
-                this.doEffects(_policyId, applicableRules[i].negEffects, applicableRules[i], functionSignatureArgs);
+                doEffects(ruleData, _policyId, applicableRules[i], ruleData.ruleStorageSets[applicableRules[i]].rule.negEffects, functionSignatureArgs);
             } else{
-                this.doEffects(_policyId, applicableRules[i].posEffects, applicableRules[i], functionSignatureArgs);
+                doEffects(ruleData, _policyId, applicableRules[i], ruleData.ruleStorageSets[applicableRules[i]].rule.posEffects, functionSignatureArgs);
+
             }
         }
     }
@@ -104,26 +94,43 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @return response the result of the rule condition evaluation 
      * TODO: Look into the relationship between policy and foreign calls
      */
-    function evaluateIndividualRule(uint256 _policyId, Rule memory applicableRule, Arguments memory functionSignatureArgs) internal returns (bool response) {
-            Arguments memory ruleArgs = buildArguments(_policyId, applicableRule.placeHolders, applicableRule.fcArgumentMappingsConditions, functionSignatureArgs);
-            response = this.run(_policyId, applicableRule.instructionSet, ruleArgs);
+    function evaluateIndividualRule(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, Arguments memory functionSignatureArgs) internal returns (bool response) {
+            // Arguments memory ruleArgs = buildArguments(_policyId, applicableRule.placeHolders, applicableRule.fcArgumentMappingsConditions, functionSignatureArgs);
+            Arguments memory ruleArgs = buildArguments(ruleData, _policyId, applicableRule, functionSignatureArgs, false);
+            response = run(ruleData.ruleStorageSets[applicableRule].rule.instructionSet, _policyId, ruleArgs);
+
     }
 
-    function buildArguments(uint256 _policyId, Placeholder[] memory placeHolders, ForeignCallArgumentMappings[] memory fcArgs, Arguments memory functionSignatureArgs) public returns (Arguments memory) {
+    function buildArguments(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, Arguments memory functionSignatureArgs, bool effect) internal returns (Arguments memory) {
         Arguments memory ruleArgs;
+        Placeholder[] memory placeHolders;
+        ForeignCallArgumentMappings[] memory fcs;
+
+        if(effect) {
+            placeHolders = ruleData.ruleStorageSets[applicableRule].rule.effectPlaceHolders;
+            fcs = ruleData.ruleStorageSets[applicableRule].rule.fcArgumentMappingsEffects;
+        } else {
+            placeHolders = ruleData.ruleStorageSets[applicableRule].rule.placeHolders;
+            fcs = ruleData.ruleStorageSets[applicableRule].rule.fcArgumentMappingsConditions;
+        }
+
         ruleArgs.argumentTypes = new PT[](placeHolders.length);
         ruleArgs.values = new bytes[](placeHolders.length);
         uint256 overallIter = 0;
 
+        
+        
+
         for(uint256 placeholderIndex = 0; placeholderIndex < placeHolders.length; placeholderIndex++) {
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
-            if(placeHolders[placeholderIndex].foreignCall) {
-                    ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, placeHolders, fcArgs, functionSignatureArgs, placeholderIndex);
+            Placeholder memory placeholder = placeHolders[placeholderIndex];
+            if(placeholder.foreignCall) {
+                    ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, placeHolders, fcs, functionSignatureArgs, placeholderIndex);
                     // Set the placeholders value and type based on the value returned by the foreign call
                     ruleArgs.argumentTypes[overallIter] = retVal.pType;
                     ruleArgs.values[overallIter] = retVal.value;
                     ++overallIter;
-            } else if (placeHolders[placeholderIndex].trackerValue) {
+            } else if (placeholder.trackerValue) {
                 // Load the Tracker data from storage
                 TrackerS storage data = lib.getTrackerStorage();
                 // Loop through tracker storage for invoking address  
@@ -136,28 +143,24 @@ contract RulesEngineMainFacet is FacetCommonImports{
                 }
             } else {
                 // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
-                if(placeHolders[placeholderIndex].pType == PT.ADDR) {
+                if(placeholder.pType == PT.ADDR) {
                     ruleArgs.argumentTypes[overallIter] = PT.ADDR;
-                } else if(placeHolders[placeholderIndex].pType == PT.UINT) {
+                } else if(placeholder.pType == PT.UINT) {
                     ruleArgs.argumentTypes[overallIter] = PT.UINT;
-                } else if(placeHolders[placeholderIndex].pType == PT.STR) {
+                } else if(placeholder.pType == PT.STR) {
                     ruleArgs.argumentTypes[overallIter] = PT.STR;
                 }
-                ruleArgs.values[overallIter] = functionSignatureArgs.values[placeHolders[placeholderIndex].typeSpecificIndex];
+                ruleArgs.values[overallIter] = functionSignatureArgs.values[placeholder.typeSpecificIndex];
                 ++overallIter;
             }
         }
         return ruleArgs;
     }
 
-    /**
-     * @dev Evaluates the instruction set and returns an answer to the condition
-     * @param prog The instruction set, with placeholders, to be run.
-     * @param arguments the values to replace the placeholders in the instruction set with.
-     * @return ans the result of evaluating the instruction set
-     */
-    function run(uint256 _policyId, uint256[] calldata prog, Arguments calldata arguments) public returns (bool ans) {
-        uint256[64] memory mem;
+    // function run(uint256 _policyId, uint256[] calldata prog, Arguments calldata arguments) public returns (bool ans) {
+    function run(uint256[] memory prog, uint256 _policyId, Arguments memory arguments) internal returns (bool ans) {
+
+        uint256[90] memory mem;
         uint256 idx = 0;
         uint256 opi = 0;
         while (idx < prog.length) {
@@ -166,7 +169,6 @@ contract RulesEngineMainFacet is FacetCommonImports{
             if(op == LC.PLH) {
                 // Placeholder format is: get the index of the argument in the array. For example, PLH 0 is get the first argument in the arguments array and get its type and value
                 uint256 pli = prog[idx+1];
-
                 PT typ = arguments.argumentTypes[pli];
                 if(typ == PT.ADDR) {
                     // Convert address to uint256 for direct comparison using == and != operations
@@ -182,10 +184,12 @@ contract RulesEngineMainFacet is FacetCommonImports{
                 // TRU, tracker index, mem index
                 // TODO: Update to account for type
                 // Load the Tracker data from storage
-                TrackerS storage data = lib.getTrackerStorage();
-                if(data.trackerValueSets[_policyId].trackers[prog[idx + 1]].pType == PT.UINT) {
-                    data.trackerValueSets[_policyId].trackers[prog[idx + 1]].trackerValue = abi.encode(mem[prog[idx+2]]);
+                TrackerValuesSet storage set = lib.getTrackerStorage().trackerValueSets[_policyId];
+                if(set.trackers[prog[idx + 1]].pType == PT.UINT) {
+                    set.trackers[prog[idx + 1]].trackerValue = abi.encode(mem[prog[idx+2]]);
+                    lib.getTrackerStorage().trackerValueSets[_policyId] = set;
                 }
+
                 idx += 3;
 
             } else if (op == LC.NUM) { v = prog[idx+1]; idx += 2; }
@@ -215,12 +219,13 @@ contract RulesEngineMainFacet is FacetCommonImports{
         public returns(ForeignCallReturnValue memory returnValue) {
         // Load the Foreign Call data from storage
         ForeignCallS storage data = lib.getForeignCallStorage();
+        ForeignCall[] memory foreignCalls = data.foreignCallSets[_policyId].foreignCalls;
         // Loop through the foreign call structures associated with the calling contracts address
-        for(uint256 foreignCallsIdx = 0; foreignCallsIdx < data.foreignCallSets[_policyId].foreignCalls.length; foreignCallsIdx++) {
+        for(uint256 foreignCallsIdx = 0; foreignCallsIdx < foreignCalls.length; foreignCallsIdx++) {
             // Check if the index for this placeholder matches the foreign calls index
-            if(data.foreignCallSets[_policyId].foreignCalls[foreignCallsIdx].foreignCallIndex == placeHolders[placeholderIndex].typeSpecificIndex) {
+            if(foreignCalls[foreignCallsIdx].foreignCallIndex == placeHolders[placeholderIndex].typeSpecificIndex) {
                 // Place the foreign call
-                ForeignCallReturnValue memory retVal = evaluateForeignCallForRule(data.foreignCallSets[_policyId].foreignCalls[foreignCallsIdx], fcArgumentMappings, functionSignatureArgs);
+                ForeignCallReturnValue memory retVal = evaluateForeignCallForRule(foreignCalls[foreignCallsIdx], fcArgumentMappings, functionSignatureArgs);
                 return retVal;
             }
         }
@@ -242,11 +247,13 @@ contract RulesEngineMainFacet is FacetCommonImports{
 
         // First pass: calculate sizes
         for(uint256 i = 0; i < fcArgumentMappings.length; i++) {
-            if(fcArgumentMappings[i].foreignCallIndex == fc.foreignCallIndex) {
-                for(uint256 j = 0; j < fcArgumentMappings[i].mappings.length; j++) {
+            ForeignCallArgumentMappings memory fcmapping = fcArgumentMappings[i];
+            if(fcmapping.foreignCallIndex == fc.foreignCallIndex) {
+                for(uint256 j = 0; j < fcmapping.mappings.length; j++) {
                     // Check the parameter type and set the values in the encode arrays accordingly 
-                    PT argType = fcArgumentMappings[i].mappings[j].functionCallArgumentType;
-                    bytes memory value = functionArguments.values[fcArgumentMappings[i].mappings[j].functionSignatureArg.typeSpecificIndex];
+                    IndividualArgumentMapping memory individualMapping = fcmapping.mappings[j];
+                    PT argType = individualMapping.functionCallArgumentType;
+                    bytes memory value = functionArguments.values[individualMapping.functionSignatureArg.typeSpecificIndex];
                     parameterTypes[j] = argType;
                     values[j] = value;
                     if (argType == PT.STR) {
@@ -290,16 +297,18 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @dev Loop through effects for a given rule and execute them
      * @param _effects list of effects
      */
-    function doEffects(uint256 _policyId, Effect[] calldata _effects, Rule memory applicableRule, Arguments memory functionSignatureArgs) public {
+    function doEffects(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, Effect[] memory _effects, Arguments memory functionSignatureArgs) internal {
+
         // Load the Effect data from storage
         for(uint256 i = 0; i < _effects.length; i++) {
-            if(_effects[i].valid) {
-                if (_effects[i].effectType == ET.REVERT) { 
-                    doRevert(_effects[i].text);
-                } else if (_effects[i].effectType == ET.EVENT) {
-                     doEvent(_effects[i].text);
+            Effect memory effect = _effects[i];
+            if(effect.valid) {
+                if (effect.effectType == ET.REVERT) { 
+                    doRevert(effect.text);
+                } else if (effect.effectType == ET.EVENT) {
+                     doEvent(effect.text);
                 } else {
-                    evaluateExpression(_policyId, applicableRule, functionSignatureArgs, _effects[i].instructionSet);
+                    evaluateExpression(ruleData, _policyId, applicableRule, functionSignatureArgs, effect.instructionSet);
                 }
             }
         }
@@ -321,10 +330,10 @@ contract RulesEngineMainFacet is FacetCommonImports{
         emit RulesEngineEvent(_message);
     }
 
-    function evaluateExpression(uint256 _policyId, Rule memory applicableRule, Arguments memory functionSignatureArgs, uint256[] memory instructionSet) public {
-        Arguments memory effectArguments = buildArguments( _policyId, applicableRule.effectPlaceHolders, applicableRule.fcArgumentMappingsEffects, functionSignatureArgs);
+    function evaluateExpression(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, Arguments memory functionSignatureArgs, uint256[] memory instructionSet) internal {
+        Arguments memory effectArguments = buildArguments(ruleData, _policyId, applicableRule, functionSignatureArgs, true);
         if(instructionSet.length > 1) {
-            this.run(_policyId, instructionSet, effectArguments);
+            run(instructionSet, _policyId, effectArguments);
         }
     }
 

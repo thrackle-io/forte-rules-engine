@@ -7,7 +7,7 @@ pragma solidity ^0.8.13;
  * @dev This contract provides the ability to test a hard coded min transfer rule
  * @author @ShaneDuncan602 
  */
-contract ExampleUserContractWithMinTransfer {
+contract ExampleUserContractWithMinTransferRevert {
     event RulesEngineEvent(string _message);
     uint256 predefinedMinTransfer;
 
@@ -17,11 +17,10 @@ contract ExampleUserContractWithMinTransfer {
 
     function transfer(address _to, uint256 _amount) public returns (bool _return) {
         _to;
-        if (_amount > predefinedMinTransfer) {
-            emit RulesEngineEvent("Min Transfer triggered");
-            return true;
+        if (_amount < predefinedMinTransfer) {
+            revert();
         } else {
-            return false;
+            return true;
         }
     }
 

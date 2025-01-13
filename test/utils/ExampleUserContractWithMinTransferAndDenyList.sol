@@ -8,25 +8,28 @@ import "test/utils/ForeignCallTestCommon.sol";
  * @dev This contract provides the ability to test a hardcoded min transfer with a foreign call
  * @author @ShaneDuncan602 
  */
-contract ExampleUserContractWithMinTransferFC {
+contract ExampleUserContractWithMinTransferAndDenyList {
     event RulesEngineEvent(string _message);
-    ForeignCallTestContract fc;
+    ForeignCallTestContractOFAC fc;
     uint256 predefinedMinTransfer;
 
     constructor () {
-        fc = new ForeignCallTestContract();
+        fc = new ForeignCallTestContractOFAC();
         predefinedMinTransfer = 4;
     }
 
     function transfer(address _to, uint256 _amount) public returns (bool _return) {
         _to;
-        uint256 internalAmount = fc.simpleCheck(_amount);
-        if (internalAmount > predefinedMinTransfer) {
-            emit RulesEngineEvent("Min Transfer triggered");
-            return true;
+        bool isOnDenyList = fc.onTheNaughtyList(_to);
+        if (isOnDenyList && _amount < predefinedMinTransfer) {
+            revert();
         } else {
-            return false;
+            return true;
         }
+    }
+
+    function addToDenyList(address _to) public {
+        fc.addToNaughtyList(_to);
     }
 
 }
