@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import "lib/forge-std/src/console.sol";
 
 /**
  * @title Example contract for testing the Foreign Call Encoding
@@ -29,6 +30,8 @@ contract ForeignCallTestContract {
     }
 
     function simpleCheck(uint256 value) public returns (uint256) {
+        console.log("MADE IT HERE");
+        console.log(value);
         internalValue = value;
         return value;
     }

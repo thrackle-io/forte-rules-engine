@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
+import "lib/forge-std/src/console.sol";
 
 contract RulesEngineMainFacet is FacetCommonImports{
 
