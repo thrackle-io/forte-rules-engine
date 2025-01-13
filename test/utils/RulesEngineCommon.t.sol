@@ -282,7 +282,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
 
-        RulesEngineDataFacet(address(red)).addTracker(policyIds[0], tracker);      
+        uint256 tId = RulesEngineDataFacet(address(red)).addTracker(policyIds[0], tracker);      
+        
         ForeignCall memory fc = RulesEngineDataFacet(address(red)).updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", PT.UINT, fcArgs);
 
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);

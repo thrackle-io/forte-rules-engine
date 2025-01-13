@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
+import "lib/forge-std/src/console.sol";
 
 contract RulesEngineMainFacet is FacetCommonImports{
 
@@ -95,14 +96,24 @@ contract RulesEngineMainFacet is FacetCommonImports{
      */
     function evaluateIndividualRule(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, Arguments memory functionSignatureArgs) internal returns (bool response) {
             // Arguments memory ruleArgs = buildArguments(_policyId, applicableRule.placeHolders, applicableRule.fcArgumentMappingsConditions, functionSignatureArgs);
-            Arguments memory ruleArgs = buildArguments(ruleData, _policyId, applicableRule, functionSignatureArgs);
-            response = run(ruleData, _policyId, applicableRule, ruleArgs);
+            Arguments memory ruleArgs = buildArguments(ruleData, _policyId, applicableRule, functionSignatureArgs, false);
+            response = run(ruleData.ruleStorageSets[applicableRule].rule.instructionSet, _policyId, ruleArgs);
 
     }
 
-    function buildArguments(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, Arguments memory functionSignatureArgs) internal returns (Arguments memory) {
+    function buildArguments(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, Arguments memory functionSignatureArgs, bool effect) internal returns (Arguments memory) {
         Arguments memory ruleArgs;
-        Placeholder[] memory placeHolders = ruleData.ruleStorageSets[applicableRule].rule.placeHolders;
+        Placeholder[] memory placeHolders;
+        ForeignCallArgumentMappings[] memory fcs;
+
+        if(effect) {
+            placeHolders = ruleData.ruleStorageSets[applicableRule].rule.effectPlaceHolders;
+            fcs = ruleData.ruleStorageSets[applicableRule].rule.fcArgumentMappingsEffects;
+        } else {
+            placeHolders = ruleData.ruleStorageSets[applicableRule].rule.placeHolders;
+            fcs = ruleData.ruleStorageSets[applicableRule].rule.fcArgumentMappingsConditions;
+        }
+
         ruleArgs.argumentTypes = new PT[](placeHolders.length);
         ruleArgs.values = new bytes[](placeHolders.length);
         uint256 overallIter = 0;
@@ -114,7 +125,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
             Placeholder memory placeholder = placeHolders[placeholderIndex];
             if(placeholder.foreignCall) {
-                    ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, placeHolders, ruleData.ruleStorageSets[applicableRule].rule.fcArgumentMappingsConditions, functionSignatureArgs, placeholderIndex);
+                    ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, placeHolders, fcs, functionSignatureArgs, placeholderIndex);
                     // Set the placeholders value and type based on the value returned by the foreign call
                     ruleArgs.argumentTypes[overallIter] = retVal.pType;
                     ruleArgs.values[overallIter] = retVal.value;
@@ -147,8 +158,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
     }
 
     // function run(uint256 _policyId, uint256[] calldata prog, Arguments calldata arguments) public returns (bool ans) {
-    function run(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, Arguments memory arguments) internal returns (bool ans) {
-        uint256[] memory prog = ruleData.ruleStorageSets[applicableRule].rule.instructionSet;
+    function run(uint256[] memory prog, uint256 _policyId, Arguments memory arguments) internal returns (bool ans) {
 
         uint256[90] memory mem;
         uint256 idx = 0;
@@ -177,7 +187,9 @@ contract RulesEngineMainFacet is FacetCommonImports{
                 TrackerValuesSet storage set = lib.getTrackerStorage().trackerValueSets[_policyId];
                 if(set.trackers[prog[idx + 1]].pType == PT.UINT) {
                     set.trackers[prog[idx + 1]].trackerValue = abi.encode(mem[prog[idx+2]]);
+                    lib.getTrackerStorage().trackerValueSets[_policyId] = set;
                 }
+
                 idx += 3;
 
             } else if (op == LC.NUM) { v = prog[idx+1]; idx += 2; }
@@ -319,9 +331,9 @@ contract RulesEngineMainFacet is FacetCommonImports{
     }
 
     function evaluateExpression(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, Arguments memory functionSignatureArgs, uint256[] memory instructionSet) internal {
-        Arguments memory effectArguments = buildArguments(ruleData, _policyId, applicableRule, functionSignatureArgs);
+        Arguments memory effectArguments = buildArguments(ruleData, _policyId, applicableRule, functionSignatureArgs, true);
         if(instructionSet.length > 1) {
-            run(ruleData, _policyId, applicableRule, effectArguments);
+            run(instructionSet, _policyId, effectArguments);
         }
     }
 

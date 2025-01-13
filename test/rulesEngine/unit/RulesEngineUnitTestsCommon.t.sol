@@ -521,6 +521,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
+        userContract = new ExampleUserContract();
+        userContractAddress = address(userContract);
+        testContract = new ForeignCallTestContract();
         uint256 policyId = setupEffectWithTrackerUpdate();
         Arguments memory arguments;
         arguments.argumentTypes = new PT[](2);
@@ -534,7 +537,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // It will have the result of the foreign call (simpleCheck) added to it.
         // original tracker value 2, added value 5, resulting updated tracker value should be 7
         RulesEngineMainFacet(address(red)).checkPolicies(
-            address(userContract),
+            userContractAddress,
             bytes4(keccak256(bytes(functionSignature))),
             retVal
         );
@@ -575,7 +578,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         _setupRuleWithRevert();
         vm.expectRevert(abi.encodePacked(revert_text));
-        userContract.transfer(address(0x7654321), 3);
+        userContract.transfer(address(0x7654321), 5);
     }
 
     /// Ensure that rule with a positive effect event applied, that passes, will emit the event
