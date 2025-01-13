@@ -28,7 +28,6 @@ contract GasReports is GasHelpers, RulesEngineCommon {
     function setUp() public {
         red = _createRulesEngineDiamond(address(0xB0b));
         userContract = new ExampleERC20("Token Name", "SYMB");
-        userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
         userContractAddress = address(userContract);
         userContract.setRulesEngineAddress(address(red));
         testContract = new ForeignCallTestContract();
@@ -117,6 +116,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 /**********  Simple Minimum Transfer Rule Checks **********/
 
     function _testGasExampleSimpleMinTransferTriggeredWithRevertEffect() internal endWithStopPrank resets{
+        userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
         // Create a minimum transaction(GT 4) rule with positive event
         _setupRuleWithRevert();
         _testExampleContractPrep(3, address(userContract));
@@ -124,6 +124,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
     }
 
     function _testGasExampleManyMinTransferTriggeredWithRevertEffect() internal endWithStopPrank resets{
+        userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
         // Create a minimum transaction(GT 4) rule with positive event
         _setupRuleWithRevertManyCondition();
         _testExampleContractPrep(3, address(userContract));
@@ -179,6 +180,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
 /**********  OFAC Prep functions to ensure warm storage comparisons **********/
     function _testGasExampleOFAC() public {
+        userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
         testContract2 = new ForeignCallTestContractOFAC();
         setupRuleWithOFACForeignCall(address(testContract2), ET.REVERT, true);
         testContract2.addToNaughtyList(address(0x7654321));
@@ -187,6 +189,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
     }
 
     function _testGasExampleOFACWithMinTransfer() public {
+        userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
         testContract2 = new ForeignCallTestContractOFAC();
         setupRulesWithForeignCallAndMinTransfer(address(testContract2), ET.REVERT, true);
         testContract2.addToNaughtyList(address(0x7654321));
@@ -195,6 +198,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
     }
 
     function _testGasExampleOFACWithMinTransferAndMaxTransfer() public {
+        userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
         testContract2 = new ForeignCallTestContractOFAC();
         setupRulesWithForeignCallPlusMinTransferAndMaxTransfer(address(testContract2), ET.REVERT, true);
         testContract2.addToNaughtyList(address(0x7654321));
@@ -203,6 +207,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
     }
 
     function _testGasExampleOFACWithMinTransferInOneRule() public {
+        userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
         testContract2 = new ForeignCallTestContractOFAC();
         setupRulesWithForeignCallPlusMinTransferAndMaxTransferInOneRule(address(testContract2), ET.REVERT, true);
         testContract2.addToNaughtyList(address(0x7654321));
@@ -211,6 +216,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
     }
 
     function _testGasExampleOFACWithMinTransferInSeparatePolicies() public {
+        userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
         testContract2 = new ForeignCallTestContractOFAC();
         setupRulesWithForeignCallAndMinTransferSeparatePolicies(address(testContract2), ET.REVERT, true);
         testContract2.addToNaughtyList(address(0x7654321));
