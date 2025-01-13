@@ -64,7 +64,7 @@ contract ExampleERC20WithManyConditionMinTransfer is ExampleERC20 {
         uint256 amount
     ) public virtual override nonReentrant returns (bool) {
         address owner = _msgSender();
-        for (uint i; i == predefinedMinTransfer.length; ++i) {
+        for (uint i; i < predefinedMinTransfer.length; ++i) {
             if (amount < predefinedMinTransfer[i]) {
                 revert("Min Transfer Amount Not Reached");
             } 
