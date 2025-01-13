@@ -14,6 +14,7 @@ import "test/utils/ExampleUserContractWithMinTransferMaxTransferAndDenyList.sol"
 import "test/utils/ExampleERC20WithMinTransfer.sol"; 
 import "test/utils/ExampleERC20WithDenyList.sol"; 
 import "test/utils/ExampleERC20WithDenyListAndMinTransfer.sol";
+import "test/utils/ExampleERC20Hardcoded.sol";
 import "src/example/ExampleERC20.sol";
 import "test/utils/ExampleERC20WithDenyListMinAndMax.sol";
 import "test/utils/ExampleERC20WithManyConditionMinTransfer.sol";
@@ -62,20 +63,20 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Hard coded
         _testGasExampleContract_Base();
         // _testGasExampleHardcodedMinTransferRevert();
-        // _testGasExampleHardcodedManyMinTransferRevert();
         // _testGasExampleHardcodedOFAC();
         // _testGasExampleHardcodedOFACWithMinTransfer();
         // _testGasExampleHardcodedOFACWithMinTransferAndMaxTransfer();
+        // _testGasExampleHardcodedManyMinTransferRevert();
         //-----------------------------------------------------------------------------
         // R2V2
         // _testGasExampleContract_NoPoliciesActive();
         // _testGasExampleSimpleMinTransferTriggeredWithRevertEffect();
-        // _testGasExampleManyMinTransferTriggeredWithRevertEffect();
         // _testGasExampleOFAC();
         // _testGasExampleOFACWithMinTransfer();
         // _testGasExampleOFACWithMinTransferAndMaxTransfer();
         // _testGasExampleOFACWithMinTransferInOneRule();
         // _testGasExampleOFACWithMinTransferInSeparatePolicies();
+        // _testGasExampleManyMinTransferTriggeredWithRevertEffect();
 
         //-----------------------------------------------------------------------------
         vm.stopPrank();
@@ -91,7 +92,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 //---------------------------------------------------------------------------------------------
     /**********  BASELINE gas test with no integrations or rules **********/
     function _testGasExampleContract_Base() internal resets{
-        ExampleERC20 hardCodedContract = new ExampleERC20("Token Name", "SYMB");
+        ExampleERC20Hardcoded hardCodedContract = new ExampleERC20Hardcoded("Token Name", "SYMB");
         hardCodedContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
         _testExampleContractPrep(1, address(hardCodedContract));
         _exampleContractGasReport(1, address(hardCodedContract), "Base");   
