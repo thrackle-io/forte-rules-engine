@@ -9,13 +9,7 @@ import "./IRulesEngine.sol";
  * @dev The abstract contract containing modifiers used by Rules Engine clients. It is intended to be inherited and implemented by client contracts. It is self-contained and requires no additional imports.
  */
 abstract contract RulesEngineClient {
-    struct Arguments {
-        // Parameter types of arguments in order
-        IRulesEngine.PT[] argumentTypes;
-        // The actual values of the arguments in order
-        bytes[] values;
-    }
-    
+
     address public rulesEngineAddress;
 
     /**
@@ -94,17 +88,8 @@ abstract contract RulesEngineClient {
      * @param value amount transferred
      */
     function _checksPoliciesERC20Transfer(address to, uint256 value) internal {
-        Arguments memory args;
-        args.values = new bytes[](3);
-        args.values[0] = abi.encode(address(to));
-        args.values[1] = abi.encode(uint256(value));
-        args.values[2] = abi.encode(msg.sender);
-        args.argumentTypes = new IRulesEngine.PT[](3);
-        args.argumentTypes[0] = IRulesEngine.PT.ADDR;
-        args.argumentTypes[1] = IRulesEngine.PT.UINT;
-        args.argumentTypes[2] = IRulesEngine.PT.ADDR;
-        bytes memory encoded = abi.encode(args);
-        _invokeRulesEngine(bytes4(keccak256(bytes("transfer(address,uint256)"))), encoded);
+        bytes memory encoded = abi.encodeWithSelector(msg.sig, to, value, msg.sender);
+        _invokeRulesEngine(encoded);
     }
 
     /**
@@ -114,19 +99,8 @@ abstract contract RulesEngineClient {
      * @param value amount transferred
      */
     function _checksPoliciesERC20TransferFrom(address from, address to, uint256 value) internal {
-        Arguments memory args;
-        args.values = new bytes[](4);
-        args.values[0] = abi.encode(address(from));
-        args.values[1] = abi.encode(address(to));
-        args.values[2] = abi.encode(uint256(value));
-        args.values[3] = abi.encode(msg.sender);
-        args.argumentTypes = new IRulesEngine.PT[](4);
-        args.argumentTypes[0] = IRulesEngine.PT.ADDR;
-        args.argumentTypes[1] = IRulesEngine.PT.ADDR;
-        args.argumentTypes[2] = IRulesEngine.PT.UINT;
-        args.argumentTypes[3] = IRulesEngine.PT.ADDR;
-        bytes memory encoded = abi.encode(args);
-        _invokeRulesEngine(bytes4(keccak256(bytes("transferFrom(address,address,uint256)"))), encoded);
+        bytes memory encoded = abi.encodeWithSelector(msg.sig, from, to, value, msg.sender);
+        _invokeRulesEngine(encoded);
     }
 
     /**
@@ -135,26 +109,16 @@ abstract contract RulesEngineClient {
      * @param amount amount transferred
      */
     function _checksPoliciesERC20Mint(address to, uint256 amount) internal {
-        Arguments memory args;
-        args.values = new bytes[](3);
-        args.values[0] = abi.encode(to);
-        args.values[1] = abi.encode(amount);
-        args.values[2] = abi.encode(msg.sender);
-        args.argumentTypes = new IRulesEngine.PT[](3);
-        args.argumentTypes[0] = IRulesEngine.PT.ADDR;
-        args.argumentTypes[1] = IRulesEngine.PT.UINT;
-        args.argumentTypes[2] = IRulesEngine.PT.ADDR;
-        bytes memory encoded = abi.encode(args);
-        _invokeRulesEngine(bytes4(keccak256(bytes("mint(address,uint256)"))), encoded);
+        bytes memory encoded = abi.encodeWithSelector(msg.sig, to, amount, msg.sender);
+        _invokeRulesEngine(encoded);
     }
 
     /**
      * @dev This function makes the call to the Rules Engine
-     * @param signature calling function signature
-     * @param args function signature's arguments
+     * @param encoded encoded data to be passed to the rules engine
      * @return retval return value from the rules engine
      */
-    function _invokeRulesEngine(bytes4 signature, bytes memory args) internal returns (uint256 retval) {
-        if (rulesEngineAddress != address(0)) return IRulesEngine(rulesEngineAddress).checkPolicies(address(this), signature, args);
+    function _invokeRulesEngine(bytes memory encoded) internal returns (uint256 retval) {
+        if (rulesEngineAddress != address(0)) return IRulesEngine(rulesEngineAddress).checkPolicies(address(this), encoded);
     }
 }
