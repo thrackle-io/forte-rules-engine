@@ -20,7 +20,7 @@ interface IRulesEngine {
     /**
      * @dev evaluates the conditions associated with all applicable rules and returns the result
      * @param contractAddress the address of the rules-enabled contract, used to pull the applicable rules
-     * @param functionSignature the signature of the function that initiated the transaction, used to pull the applicable rules.
+     * @param arguments Think of this as msg.data and whatever other context and global variables you would like to pass in to check.
      */
-    function checkPolicies(address contractAddress, bytes4 functionSignature, bytes calldata arguments) external returns (uint256);
+    function checkPolicies(address contractAddress, bytes calldata arguments) external returns (uint256);
 }

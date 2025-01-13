@@ -1231,7 +1231,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.fcArgumentMappingsConditions[0].mappings[0].functionCallArgumentType = PT.UINT;
         rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.foreignCall = false;
         rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.pType = PT.UINT;
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
+        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 2;
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule

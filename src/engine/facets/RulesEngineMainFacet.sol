@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
+import "forge-std/console.sol";
 
 contract RulesEngineMainFacet is FacetCommonImports{
 
@@ -24,33 +25,31 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @dev evaluates the conditions associated with all applicable rules and returns the result
      * @dev PEP for policy checks
      * @param contractAddress the address of the rules-enabled contract, used to pull the applicable rules
-     * @param functionSignature the signature of the function that initiated the transaction, used to pull the applicable rules.
-     * @param arguments function arguments
+     * @param arguments function arguments. Should included the function signature and the arguments to be passed to the function
      * TODO: refine the parameters to this function. contractAddress is not necessary as it's the message caller
      */
-    function checkPolicies(address contractAddress, bytes4 functionSignature, bytes calldata arguments) public returns (uint256 retVal) {  
+    function checkPolicies(address contractAddress, bytes calldata arguments) public returns (uint256 retVal) {  
         retVal = 1; 
         // Load the function signature data from storage
         PolicyAssociationS storage data = lib.getPolicyAssociationStorage();
         uint256[] memory policyIds = data.contractPolicyIdMap[contractAddress];
         // loop through all the active policies
         for(uint256 policyIdx = 0; policyIdx < policyIds.length; policyIdx++) {
-            if(!_checkPolicy(policyIds[policyIdx], contractAddress, functionSignature, arguments)) {
+            if(!_checkPolicy(policyIds[policyIdx], contractAddress, arguments)) {
                 retVal = 0;
             }
         }
     }
 
-    function _checkPolicy(uint256 _policyId, address _contractAddress, bytes4 functionSignature, bytes calldata arguments) internal returns (bool retVal) {
+    function _checkPolicy(uint256 _policyId, address _contractAddress, bytes calldata arguments) internal returns (bool retVal) {
         _contractAddress; // added to remove wanring. TODO remove this once msg.sender testing is complete 
-        // Load the policy data from storage
-        Arguments memory functionSignatureArgs = abi.decode(arguments, (Arguments));    
+        // Load the policy data from storage   
         PolicyStorageSet storage policyStorageSet = lib.getPolicyStorage().policyStorageSets[_policyId];
         RuleS storage ruleData = lib.getRuleStorage();
 
         // Retrieve placeHolder[] for specific rule to be evaluated and translate function signature argument array 
         // to rule specific argument array
-        retVal = evaluateRulesAndExecuteEffects(ruleData ,_policyId, _loadApplicableRules(ruleData,policyStorageSet.policy, functionSignature), functionSignatureArgs);
+        retVal = evaluateRulesAndExecuteEffects(ruleData ,_policyId, _loadApplicableRules(ruleData,policyStorageSet.policy, bytes4(arguments[:4])), arguments[4:]);
     }
 
     function _loadApplicableRules(RuleS storage ruleData, Policy storage policy, bytes4 functionSignature) internal view returns(uint256[] memory){
@@ -69,7 +68,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
     }
     
     
-    function evaluateRulesAndExecuteEffects(RuleS storage ruleData, uint256 _policyId, uint256[] memory applicableRules, Arguments memory functionSignatureArgs) internal returns (bool retVal) {
+    function evaluateRulesAndExecuteEffects(RuleS storage ruleData, uint256 _policyId, uint256[] memory applicableRules, bytes calldata functionSignatureArgs) internal returns (bool retVal) {
         retVal = true;
         
         for(uint256 i = 0; i < applicableRules.length; i++) { 
@@ -91,13 +90,13 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @return response the result of the rule condition evaluation 
      * TODO: Look into the relationship between policy and foreign calls
      */
-    function evaluateIndividualRule(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, Arguments memory functionSignatureArgs) internal returns (bool response) {
+    function evaluateIndividualRule(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, bytes calldata functionSignatureArgs) internal returns (bool response) {
             Arguments memory ruleArgs = buildArguments(ruleData, _policyId, applicableRule, functionSignatureArgs, false);
             response = run(ruleData.ruleStorageSets[applicableRule].rule.instructionSet, _policyId, ruleArgs);
 
     }
 
-    function buildArguments(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, Arguments memory functionSignatureArgs, bool effect) internal returns (Arguments memory) {
+    function buildArguments(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, bytes calldata functionSignatureArgs, bool effect) internal returns (Arguments memory) {
         Arguments memory ruleArgs;
         Placeholder[] memory placeHolders;
         ForeignCallArgumentMappings[] memory fcs;
@@ -139,14 +138,15 @@ contract RulesEngineMainFacet is FacetCommonImports{
                 }
             } else {
                 // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
-                if(placeholder.pType == PT.ADDR) {
-                    ruleArgs.argumentTypes[overallIter] = PT.ADDR;
-                } else if(placeholder.pType == PT.UINT) {
-                    ruleArgs.argumentTypes[overallIter] = PT.UINT;
-                } else if(placeholder.pType == PT.STR) {
+                ruleArgs.argumentTypes[overallIter] = placeholder.pType;
+                if(placeholder.pType == PT.STR || placeholder.pType == PT.BYTES) {
                     ruleArgs.argumentTypes[overallIter] = PT.STR;
+                    ruleArgs.values[overallIter] = getDynamicVariableFromCalldata(functionSignatureArgs, placeholder.typeSpecificIndex);
+                } else {
+                    ruleArgs.values[overallIter] = functionSignatureArgs[
+                        placeholder.typeSpecificIndex * 32: (placeholder.typeSpecificIndex + 1) * 32
+                    ];
                 }
-                ruleArgs.values[overallIter] = functionSignatureArgs.values[placeholder.typeSpecificIndex];
                 ++overallIter;
             }
         }
@@ -209,7 +209,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
     function evaluateForeignCalls(
         uint256 _policyId, Placeholder[] memory placeHolders, 
         ForeignCallArgumentMappings[] memory fcArgumentMappings, 
-        Arguments memory functionSignatureArgs, 
+        bytes calldata functionSignatureArgs, 
         uint256 placeholderIndex) 
         public returns(ForeignCallReturnValue memory returnValue) {
         // Load the Foreign Call data from storage
@@ -233,13 +233,12 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @param functionArguments the arguments of the rules calling funciton (to be passed to the foreign call as needed)
      * @return retVal the foreign calls return value
      */
-    function evaluateForeignCallForRule(ForeignCall memory fc, ForeignCallArgumentMappings[] memory fcArgumentMappings, Arguments memory functionArguments) public returns (ForeignCallReturnValue memory retVal) {
+    function evaluateForeignCallForRule(ForeignCall memory fc, ForeignCallArgumentMappings[] memory fcArgumentMappings, bytes calldata functionArguments) public returns (ForeignCallReturnValue memory retVal) {
         // First, calculate total size needed and positions of dynamic data
-        uint dynamicVarCount = 0;
-        uint[] memory dynamicVarLengths = new uint[](functionArguments.values.length);
-        bytes[] memory values = new bytes[](functionArguments.values.length);
-        PT[] memory parameterTypes = new PT[](functionArguments.values.length);
+        bytes memory encodedCall = bytes.concat(bytes4(fc.signature));
+        bytes memory dynamicData;
 
+        uint256 lengthToAppend = 0;
         // First pass: calculate sizes
         for(uint256 i = 0; i < fcArgumentMappings.length; i++) {
             ForeignCallArgumentMappings memory fcmapping = fcArgumentMappings[i];
@@ -248,18 +247,23 @@ contract RulesEngineMainFacet is FacetCommonImports{
                     // Check the parameter type and set the values in the encode arrays accordingly 
                     IndividualArgumentMapping memory individualMapping = fcmapping.mappings[j];
                     PT argType = individualMapping.functionCallArgumentType;
-                    bytes memory value = functionArguments.values[individualMapping.functionSignatureArg.typeSpecificIndex];
-                    parameterTypes[j] = argType;
-                    values[j] = value;
-                    if (argType == PT.STR) {
-                        dynamicVarLengths[dynamicVarCount] = value.length;
-                        ++dynamicVarCount;
+                    uint256 typeSpecificIndex = individualMapping.functionSignatureArg.typeSpecificIndex;
+                    bytes32 value = bytes32(functionArguments[typeSpecificIndex * 32: (typeSpecificIndex + 1) * 32]);
+                    
+                    if (argType == PT.STR || argType == PT.BYTES) {
+                        (bytes memory dynamicValue, uint256 dynamicLength) = getDynamicVariableFromCalldataNoOffset(functionArguments, typeSpecificIndex);
+                        uint256 dynamicOffset = (fcmapping.mappings.length * 32) + lengthToAppend;
+                        encodedCall = bytes.concat(encodedCall, bytes32(dynamicOffset));
+                        dynamicData = bytes.concat(dynamicData, dynamicValue);
+                        uint dynamicLengthToWordLength = (dynamicLength + 31) / 32 * 32;
+                        lengthToAppend += dynamicLengthToWordLength;
+                    } else {
+                        encodedCall = bytes.concat(encodedCall, value);
                     }
                 }
             }
         }
 
-        bytes memory encodedCall = assemblyEncode(parameterTypes, values, fc.signature, dynamicVarLengths);
         // Place the foreign call
         (bool response, bytes memory data) = fc.foreignCallAddress.call(encodedCall);
     
@@ -267,17 +271,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
         // Verify that the foreign call was successful
         if(response) {
             // Decode the return value based on the specified return value parameter type in the foreign call structure
-            if(fc.returnType == PT.BOOL) {
-                retVal.pType = PT.BOOL;
-            } else if(fc.returnType == PT.UINT) {
-                retVal.pType = PT.UINT;
-            } else if(fc.returnType == PT.STR) {
-                retVal.pType = PT.STR;
-            } else if(fc.returnType == PT.ADDR) {
-                retVal.pType = PT.ADDR;
-            } else if(fc.returnType == PT.VOID) {
-                retVal.pType = PT.VOID;
-            }
+            retVal.pType = fc.returnType;
             retVal.value = data;
         }
     }
@@ -292,7 +286,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @dev Loop through effects for a given rule and execute them
      * @param _effects list of effects
      */
-    function doEffects(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, Effect[] memory _effects, Arguments memory functionSignatureArgs) internal {
+    function doEffects(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, Effect[] memory _effects, bytes calldata functionSignatureArgs) internal {
 
         // Load the Effect data from storage
         for(uint256 i = 0; i < _effects.length; i++) {
@@ -325,7 +319,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
         emit RulesEngineEvent(_message);
     }
 
-    function evaluateExpression(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, Arguments memory functionSignatureArgs, uint256[] memory instructionSet) internal {
+    function evaluateExpression(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, bytes calldata functionSignatureArgs, uint256[] memory instructionSet) internal {
         Arguments memory effectArguments = buildArguments(ruleData, _policyId, applicableRule, functionSignatureArgs, true);
         if(instructionSet.length > 1) {
             run(instructionSet, _policyId, effectArguments);
@@ -446,6 +440,57 @@ contract RulesEngineMainFacet is FacetCommonImports{
         assembly {
             result := mload(add(source, 32))
         }
+    }
+
+    function getDynamicVariableFromCalldata(bytes calldata data, uint256 index) public pure returns (bytes memory retVal) {
+        // Get offset from parameter position
+        uint256 offset = uint256(bytes32(data[index * 32:(index + 1) * 32]));
+        // Get length from the offset position
+        uint256 length = uint256(bytes32(data[offset:offset + 32]));
+        
+        // Allocate memory for result: 32 (offset) + 32 (length) + data length
+        bytes memory result = new bytes(64 + length);
+    
+        assembly {
+            // Store offset to length (0x20)
+            mstore(add(result, 32), 0x20)
+            
+            // Store length
+            mstore(add(result, 64), length)
+            
+            // Copy actual data
+            calldatacopy(
+                add(result, 96),           // destination (after offset+length)
+                add(add(data.offset, offset), 32),  // source (after length in calldata)
+                length                     // length of data
+            )
+        }
+        
+        return result;
+    }
+
+    function getDynamicVariableFromCalldataNoOffset(bytes calldata data, uint256 index) public pure returns (bytes memory, uint256) {
+        // Get offset from parameter position
+        uint256 offset = uint256(bytes32(data[index * 32:(index + 1) * 32]));
+        // Get length from the offset position
+        uint256 length = uint256(bytes32(data[offset:offset + 32]));
+        
+        // Allocate memory for result: 32 (length) + data length
+        bytes memory result = new bytes(32 + length);
+        
+        assembly {
+            // Store length
+            mstore(add(result, 32), length)
+            
+            // Copy actual data
+            calldatacopy(
+                add(result, 64),           // destination (after length)
+                add(add(data.offset, offset), 32),  // source (after length in calldata)
+                length                     // length of data
+            )
+        }
+        
+        return (result, length);
     }
 
     /**
