@@ -325,8 +325,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.instructionSet = _createInstructionSet(_amount);
 
         rule = _setUpEffect(rule, _effectType, isPositive);
-        // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
@@ -341,6 +339,10 @@ contract RulesEngineCommon is DiamondMine, Test {
                 fcArgs,
                 typeSpecificIndices
             );
+        // Save the rule
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
+
+
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);       

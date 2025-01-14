@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
-import "forge-std/console.sol";
 
 contract RulesEngineMainFacet is FacetCommonImports{
 
@@ -190,16 +189,9 @@ contract RulesEngineMainFacet is FacetCommonImports{
         uint256 foreignCallIndex
     ) public returns(ForeignCallReturnValue memory returnValue) {
         // Load the Foreign Call data from storage
-        ForeignCallS storage data = lib.getForeignCallStorage();
-        ForeignCall[] memory foreignCalls = data.foreignCallSets[_policyId].foreignCalls;
-        // Loop through the foreign call structures associated with the calling contracts address
-        for(uint256 foreignCallsIdx = 0; foreignCallsIdx < foreignCalls.length; foreignCallsIdx++) {
-            // Check if the index for this placeholder matches the foreign calls index
-            if(foreignCalls[foreignCallsIdx].foreignCallIndex == foreignCallIndex) {
-                // Place the foreign call
-                ForeignCallReturnValue memory retVal = evaluateForeignCallForRule(foreignCalls[foreignCallsIdx], functionSignatureArgs);
-                return retVal;
-            }
+        ForeignCall memory foreignCall = lib.getForeignCallStorage().foreignCalls[_policyId][foreignCallIndex];
+        if (foreignCall.set) {
+            return evaluateForeignCallForRule(foreignCall, functionSignatureArgs);
         }
     }
 
