@@ -91,67 +91,47 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * TODO: Look into the relationship between policy and foreign calls
      */
     function evaluateIndividualRule(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, bytes calldata functionSignatureArgs) internal returns (bool response) {
-            Arguments memory ruleArgs = buildArguments(ruleData, _policyId, applicableRule, functionSignatureArgs, false);
-            response = run(ruleData.ruleStorageSets[applicableRule].rule.instructionSet, _policyId, ruleArgs);
-
+        (bytes[] memory ruleArgs, Placeholder[] memory placeholders) = buildArguments(ruleData, _policyId, applicableRule, functionSignatureArgs, false);
+        response = run(ruleData.ruleStorageSets[applicableRule].rule.instructionSet, placeholders, _policyId, ruleArgs);
     }
 
-    function buildArguments(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, bytes calldata functionSignatureArgs, bool effect) internal returns (Arguments memory) {
-        Arguments memory ruleArgs;
+    function buildArguments(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, bytes calldata functionSignatureArgs, bool effect) internal returns (bytes[] memory, Placeholder[] memory) {
         Placeholder[] memory placeHolders;
 
         if(effect) {
             placeHolders = ruleData.ruleStorageSets[applicableRule].rule.effectPlaceHolders;
         } else {
             placeHolders = ruleData.ruleStorageSets[applicableRule].rule.placeHolders;
-        }
+        }       
 
-        ruleArgs.argumentTypes = new PT[](placeHolders.length);
-        ruleArgs.values = new bytes[](placeHolders.length);
-        uint256 overallIter = 0;
-
-        
-        
-
+        bytes[] memory retVals = new bytes[](placeHolders.length);
         for(uint256 placeholderIndex = 0; placeholderIndex < placeHolders.length; placeholderIndex++) {
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
             Placeholder memory placeholder = placeHolders[placeholderIndex];
             if(placeholder.foreignCall) {
                     ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, functionSignatureArgs, placeholder.typeSpecificIndex, applicableRule, effect);
                     // Set the placeholders value and type based on the value returned by the foreign call
-                    ruleArgs.argumentTypes[overallIter] = retVal.pType;
-                    ruleArgs.values[overallIter] = retVal.value;
-                    ++overallIter;
+                    retVals[placeholderIndex] = retVal.value;
             } else if (placeholder.trackerValue) {
                 // Load the Tracker data from storage
-                TrackerS storage data = lib.getTrackerStorage();
-                // Loop through tracker storage for invoking address  
-                for(uint256 trackerValueIndex = 0; trackerValueIndex < data.trackerValueSets[_policyId].trackers.length; trackerValueIndex++) {
-                    // determine pType of tracker
-                    ruleArgs.argumentTypes[overallIter] = data.trackerValueSets[_policyId].trackers[trackerValueIndex].pType;
-                    // replace the placeholder value with the tracker value 
-                    ruleArgs.values[overallIter] = data.trackerValueSets[_policyId].trackers[trackerValueIndex].trackerValue;
-                    ++overallIter;
-                }
+                Trackers memory tracker = lib.getTrackerStorage().trackerValueSets[_policyId].trackers[placeholder.typeSpecificIndex];
+                retVals[placeholderIndex] = tracker.trackerValue;
             } else {
                 // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
-                ruleArgs.argumentTypes[overallIter] = placeholder.pType;
                 if(placeholder.pType == PT.STR || placeholder.pType == PT.BYTES) {
-                    ruleArgs.argumentTypes[overallIter] = PT.STR;
-                    ruleArgs.values[overallIter] = getDynamicVariableFromCalldata(functionSignatureArgs, placeholder.typeSpecificIndex);
+                    retVals[placeholderIndex] = getDynamicVariableFromCalldata(functionSignatureArgs, placeholder.typeSpecificIndex);
                 } else {
-                    ruleArgs.values[overallIter] = functionSignatureArgs[
+                    retVals[placeholderIndex] = functionSignatureArgs[
                         placeholder.typeSpecificIndex * 32: (placeholder.typeSpecificIndex + 1) * 32
                     ];
                 }
-                ++overallIter;
             }
         }
-        return ruleArgs;
+
+        return (retVals, placeHolders);
     }
 
-    function run(uint256[] memory prog, uint256 _policyId, Arguments memory arguments) internal returns (bool ans) {
-
+    function run(uint256[] memory prog, Placeholder[] memory placeHolders, uint256 _policyId, bytes[] memory arguments) internal returns (bool ans) {
         uint256[90] memory mem;
         uint256 idx = 0;
         uint256 opi = 0;
@@ -161,15 +141,15 @@ contract RulesEngineMainFacet is FacetCommonImports{
             if(op == LC.PLH) {
                 // Placeholder format is: get the index of the argument in the array. For example, PLH 0 is get the first argument in the arguments array and get its type and value
                 uint256 pli = prog[idx+1];
-                PT typ = arguments.argumentTypes[pli];
+                PT typ = placeHolders[pli].pType;
                 if(typ == PT.ADDR) {
                     // Convert address to uint256 for direct comparison using == and != operations
-                    v = uint256(uint160(address(abi.decode(arguments.values[pli], (address))))); idx += 2;
+                    v = uint256(uint160(address(abi.decode(arguments[pli], (address))))); idx += 2;
                 } else if(typ == PT.UINT) {
-                    v = abi.decode(arguments.values[pli], (uint256)); idx += 2;
+                    v = abi.decode(arguments[pli], (uint256)); idx += 2;
                 } else if(typ == PT.STR) {
                     // Convert string to uint256 for direct comparison using == and != operations
-                    v = uint256(keccak256(abi.encode(abi.decode(arguments.values[pli], (string))))); idx += 2;
+                    v = uint256(keccak256(abi.encode(abi.decode(arguments[pli], (string))))); idx += 2;
                 }
             } else if(op == LC.TRU) {
                 // Tracker Update format will be:
@@ -313,9 +293,9 @@ contract RulesEngineMainFacet is FacetCommonImports{
     }
 
     function evaluateExpression(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, bytes calldata functionSignatureArgs, uint256[] memory instructionSet) internal {
-        Arguments memory effectArguments = buildArguments(ruleData, _policyId, applicableRule, functionSignatureArgs, true);
+        (bytes[] memory effectArguments, Placeholder[] memory placeholders) = buildArguments(ruleData, _policyId, applicableRule, functionSignatureArgs, true);
         if(instructionSet.length > 1) {
-            run(instructionSet, _policyId, effectArguments);
+            run(instructionSet, placeholders, _policyId, effectArguments);
         }
     }
 
