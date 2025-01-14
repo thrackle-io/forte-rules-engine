@@ -161,43 +161,21 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(ruleValue);
         // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 1;
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 1;
         RulesEngineDataFacet(address(red)).updateForeignCall(
             policyIds[0],
             address(testContract),
             "simpleCheck(uint256)",
             PT.UINT,
-            fcArgs
+            fcArgs,
+            typeSpecificIndices
         );
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -242,43 +220,21 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(ruleValue);
         // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 1;
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 1;
         RulesEngineDataFacet(address(red)).updateForeignCall(
             policyIds[0],
             address(testContract),
             "simpleCheck(uint256)",
             PT.UINT,
-            fcArgs
+            fcArgs,
+            typeSpecificIndices
         );
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -615,12 +571,19 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         fc.parameterTypes[3] = PT.STR;
         fc.parameterTypes[4] = PT.ADDR;
 
+        fc.typeSpecificIndices = new uint8[](5);
+        fc.typeSpecificIndices[0] = 1;
+        fc.typeSpecificIndices[1] = 0;
+        fc.typeSpecificIndices[2] = 2;
+        fc.typeSpecificIndices[3] = 3;
+        fc.typeSpecificIndices[4] = 5;
+
         // rule signature function arguments (RS): string, uint256, uint256, string, uint256, string, address
         // foreign call function arguments (FC): uint256, string, uint256, string, address
         //
         // Mapping:
         // FC index: 0 1 2 3 4
-        // RS index: 1 3 4 5 6
+        // RS index: 1 0 2 3 5
 
         // Build the rule signature function arguments structure
 
@@ -629,94 +592,11 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         Rule memory rule;
 
         // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule.fcArgumentMappingsConditions[0].foreignCallIndex = 0;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](5);
-
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 1;
-
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[1]
-            .functionCallArgumentType = PT.STR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[1]
-            .functionSignatureArg
-            .pType = PT.STR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[1]
-            .functionSignatureArg
-            .typeSpecificIndex = 0;
-
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[2]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[2]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[2]
-            .functionSignatureArg
-            .typeSpecificIndex = 2;
-
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[3]
-            .functionCallArgumentType = PT.STR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[3]
-            .functionSignatureArg
-            .pType = PT.STR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[3]
-            .functionSignatureArg
-            .typeSpecificIndex = 3;
-
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[4]
-            .functionCallArgumentType = PT.ADDR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[4]
-            .functionSignatureArg
-            .pType = PT.ADDR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[4]
-            .functionSignatureArg
-            .typeSpecificIndex = 5;
 
         ForeignCallReturnValue memory retVal = RulesEngineMainFacet(
             address(red)
         ).evaluateForeignCallForRule(
                 fc,
-                rule.fcArgumentMappingsConditions,
                 arguments
             );
         console2.logBytes(retVal.value);
@@ -951,31 +831,6 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(4);
         // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 1;
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
@@ -983,12 +838,15 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 1;
         RulesEngineDataFacet(address(red)).updateForeignCall(
             policyIds[0],
             address(testContract),
             "simpleCheck(uint256)",
             PT.UINT,
-            fcArgs
+            fcArgs,
+            typeSpecificIndices
         );
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -1002,7 +860,6 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         RulesEngineMainFacet(address(red)).evaluateForeignCalls(
             0,
             rule.placeHolders,
-            rule.fcArgumentMappingsConditions,
             arguments,
             0
         );
