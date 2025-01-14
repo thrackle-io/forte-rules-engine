@@ -69,10 +69,10 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         //-----------------------------------------------------------------------------
         // R2V2
         // _testGasExampleContract_NoPoliciesActive();
-        //_testGasExampleSimpleMinTransferTriggeredWithRevertEffect();
+        _testGasExampleSimpleMinTransferTriggeredWithRevertEffect();
         // _testGasExampleManyMinTransferTriggeredWithRevertEffect();
         // _testGasExampleOFAC();
-        _testGasExampleOFACWithMinTransfer();
+        // _testGasExampleOFACWithMinTransfer();
         // _testGasExampleOFACWithMinTransferAndMaxTransfer();
         // _testGasExampleOFACWithMinTransferInOneRule();
         // _testGasExampleOFACWithMinTransferInSeparatePolicies();

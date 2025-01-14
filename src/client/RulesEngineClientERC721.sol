@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import "./IRulesEngine.sol";
-import "forge-std/console.sol";
 
 /**
  * @title Rules Engine Client ERC721

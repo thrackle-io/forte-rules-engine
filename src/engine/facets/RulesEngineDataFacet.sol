@@ -31,12 +31,14 @@ contract RulesEngineDataFacet is FacetCommonImports {
         PT[] memory arguments,
         uint8[] memory typeSpecificIndices
     ) public returns (ForeignCall memory fc) {
+        
         // Load the Foreign Call data from storage
         ForeignCallS storage data = lib.getForeignCallStorage();
         fc.foreignCallAddress = foreignContractAddress;
         // Convert the string representation of the function signature to a selector
         fc.signature = bytes4(keccak256(bytes(functionSignature)));
         fc.foreignCallIndex = data.foreignCallIndex;
+        fc.set = true;
         data.foreignCallIndex++;
         fc.returnType = returnType;
         assert(arguments.length == typeSpecificIndices.length);
@@ -48,8 +50,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         }
 
         // If the foreign call structure already exists in the mapping update it, otherwise add it
-        data.foreignCallSets[_policyId].foreignCalls.push(fc);
-        data.foreignCallSets[_policyId].set = true;
+        data.foreignCalls[_policyId][fc.foreignCallIndex] = fc;
     }
 
     /**
@@ -63,14 +64,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         uint256 _foreignCallId
     ) public view returns (ForeignCall memory fc) {
         // Load the Foreign Call data from storage
-        ForeignCallS storage data = lib.getForeignCallStorage();
-        ForeignCall[] memory foreignCalls = data
-            .foreignCallSets[_policyId]
-            .foreignCalls;
-        for (uint256 i = 0; i < foreignCalls.length; i++) {
-            if (foreignCalls[i].foreignCallIndex == _foreignCallId)
-                return foreignCalls[i];
-        }
+        return lib.getForeignCallStorage().foreignCalls[_policyId][_foreignCallId];
     }
 
     /**
@@ -78,9 +72,15 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _policyId the policy Id of the foreign call to retrieve
      * @return fc the foreign call set structure
      */
-    function getForeignCall(uint256 _policyId) public view returns (ForeignCallSet memory fc) {
+    function getForeignCalls(uint256 _policyId) public view returns (ForeignCall[] memory fc) {
         // Return the Foreign Call Set data from storage
-        return lib.getForeignCallStorage().foreignCallSets[_policyId];
+        ForeignCall[] memory foreignCalls = new ForeignCall[](30);
+        for (uint256 i = 0; i < 30; i++) {
+            if (lib.getForeignCallStorage().foreignCalls[_policyId][i].set) {
+                foreignCalls[i] = lib.getForeignCallStorage().foreignCalls[_policyId][i];
+            }
+        }
+        return foreignCalls;
     }
 
     /// Tracker Storage
@@ -304,7 +304,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
                     if(!ruleStore.set) revert("Invalid Rule");
                     for (uint256 k = 0; k < ruleStore.rule.placeHolders.length; k++) {
                         if(ruleStore.rule.placeHolders[k].foreignCall) {
-                            require(getForeignCall(_policyId).set, "Foreign Call referenced in rule not set");
+                            require(getForeignCall(_policyId, ruleStore.rule.placeHolders[k].typeSpecificIndex).set, "Foreign Call referenced in rule not set");
                         } else if (ruleStore.rule.placeHolders[k].trackerValue) {
                             require(getTracker(_policyId).set, "Tracker referenced in rule not set");
                         }
