@@ -11,7 +11,7 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
     function testRulesEngine_Fuzz_createRule_simple(uint256 ruleValue, uint256 transferValue) public {
         uint256 response;
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
+        RuleInputStructure memory rule;
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(ruleValue);
         // Build the calling function argument placeholder 

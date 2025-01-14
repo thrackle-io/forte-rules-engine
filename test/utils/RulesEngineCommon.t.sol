@@ -93,7 +93,7 @@ contract RulesEngineCommon is DiamondMine, Test {
             pTypes
         );
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
+        RuleInputStructure memory rule;
         // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(4);
@@ -119,7 +119,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         returns (uint256 ruleId)
     {
         // Rule: info == "Bad Info" -> revert -> updateInfo(address _to, string info) returns (bool)"
-        Rule memory rule;
+        RuleInputStructure memory rule;
         // Instruction set: LC.PLH, 0, LC.NUM, *uint256 representation of Bad Info*, LC.EQ, 0, 1
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = new uint256[](7);
@@ -174,7 +174,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         returns (uint256 ruleId)
     {
         // Rule: _to == 0x1234567 -> revert -> updateInfo(address _to, string info) returns (bool)"
-        Rule memory rule;
+        RuleInputStructure memory rule;
         // Instruction set: LC.PLH, 0, LC.NUM, *uint256 representation of 0x1234567o*, LC.EQ, 0, 1
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = new uint256[](7);
@@ -246,7 +246,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Rule: 1 == 1 -> TRU:someTracker += FC:simpleCheck(amount) -> transfer(address _to, uint256 amount) returns (bool)
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
-        Rule memory rule;
+        RuleInputStructure memory rule;
         rule.posEffects = new Effect[](1);
         rule.posEffects[0] = effectId_expression2;
         rule.instructionSet = new uint256[](7);
@@ -264,12 +264,14 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.effectPlaceHolders[1].pType = PT.UINT;
         rule.effectPlaceHolders[1].trackerValue = true;
 
-        rule.fcArgumentMappingsEffects = new ForeignCallArgumentMappings[](1);
-        rule.fcArgumentMappingsEffects[0].mappings = new IndividualArgumentMapping[](1);
-        rule.fcArgumentMappingsEffects[0].mappings[0].functionCallArgumentType = PT.UINT;
-        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.foreignCall = false;
-        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.pType = PT.UINT;
-        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
+        // rule.fcArgumentMappingsEffects = new ForeignCallArgumentMappings[](1);
+        // rule.fcArgumentMappingsEffects[0].mappings = new IndividualArgumentMapping[](1);
+        // rule.fcArgumentMappingsEffects[0].mappings[0].functionCallArgumentType = PT.UINT;
+        // rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.foreignCall = false;
+        // rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.pType = PT.UINT;
+        // rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 1;
         ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
 
         //build tracker
@@ -311,7 +313,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         );
 
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
+        RuleInputStructure memory rule;
 
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](1);
@@ -322,31 +324,35 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.instructionSet = _createInstructionSet(_amount);
 
         // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 1;
+        // rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
+        //     1
+        // );
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings = new IndividualArgumentMapping[](1);
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[0]
+        //     .functionCallArgumentType = PT.UINT;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[0]
+        //     .functionSignatureArg
+        //     .foreignCall = false;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[0]
+        //     .functionSignatureArg
+        //     .pType = PT.UINT;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[0]
+        //     .functionSignatureArg
+        //     .typeSpecificIndex = 1;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 1;
+        rule.fcTypeSpecificIndices = typeSpecificIndices;
+        rule.foreignCallIndex = 0;
         rule = _setUpEffect(rule, _effectType, isPositive);
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
@@ -369,10 +375,10 @@ contract RulesEngineCommon is DiamondMine, Test {
     }
 
     function _setUpEffect(
-        Rule memory rule,
+        RuleInputStructure memory rule,
         ET _effectType,
         bool isPositive
-    ) public view returns (Rule memory _rule) {
+    ) public view returns (RuleInputStructure memory _rule) {
         if (isPositive) {
             rule.posEffects = new Effect[](1);
             if (_effectType == ET.REVERT) {
@@ -413,7 +419,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         // Rule memory rule = _createGTRule(4);
-        Rule memory rule;
+        RuleInputStructure memory rule;
         _setupEffectProcessor();
         // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
         rule.placeHolders = new Placeholder[](1);
@@ -463,7 +469,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         // Rule memory rule = _createGTRule(4);
-        Rule memory rule;
+        RuleInputStructure memory rule;
         _setupEffectProcessor();
         // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
         rule.placeHolders = new Placeholder[](1);
@@ -740,7 +746,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         );
 
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule = _createGTRule(4);
+        RuleInputStructure memory rule = _createGTRule(4);
         rule.posEffects[0] = effectId_event;
 
         // Save the rule
@@ -770,7 +776,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         );
 
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule = _createGTRule(threshold);
+        RuleInputStructure memory rule = _createGTRule(threshold);
         rule.posEffects[0] = effectId_event;
 
         // Save the rule
@@ -813,7 +819,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         // Rule 1: GT 4
-        Rule memory rule = _createGTRule(4);
+        RuleInputStructure memory rule = _createGTRule(4);
         rule.posEffects[0] = effectId_event;
 
         // Save the rule
@@ -877,7 +883,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         );
 
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule = _createGTRule(4);
+        RuleInputStructure memory rule = _createGTRule(4);
         rule.posEffects = new Effect[](2);
         rule.posEffects[0] = effectId_event;
         rule.posEffects[1] = effectId_event2;
@@ -916,7 +922,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         );
 
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
+        RuleInputStructure memory rule;
 
         // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
         rule.instructionSet = _createInstructionSet(0, 1);
@@ -982,9 +988,9 @@ contract RulesEngineCommon is DiamondMine, Test {
     }
 
     // internal rule builder
-    function _createGTRule(uint256 _amount) public returns (Rule memory) {
+    function _createGTRule(uint256 _amount) public returns (RuleInputStructure memory) {
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
+        RuleInputStructure memory rule;
         // Set up some effects.
         _setupEffectProcessor();
         // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
@@ -1000,9 +1006,9 @@ contract RulesEngineCommon is DiamondMine, Test {
         return rule;
     }
 
-    function _createLTRule(uint256 _amount) public returns (Rule memory) {
+    function _createLTRule(uint256 _amount) public returns (RuleInputStructure memory) {
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
+        RuleInputStructure memory rule;
         // Set up some effects.
         _setupEffectProcessor();
         // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
@@ -1180,7 +1186,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[1] = PT.UINT;
         _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
-        Rule memory rule;
+        RuleInputStructure memory rule;
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](1); 
         rule.placeHolders[0].foreignCall = true;
@@ -1188,14 +1194,22 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(transferValue);
         // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](1);
-        rule.fcArgumentMappingsConditions[0].mappings = new IndividualArgumentMapping[](1);
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionCallArgumentType = PT.UINT;
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.foreignCall = false;
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.pType = PT.UINT;
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
+        // rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](1);
+        // rule.fcArgumentMappingsConditions[0].mappings = new IndividualArgumentMapping[](1);
+        // rule.fcArgumentMappingsConditions[0].mappings[0].functionCallArgumentType = PT.UINT;
+        // rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.foreignCall = false;
+        // rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.pType = PT.UINT;
+        // rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
+
+        uint8[] memory fcTypeSpecificIndices = new uint8[](1);
+        fcTypeSpecificIndices[0] = 1;
+
+ 
+        rule.fcTypeSpecificIndices = fcTypeSpecificIndices;
+        rule.foreignCallIndex = 0;
+
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
 
@@ -1218,7 +1232,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[2] = PT.UINT;
         _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
-        Rule memory rule;
+        RuleInputStructure memory rule;
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](1); 
         rule.placeHolders[0].foreignCall = true;
@@ -1226,14 +1240,21 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(transferValue);
         // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](1);
-        rule.fcArgumentMappingsConditions[0].mappings = new IndividualArgumentMapping[](1);
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionCallArgumentType = PT.UINT;
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.foreignCall = false;
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.pType = PT.UINT;
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 2;
+        // rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](1);
+        // rule.fcArgumentMappingsConditions[0].mappings = new IndividualArgumentMapping[](1);
+        // rule.fcArgumentMappingsConditions[0].mappings[0].functionCallArgumentType = PT.UINT;
+        // rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.foreignCall = false;
+        // rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.pType = PT.UINT;
+        // rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 2;
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
+
+        uint8[] memory fcTypeSpecificIndices = new uint8[](1);
+        fcTypeSpecificIndices[0] = 1;
+
+        rule.fcTypeSpecificIndices = fcTypeSpecificIndices;
+        rule.foreignCallIndex = 0;
+
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
 
@@ -1252,7 +1273,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         
         _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
-        Rule memory rule;
+        RuleInputStructure memory rule;
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](1); 
         rule.placeHolders[0].foreignCall = true;
@@ -1260,12 +1281,18 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(transferValue);
         // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](1);
-        rule.fcArgumentMappingsConditions[0].mappings = new IndividualArgumentMapping[](1);
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionCallArgumentType = PT.UINT;
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.foreignCall = false;
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.pType = PT.UINT;
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
+        // rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](1);
+        // rule.fcArgumentMappingsConditions[0].mappings = new IndividualArgumentMapping[](1);
+        // rule.fcArgumentMappingsConditions[0].mappings[0].functionCallArgumentType = PT.UINT;
+        // rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.foreignCall = false;
+        // rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.pType = PT.UINT;
+        // rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
+        uint8[] memory fcTypeSpecificIndices = new uint8[](1);
+        fcTypeSpecificIndices[0] = 1;
+
+        rule.fcTypeSpecificIndices = fcTypeSpecificIndices;
+        rule.foreignCallIndex = 0;
+
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule

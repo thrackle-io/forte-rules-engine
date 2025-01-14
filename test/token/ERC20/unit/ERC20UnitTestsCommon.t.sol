@@ -125,7 +125,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule =  _createGTRuleTransferFrom(4);
+        RuleInputStructure memory rule =  _createGTRuleTransferFrom(4);
         rule.negEffects[0] = effectId_revert;
         rule.posEffects[0] = effectId_event;
         // Save the rule
@@ -145,7 +145,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule =  _createGTRuleMint(4);
+        RuleInputStructure memory rule =  _createGTRuleMint(4);
         rule.negEffects[0] = effectId_revert;
         rule.posEffects[0] = effectId_event;
         // Save the rule
@@ -157,9 +157,9 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
-    function _createGTRuleTransferFrom(uint256 _amount) public returns(Rule memory){
+    function _createGTRuleTransferFrom(uint256 _amount) public returns(RuleInputStructure memory){
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
+        RuleInputStructure memory rule;
         // Set up some effects.
         _setupEffectProcessor();
         // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
@@ -181,9 +181,9 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         return rule;
     }
 
-    function _createGTRuleMint(uint256 _amount) public returns(Rule memory){
+    function _createGTRuleMint(uint256 _amount) public returns(RuleInputStructure memory){
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
+        RuleInputStructure memory rule;
         // Set up some effects.
         _setupEffectProcessor();
         // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1

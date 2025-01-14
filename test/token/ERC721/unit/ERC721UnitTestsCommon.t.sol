@@ -96,7 +96,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
 
         _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
 
-        Rule memory rule =  _createEQRuleSafeMint(USER_ADDRESS);
+        RuleInputStructure memory rule =  _createEQRuleSafeMint(USER_ADDRESS);
         rule.negEffects[0] = effectId_revert;
         rule.posEffects[0] = effectId_event;
         // Save the rule
@@ -116,7 +116,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
 
         _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
 
-        Rule memory rule =  _createEQRuleSafeTransferFrom(USER_ADDRESS);
+        RuleInputStructure memory rule =  _createEQRuleSafeTransferFrom(USER_ADDRESS);
         rule.negEffects[0] = effectId_revert;
         rule.posEffects[0] = effectId_event;
         // Save the rule
@@ -136,7 +136,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
 
         _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
 
-        Rule memory rule =  _createEQRuleTransferFrom(USER_ADDRESS);
+        RuleInputStructure memory rule =  _createEQRuleTransferFrom(USER_ADDRESS);
         rule.negEffects[0] = effectId_revert;
         rule.posEffects[0] = effectId_event;
         // Save the rule
@@ -148,9 +148,9 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
-    function _createEQRuleSafeMint(address _address) public returns(Rule memory){
+    function _createEQRuleSafeMint(address _address) public returns(RuleInputStructure memory){
         // Rule: _to == _address -> revert -> safeMint(address _to)"
-        Rule memory rule;
+        RuleInputStructure memory rule;
         // Set up some effects.
         _setupEffectProcessor();
         // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
@@ -172,9 +172,9 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         return rule;
     }
 
-    function _createEQRuleSafeTransferFrom(address _address) public returns(Rule memory){
+    function _createEQRuleSafeTransferFrom(address _address) public returns(RuleInputStructure memory){
         // Rule: _to == _address -> revert -> safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data)"
-        Rule memory rule;
+        RuleInputStructure memory rule;
         // Set up some effects.
         _setupEffectProcessor();
         // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
@@ -196,9 +196,9 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         return rule;
     }
 
-    function _createEQRuleTransferFrom(address _address) public returns(Rule memory){
+    function _createEQRuleTransferFrom(address _address) public returns(RuleInputStructure memory){
         // Rule: _to == _address -> revert -> TransferFrom(address from, address to, uint256 tokenId)"
-        Rule memory rule;
+        RuleInputStructure memory rule;
         // Set up some effects.
         _setupEffectProcessor();
         // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1

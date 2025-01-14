@@ -99,14 +99,11 @@ contract RulesEngineMainFacet is FacetCommonImports{
     function buildArguments(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, bytes calldata functionSignatureArgs, bool effect) internal returns (Arguments memory) {
         Arguments memory ruleArgs;
         Placeholder[] memory placeHolders;
-        ForeignCallArgumentMappings[] memory fcs;
 
         if(effect) {
             placeHolders = ruleData.ruleStorageSets[applicableRule].rule.effectPlaceHolders;
-            fcs = ruleData.ruleStorageSets[applicableRule].rule.fcArgumentMappingsEffects;
         } else {
             placeHolders = ruleData.ruleStorageSets[applicableRule].rule.placeHolders;
-            fcs = ruleData.ruleStorageSets[applicableRule].rule.fcArgumentMappingsConditions;
         }
 
         ruleArgs.argumentTypes = new PT[](placeHolders.length);
@@ -120,7 +117,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
             Placeholder memory placeholder = placeHolders[placeholderIndex];
             if(placeholder.foreignCall) {
-                    ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, placeHolders, fcs, functionSignatureArgs, placeholderIndex);
+                    ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, functionSignatureArgs, placeholder.typeSpecificIndex, applicableRule, effect);
                     // Set the placeholders value and type based on the value returned by the foreign call
                     ruleArgs.argumentTypes[overallIter] = retVal.pType;
                     ruleArgs.values[overallIter] = retVal.value;
@@ -207,22 +204,17 @@ contract RulesEngineMainFacet is FacetCommonImports{
 
 
     function evaluateForeignCalls(
-        uint256 _policyId, Placeholder[] memory placeHolders, 
-        ForeignCallArgumentMappings[] memory fcArgumentMappings, 
+        uint256 _policyId, 
         bytes calldata functionSignatureArgs, 
-        uint256 placeholderIndex) 
-        public returns(ForeignCallReturnValue memory returnValue) {
+        uint256 foreignCallIndex,
+        uint256 applicableRule,
+        bool effect
+    ) public returns(ForeignCallReturnValue memory returnValue) {
         // Load the Foreign Call data from storage
-        ForeignCallS storage data = lib.getForeignCallStorage();
-        ForeignCall[] memory foreignCalls = data.foreignCallSets[_policyId].foreignCalls;
-        // Loop through the foreign call structures associated with the calling contracts address
-        for(uint256 foreignCallsIdx = 0; foreignCallsIdx < foreignCalls.length; foreignCallsIdx++) {
-            // Check if the index for this placeholder matches the foreign calls index
-            if(foreignCalls[foreignCallsIdx].foreignCallIndex == placeHolders[placeholderIndex].typeSpecificIndex) {
-                // Place the foreign call
-                ForeignCallReturnValue memory retVal = evaluateForeignCallForRule(foreignCalls[foreignCallsIdx], fcArgumentMappings, functionSignatureArgs);
-                return retVal;
-            }
+        ForeignCall memory fc = lib.getForeignCallStorage().foreignCall[_policyId][foreignCallIndex];
+        if (fc.set) {
+            ForeignCallReturnValue memory retVal = evaluateForeignCallForRule(fc, applicableRule, effect, foreignCallIndex, functionSignatureArgs);
+            return retVal;
         }
     }
 
@@ -233,39 +225,40 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @param functionArguments the arguments of the rules calling funciton (to be passed to the foreign call as needed)
      * @return retVal the foreign calls return value
      */
-    function evaluateForeignCallForRule(ForeignCall memory fc, ForeignCallArgumentMappings[] memory fcArgumentMappings, bytes calldata functionArguments) public returns (ForeignCallReturnValue memory retVal) {
+    function evaluateForeignCallForRule(ForeignCall memory fc, uint256 applicableRule, bool effect, uint256 foreignCallIndex, bytes calldata functionArguments) public returns (ForeignCallReturnValue memory retVal) {
         // First, calculate total size needed and positions of dynamic data
         bytes memory encodedCall = bytes.concat(bytes4(fc.signature));
         bytes memory dynamicData;
 
         uint256 lengthToAppend = 0;
-        // First pass: calculate sizes
-        for(uint256 i = 0; i < fcArgumentMappings.length; i++) {
-            ForeignCallArgumentMappings memory fcmapping = fcArgumentMappings[i];
-            if(fcmapping.foreignCallIndex == fc.foreignCallIndex) {
-                for(uint256 j = 0; j < fcmapping.mappings.length; j++) {
-                    // Check the parameter type and set the values in the encode arrays accordingly 
-                    IndividualArgumentMapping memory individualMapping = fcmapping.mappings[j];
-                    PT argType = individualMapping.functionCallArgumentType;
-                    uint256 typeSpecificIndex = individualMapping.functionSignatureArg.typeSpecificIndex;
-                    bytes32 value = bytes32(functionArguments[typeSpecificIndex * 32: (typeSpecificIndex + 1) * 32]);
-                    
-                    if (argType == PT.STR || argType == PT.BYTES) {
-                        (bytes memory dynamicValue, uint256 dynamicLength) = getDynamicVariableFromCalldataNoOffset(functionArguments, typeSpecificIndex);
-                        uint256 dynamicOffset = (fcmapping.mappings.length * 32) + lengthToAppend;
-                        encodedCall = bytes.concat(encodedCall, bytes32(dynamicOffset));
-                        dynamicData = bytes.concat(dynamicData, dynamicValue);
-                        uint dynamicLengthToWordLength = (dynamicLength + 31) / 32 * 32;
-                        lengthToAppend += dynamicLengthToWordLength;
-                    } else {
-                        encodedCall = bytes.concat(encodedCall, value);
-                    }
-                }
+
+        uint8[] memory typeSpecificIndices;
+        if (effect) {
+            typeSpecificIndices = lib.getRuleStorage().ruleStorageSets[applicableRule].rule.fcArgumentMappingsEffects[foreignCallIndex];
+        } else {
+            typeSpecificIndices = lib.getRuleStorage().ruleStorageSets[applicableRule].rule.fcArgumentMappingsConditions[foreignCallIndex];
+        }
+
+        assert(typeSpecificIndices.length == fc.parameterTypes.length);
+
+        for(uint256 i = 0; i < typeSpecificIndices.length; i++) {
+            uint256 typeSpecificIndex = typeSpecificIndices[i];
+            PT argType = fc.parameterTypes[i];
+            bytes32 value = bytes32(functionArguments[typeSpecificIndex * 32: (typeSpecificIndex + 1) * 32]);
+            if (argType == PT.STR || argType == PT.BYTES) {
+                (bytes memory dynamicValue, uint256 dynamicLength) = getDynamicVariableFromCalldataNoOffset(functionArguments, typeSpecificIndex);
+                uint256 dynamicOffset = (typeSpecificIndices.length * 32) + lengthToAppend;
+                encodedCall = bytes.concat(encodedCall, bytes32(dynamicOffset));
+                dynamicData = bytes.concat(dynamicData, dynamicValue);
+                uint dynamicLengthToWordLength = (dynamicLength + 31) / 32 * 32;
+                lengthToAppend += dynamicLengthToWordLength;
+            } else {
+                encodedCall = bytes.concat(encodedCall, value);
             }
         }
 
         // Place the foreign call
-        (bool response, bytes memory data) = fc.foreignCallAddress.call(encodedCall);
+        (bool response, bytes memory data) = fc.foreignCallAddress.call(bytes.concat(encodedCall, dynamicData));
     
 
         // Verify that the foreign call was successful
@@ -523,7 +516,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @param pType the parameter type of the value
      */
     function retreiveRawEncodedFromInstructionSet(uint256 _ruleId, uint256 instructionSetId, PT pType) internal view returns (uint256 instructionSetValue, bytes memory encoded) {
-        RuleStorageSet memory _ruleStorage = lib.getRuleStorage().ruleStorageSets[_ruleId];
+        RuleStorageSet storage _ruleStorage = lib.getRuleStorage().ruleStorageSets[_ruleId];
         if(!_ruleStorage.set) {
             revert("Unknown Rule");
         }

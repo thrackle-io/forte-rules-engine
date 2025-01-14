@@ -63,7 +63,7 @@ struct Placeholder {
     // The type of parameter the placeholder represents
     PT pType;
     // The index in the specific array for the specified type;
-    uint8 typeSpecificIndex;
+    uint128 typeSpecificIndex;
     /// Determine if the index of value to replace the placeholder is a tracker value
     bool trackerValue;
     // Used to determine whether this Placeholder represents the value returned from a foreign call
@@ -85,24 +85,10 @@ struct Effect {
 /// Foreign Call Structures
 struct ForeignCallS {
     uint256 foreignCallIndex;
-    mapping(uint256 policyId => ForeignCallSet) foreignCallSets;
+    mapping(uint256 policyId => mapping(uint256 foreignCallIndex => ForeignCall)) foreignCall;
 }
 
-struct ForeignCallSet {
-    bool set;
-    ForeignCall[] foreignCalls;
-}
 
-/**
- * Structure used to represent the mapping of arguments between a Rules
- * Function Call Arguments and the Foreign Calls Arguments.
- */
-struct ForeignCallArgumentMappings {
-    // Index of the foreign call structure
-    uint8 foreignCallIndex;
-    // Mappings of individual arguments (Function Signature -> Foreign Call)
-    IndividualArgumentMapping[] mappings;
-}
 /**
  * Structure used to represent the return value of a Foreign Call
  */
@@ -124,27 +110,18 @@ struct Arguments {
     // The actual values of the arguments in order
     bytes[] values;
 }
-/**
- * Structure to represent the mapping of an individual argument between a
- * Rules Function Call Argument and a Foreign Call Argument.
- */
-struct IndividualArgumentMapping {
-    // The Parameter Type of the Function Call Argument
-    PT functionCallArgumentType;
-    // The Argument information for the Function Call Argument
-    Placeholder functionSignatureArg;
-}
 
 /**
  * Structure used to represent a foreign call that can be made during rule evaluation
  */
 struct ForeignCall {
+    bool set;
     // Address of the contract to make the call to
     address foreignCallAddress;
-    // Unique identifier for the foreign contract structure (used by the rule to reference it)
-    uint256 foreignCallIndex;
     // The function signature of the foreign call
     bytes4 signature;
+    // Unique identifier for the foreign contract structure (used by the rule to reference it)
+    uint256 foreignCallIndex;
     // The parameter type of the foreign calls return
     PT returnType;
     // The parameter types of the arguments the foreign call takes
@@ -220,10 +197,31 @@ struct Rule {
     Placeholder[] effectPlaceHolders;
     // Mapping between the Foreigns Calls arguments and the arguments of the function signature and/or trackers this rule is associated with
     // (for foreign calls used in the rules condition evaluation)
-    ForeignCallArgumentMappings[] fcArgumentMappingsConditions;
+    mapping(uint256 foreignCallIndex => uint8[] typeSpecificIndices) fcArgumentMappingsConditions;
     // Mapping between the Foreigns Calls arguments and the arguments of the function signature and/or trackers this rule is associated with
     // (for foreign calls used in the rules effect execution)
-    ForeignCallArgumentMappings[] fcArgumentMappingsEffects;
+    mapping(uint256 foreignCallIndex => uint8[] typeSpecificIndices) fcArgumentMappingsEffects;
+    // List of all positive effects
+    Effect[] posEffects;
+    // List of all positive effects
+    Effect[] negEffects;
+}
+
+// This is a struct that will be used to store the rule input data
+struct RuleInputStructure {
+    uint8[] fcTypeSpecificIndices;
+    uint8[] effectTypeSpecificIndices;
+    uint256 foreignCallIndex;
+    uint256 foreignCallIndexEffects;
+
+    // The instruction set that will be run at rule evaluation
+    uint256[] instructionSet;
+    // The raw format string and addresses for values in the instruction set that have already been converted to uint256.
+    RawData rawData;
+    // List of all placeholders used in the rule in order
+    Placeholder[] placeHolders;
+    // List of all placeholders used in the rule in order
+    Placeholder[] effectPlaceHolders;
     // List of all positive effects
     Effect[] posEffects;
     // List of all positive effects

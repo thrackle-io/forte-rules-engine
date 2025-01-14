@@ -66,7 +66,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
+        RuleInputStructure memory rule;
         // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(4);
@@ -153,7 +153,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
             pTypes
         );
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
+        RuleInputStructure memory rule;
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].foreignCall = true;
@@ -161,33 +161,39 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(ruleValue);
         // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 1;
+        // rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
+        //     1
+        // );
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings = new IndividualArgumentMapping[](1);
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[0]
+        //     .functionCallArgumentType = PT.UINT;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[0]
+        //     .functionSignatureArg
+        //     .foreignCall = false;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[0]
+        //     .functionSignatureArg
+        //     .pType = PT.UINT;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[0]
+        //     .functionSignatureArg
+        //     .typeSpecificIndex = 1;
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
+        uint8[] memory fcTypeSpecificIndices = new uint8[](1);
+        fcTypeSpecificIndices[0] = 1;
+
+        rule.fcTypeSpecificIndices = fcTypeSpecificIndices;
+        rule.foreignCallIndex = 0;
+
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
         PT[] memory fcArgs = new PT[](1);
@@ -234,7 +240,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
             pTypes
         );
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
+        RuleInputStructure memory rule;
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].foreignCall = true;
@@ -242,31 +248,37 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(ruleValue);
         // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 1;
+        uint8[] memory fcTypeSpecificIndices = new uint8[](1);
+        fcTypeSpecificIndices[0] = 1;
+
+        rule.fcTypeSpecificIndices = fcTypeSpecificIndices;
+        rule.foreignCallIndex = 0;
+
+        // rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
+        //     1
+        // );
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings = new IndividualArgumentMapping[](1);
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[0]
+        //     .functionCallArgumentType = PT.UINT;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[0]
+        //     .functionSignatureArg
+        //     .foreignCall = false;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[0]
+        //     .functionSignatureArg
+        //     .pType = PT.UINT;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[0]
+        //     .functionSignatureArg
+        //     .typeSpecificIndex = 1;
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
@@ -626,97 +638,110 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         bytes memory arguments = abi.encode("one", 2, 3, "four", 5, address(0x12345678));
 
-        Rule memory rule;
+        uint8[] memory fcTypeSpecificIndices = new uint8[](5);
+        fcTypeSpecificIndices[0] = 1;
+        fcTypeSpecificIndices[1] = 0;
+        fcTypeSpecificIndices[2] = 2;
+        fcTypeSpecificIndices[3] = 3;
+        fcTypeSpecificIndices[4] = 5;
+
+        RuleInputStructure memory rule;
+        rule.fcTypeSpecificIndices = fcTypeSpecificIndices;
+        rule.foreignCallIndex = 0;
+
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
 
         // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule.fcArgumentMappingsConditions[0].foreignCallIndex = 0;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](5);
+        // rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
+        //     1
+        // );
+        // rule.fcArgumentMappingsConditions[0].foreignCallIndex = 0;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings = new IndividualArgumentMapping[](5);
 
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 1;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[0]
+        //     .functionCallArgumentType = PT.UINT;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[0]
+        //     .functionSignatureArg
+        //     .pType = PT.UINT;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[0]
+        //     .functionSignatureArg
+        //     .typeSpecificIndex = 1;
 
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[1]
-            .functionCallArgumentType = PT.STR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[1]
-            .functionSignatureArg
-            .pType = PT.STR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[1]
-            .functionSignatureArg
-            .typeSpecificIndex = 0;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[1]
+        //     .functionCallArgumentType = PT.STR;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[1]
+        //     .functionSignatureArg
+        //     .pType = PT.STR;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[1]
+        //     .functionSignatureArg
+        //     .typeSpecificIndex = 0;
 
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[2]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[2]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[2]
-            .functionSignatureArg
-            .typeSpecificIndex = 2;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[2]
+        //     .functionCallArgumentType = PT.UINT;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[2]
+        //     .functionSignatureArg
+        //     .pType = PT.UINT;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[2]
+        //     .functionSignatureArg
+        //     .typeSpecificIndex = 2;
 
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[3]
-            .functionCallArgumentType = PT.STR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[3]
-            .functionSignatureArg
-            .pType = PT.STR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[3]
-            .functionSignatureArg
-            .typeSpecificIndex = 3;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[3]
+        //     .functionCallArgumentType = PT.STR;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[3]
+        //     .functionSignatureArg
+        //     .pType = PT.STR;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[3]
+        //     .functionSignatureArg
+        //     .typeSpecificIndex = 3;
 
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[4]
-            .functionCallArgumentType = PT.ADDR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[4]
-            .functionSignatureArg
-            .pType = PT.ADDR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[4]
-            .functionSignatureArg
-            .typeSpecificIndex = 5;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[4]
+        //     .functionCallArgumentType = PT.ADDR;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[4]
+        //     .functionSignatureArg
+        //     .pType = PT.ADDR;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[4]
+        //     .functionSignatureArg
+        //     .typeSpecificIndex = 5;
 
         ForeignCallReturnValue memory retVal = RulesEngineMainFacet(
             address(red)
         ).evaluateForeignCallForRule(
                 fc,
-                rule.fcArgumentMappingsConditions,
+                ruleId,
+                false,
+                0,
                 arguments
             );
         console2.logBytes(retVal.value);
@@ -844,7 +869,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         );
 
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
+        RuleInputStructure memory rule;
 
         rule.placeHolders = new Placeholder[](2);
         rule.placeHolders[0].pType = PT.UINT;
@@ -880,7 +905,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         );
 
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
+        RuleInputStructure memory rule;
 
         // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
         rule.instructionSet = _createInstructionSet(0, 1);
@@ -943,7 +968,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
             pTypes
         );
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
+        RuleInputStructure memory rule;
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].foreignCall = true;
@@ -951,31 +976,37 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(4);
         // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 1;
+        // rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
+        //     1
+        // );
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings = new IndividualArgumentMapping[](1);
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[0]
+        //     .functionCallArgumentType = PT.UINT;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[0]
+        //     .functionSignatureArg
+        //     .foreignCall = false;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[0]
+        //     .functionSignatureArg
+        //     .pType = PT.UINT;
+        // rule
+        //     .fcArgumentMappingsConditions[0]
+        //     .mappings[0]
+        //     .functionSignatureArg
+        //     .typeSpecificIndex = 1;
+        uint8[] memory fcTypeSpecificIndices = new uint8[](1);
+        fcTypeSpecificIndices[0] = 1;
+
+        rule.fcTypeSpecificIndices = fcTypeSpecificIndices;
+        rule.foreignCallIndex = 1;
+
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
@@ -1001,10 +1032,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         bytes memory arguments = abi.encode(address(0x7654321), 5);
         RulesEngineMainFacet(address(red)).evaluateForeignCalls(
             0,
-            rule.placeHolders,
-            rule.fcArgumentMappingsConditions,
             arguments,
-            0
+            0,
+            0,
+            false
         );
     }
 
@@ -1302,7 +1333,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         );
 
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
+        RuleInputStructure memory rule;
 
         // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
         rule.instructionSet = _createInstructionSet(0, 1);
