@@ -28,7 +28,8 @@ contract RulesEngineDataFacet is FacetCommonImports {
         address foreignContractAddress,
         string memory functionSignature,
         PT returnType,
-        PT[] memory arguments
+        PT[] memory arguments,
+        uint8[] memory typeSpecificIndices
     ) public returns (ForeignCall memory fc) {
         // Load the Foreign Call data from storage
         ForeignCallS storage data = lib.getForeignCallStorage();
@@ -38,9 +39,12 @@ contract RulesEngineDataFacet is FacetCommonImports {
         fc.foreignCallIndex = data.foreignCallIndex;
         data.foreignCallIndex++;
         fc.returnType = returnType;
+        assert(arguments.length == typeSpecificIndices.length);
         fc.parameterTypes = new PT[](arguments.length);
+        fc.typeSpecificIndices = new uint8[](arguments.length);
         for (uint256 i = 0; i < arguments.length; i++) {
             fc.parameterTypes[i] = arguments[i];
+            fc.typeSpecificIndices[i] = typeSpecificIndices[i];
         }
 
         // If the foreign call structure already exists in the mapping update it, otherwise add it

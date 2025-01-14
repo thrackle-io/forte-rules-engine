@@ -269,33 +269,6 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
-
-        // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.ADDR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.ADDR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 0;
         // Swapping isPositive to make sure the revert doesn't trigger (for comparison with V1 numbers)
         rule = _setUpEffect(rule, _effectType, !isPositive);
         // Save the rule
@@ -303,13 +276,16 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 0;
         ForeignCall memory fc = RulesEngineDataFacet(address(red))
             .updateForeignCall(
                 policyIds[0],
                 address(_contractAddress),
                 "getNaughty(address)",
                 PT.UINT,
-                fcArgs
+                fcArgs,
+                typeSpecificIndices
             );
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -360,32 +336,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule1.instructionSet[4] = uint(LC.EQ);
         rule1.instructionSet[5] = 0;
         rule1.instructionSet[6] = 1;
-        // Build the mapping between calling function arguments and foreign call arguments
-        rule1.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.ADDR;
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.ADDR;
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 0;
+
         rule1 = _setUpEffect(rule1, _effectType, isPositive);
         // Save the rule
         uint256 ruleId1 = RulesEngineDataFacet(address(red)).updateRule(0, rule1);
@@ -396,13 +347,16 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 0;
         ForeignCall memory fc = RulesEngineDataFacet(address(red))
             .updateForeignCall(
                 policyIds[0],
                 address(_contractAddress),
                 "getNaughty(address)",
                 PT.UINT,
-                fcArgs
+                fcArgs,
+                typeSpecificIndices
             );
         ruleIds.push(new uint256[](2));
         ruleIds[0][0] = ruleId1;
@@ -461,45 +415,22 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule1.instructionSet[14] = uint256(LC.AND);
         rule1.instructionSet[15] = 2;
         rule1.instructionSet[16] = 5;
-        // Build the mapping between calling function arguments and foreign call arguments
-        rule1.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.ADDR;
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.ADDR;
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 0;
-            // Swapping isPositive to make sure the revert doesn't trigger (for comparison with V1 numbers)
+        // Swapping isPositive to make sure the revert doesn't trigger (for comparison with V1 numbers)
         rule1 = _setUpEffect(rule1, _effectType, !isPositive);
         // Save the rule
         uint256 ruleId1 = RulesEngineDataFacet(address(red)).updateRule(0, rule1);
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 0;
         ForeignCall memory fc = RulesEngineDataFacet(address(red))
             .updateForeignCall(
                 policyIds[0],
                 address(_contractAddress),
                 "getNaughty(address)",
                 PT.UINT,
-                fcArgs
+                fcArgs,
+                typeSpecificIndices
             );
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId1;
@@ -559,32 +490,6 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule1.instructionSet[4] = uint(LC.EQ);
         rule1.instructionSet[5] = 0;
         rule1.instructionSet[6] = 1;
-        // Build the mapping between calling function arguments and foreign call arguments
-        rule1.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.ADDR;
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.ADDR;
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 0;
         rule1 = _setUpEffect(rule1, _effectType, isPositive);
         // Save the rule
         uint256 ruleId1 = RulesEngineDataFacet(address(red)).updateRule(0, rule1);
@@ -595,13 +500,16 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 0;
         ForeignCall memory fc = RulesEngineDataFacet(address(red))
             .updateForeignCall(
                 policyIds[0],
                 address(_contractAddress),
                 "getNaughty(address)",
                 PT.UINT,
-                fcArgs
+                fcArgs,
+                typeSpecificIndices
             );
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId1;
@@ -638,83 +546,65 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             pTypes
         );
 
-        // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule1;
-        Rule memory rule2;
-        Rule memory rule3;
-        // Build the foreign call placeholder
-        rule1.placeHolders = new Placeholder[](2);
-        rule1.placeHolders[0].foreignCall = true;
-        rule1.placeHolders[0].typeSpecificIndex = 0;
-        rule1.placeHolders[1].pType = PT.UINT;
-        rule1.placeHolders[1].typeSpecificIndex = 1;
-        // Build the instruction set for the rule (including placeholders)
-        // We don't want this one to trigger the revert effect, we want both rules to be captured in the gas test
-        // forcing this rule to fail
-        rule1.instructionSet = new uint256[](7);
-        rule1.instructionSet[0] = uint(LC.PLH);
-        rule1.instructionSet[1] = 0;
-        rule1.instructionSet[2] = uint(LC.NUM);
-        rule1.instructionSet[3] = 0;
-        rule1.instructionSet[4] = uint(LC.EQ);
-        rule1.instructionSet[5] = 0;
-        rule1.instructionSet[6] = 1;
-        // Build the mapping between calling function arguments and foreign call arguments
-        rule1.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.ADDR;
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.ADDR;
-        rule1
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 0;
-        rule1 = _setUpEffect(rule1, _effectType, isPositive);
-        // Save the rule
-        uint256 ruleId1 = RulesEngineDataFacet(address(red)).updateRule(0, rule1);
-        rule2 = _createGTRule(4);
-        rule3 = _createLTRule(4);
-        rule2.posEffects[0] = effectId_revert;
-        // Swapping from posEffect to negEffects to make sure the revert doesn't trigger (for comparison with V1 numbers)
-        rule3.negEffects[0] = effectId_revert;
-        uint256 ruleId2 = RulesEngineDataFacet(address(red)).updateRule(0, rule2);
-        uint256 ruleId3 = RulesEngineDataFacet(address(red)).updateRule(0, rule3);
+        {
+            // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+            Rule memory rule1;
+            Rule memory rule2;
+            Rule memory rule3;
+            // Build the foreign call placeholder
+            rule1.placeHolders = new Placeholder[](2);
+            rule1.placeHolders[0].foreignCall = true;
+            rule1.placeHolders[0].typeSpecificIndex = 0;
+            rule1.placeHolders[1].pType = PT.UINT;
+            rule1.placeHolders[1].typeSpecificIndex = 1;
+            // Build the instruction set for the rule (including placeholders)
+            // We don't want this one to trigger the revert effect, we want both rules to be captured in the gas test
+            // forcing this rule to fail
+            rule1.instructionSet = new uint256[](7);
+            rule1.instructionSet[0] = uint(LC.PLH);
+            rule1.instructionSet[1] = 0;
+            rule1.instructionSet[2] = uint(LC.NUM);
+            rule1.instructionSet[3] = 0;
+            rule1.instructionSet[4] = uint(LC.EQ);
+            rule1.instructionSet[5] = 0;
+            rule1.instructionSet[6] = 1;
+            rule1 = _setUpEffect(rule1, _effectType, isPositive);
+            // Save the rule
+            uint256 ruleId1 = RulesEngineDataFacet(address(red)).updateRule(0, rule1);
+            rule2 = _createGTRule(4);
+            rule3 = _createLTRule(4);
+            rule2.posEffects[0] = effectId_revert;
+            // Swapping from posEffect to negEffects to make sure the revert doesn't trigger (for comparison with V1 numbers)
+            rule3.negEffects[0] = effectId_revert;
+            uint256 ruleId2 = RulesEngineDataFacet(address(red)).updateRule(0, rule2);
+            uint256 ruleId3 = RulesEngineDataFacet(address(red)).updateRule(0, rule3);
+            ruleIds.push(new uint256[](3));
+            ruleIds[0][0] = ruleId1;
+            ruleIds[0][1] = ruleId2;
+            ruleIds[0][2] = ruleId3;
+            _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        }
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
-        ForeignCall memory fc = RulesEngineDataFacet(address(red))
-            .updateForeignCall(
-                policyIds[0],
-                address(_contractAddress),
-                "getNaughty(address)",
-                PT.UINT,
-                fcArgs
-            );
-        ruleIds.push(new uint256[](3));
-        ruleIds[0][0] = ruleId1;
-        ruleIds[0][1] = ruleId2;
-        ruleIds[0][2] = ruleId3;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 0;
+        {
+            ForeignCall memory fc = RulesEngineDataFacet(address(red))
+                .updateForeignCall(
+                    policyIds[0],
+                    _contractAddress,
+                    "getNaughty(address)",
+                    PT.UINT,
+                    fcArgs,
+                    typeSpecificIndices
+                );
+        }
+
         RulesEngineDataFacet(address(red)).applyPolicy(
             address(userContract),
             policyIds
         );
-        fc; //added to silence warnings during testing revamp
+        //fc; //added to silence warnings during testing revamp
     }
 
 /**********  Rule Setup Helpers **********/

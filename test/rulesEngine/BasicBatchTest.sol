@@ -18,7 +18,9 @@ contract BasicBatchTest is RulesEngineCommon {
         address _address = address(22);
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
-        calls[1] = abi.encodeWithSelector(RulesEngineDataFacet.updateForeignCall.selector, 1, _address, "simpleCheck(uint256)", PT.UINT, fcArgs);
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 1;
+        calls[1] = abi.encodeWithSelector(RulesEngineDataFacet.updateForeignCall.selector, 1, _address, "simpleCheck(uint256)", PT.UINT, fcArgs, typeSpecificIndices);
         calls[2] = abi.encodeWithSelector(RulesEngineDataFacet.updatePolicy.selector, 0, blankSignatures, blankFunctionSignatureIds, blankRuleIds);
         RulesEngineDiamond(red).batch(calls, true);
     }
