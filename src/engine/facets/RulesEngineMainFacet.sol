@@ -418,9 +418,9 @@ contract RulesEngineMainFacet is FacetCommonImports{
     }
 
     function getDynamicVariableFromCalldata(bytes calldata data, uint256 index) public pure returns (bytes memory retVal) {
-        // Get offset from parameter position
+        // Get offset from parameter position, using index * 32 to get the correct position in the calldata
         uint256 offset = uint256(bytes32(data[index * 32:(index + 1) * 32]));
-        // Get length from the offset position
+        // Get length from the offset position, using offset + 32 to get the correct position in the calldata
         uint256 length = uint256(bytes32(data[offset:offset + 32]));
         
         // Allocate memory for result: 32 (offset) + 32 (length) + data length
