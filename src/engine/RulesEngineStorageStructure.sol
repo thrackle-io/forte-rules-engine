@@ -63,7 +63,7 @@ struct Placeholder {
     // The type of parameter the placeholder represents
     PT pType;
     // The index in the specific array for the specified type;
-    uint8 typeSpecificIndex;
+    uint128 typeSpecificIndex;
     /// Determine if the index of value to replace the placeholder is a tracker value
     bool trackerValue;
     // Used to determine whether this Placeholder represents the value returned from a foreign call
@@ -85,24 +85,9 @@ struct Effect {
 /// Foreign Call Structures
 struct ForeignCallS {
     uint256 foreignCallIndex;
-    mapping(uint256 policyId => ForeignCallSet) foreignCallSets;
+    mapping(uint256 policyId => mapping(uint256 foreignCallIndex => ForeignCall)) foreignCalls;
 }
 
-struct ForeignCallSet {
-    bool set;
-    ForeignCall[] foreignCalls;
-}
-
-/**
- * Structure used to represent the mapping of arguments between a Rules
- * Function Call Arguments and the Foreign Calls Arguments.
- */
-struct ForeignCallArgumentMappings {
-    // Index of the foreign call structure
-    uint8 foreignCallIndex;
-    // Mappings of individual arguments (Function Signature -> Foreign Call)
-    IndividualArgumentMapping[] mappings;
-}
 /**
  * Structure used to represent the return value of a Foreign Call
  */
@@ -124,31 +109,25 @@ struct Arguments {
     // The actual values of the arguments in order
     bytes[] values;
 }
-/**
- * Structure to represent the mapping of an individual argument between a
- * Rules Function Call Argument and a Foreign Call Argument.
- */
-struct IndividualArgumentMapping {
-    // The Parameter Type of the Function Call Argument
-    PT functionCallArgumentType;
-    // The Argument information for the Function Call Argument
-    Placeholder functionSignatureArg;
-}
+
 
 /**
  * Structure used to represent a foreign call that can be made during rule evaluation
  */
 struct ForeignCall {
+    bool set;
     // Address of the contract to make the call to
     address foreignCallAddress;
-    // Unique identifier for the foreign contract structure (used by the rule to reference it)
-    uint256 foreignCallIndex;
     // The function signature of the foreign call
     bytes4 signature;
     // The parameter type of the foreign calls return
     PT returnType;
+    // Unique identifier for the foreign contract structure (used by the rule to reference it)
+    uint256 foreignCallIndex;
     // The parameter types of the arguments the foreign call takes
     PT[] parameterTypes;
+    // A list of type specific indices to use for the foreign call and where they sit in the calldata
+    uint8[] typeSpecificIndices;
 }
 
 /// Tracker Structures
@@ -218,12 +197,6 @@ struct Rule {
     // pType = parameterType.ADDR index = 1
     Placeholder[] placeHolders;
     Placeholder[] effectPlaceHolders;
-    // Mapping between the Foreigns Calls arguments and the arguments of the function signature and/or trackers this rule is associated with
-    // (for foreign calls used in the rules condition evaluation)
-    ForeignCallArgumentMappings[] fcArgumentMappingsConditions;
-    // Mapping between the Foreigns Calls arguments and the arguments of the function signature and/or trackers this rule is associated with
-    // (for foreign calls used in the rules effect execution)
-    ForeignCallArgumentMappings[] fcArgumentMappingsEffects;
     // List of all positive effects
     Effect[] posEffects;
     // List of all positive effects
@@ -281,5 +254,4 @@ struct Policy {
 struct PolicyAssociationS {
     mapping(address contractAddress => uint256[]) contractPolicyIdMap;
 }
-
 

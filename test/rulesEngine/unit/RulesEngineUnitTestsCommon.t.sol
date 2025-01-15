@@ -109,18 +109,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         setupRuleWithoutForeignCall();
-        Arguments memory arguments;
-        arguments.argumentTypes = new PT[](2);
-        arguments.argumentTypes[0] = PT.ADDR;
-        arguments.argumentTypes[1] = PT.UINT;
-        arguments.values = new bytes[](2);
-        arguments.values[0] = abi.encode(address(0x7654321));
-        arguments.values[1] = abi.encode(5);
-        bytes memory retVal = abi.encode(arguments);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), 5);
         uint256 response = RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(keccak256(bytes(functionSignature))),
-            retVal
+            arguments
         );
         assertEq(response, 1);
     }
@@ -169,43 +161,21 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(ruleValue);
         // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 1;
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 1;
         RulesEngineDataFacet(address(red)).updateForeignCall(
             policyIds[0],
             address(testContract),
             "simpleCheck(uint256)",
             PT.UINT,
-            fcArgs
+            fcArgs,
+            typeSpecificIndices
         );
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -215,19 +185,11 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
             policyIds
         );
 
-        Arguments memory arguments;
-        arguments.argumentTypes = new PT[](2);
-        arguments.argumentTypes[0] = PT.ADDR;
-        arguments.argumentTypes[1] = PT.UINT;
-        arguments.values = new bytes[](2);
-        arguments.values[0] = abi.encode(address(0x7654321));
-        arguments.values[1] = abi.encode(transferValue);
-        bytes memory retVal = abi.encode(arguments);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), transferValue);
 
         uint256 response = RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(keccak256(bytes(functionSignature))),
-            retVal
+            arguments
         );
         assertEq(response, 1);
     }
@@ -258,43 +220,21 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(ruleValue);
         // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 1;
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 1;
         RulesEngineDataFacet(address(red)).updateForeignCall(
             policyIds[0],
             address(testContract),
             "simpleCheck(uint256)",
             PT.UINT,
-            fcArgs
+            fcArgs,
+            typeSpecificIndices
         );
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -304,20 +244,11 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
             policyIds
         );
 
-        Arguments memory arguments;
-        arguments.argumentTypes = new PT[](2);
-        arguments.argumentTypes[0] = PT.ADDR;
-        arguments.argumentTypes[1] = PT.UINT;
-        arguments.values = new bytes[](2);
-        arguments.values[0] = abi.encode(address(0x7654321));
-        arguments.values[1] = abi.encode(transferValue);
-        bytes memory retVal = abi.encode(arguments);
-
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), transferValue);
         vm.expectRevert(abi.encodePacked(revert_text));
         RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(keccak256(bytes(functionSignature))),
-            retVal
+            arguments
         );
     }
 
@@ -353,18 +284,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         setupRuleWithStringComparison();
-        Arguments memory arguments;
-        arguments.argumentTypes = new PT[](2);
-        arguments.argumentTypes[0] = PT.ADDR;
-        arguments.argumentTypes[1] = PT.STR;
-        arguments.values = new bytes[](2);
-        arguments.values[0] = abi.encode(address(0x7654321));
-        arguments.values[1] = abi.encode("Bad Info");
-        bytes memory retVal = abi.encode(arguments);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature2))), address(0x7654321), "Bad Info");
         uint256 response = RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(keccak256(bytes(functionSignature2))),
-            retVal
+            arguments
         );
         assertEq(response, 1);
     }
@@ -375,18 +298,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         setupRuleWithStringComparison();
-        Arguments memory arguments;
-        arguments.argumentTypes = new PT[](2);
-        arguments.argumentTypes[0] = PT.ADDR;
-        arguments.argumentTypes[1] = PT.STR;
-        arguments.values = new bytes[](2);
-        arguments.values[0] = abi.encode(address(0x7654321));
-        arguments.values[1] = abi.encode("test");
-        bytes memory retVal = abi.encode(arguments);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature2))), address(0x7654321), "test");
         uint256 response = RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(keccak256(bytes(functionSignature2))),
-            retVal
+            arguments
         );
         assertEq(response, 0);
     }
@@ -414,18 +329,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         setupRuleWithAddressComparison();
-        Arguments memory arguments;
-        arguments.argumentTypes = new PT[](2);
-        arguments.argumentTypes[0] = PT.ADDR;
-        arguments.argumentTypes[1] = PT.STR;
-        arguments.values = new bytes[](2);
-        arguments.values[0] = abi.encode(address(0x1234567));
-        arguments.values[1] = abi.encode("test");
-        bytes memory retVal = abi.encode(arguments);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature2))), address(0x1234567), "test");
         uint256 response = RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(keccak256(bytes(functionSignature2))),
-            retVal
+            arguments
         );
         assertEq(response, 1);
     }
@@ -436,18 +343,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         setupRuleWithAddressComparison();
-        Arguments memory arguments;
-        arguments.argumentTypes = new PT[](2);
-        arguments.argumentTypes[0] = PT.ADDR;
-        arguments.argumentTypes[1] = PT.STR;
-        arguments.values = new bytes[](2);
-        arguments.values[0] = abi.encode(address(0x7654321));
-        arguments.values[1] = abi.encode("test");
-        bytes memory retVal = abi.encode(arguments);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature2))), address(0x7654321), "test");
         uint256 response = RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(keccak256(bytes(functionSignature2))),
-            retVal
+            arguments
         );
         assertEq(response, 0);
     }
@@ -475,19 +374,12 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         setupRuleWithForeignCall(4, ET.REVERT, false);
-        Arguments memory arguments;
-        arguments.argumentTypes = new PT[](2);
-        arguments.argumentTypes[0] = PT.ADDR;
-        arguments.argumentTypes[1] = PT.UINT;
-        arguments.values = new bytes[](2);
-        arguments.values[0] = abi.encode(address(0x7654321));
-        arguments.values[1] = abi.encode(5);
-        bytes memory retVal = abi.encode(arguments);
+
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), 5);
 
         uint256 response = RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(keccak256(bytes(functionSignature))),
-            retVal
+            arguments
         );
         assertEq(response, 1);
     }
@@ -498,20 +390,12 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         setupRuleWithForeignCall(4, ET.REVERT, false);
-        Arguments memory arguments;
-        arguments.argumentTypes = new PT[](2);
-        arguments.argumentTypes[0] = PT.ADDR;
-        arguments.argumentTypes[1] = PT.UINT;
-        arguments.values = new bytes[](2);
-        arguments.values[0] = abi.encode(address(0x7654321));
-        arguments.values[1] = abi.encode(5);
-        bytes memory retVal = abi.encode(arguments);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), 5);
         // The Foreign call will be placed during the effect for the single rule in this policy.
         // The value being set in the foreign contract is then polled to verify that it has been udpated.
         RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(keccak256(bytes(functionSignature))),
-            retVal
+            arguments
         );
         assertEq(testContract.getInternalValue(), 5);
     }
@@ -525,21 +409,14 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         userContractAddress = address(userContract);
         testContract = new ForeignCallTestContract();
         uint256 policyId = setupEffectWithTrackerUpdate();
-        Arguments memory arguments;
-        arguments.argumentTypes = new PT[](2);
-        arguments.argumentTypes[0] = PT.ADDR;
-        arguments.argumentTypes[1] = PT.UINT;
-        arguments.values = new bytes[](2);
-        arguments.values[0] = abi.encode(address(0x7654321));
-        arguments.values[1] = abi.encode(5);
-        bytes memory retVal = abi.encode(arguments);
+
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), 5);
         // The tracker will be updated during the effect for the single rule in this policy.
         // It will have the result of the foreign call (simpleCheck) added to it.
         // original tracker value 2, added value 5, resulting updated tracker value should be 7
         RulesEngineMainFacet(address(red)).checkPolicies(
             userContractAddress,
-            bytes4(keccak256(bytes(functionSignature))),
-            retVal
+            arguments
         );
         Trackers memory tracker = RulesEngineDataFacet(address(red)).getTracker(
             policyId,
@@ -554,19 +431,11 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         setupRuleWithForeignCall(4, ET.REVERT, false);
-        Arguments memory arguments;
-        arguments.argumentTypes = new PT[](2);
-        arguments.argumentTypes[0] = PT.ADDR;
-        arguments.argumentTypes[1] = PT.UINT;
-        arguments.values = new bytes[](2);
-        arguments.values[0] = abi.encode(address(0x7654321));
-        arguments.values[1] = abi.encode(3);
-        bytes memory retVal = abi.encode(arguments);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), 3);
         vm.expectRevert(abi.encodePacked(revert_text));
         RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(keccak256(bytes(functionSignature))),
-            retVal
+            arguments
         );
     }
 
@@ -702,124 +571,33 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         fc.parameterTypes[3] = PT.STR;
         fc.parameterTypes[4] = PT.ADDR;
 
-        Arguments memory functionArguments;
+        fc.typeSpecificIndices = new uint8[](5);
+        fc.typeSpecificIndices[0] = 1;
+        fc.typeSpecificIndices[1] = 0;
+        fc.typeSpecificIndices[2] = 2;
+        fc.typeSpecificIndices[3] = 3;
+        fc.typeSpecificIndices[4] = 5;
+
         // rule signature function arguments (RS): string, uint256, uint256, string, uint256, string, address
         // foreign call function arguments (FC): uint256, string, uint256, string, address
         //
         // Mapping:
         // FC index: 0 1 2 3 4
-        // RS index: 1 3 4 5 6
+        // RS index: 1 0 2 3 5
 
         // Build the rule signature function arguments structure
-        functionArguments.argumentTypes = new PT[](7);
-        functionArguments.argumentTypes[0] = PT.STR;
-        functionArguments.argumentTypes[1] = PT.UINT;
-        functionArguments.argumentTypes[2] = PT.UINT;
-        functionArguments.argumentTypes[3] = PT.STR;
-        functionArguments.argumentTypes[4] = PT.UINT;
-        functionArguments.argumentTypes[5] = PT.STR;
-        functionArguments.argumentTypes[6] = PT.ADDR;
 
-        functionArguments.values = new bytes[](6);
-        functionArguments.values[0] = abi.encode("one");
-        functionArguments.values[1] = abi.encode(2);
-        functionArguments.values[2] = abi.encode(3);
-        functionArguments.values[3] = abi.encode("four");
-        functionArguments.values[4] = abi.encode(5);
-        functionArguments.values[5] = abi.encode(address(0x12345678));
+        bytes memory arguments = abi.encode("one", 2, 3, "four", 5, address(0x12345678));
 
         Rule memory rule;
 
         // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule.fcArgumentMappingsConditions[0].foreignCallIndex = 0;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](5);
-
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 1;
-
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[1]
-            .functionCallArgumentType = PT.STR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[1]
-            .functionSignatureArg
-            .pType = PT.STR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[1]
-            .functionSignatureArg
-            .typeSpecificIndex = 0;
-
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[2]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[2]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[2]
-            .functionSignatureArg
-            .typeSpecificIndex = 2;
-
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[3]
-            .functionCallArgumentType = PT.STR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[3]
-            .functionSignatureArg
-            .pType = PT.STR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[3]
-            .functionSignatureArg
-            .typeSpecificIndex = 3;
-
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[4]
-            .functionCallArgumentType = PT.ADDR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[4]
-            .functionSignatureArg
-            .pType = PT.ADDR;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[4]
-            .functionSignatureArg
-            .typeSpecificIndex = 5;
 
         ForeignCallReturnValue memory retVal = RulesEngineMainFacet(
             address(red)
         ).evaluateForeignCallForRule(
                 fc,
-                rule.fcArgumentMappingsConditions,
-                functionArguments
+                arguments
             );
         console2.logBytes(retVal.value);
     }
@@ -884,19 +662,11 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         setupRuleWithTracker(10);
         uint256 transferValue = 15;
 
-        Arguments memory arguments;
-        arguments.argumentTypes = new PT[](2);
-        arguments.argumentTypes[0] = PT.ADDR;
-        arguments.argumentTypes[1] = PT.UINT;
-        arguments.values = new bytes[](2);
-        arguments.values[0] = abi.encode(address(0x7654321));
-        arguments.values[1] = abi.encode(transferValue);
-        bytes memory retVal = abi.encode(arguments);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), transferValue);
 
         uint256 response = RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(keccak256(bytes(functionSignature))),
-            retVal
+            arguments
         );
         assertEq(response, 1);
     }
@@ -909,20 +679,12 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         setupRuleWithTracker(15);
         uint256 transferValue = 10;
 
-        Arguments memory arguments;
-        arguments.argumentTypes = new PT[](2);
-        arguments.argumentTypes[0] = PT.ADDR;
-        arguments.argumentTypes[1] = PT.UINT;
-        arguments.values = new bytes[](2);
-        arguments.values[0] = abi.encode(address(0x7654321));
-        arguments.values[1] = abi.encode(transferValue);
-        bytes memory retVal = abi.encode(arguments);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), transferValue);
 
         vm.expectRevert(abi.encodePacked(revert_text));
         RulesEngineMainFacet(address(red)).checkPolicies(
             address(userContract),
-            bytes4(keccak256(bytes(functionSignature))),
-            retVal
+            arguments
         );
     }
 
@@ -1069,31 +831,6 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(4);
         // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 1;
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
@@ -1101,12 +838,15 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 1;
         RulesEngineDataFacet(address(red)).updateForeignCall(
             policyIds[0],
             address(testContract),
             "simpleCheck(uint256)",
             PT.UINT,
-            fcArgs
+            fcArgs,
+            typeSpecificIndices
         );
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -1115,18 +855,11 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
             address(userContract),
             policyIds
         );
-        Arguments memory arguments;
-        arguments.argumentTypes = new PT[](2);
-        arguments.argumentTypes[0] = PT.ADDR;
-        arguments.argumentTypes[1] = PT.UINT;
-        arguments.values = new bytes[](2);
-        arguments.values[0] = abi.encode(address(0x7654321));
-        arguments.values[1] = abi.encode(5);
 
+        bytes memory arguments = abi.encode(address(0x7654321), 5);
         RulesEngineMainFacet(address(red)).evaluateForeignCalls(
             0,
             rule.placeHolders,
-            rule.fcArgumentMappingsConditions,
             arguments,
             0
         );

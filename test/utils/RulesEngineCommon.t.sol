@@ -244,8 +244,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         );
 
         // Rule: 1 == 1 -> TRU:someTracker += FC:simpleCheck(amount) -> transfer(address _to, uint256 amount) returns (bool)
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
+
         Rule memory rule;
         rule.posEffects = new Effect[](1);
         rule.posEffects[0] = effectId_expression2;
@@ -264,12 +263,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.effectPlaceHolders[1].pType = PT.UINT;
         rule.effectPlaceHolders[1].trackerValue = true;
 
-        rule.fcArgumentMappingsEffects = new ForeignCallArgumentMappings[](1);
-        rule.fcArgumentMappingsEffects[0].mappings = new IndividualArgumentMapping[](1);
-        rule.fcArgumentMappingsEffects[0].mappings[0].functionCallArgumentType = PT.UINT;
-        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.foreignCall = false;
-        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.pType = PT.UINT;
-        rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
         ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
 
         //build tracker
@@ -283,8 +276,12 @@ contract RulesEngineCommon is DiamondMine, Test {
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
 
         uint256 tId = RulesEngineDataFacet(address(red)).addTracker(policyIds[0], tracker);      
-        
-        ForeignCall memory fc = RulesEngineDataFacet(address(red)).updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", PT.UINT, fcArgs);
+        PT[] memory fcArgs = new PT[](1);
+        fcArgs[0] = PT.UINT;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 1;
+
+        ForeignCall memory fc = RulesEngineDataFacet(address(red)).updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", PT.UINT, fcArgs, typeSpecificIndices);
 
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
         fc;  //added to silence warnings during testing revamp 
@@ -321,46 +318,25 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(_amount);
 
-        // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](
-            1
-        );
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings = new IndividualArgumentMapping[](1);
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionCallArgumentType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .foreignCall = false;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .pType = PT.UINT;
-        rule
-            .fcArgumentMappingsConditions[0]
-            .mappings[0]
-            .functionSignatureArg
-            .typeSpecificIndex = 1;
         rule = _setUpEffect(rule, _effectType, isPositive);
-        // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 1;
         ForeignCall memory fc = RulesEngineDataFacet(address(red))
             .updateForeignCall(
                 policyIds[0],
                 address(testContract),
                 "simpleCheck(uint256)",
                 PT.UINT,
-                fcArgs
+                fcArgs,
+                typeSpecificIndices
             );
+        // Save the rule
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
+
+
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);       
@@ -1187,13 +1163,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders[0].typeSpecificIndex = 0;
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(transferValue);
-        // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](1);
-        rule.fcArgumentMappingsConditions[0].mappings = new IndividualArgumentMapping[](1);
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionCallArgumentType = PT.UINT;
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.foreignCall = false;
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.pType = PT.UINT;
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
@@ -1201,7 +1170,9 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
-        RulesEngineDataFacet(address(red)).updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", PT.UINT, fcArgs);
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 1;
+        RulesEngineDataFacet(address(red)).updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", PT.UINT, fcArgs, typeSpecificIndices);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);       
@@ -1225,13 +1196,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders[0].typeSpecificIndex = 0;
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(transferValue);
-        // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](1);
-        rule.fcArgumentMappingsConditions[0].mappings = new IndividualArgumentMapping[](1);
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionCallArgumentType = PT.UINT;
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.foreignCall = false;
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.pType = PT.UINT;
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
@@ -1239,7 +1203,9 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
-        RulesEngineDataFacet(address(red)).updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", PT.UINT, fcArgs);
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 2;
+        RulesEngineDataFacet(address(red)).updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", PT.UINT, fcArgs, typeSpecificIndices);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);       
@@ -1259,13 +1225,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders[0].typeSpecificIndex = 0;
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(transferValue);
-        // Build the mapping between calling function arguments and foreign call arguments
-        rule.fcArgumentMappingsConditions = new ForeignCallArgumentMappings[](1);
-        rule.fcArgumentMappingsConditions[0].mappings = new IndividualArgumentMapping[](1);
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionCallArgumentType = PT.UINT;
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.foreignCall = false;
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.pType = PT.UINT;
-        rule.fcArgumentMappingsConditions[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
@@ -1273,7 +1232,9 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
-        RulesEngineDataFacet(address(red)).updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", PT.UINT, fcArgs);
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 1;
+        RulesEngineDataFacet(address(red)).updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", PT.UINT, fcArgs, typeSpecificIndices);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);       
