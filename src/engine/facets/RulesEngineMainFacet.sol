@@ -48,6 +48,8 @@ contract RulesEngineMainFacet is FacetCommonImports{
 
         // Retrieve placeHolder[] for specific rule to be evaluated and translate function signature argument array 
         // to rule specific argument array
+        // note that arguments is being sliced, first 4 bytes are the function signature being passed (:4) and the rest (4:) 
+        // are all the arguments associated for the rule to be invoked. This saves on further calculations so that we don't need to factor in the signature.
         retVal = evaluateRulesAndExecuteEffects(ruleData ,_policyId, _loadApplicableRules(ruleData,policyStorageSet.policy, bytes4(arguments[:4])), arguments[4:]);
     }
 
@@ -120,6 +122,9 @@ contract RulesEngineMainFacet is FacetCommonImports{
                 if(placeholder.pType == PT.STR || placeholder.pType == PT.BYTES) {
                     retVals[placeholderIndex] = getDynamicVariableFromCalldata(functionSignatureArgs, placeholder.typeSpecificIndex);
                 } else {
+                    // since this is not a dynamic value, we can assume that it is only 1 word, therefore we multiply
+                    // the typeSpecificIndex by 32 to get the correct position in the functionSignatureArgs array
+                    // and then add 1 and multiply by 32 to get the correct 32 byte word to get the value
                     retVals[placeholderIndex] = functionSignatureArgs[
                         placeholder.typeSpecificIndex * 32: (placeholder.typeSpecificIndex + 1) * 32
                     ];
@@ -215,11 +220,19 @@ contract RulesEngineMainFacet is FacetCommonImports{
             bytes32 value = bytes32(functionArguments[typeSpecificIndex * 32: (typeSpecificIndex + 1) * 32]);
             
             if (argType == PT.STR || argType == PT.BYTES) {
+                // Get the dynamic value and length from the function arguments
                 (bytes memory dynamicValue, uint256 dynamicLength) = getDynamicVariableFromCalldataNoOffset(functionArguments, typeSpecificIndex);
+                // Get the offset of the dynamic value in the encoded call
                 uint256 dynamicOffset = (fc.parameterTypes.length * 32) + lengthToAppend;
+                // Add the dynamic offset to the encoded call
                 encodedCall = bytes.concat(encodedCall, bytes32(dynamicOffset));
+                // Add dynamic value to the tail end of the encoded call
                 dynamicData = bytes.concat(dynamicData, dynamicValue);
+                // This is to take the dynamic length and convert it to the appropriate word length
+                // adding 31 to the length and then dividing by 32 will get us a truncated number of words, 
+                // we multiply by 32 to get the actual word length
                 uint dynamicLengthToWordLength = (dynamicLength + 31) / 32 * 32;
+                // Add the dynamic length to the lengthToAppend to get the total length of the encoded call
                 lengthToAppend += dynamicLengthToWordLength;
             } else {
                 encodedCall = bytes.concat(encodedCall, value);

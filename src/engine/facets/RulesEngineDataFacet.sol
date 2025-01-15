@@ -304,6 +304,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
                     if(!ruleStore.set) revert("Invalid Rule");
                     for (uint256 k = 0; k < ruleStore.rule.placeHolders.length; k++) {
                         if(ruleStore.rule.placeHolders[k].foreignCall) {
+                            // get the foreign call using the type specific index which will be interpreted as a foreign call index since it has foreignCall bool set
                             require(getForeignCall(_policyId, ruleStore.rule.placeHolders[k].typeSpecificIndex).set, "Foreign Call referenced in rule not set");
                         } else if (ruleStore.rule.placeHolders[k].trackerValue) {
                             require(getTracker(_policyId).set, "Tracker referenced in rule not set");

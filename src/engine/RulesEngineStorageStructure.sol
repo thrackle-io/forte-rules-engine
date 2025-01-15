@@ -255,4 +255,3 @@ struct PolicyAssociationS {
     mapping(address contractAddress => uint256[]) contractPolicyIdMap;
 }
 
-

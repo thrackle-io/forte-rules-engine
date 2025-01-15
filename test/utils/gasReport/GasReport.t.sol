@@ -60,7 +60,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         //-----------------------------------------------------------------------------
         // Hard coded
-        //_testGasExampleContract_Base();
+        _testGasExampleContract_Base();
         // _testGasExampleHardcodedMinTransferRevert();
         // _testGasExampleHardcodedOFAC();
         // _testGasExampleHardcodedOFACWithMinTransfer();
@@ -69,7 +69,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         //-----------------------------------------------------------------------------
         // R2V2
         // _testGasExampleContract_NoPoliciesActive();
-        _testGasExampleSimpleMinTransferTriggeredWithRevertEffect();
+        // _testGasExampleSimpleMinTransferTriggeredWithRevertEffect();
         // _testGasExampleManyMinTransferTriggeredWithRevertEffect();
         // _testGasExampleOFAC();
         // _testGasExampleOFACWithMinTransfer();

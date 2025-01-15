@@ -263,12 +263,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.effectPlaceHolders[1].pType = PT.UINT;
         rule.effectPlaceHolders[1].trackerValue = true;
 
-        // rule.fcArgumentMappingsEffects = new ForeignCallArgumentMappings[](1);
-        // rule.fcArgumentMappingsEffects[0].mappings = new IndividualArgumentMapping[](1);
-        // rule.fcArgumentMappingsEffects[0].mappings[0].functionCallArgumentType = PT.UINT;
-        // rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.foreignCall = false;
-        // rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.pType = PT.UINT;
-        // rule.fcArgumentMappingsEffects[0].mappings[0].functionSignatureArg.typeSpecificIndex = 1;
         ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
 
         //build tracker
