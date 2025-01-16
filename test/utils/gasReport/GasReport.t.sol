@@ -275,7 +275,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule1 = _setUpEffect(rule1, _effectType, isPositive);
         // Save the rule
         uint256 ruleId1 = RulesEngineDataFacet(address(red)).updateRule(0, rule1);
-        rule2 = _createGTRule(4);
+        rule2 = _createGTRule(policyIds[0], 4);
         // Swapping from posEffect to negEffects to make sure the revert doesn't trigger (for comparison with V1 numbers)
         rule2.negEffects[0] = effectId_revert;
         uint256 ruleId2 = RulesEngineDataFacet(address(red)).updateRule(0, rule2);
@@ -430,7 +430,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule1 = _setUpEffect(rule1, _effectType, isPositive);
         // Save the rule
         uint256 ruleId1 = RulesEngineDataFacet(address(red)).updateRule(0, rule1);
-        rule2 = _createGTRule(4);
+        rule2 = _createGTRule(policyIds[0], 4);
         // Swapping from posEffects to negEffects to make sure the revert doesn't trigger (for comparison with V1 numbers)
         rule2.negEffects[0] = effectId_revert;
         uint256 ruleId2 = RulesEngineDataFacet(address(red)).updateRule(0, rule2);
@@ -511,8 +511,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             rule1 = _setUpEffect(rule1, _effectType, isPositive);
             // Save the rule
             uint256 ruleId1 = RulesEngineDataFacet(address(red)).updateRule(0, rule1);
-            rule2 = _createGTRule(4);
-            rule3 = _createLTRule(4);
+            rule2 = _createGTRule(policyIds[0], 4);
+            rule3 = _createLTRule(policyIds[0], 4);
             rule2.posEffects[0] = effectId_revert;
             // Swapping from posEffect to negEffects to make sure the revert doesn't trigger (for comparison with V1 numbers)
             rule3.negEffects[0] = effectId_revert;
@@ -531,7 +531,6 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             address(userContractFCPlusMinPlusMax),
             policyIds
         );
-        //fc; //added to silence warnings during testing revamp
     }
 
     function _setupRuleWithRevertManyCondition()

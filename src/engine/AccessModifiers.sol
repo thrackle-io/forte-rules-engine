@@ -1,0 +1,35 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.24;
+
+import "src/engine/facets/FacetUtils.sol";
+
+/**
+ * @title Access modifiers for the Rules Engine
+ * @author @ShaneDuncan602 
+ * @dev This contains all the access modifiers for the Rules Engine. It is inherited by all Engine facets.
+ */
+contract AccessModifiers is FacetUtils {
+    event HEY(string _label, bytes _res);
+
+    /**
+     * @dev Modifier ensures function caller is a Policy Admin for the specific policy
+     * @param _policyAdmin Address of App Manager
+     * @param _address user address
+     */
+    modifier policyAdminOnly(uint256 _policyAdmin, address _address) {        
+        (bool success, bytes memory res) = callAnotherFacet(0x901cee11, abi.encodeWithSignature("isPolicyAdmin(uint256,address)", _policyAdmin, _address));   
+        bool returnBool;
+        if (success) {
+            if (res.length >= 4) {
+                assembly {
+                    returnBool := mload(add(res, 32))
+                }
+            } else {
+                returnBool = false;
+            }
+            // returned false so revert with error
+            if (!returnBool) revert("Not Authorized To Policy");                        
+        }
+        _;                 
+    }
+}

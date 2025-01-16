@@ -238,7 +238,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
     function updateRule(
         uint256 _ruleId,
         Rule calldata rule
-    ) public returns (uint256) {
+    ) public policyAdminOnly(rule.policyId, msg.sender) returns (uint256) {
         // TODO: Add validations for rule
         // Load the function signature data from storage
         RuleS storage data = lib.getRuleStorage();
@@ -249,6 +249,12 @@ contract RulesEngineDataFacet is FacetCommonImports {
             }
             _ruleId = data.ruleId;
         }
+        // Validate that the policy exists
+        if(!lib.getPolicyStorage().policyStorageSets[rule.policyId].set) revert ("Invalid PolicyId");
+
+        // Validate that only the policy admin may update the rule
+        // isPolicyAdmin(rule.policyId, msg.sender);
+
         data.ruleStorageSets[_ruleId].set = true;
         data.ruleStorageSets[_ruleId].rule = rule;
         return _ruleId;
