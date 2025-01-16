@@ -9,7 +9,6 @@ import "src/engine/facets/FacetUtils.sol";
  * @dev This contains all the access modifiers for the Rules Engine. It is inherited by all Engine facets.
  */
 contract AccessModifiers is FacetUtils {
-    event HEY(string _label, bytes _res);
 
     /**
      * @dev Modifier ensures function caller is a Policy Admin for the specific policy

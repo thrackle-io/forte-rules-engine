@@ -252,9 +252,6 @@ contract RulesEngineDataFacet is FacetCommonImports {
         // Validate that the policy exists
         if(!lib.getPolicyStorage().policyStorageSets[rule.policyId].set) revert ("Invalid PolicyId");
 
-        // Validate that only the policy admin may update the rule
-        // isPolicyAdmin(rule.policyId, msg.sender);
-
         data.ruleStorageSets[_ruleId].set = true;
         data.ruleStorageSets[_ruleId].rule = rule;
         return _ruleId;

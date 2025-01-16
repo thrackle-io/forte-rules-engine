@@ -284,7 +284,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
 
-        uint256 tId = RulesEngineDataFacet(address(red)).addTracker(policyIds[0], tracker);      
+        RulesEngineDataFacet(address(red)).addTracker(policyIds[0], tracker);      
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
         uint8[] memory typeSpecificIndices = new uint8[](1);
