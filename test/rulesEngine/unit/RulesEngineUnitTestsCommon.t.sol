@@ -445,7 +445,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        _setupRuleWithRevert();
+        _setupRuleWithRevert(address(userContract));
         vm.expectRevert(abi.encodePacked(revert_text));
         userContract.transfer(address(0x7654321), 5);
     }
