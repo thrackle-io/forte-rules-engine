@@ -34,6 +34,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
     ExampleERC20 userContractFCPlusMinPlusMaxOneRule;
     ExampleERC20 userContractFCPlusMinSeparatePolicy;
     ExampleERC20 userContractManyChecksMin;
+    ExampleERC20 userContractMTplusEvent;
+    ExampleERC20 userContractMTplusEventDynamic;
     //-------------------------------------------------------------------------------------
 
     function setUp() public {
@@ -93,6 +95,19 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         userContractFCPlusMinPlusMax.setRulesEngineAddress(address(red));
         setupRulesWithForeignCallPlusMinTransferAndMaxTransfer(address(testContract2), ET.REVERT, true);
 
+        // Min Transfer with Event 
+        userContractMTplusEvent = new ExampleERC20("Token Name", "SYMB");
+        userContractMTplusEvent.mint(USER_ADDRESS, 1_000_000 * ATTO);
+        userContractMTplusEvent.setRulesEngineAddress(address(red));
+        bytes memory eventParam = abi.encode(uint256(5));
+        _setupRuleWithEventParamsMinTransfer(eventParam, PT.UINT); 
+
+        // Min Transfer with dynamic Event 
+        userContractMTplusEventDynamic = new ExampleERC20("Token Name", "SYMB");
+        userContractMTplusEventDynamic.mint(USER_ADDRESS, 1_000_000 * ATTO);
+        userContractMTplusEventDynamic.setRulesEngineAddress(address(red));
+        _setupRuleWithPosEventDynamicParamsFromCallingFunctionParams(PT.UINT);
+
         //-------------------------------------------------------------------------------------
 
         testContract = new ForeignCallTestContract();
@@ -141,50 +156,20 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         _exampleContractGasReport(5, address(userContractManyChecksMin), "Using REv2 min transfer 20 iterations"); 
     }
 
-
-
     function _testGasExampleMinTransferWithSetEventParams() public {
-        userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
-        bytes memory eventParam = abi.encode(uint256(5));
-        _setupRuleWithEventParamsMinTransfer(eventParam, PT.UINT); 
-        _testExampleContractPrep(1, address(userContract));
+        vm.startPrank(USER_ADDRESS);
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, 5);
-        _exampleContractGasReport(5, address(userContract), "Using REv2 Event Effect with min transfer gas report"); 
+        _exampleContractGasReport(5, address(userContractMTplusEvent), "Using REv2 Event Effect with min transfer gas report"); 
     }
 
     function _testGasExampleMinTransferWithDynamicEventParams() public {
-        /// uses single transfer data param 
-        userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
-        _setupRuleWithPosEventDynamicParamsFromCallingFunctionParams(PT.UINT); 
         vm.startPrank(USER_ADDRESS);
-        _testExampleContractPrep(1, address(userContract));
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, 5);
-        _exampleContractGasReport(5, address(userContract), "Using REv2 Event Effect with min transfer gas report"); 
+        _exampleContractGasReport(5, address(userContractMTplusEventDynamic), "Using REv2 Event Effect with min transfer gas report"); 
     }
 
-
-    function _testGasExampleMinTransferWithSetEventParams() public {
-        userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
-        bytes memory eventParam = abi.encode(uint256(5));
-        _setupRuleWithEventParamsMinTransfer(eventParam, PT.UINT); 
-        _testExampleContractPrep(1, address(userContract));
-        vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT, 5);
-        _exampleContractGasReport(5, address(userContract), "Using REv2 Event Effect with min transfer gas report"); 
-    }
-
-    function _testGasExampleMinTransferWithDynamicEventParams() public {
-        /// uses single transfer data param 
-        userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
-        _setupRuleWithPosEventDynamicParamsFromCallingFunctionParams(PT.UINT); 
-        vm.startPrank(USER_ADDRESS);
-        _testExampleContractPrep(1, address(userContract));
-        vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT, 5);
-        _exampleContractGasReport(5, address(userContract), "Using REv2 Event Effect with min transfer gas report"); 
-    }
 
 
 /**********  Prep functions to ensure warm storage comparisons **********/
@@ -910,163 +895,15 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule.instructionSet[6] = 1;
 
         rule.posEffects[0] = effectId_event;
+        rule.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
-
-    function _setupRuleWithDynamicEventParamsMinTransfer() 
-        public
-        ifDeploymentTestsEnabled
-        resetsGlobalVariables
-    {
-
-        uint256[] memory policyIds = new uint256[](1);
-        policyIds[0] = _createBlankPolicy();
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
-
-        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        // Rule memory rule = _createGTRule(4);
-        Rule memory rule;
-        effectId_event = _createEffectEventDynamicParams();
-        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
-        rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-        // Add a negative/positive effects
-        rule.negEffects = new Effect[](1);
-        rule.posEffects = new Effect[](1);
-
-        rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
-        rule.instructionSet[1] = 0;
-        rule.instructionSet[2] = uint(LC.NUM);
-        rule.instructionSet[3] = 4;
-        rule.instructionSet[4] = uint(LC.GT); // register 2
-        rule.instructionSet[5] = 0;
-        rule.instructionSet[6] = 1;
-
-        rule.posEffects[0] = effectId_event;
-        // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
-
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-        RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-    }
-
-
-    function _setupRuleWithEventParamsMinTransfer(bytes memory param, PT pType) 
-        public
-        ifDeploymentTestsEnabled
-        resetsGlobalVariables
-    {
-
-        uint256[] memory policyIds = new uint256[](1);
-        policyIds[0] = _createBlankPolicy();
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
-
-        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        // Rule memory rule = _createGTRule(4);
-        Rule memory rule;
-        effectId_event = _createCustomEffectEvent(param, pType);
-        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
-        rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-        // Add a negative/positive effects
-        rule.negEffects = new Effect[](1);
-        rule.posEffects = new Effect[](1);
-
-        rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
-        rule.instructionSet[1] = 0;
-        rule.instructionSet[2] = uint(LC.NUM);
-        rule.instructionSet[3] = 4;
-        rule.instructionSet[4] = uint(LC.GT); // register 2
-        rule.instructionSet[5] = 0;
-        rule.instructionSet[6] = 1;
-
-        rule.posEffects[0] = effectId_event;
-        // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
-
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-        RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-    }
-
-    function _setupRuleWithDynamicEventParamsMinTransfer() 
-        public
-        ifDeploymentTestsEnabled
-        resetsGlobalVariables
-    {
-
-        uint256[] memory policyIds = new uint256[](1);
-        policyIds[0] = _createBlankPolicy();
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
-
-        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        // Rule memory rule = _createGTRule(4);
-        Rule memory rule;
-        effectId_event = _createEffectEventDynamicParams();
-        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
-        rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-        // Add a negative/positive effects
-        rule.negEffects = new Effect[](1);
-        rule.posEffects = new Effect[](1);
-
-        rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
-        rule.instructionSet[1] = 0;
-        rule.instructionSet[2] = uint(LC.NUM);
-        rule.instructionSet[3] = 4;
-        rule.instructionSet[4] = uint(LC.GT); // register 2
-        rule.instructionSet[5] = 0;
-        rule.instructionSet[6] = 1;
-
-        rule.posEffects[0] = effectId_event;
-        // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
-
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-        RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-    }
-
 
 /**********  Rule Setup Helpers **********/
     function _exampleContractGasReport(uint256 _amount, address contractAddress, string memory _label) public {

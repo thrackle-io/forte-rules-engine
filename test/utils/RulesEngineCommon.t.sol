@@ -489,7 +489,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         );
 
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule = _createGTRuleWithCustomEventParams(4, param, pType);
+        Rule memory rule = _createGTRuleWithCustomEventParams(policyIds[0], 4, param, pType);
         rule.posEffects[0] = effectId_event;
 
         // Save the rule
@@ -523,81 +523,10 @@ contract RulesEngineCommon is DiamondMine, Test {
         Rule memory rule;
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         if(pType == PT.ADDR){
-            rule = _createGTRuleWithDynamicEventParamsAddress(4);
+            rule = _createGTRuleWithDynamicEventParamsAddress(policyIds[0], 4);
             rule.posEffects[0] = effectId_event;
         } else{
-            rule = _createGTRuleWithDynamicEventParams(4);
-            rule.posEffects[0] = effectId_event;
-        } 
-
-        // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
-
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-        RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-    }
-
-    function _setupRuleWithPosEventParams(bytes memory param, PT pType) 
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        resetsGlobalVariables
-    {
-
-        uint256[] memory policyIds = new uint256[](1);
-        policyIds[0] = _createBlankPolicy();
-
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
-
-        // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule = _createGTRuleWithCustomEventParams(4, param, pType);
-        rule.posEffects[0] = effectId_event;
-
-        // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
-
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-        RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-    }
-
-    function _setupRuleWithPosEventDynamicParamsFromCallingFunctionParams(PT pType) 
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        resetsGlobalVariables
-    {
-
-        uint256[] memory policyIds = new uint256[](1);
-        policyIds[0] = _createBlankPolicy();
-
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
-        Rule memory rule;
-        // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
-        if(pType == PT.ADDR){
-            rule = _createGTRuleWithDynamicEventParamsAddress(4);
-            rule.posEffects[0] = effectId_event;
-        } else{
-            rule = _createGTRuleWithDynamicEventParams(4);
+            rule = _createGTRuleWithDynamicEventParams(policyIds[0], 4);
             rule.posEffects[0] = effectId_event;
         } 
         
@@ -860,7 +789,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         return rule;
     }
 
-    function _createGTRuleWithCustomEventParams(uint256 _amount, bytes memory param, PT paramType) public returns (Rule memory) {
+    function _createGTRuleWithCustomEventParams(uint256 _policyId, uint256 _amount, bytes memory param, PT paramType) public returns (Rule memory) {
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         // Set up custom event param effect.
@@ -875,10 +804,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
+        rule.policyId = _policyId;
         return rule;
     }
 
-    function _createGTRuleWithDynamicEventParams(uint256 _amount) public returns (Rule memory) {
+    function _createGTRuleWithDynamicEventParams(uint256 _policyId, uint256 _amount) public returns (Rule memory) {
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         // Set up custom event param effect.
@@ -897,10 +827,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
+        rule.policyId = _policyId;
         return rule;
     }
 
-    function _createGTRuleWithDynamicEventParamsAddress(uint256 _amount) public returns (Rule memory) {
+    function _createGTRuleWithDynamicEventParamsAddress(uint256 _policyId, uint256 _amount) public returns (Rule memory) {
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         // Set up custom event param effect.
@@ -919,6 +850,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
+        rule.policyId = _policyId;
         return rule;
     }
 
