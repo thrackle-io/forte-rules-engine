@@ -421,7 +421,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         rule.posEffects[0] = effectId_revert;
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;

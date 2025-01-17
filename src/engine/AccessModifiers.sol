@@ -15,7 +15,8 @@ contract AccessModifiers is FacetUtils {
      * @param _policyAdmin Address of App Manager
      * @param _address user address
      */
-    modifier policyAdminOnly(uint256 _policyAdmin, address _address) {        
+    modifier policyAdminOnly(uint256 _policyAdmin, address _address) {   
+        // 0x901cee11 = isPolicyAdmin(uint256,address)   
         (bool success, bytes memory res) = callAnotherFacet(0x901cee11, abi.encodeWithSignature("isPolicyAdmin(uint256,address)", _policyAdmin, _address));   
         bool returnBool;
         if (success) {
