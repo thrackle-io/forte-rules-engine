@@ -169,6 +169,20 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             pTypes
         );
 
+        PT[] memory fcArgs = new PT[](1);
+        fcArgs[0] = PT.ADDR;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 0;
+        ForeignCall memory fc = RulesEngineDataFacet(address(red))
+            .updateForeignCall(
+                policyIds[0],
+                address(_contractAddress),
+                "getNaughty(address)",
+                PT.UINT,
+                fcArgs,
+                typeSpecificIndices
+            );
+
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
 
@@ -194,19 +208,6 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
 
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.ADDR;
-        uint8[] memory typeSpecificIndices = new uint8[](1);
-        typeSpecificIndices[0] = 0;
-        ForeignCall memory fc = RulesEngineDataFacet(address(red))
-            .updateForeignCall(
-                policyIds[0],
-                address(_contractAddress),
-                "getNaughty(address)",
-                PT.UINT,
-                fcArgs,
-                typeSpecificIndices
-            );
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
@@ -235,6 +236,20 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             bytes4(keccak256(bytes(functionSignature))),
             pTypes
         );
+
+        PT[] memory fcArgs = new PT[](1);
+        fcArgs[0] = PT.ADDR;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 0;
+        ForeignCall memory fc = RulesEngineDataFacet(address(red))
+            .updateForeignCall(
+                policyIds[0],
+                address(_contractAddress),
+                "getNaughty(address)",
+                PT.UINT,
+                fcArgs,
+                typeSpecificIndices
+            );
 
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule1;
@@ -265,19 +280,6 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule2.negEffects[0] = effectId_revert;
         uint256 ruleId2 = RulesEngineDataFacet(address(red)).updateRule(0, rule2);
 
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.ADDR;
-        uint8[] memory typeSpecificIndices = new uint8[](1);
-        typeSpecificIndices[0] = 0;
-        ForeignCall memory fc = RulesEngineDataFacet(address(red))
-            .updateForeignCall(
-                policyIds[0],
-                address(_contractAddress),
-                "getNaughty(address)",
-                PT.UINT,
-                fcArgs,
-                typeSpecificIndices
-            );
         ruleIds.push(new uint256[](2));
         ruleIds[0][0] = ruleId1;
         ruleIds[0][1] = ruleId2;
@@ -307,6 +309,20 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             bytes4(keccak256(bytes(functionSignature))),
             pTypes
         );
+
+        PT[] memory fcArgs = new PT[](1);
+        fcArgs[0] = PT.ADDR;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 0;
+        ForeignCall memory fc = RulesEngineDataFacet(address(red))
+            .updateForeignCall(
+                policyIds[0],
+                address(_contractAddress),
+                "getNaughty(address)",
+                PT.UINT,
+                fcArgs,
+                typeSpecificIndices
+            );
 
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule1;
@@ -339,19 +355,6 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule1 = _setUpEffect(rule1, _effectType, !isPositive);
         // Save the rule
         uint256 ruleId1 = RulesEngineDataFacet(address(red)).updateRule(0, rule1);
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.ADDR;
-        uint8[] memory typeSpecificIndices = new uint8[](1);
-        typeSpecificIndices[0] = 0;
-        ForeignCall memory fc = RulesEngineDataFacet(address(red))
-            .updateForeignCall(
-                policyIds[0],
-                address(_contractAddress),
-                "getNaughty(address)",
-                PT.UINT,
-                fcArgs,
-                typeSpecificIndices
-            );
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId1;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
@@ -390,6 +393,20 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             blankRuleIds
         );
 
+        PT[] memory fcArgs = new PT[](1);
+        fcArgs[0] = PT.ADDR;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 0;
+        ForeignCall memory fc = RulesEngineDataFacet(address(red))
+            .updateForeignCall(
+                policyIds[0],
+                address(_contractAddress),
+                "getNaughty(address)",
+                PT.UINT,
+                fcArgs,
+                typeSpecificIndices
+            );
+
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule1;
         Rule memory rule2;
@@ -418,19 +435,6 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule2.negEffects[0] = effectId_revert;
         uint256 ruleId2 = RulesEngineDataFacet(address(red)).updateRule(0, rule2);
 
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.ADDR;
-        uint8[] memory typeSpecificIndices = new uint8[](1);
-        typeSpecificIndices[0] = 0;
-        ForeignCall memory fc = RulesEngineDataFacet(address(red))
-            .updateForeignCall(
-                policyIds[0],
-                address(_contractAddress),
-                "getNaughty(address)",
-                PT.UINT,
-                fcArgs,
-                typeSpecificIndices
-            );
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId1;
 
