@@ -77,6 +77,8 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
     }
 
     function testRulesEngine_Unit_Diamond_RuleStorage_Positive() public {
+        uint256 policyId = _createBlankPolicy();
+        
         Rule memory rule;
         // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
         // Build the instruction set for the rule (including placeholders)
@@ -85,6 +87,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType = PT.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.policyId = policyId;
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
         RuleStorageSet memory rss = RulesEngineDataFacet(address(red)).getRule(ruleId);
@@ -110,6 +113,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType = PT.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.policyId = policyIds[0];
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
 
@@ -138,7 +142,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         bytes4[] memory blankSignatures = new bytes4[](0);
         uint256[] memory blankFunctionSignatureIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
-        uint256 policyId = RulesEngineDataFacet(address(red)).updatePolicy(0, blankSignatures, blankFunctionSignatureIds, blankRuleIds);
+        uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(0, blankSignatures, blankFunctionSignatureIds, blankRuleIds);
         return policyId;
     }
 

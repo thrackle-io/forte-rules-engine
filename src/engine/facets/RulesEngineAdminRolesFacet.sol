@@ -17,7 +17,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
  */
 
 contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard, IRulesEngineErrors {
-
+    
     /**
      * @dev View Function to determine if address is the policy admin for policy Id 
      * @param _policyId policy Id 

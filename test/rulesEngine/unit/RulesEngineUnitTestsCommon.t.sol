@@ -65,6 +65,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
+        uint256 policyId = _createBlankPolicy();
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
@@ -75,6 +76,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType = PT.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.policyId = policyId;
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
         PT[] memory pTypes = new PT[](2);
@@ -163,6 +165,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Build the mapping between calling function arguments and foreign call arguments
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
+        rule.policyId = policyIds[0];
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
         PT[] memory fcArgs = new PT[](1);
@@ -222,6 +225,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Build the mapping between calling function arguments and foreign call arguments
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
+        rule.policyId = policyIds[0];
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
         PT[] memory fcArgs = new PT[](1);
@@ -589,8 +593,6 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         bytes memory arguments = abi.encode("one", 2, 3, "four", 5, address(0x12345678));
 
-        Rule memory rule;
-
         // Build the mapping between calling function arguments and foreign call arguments
 
         ForeignCallReturnValue memory retVal = RulesEngineMainFacet(
@@ -731,6 +733,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders[0].typeSpecificIndex = 1;
         rule.placeHolders[1].pType = PT.UINT;
         rule.placeHolders[1].foreignCall = true;
+        rule.policyId = policyIds[0];
 
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
 
@@ -770,6 +773,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders[0].typeSpecificIndex = 1;
         rule.placeHolders[1].pType = PT.UINT;
         rule.placeHolders[1].trackerValue = true;
+        rule.policyId = policyIds[0];
 
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
 
@@ -833,6 +837,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Build the mapping between calling function arguments and foreign call arguments
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
+        rule.policyId = policyIds[0];
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
 
@@ -1173,8 +1178,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.negEffects[0] = effectId_revert;
         rule.posEffects = new Effect[](1);
         rule.posEffects[0] = effectId_event;
-
-        
+        rule.policyId = policyIds[0];        
 
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
@@ -1189,5 +1193,33 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(_ruleIds.length, 1);
         assertEq(_ruleIds[0].length, 1);
         assertEq(_ruleIds[0][0], ruleId);
+    }
+
+    // Test attempt to update a rule without policy admin permissions.
+    function testRulesEngine_Unit_UpdateRule_NotPolicyAdmin() public ifDeploymentTestsEnabled endWithStopPrank {
+        address POLICY_ADMIN_USER = address(1);
+        address NOT_POLICY_ADMIN_USER = address(2);
+        vm.startPrank(POLICY_ADMIN_USER);
+        uint256 policyId = _createBlankPolicy(); // this will create the initial policy admin
+        Rule memory rule;
+        // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
+        rule.instructionSet = _createInstructionSet(0, 1);
+
+        rule.placeHolders = new Placeholder[](2);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.placeHolders[1].pType = PT.UINT;
+        // Add a negative/positive effects
+        rule.negEffects = new Effect[](1);
+        rule.negEffects[0] = effectId_revert;
+        rule.posEffects = new Effect[](1);
+        rule.posEffects[0] = effectId_event;
+        rule.policyId = policyId;
+
+        // Change to non policy admin user
+        vm.startPrank(NOT_POLICY_ADMIN_USER);
+        vm.expectRevert("Not Authorized To Policy");
+        // Attempt to Save the rule
+        RulesEngineDataFacet(address(red)).updateRule(0,rule);
     }
 }

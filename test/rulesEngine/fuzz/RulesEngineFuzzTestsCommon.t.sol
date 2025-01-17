@@ -10,6 +10,7 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
     // 45   This single function is not the full fuzz test suite. Only serving as a stepping stone to further fuzz tests. TODO remove in fuzz test ticket
     function testRulesEngine_Fuzz_createRule_simple(uint256 ruleValue, uint256 transferValue) public {
         uint256 response;
+        uint256 policyId = _createBlankPolicy();
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         // Build the instruction set for the rule (including placeholders)
@@ -18,6 +19,7 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType =PT.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.policyId = policyId;
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
 

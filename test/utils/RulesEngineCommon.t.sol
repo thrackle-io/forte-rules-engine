@@ -101,6 +101,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType = PT.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.policyId = policyIds[0];
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
 
@@ -118,6 +119,9 @@ contract RulesEngineCommon is DiamondMine, Test {
         endWithStopPrank
         returns (uint256 ruleId)
     {
+        uint256[] memory policyIds = new uint256[](1);
+        // blank slate policy
+        policyIds[0] = _createBlankPolicy();
         // Rule: info == "Bad Info" -> revert -> updateInfo(address _to, string info) returns (bool)"
         Rule memory rule;
         // Instruction set: LC.PLH, 0, LC.NUM, *uint256 representation of Bad Info*, LC.EQ, 0, 1
@@ -142,6 +146,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType = PT.STR;
         rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.policyId = policyIds[0];
         // Save the rule
         ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
 
@@ -160,7 +165,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        uint256[] memory policyIds = new uint256[](1); 
+         
         policyIds[0] = RulesEngineDataFacet(address(red)).updatePolicy(0, signatures, functionSignatureIds, ruleIds);        
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
 
@@ -173,6 +178,9 @@ contract RulesEngineCommon is DiamondMine, Test {
         endWithStopPrank
         returns (uint256 ruleId)
     {
+        uint256[] memory policyIds = new uint256[](1);
+        // blank slate policy
+        policyIds[0] = _createBlankPolicy();
         // Rule: _to == 0x1234567 -> revert -> updateInfo(address _to, string info) returns (bool)"
         Rule memory rule;
         // Instruction set: LC.PLH, 0, LC.NUM, *uint256 representation of 0x1234567o*, LC.EQ, 0, 1
@@ -197,6 +205,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType = PT.ADDR;
         rule.placeHolders[0].typeSpecificIndex = 0;
+        rule.policyId = policyIds[0];
         // Save the rule
         ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
 
@@ -215,7 +224,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        uint256[] memory policyIds = new uint256[](1); 
         policyIds[0] = RulesEngineDataFacet(address(red)).updatePolicy(0, signatures, functionSignatureIds, ruleIds);        
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
 
@@ -262,6 +270,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.effectPlaceHolders[0].typeSpecificIndex = 0;
         rule.effectPlaceHolders[1].pType = PT.UINT;
         rule.effectPlaceHolders[1].trackerValue = true;
+        rule.policyId = policyIds[0];
 
         ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
 
@@ -275,7 +284,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
 
-        uint256 tId = RulesEngineDataFacet(address(red)).addTracker(policyIds[0], tracker);      
+        RulesEngineDataFacet(address(red)).addTracker(policyIds[0], tracker);      
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
         uint8[] memory typeSpecificIndices = new uint8[](1);
@@ -314,6 +323,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].foreignCall = true;
         rule.placeHolders[0].typeSpecificIndex = 0;
+        rule.policyId = policyIds[0];
 
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(_amount);
@@ -388,7 +398,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         );
 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        // Rule memory rule = _createGTRule(4);
+        // Rule memory rule = _createGTRule(policyIds[0], 4);
         Rule memory rule;
         _setupEffectProcessor();
         // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
@@ -398,6 +408,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
+        rule.policyId = policyIds[0];
 
         rule.instructionSet = new uint256[](7);
         rule.instructionSet[0] = uint(LC.PLH);
@@ -410,7 +421,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         rule.posEffects[0] = effectId_revert;
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -438,7 +449,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         );
 
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule = _createGTRule(4);
+        Rule memory rule = _createGTRule(policyIds[0], 4);
         rule.posEffects[0] = effectId_event;
 
         // Save the rule
@@ -468,7 +479,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         );
 
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule = _createGTRule(threshold);
+        Rule memory rule = _createGTRule(policyIds[0], threshold);
         rule.posEffects[0] = effectId_event;
 
         // Save the rule
@@ -511,7 +522,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         // Rule 1: GT 4
-        Rule memory rule = _createGTRule(4);
+        Rule memory rule = _createGTRule(policyIds[0], 4);
         rule.posEffects[0] = effectId_event;
 
         // Save the rule
@@ -521,7 +532,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds[0][0] = ruleId;
 
         // Rule 2: GT 5
-        rule = _createGTRule(5);
+        rule = _createGTRule(policyIds[0], 5);
         rule.posEffects[0] = effectId_event2;
 
         // Save the rule
@@ -531,7 +542,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds[0][1] = ruleId;
 
         // Rule 3: GT 6
-        rule = _createGTRule(6);
+        rule = _createGTRule(policyIds[0], 6);
         rule.posEffects[0] = effectId_event;
 
         // Save the rule
@@ -541,7 +552,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds[0][2] = ruleId;
 
         // Rule 4: GT 7
-        rule = _createGTRule(7);
+        rule = _createGTRule(policyIds[0], 7);
         rule.posEffects[0] = effectId_event2;
 
         // Save the rule
@@ -575,7 +586,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         );
 
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule = _createGTRule(4);
+        Rule memory rule = _createGTRule(policyIds[0], 4);
         rule.posEffects = new Effect[](2);
         rule.posEffects[0] = effectId_event;
         rule.posEffects[1] = effectId_event2;
@@ -629,6 +640,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.posEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         rule.posEffects[0] = effectId_event;
+        rule.policyId = policyIds[0];
 
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
@@ -654,7 +666,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         bytes4[] memory blankSignatures = new bytes4[](0);
         uint256[] memory blankFunctionSignatureIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
-        uint256 policyId = RulesEngineDataFacet(address(red)).updatePolicy(
+        uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(
             0,
             blankSignatures,
             blankFunctionSignatureIds,
@@ -680,7 +692,7 @@ contract RulesEngineCommon is DiamondMine, Test {
     }
 
     // internal rule builder
-    function _createGTRule(uint256 _amount) public returns (Rule memory) {
+    function _createGTRule(uint256 _policyId, uint256 _amount) public returns (Rule memory) {
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         // Set up some effects.
@@ -695,10 +707,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
+        rule.policyId = _policyId;
         return rule;
     }
 
-    function _createLTRule(uint256 _amount) public returns (Rule memory) {
+    function _createLTRule(uint256 _policyId, uint256 _amount) public returns (Rule memory) {
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         // Set up some effects.
@@ -718,6 +731,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
+        rule.policyId = _policyId;
         return rule;
     }
 
@@ -887,6 +901,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.instructionSet = _createInstructionSet(transferValue);
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
+        rule.policyId = policyIds[0];
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
 
@@ -920,6 +935,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.instructionSet = _createInstructionSet(transferValue);
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
+        rule.policyId = policyIds[0];
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
 
@@ -949,6 +965,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.instructionSet = _createInstructionSet(transferValue);
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
+        rule.policyId = policyIds[0];
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
 
