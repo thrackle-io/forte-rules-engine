@@ -89,7 +89,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         vm.startPrank(USER_ADDRESS);
         userContract.approve(USER_ADDRESS, 5);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(event_text);
+        emit RulesEngineEvent(1, EVENTTEXT, event_text);
         bool response = userContract.transferFrom(USER_ADDRESS, address(0x7654321), 5);
         assertTrue(response);
     }
@@ -113,7 +113,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         _setupRuleWithRevertMint(ERC20_MINT_SIGNATURE, pTypes);
         vm.startPrank(USER_ADDRESS);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(event_text); 
+        emit RulesEngineEvent(1, EVENTTEXT, event_text); 
         userContract.mint(USER_ADDRESS, 5);
     }
 

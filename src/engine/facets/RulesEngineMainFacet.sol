@@ -4,7 +4,6 @@ pragma solidity ^0.8.24;
 import "src/engine/facets/FacetCommonImports.sol";
 
 contract RulesEngineMainFacet is FacetCommonImports{
-
     /**
      * @dev Initializer params
      * @param _owner initial owner of the diamond
@@ -252,8 +251,6 @@ contract RulesEngineMainFacet is FacetCommonImports{
     }
 
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
     // Effect Execution Functions
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -268,13 +265,76 @@ contract RulesEngineMainFacet is FacetCommonImports{
             Effect memory effect = _effects[i];
             if(effect.valid) {
                 if (effect.effectType == ET.REVERT) { 
-                    doRevert(effect.text);
+                    doRevert(effect.errorMessage);
                 } else if (effect.effectType == ET.EVENT) {
-                    doEvent(effect.text);
+                    buildEvent(ruleData, _effects[i].dynamicParam, _policyId, _effects[i].text, _effects[i], applicableRule, functionSignatureArgs);
                 } else {
                     evaluateExpression(ruleData, _policyId, applicableRule, functionSignatureArgs, effect.instructionSet);
                 }
             }
+        }
+    }
+
+    /**
+     * @dev Define event to be fired 
+     */
+    function buildEvent(RuleS storage ruleData,
+        bool isDynamicParam, 
+        uint256 _policyId, 
+        bytes32 _message, 
+        Effect memory effectStruct, 
+        uint256 applicableRule, 
+        bytes calldata functionSignatureArgs
+        ) internal {
+        // determine if we need to dynamically build event key 
+        if (isDynamicParam){
+            // fire event by param type based on return value 
+            fireDynamicEvent(ruleData, _policyId, _message, applicableRule, functionSignatureArgs);
+        } else {
+            fireEvent(_policyId, _message, effectStruct);
+        }
+    }
+
+    function fireDynamicEvent(RuleS storage ruleData, uint256 _policyId, bytes32 _message, uint256 applicableRule, bytes calldata functionSignatureArgs) internal {
+        // Build the effect arguments struct for event parameters:  
+        (bytes[] memory effectArguments, Placeholder[] memory placeholders) = buildArguments(ruleData, _policyId, applicableRule, functionSignatureArgs, true);
+        for(uint256 i = 0; i < effectArguments.length; i++) { 
+            // loop through PT types and set eventParam 
+            if (placeholders[i].pType == PT.UINT) {
+                uint256 uintParam = abi.decode(effectArguments[i], (uint)); 
+                emit RulesEngineEvent(_policyId, _message, uintParam);
+            } else if (placeholders[i].pType == PT.ADDR) {
+                address addrParam = abi.decode(effectArguments[i], (address));
+                emit RulesEngineEvent(_policyId, _message, addrParam);
+            } else if (placeholders[i].pType == PT.BOOL) {
+                bool boolParam = abi.decode(effectArguments[i], (bool));
+                emit RulesEngineEvent(_policyId, _message, boolParam);
+            } else if (placeholders[i].pType == PT.STR) {
+                string memory textParam = abi.decode(effectArguments[i], (string));
+                emit RulesEngineEvent(_policyId, _message, textParam);
+            } else if (placeholders[i].pType == PT.BYTES) {
+                bytes32 bytesParam = abi.decode(effectArguments[i], (bytes32));
+                emit RulesEngineEvent(_policyId, _message, bytesParam);
+            }
+        }
+    }
+
+    function fireEvent(uint256 _policyId, bytes32 _message, Effect memory effectStruct) internal { 
+        if (effectStruct.pType == PT.UINT) {
+            uint256 uintParam = abi.decode(effectStruct.param, (uint));
+            emit RulesEngineEvent(_policyId, _message, uintParam);
+        } else if (effectStruct.pType == PT.ADDR) {
+            address addrParam = abi.decode(effectStruct.param, (address));
+            emit RulesEngineEvent(_policyId, _message, addrParam);
+        } else if (effectStruct.pType == PT.BOOL) {
+            bool boolParam = abi.decode(effectStruct.param, (bool));
+            emit RulesEngineEvent(_policyId, _message, boolParam);
+        } else if (effectStruct.pType == PT.STR) {
+            string memory textParam = abi.decode(effectStruct.param, (string));
+            emit RulesEngineEvent(_policyId, _message, textParam);
+        } else if (effectStruct.pType == PT.BYTES) {
+            bytes32 bytesParam = abi.decode(effectStruct.param, (bytes32));
+            emit RulesEngineEvent(_policyId, _message, bytesParam);
         }
     }
 
@@ -287,13 +347,12 @@ contract RulesEngineMainFacet is FacetCommonImports{
     }
 
     /**
-     * @dev Emit an event
-     * @param _message the reversion message
+     * @dev Evaluate an effect expression
+     * @param _policyId the policy id
+     * @param applicableRule Rule struct 
+     * @param functionSignatureArgs arguments of the function signature
+     * @param instructionSet instruction set 
      */
-    function doEvent(string memory _message) internal {
-        emit RulesEngineEvent(_message);
-    }
-
     function evaluateExpression(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, bytes calldata functionSignatureArgs, uint256[] memory instructionSet) internal {
         (bytes[] memory effectArguments, Placeholder[] memory placeholders) = buildArguments(ruleData, _policyId, applicableRule, functionSignatureArgs, true);
         if(instructionSet.length > 1) {

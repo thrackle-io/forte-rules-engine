@@ -462,8 +462,91 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         _setupRuleWithPosEvent();
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(event_text);
+        emit RulesEngineEvent(1, EVENTTEXT, event_text);
         userContract.transfer(address(0x7654321), 5);
+    }
+
+    function testRulesEngine_Unit_CheckRules_WithExampleContract_Positive_Event_CustomParams_Uint()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        bytes memory eventParam = abi.encode(uint256(100)); 
+        _setupRuleWithPosEventParams(eventParam, PT.UINT);
+        vm.expectEmit(true, true, false, false);
+        emit RulesEngineEvent(1, EVENTTEXT, 100);
+        userContract.transfer(address(0x7654321), 5);
+    }
+
+    function testRulesEngine_Unit_CheckRules_WithExampleContract_Positive_Event_CustomParams_String()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        bytes memory eventParam = abi.encode(string("Test")); 
+        _setupRuleWithPosEventParams(eventParam, PT.STR);
+        vm.expectEmit(true, true, false, false);
+        emit RulesEngineEvent(1, EVENTTEXT, string("test"));
+        userContract.transfer(address(0x7654321), 5);
+    }
+
+    function testRulesEngine_Unit_CheckRules_WithExampleContract_Positive_Event_CustomParams_Address()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        bytes memory eventParam = abi.encode(address(0x100)); 
+        _setupRuleWithPosEventParams(eventParam, PT.ADDR);
+        vm.expectEmit(true, true, false, false);
+        emit RulesEngineEvent(1, EVENTTEXT, address(0x100));
+        userContract.transfer(address(0x7654321), 5);
+    }
+
+    function testRulesEngine_Unit_CheckRules_WithExampleContract_Positive_Event_CustomParams_Bool()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        bytes memory eventParam = abi.encode(bool(true)); 
+        _setupRuleWithPosEventParams(eventParam, PT.BOOL);
+        vm.expectEmit(true, true, false, false);
+        emit RulesEngineEvent(1, EVENTTEXT, true);
+        userContract.transfer(address(0x7654321), 5);
+    }
+
+    function testRulesEngine_Unit_CheckRules_WithExampleContract_Positive_Event_CustomParams_Bytes32()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        bytes memory eventParam = abi.encode(bytes32("Bytes32 Test")); 
+        _setupRuleWithPosEventParams(eventParam, PT.BYTES);
+        vm.expectEmit(true, true, false, false);
+        emit RulesEngineEvent(1, EVENTTEXT, bytes32("Bytes32 Test"));
+        userContract.transfer(address(0x7654321), 5);
+    }
+
+    function testRulesEngine_Unit_CheckRules_WithExampleContract_Positive_Event_DynamicParams_Uint()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        _setupRuleWithPosEventDynamicParamsFromCallingFunctionParams(PT.UINT);
+        vm.expectEmit(true, true, false, false);
+        emit RulesEngineEvent(1, EVENTTEXT, 100);
+        userContract.transfer(address(0x7654321), 100);
+    }
+
+
+    function testRulesEngine_Unit_CheckRules_WithExampleContract_Positive_Event_DynamicParams_Address()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        _setupRuleWithPosEventDynamicParamsFromCallingFunctionParams(PT.ADDR);
+        vm.expectEmit(true, true, false, false);
+        emit RulesEngineEvent(1, EVENTTEXT, address(0x7654321));
+        userContract.transfer(address(0x7654321), 100);
     }
 
     // Ensure that a policy with multiple rules with positive events fire in the correct order
@@ -474,13 +557,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         _setupPolicyWithMultipleRulesWithPosEvents();
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(event_text);
+        emit RulesEngineEvent(1, EVENTTEXT, event_text);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(event_text2);
+        emit RulesEngineEvent(1, EVENTTEXT2, event_text2);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(event_text);
+        emit RulesEngineEvent(1, EVENTTEXT, event_text);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(event_text2);
+        emit RulesEngineEvent(1, EVENTTEXT2, event_text2);
         userContract.transfer(address(0x7654321), 11);
     }
 
@@ -492,9 +575,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         _setupRuleWith2PosEvent();
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(event_text);
+        emit RulesEngineEvent(1, EVENTTEXT, event_text);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(event_text2);
+        emit RulesEngineEvent(1, EVENTTEXT2, event_text2);
         userContract.transfer(address(0x7654321), 11);
     }
 
@@ -611,7 +694,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         setupRuleWithTracker(2);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(event_text);
+        emit RulesEngineEvent(1, EVENTTEXT, event_text);
         bool retVal = userContract.transfer(address(0x7654321), 3);
         assertTrue(retVal);
     }

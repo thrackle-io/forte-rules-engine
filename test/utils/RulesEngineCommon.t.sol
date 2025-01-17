@@ -24,10 +24,17 @@ contract RulesEngineCommon is DiamondMine, Test {
     string constant revert_text = "Rules Engine Revert";
     string constant event_text2 = "Rules Engine Event 2";
     string constant revert_text2 = "Rules Engine Revert 2";
+    string constant customEventText = "Custom Event"; 
+    bytes32 public constant EVENTTEXT = bytes32("Rules Engine Event"); 
+    bytes32 public constant EVENTTEXT2 = bytes32("Rules Engine Event 2");
     Effect effectId_revert;
     Effect effectId_revert2;
     Effect effectId_event;
     Effect effectId_event2;
+    Effect effectId_Log1;
+    Effect effectId_Log2;
+    Effect effectId_Log3;
+    Effect effectId_Log;
     bytes4[] signatures;
     uint256[] functionSignatureIds;
     uint256[][] ruleIds;
@@ -461,6 +468,77 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
+    function _setupRuleWithPosEventParams(bytes memory param, PT pType) 
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+        resetsGlobalVariables
+    {
+
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = _createBlankPolicy();
+
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+
+        _addFunctionSignatureToPolicy(
+            policyIds[0],
+            bytes4(keccak256(bytes(functionSignature))),
+            pTypes
+        );
+
+        // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
+        Rule memory rule = _createGTRuleWithCustomEventParams(policyIds[0], 4, param, pType);
+        rule.posEffects[0] = effectId_event;
+
+        // Save the rule
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0] = ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    }
+
+    function _setupRuleWithPosEventDynamicParamsFromCallingFunctionParams(PT pType) 
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+        resetsGlobalVariables
+    {
+
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = _createBlankPolicy();
+
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+
+        _addFunctionSignatureToPolicy(
+            policyIds[0],
+            bytes4(keccak256(bytes(functionSignature))),
+            pTypes
+        );
+        Rule memory rule;
+        // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
+        if(pType == PT.ADDR){
+            rule = _createGTRuleWithDynamicEventParamsAddress(policyIds[0], 4);
+            rule.posEffects[0] = effectId_event;
+        } else{
+            rule = _createGTRuleWithDynamicEventParams(policyIds[0], 4);
+            rule.posEffects[0] = effectId_event;
+        } 
+        
+        // Save the rule
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0] = ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    }
+
     function _setupMinTransferWithPosEvent(
         uint256 threshold,
         address contractAddress
@@ -711,6 +789,71 @@ contract RulesEngineCommon is DiamondMine, Test {
         return rule;
     }
 
+    function _createGTRuleWithCustomEventParams(uint256 _policyId, uint256 _amount, bytes memory param, PT paramType) public returns (Rule memory) {
+        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        Rule memory rule;
+        // Set up custom event param effect.
+        effectId_event = _createCustomEffectEvent(param, paramType);
+        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+        rule.instructionSet = rule.instructionSet = _createInstructionSet(
+            _amount
+        );
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        // Add a negative/positive effects
+        rule.negEffects = new Effect[](1);
+        rule.posEffects = new Effect[](1);
+        rule.policyId = _policyId;
+        return rule;
+    }
+
+    function _createGTRuleWithDynamicEventParams(uint256 _policyId, uint256 _amount) public returns (Rule memory) {
+        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        Rule memory rule;
+        // Set up custom event param effect.
+        effectId_event = _createEffectEventDynamicParams();
+        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+        rule.instructionSet = rule.instructionSet = _createInstructionSet(
+            _amount
+        );
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+
+        rule.effectPlaceHolders = new Placeholder[](1);
+        rule.effectPlaceHolders[0].pType = PT.UINT;
+        rule.effectPlaceHolders[0].typeSpecificIndex = 1;
+        // Add a negative/positive effects
+        rule.negEffects = new Effect[](1);
+        rule.posEffects = new Effect[](1);
+        rule.policyId = _policyId;
+        return rule;
+    }
+
+    function _createGTRuleWithDynamicEventParamsAddress(uint256 _policyId, uint256 _amount) public returns (Rule memory) {
+        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        Rule memory rule;
+        // Set up custom event param effect.
+        effectId_event = _createEffectEventDynamicParamsAddress();
+        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+        rule.instructionSet = rule.instructionSet = _createInstructionSet(
+            _amount
+        );
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+
+        rule.effectPlaceHolders = new Placeholder[](1);
+        rule.effectPlaceHolders[0].pType = PT.ADDR;
+        rule.effectPlaceHolders[0].typeSpecificIndex = 0;
+        // Add a negative/positive effects
+        rule.negEffects = new Effect[](1);
+        rule.posEffects = new Effect[](1);
+        rule.policyId = _policyId;
+        return rule;
+    }
+
     function _createLTRule(uint256 _policyId, uint256 _amount) public returns (Rule memory) {
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
@@ -783,25 +926,100 @@ contract RulesEngineCommon is DiamondMine, Test {
     }
 
     function _createEffectEvent(string memory _text) public pure returns(Effect memory){
-        uint256[] memory emptyArray = new uint256[](1);
+        uint256[] memory emptyArray = new uint256[](1); 
         // Create a event effect
         return
             Effect({
                 valid: true,
+                dynamicParam:false,
                 effectType: ET.EVENT,
-                text: _text,
+                pType: PT.STR,
+                param: abi.encode(_text),
+                text: EVENTTEXT,
+                errorMessage: _text,
                 instructionSet: emptyArray
             });
     }
 
+    function _createCustomEffectEvent(bytes memory param, PT paramType) public pure returns(Effect memory){
+        uint256[] memory emptyArray = new uint256[](1); 
+        bytes memory encodedParam; 
+        if (paramType == PT.UINT) {
+            uint256 param = abi.decode(param, (uint)); 
+            encodedParam = abi.encode(param); 
+        } else if (paramType == PT.ADDR) {
+            address param = abi.decode(param, (address));
+            encodedParam = abi.encode(param);
+        } else if (paramType == PT.BOOL) {
+            bool param = abi.decode(param, (bool));
+            encodedParam = abi.encode(param);
+        } else if (paramType == PT.STR) {
+            string memory param = abi.decode(param, (string));
+            encodedParam = abi.encode(param);
+        } else if (paramType == PT.BYTES) {
+            bytes32 param = abi.decode(param, (bytes32));
+            encodedParam = abi.encode(param);
+        }
+        // Create a event effect
+        return
+            Effect({
+                valid: true,
+                dynamicParam:false,
+                effectType: ET.EVENT,
+                pType: paramType,
+                param: encodedParam,
+                text: EVENTTEXT,
+                errorMessage: event_text,
+                instructionSet: emptyArray
+            });
+    }
+
+    function _createEffectEventDynamicParams() public pure returns(Effect memory){
+        Effect memory effect;
+        effect.valid = true;
+        effect.dynamicParam = true;
+        effect.effectType = ET.EVENT;
+        effect.text = EVENTTEXT;
+        effect.instructionSet = new uint256[](4);
+        // Foreign Call Placeholder
+        effect.instructionSet[0] = uint(LC.NUM);
+        effect.instructionSet[1] = 0;
+        // // Tracker Placeholder
+        effect.instructionSet[2] = uint(LC.NUM);
+        effect.instructionSet[3] = 1;
+
+        return effect;
+    }
+
+    function _createEffectEventDynamicParamsAddress() public pure returns(Effect memory){
+        Effect memory effect;
+        effect.valid = true;
+        effect.dynamicParam = true;
+        effect.effectType = ET.EVENT;
+        effect.text = EVENTTEXT;
+        effect.instructionSet = new uint256[](4);
+        // Foreign Call Placeholder
+        effect.instructionSet[0] = uint(LC.NUM);
+        effect.instructionSet[1] = 1;
+        // // Tracker Placeholder
+        effect.instructionSet[2] = uint(LC.NUM);
+        effect.instructionSet[3] = 1;
+
+        return effect;
+    }
+
     function _createEffectRevert(string memory _text) public pure returns(Effect memory) {
-        uint256[] memory emptyArray = new uint256[](1);
+        uint256[] memory emptyArray = new uint256[](1); 
         // Create a revert effect
         return
             Effect({
                 valid: true,
+                dynamicParam:false,
                 effectType: ET.REVERT,
-                text: _text,
+                pType: PT.STR,
+                param: abi.encode(_text),
+                text: EVENTTEXT,
+                errorMessage: revert_text,
                 instructionSet: emptyArray
             });
     }
