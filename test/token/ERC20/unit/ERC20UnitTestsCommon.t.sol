@@ -56,7 +56,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
     function testERC20_Transfer_Unit_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
         // set up the ERC20
         userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
-        _setupRuleWithRevert();
+        _setupRuleWithRevert(address(userContract));
         vm.startPrank(USER_ADDRESS);
         vm.expectRevert(abi.encodePacked(revert_text)); 
         userContract.transfer(address(0x7654321), 5);
