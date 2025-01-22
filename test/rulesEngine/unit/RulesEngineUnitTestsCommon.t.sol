@@ -96,7 +96,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ruleIds[0][0] = ruleId;
         assertGt(
             RulesEngineDataFacet(address(red)).updatePolicy(
-                0,
+                policyId,
                 signatures,
                 functionSignatureIds,
                 ruleIds
@@ -1625,7 +1625,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         uint256[] memory blankFunctionSignatureIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         uint256 policyID = RulesEngineDataFacet(address(red)).updatePolicy(
-            0,
+            1,
             blankSignatures,
             blankFunctionSignatureIds,
             blankRuleIds

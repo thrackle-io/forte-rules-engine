@@ -142,7 +142,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         bytes4[] memory blankSignatures = new bytes4[](0);
         uint256[] memory blankFunctionSignatureIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
-        uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(0, blankSignatures, blankFunctionSignatureIds, blankRuleIds);
+        uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(blankSignatures, blankFunctionSignatureIds, blankRuleIds);
         return policyId;
     }
 

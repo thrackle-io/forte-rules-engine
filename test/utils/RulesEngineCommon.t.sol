@@ -173,7 +173,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
          
-        policyIds[0] = RulesEngineDataFacet(address(red)).updatePolicy(0, signatures, functionSignatureIds, ruleIds);        
+        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signatures, functionSignatureIds, ruleIds);        
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
 
         return ruleId;
@@ -231,7 +231,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        policyIds[0] = RulesEngineDataFacet(address(red)).updatePolicy(0, signatures, functionSignatureIds, ruleIds);        
+        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signatures, functionSignatureIds, ruleIds);        
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
 
         return ruleId;
@@ -745,7 +745,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256[] memory blankFunctionSignatureIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(
-            0,
             blankSignatures,
             blankFunctionSignatureIds,
             blankRuleIds
@@ -761,7 +760,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256[] memory blankFunctionSignatureIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(
-            0,
             blankSignatures,
             blankFunctionSignatureIds,
             blankRuleIds

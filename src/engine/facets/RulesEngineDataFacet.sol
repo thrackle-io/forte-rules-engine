@@ -269,7 +269,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
 
     /// Policy Storage
     /**
-     * Add a Policy to Storage
+     * Update a Policy in Storage
      * @param _policyId id of of the policy 
      * @param _signatures all signatures in the policy
      * @param functionSignatureIds corresponding signature ids in the policy. The elements in this array are one to one matches of the elements in _signatures array. They store the functionSignatureId for each of the signatures in _signatures array.
@@ -278,18 +278,52 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
      */
     function updatePolicy(uint256 _policyId, bytes4[] calldata _signatures, uint256[] calldata functionSignatureIds, uint256[][] calldata ruleIds) public returns(uint256){
-        // Load the policy data from storage
-        PolicyS storage data = lib.getPolicyStorage();
         // signature length must match the signature id length
         if (_signatures.length != functionSignatureIds.length) revert("Signatures and signature id's are inconsistent"); 
-        // increment the policyId if necessary
-        if (_policyId == 0) {
+        // if policy ID is zero no policy has been created and cannot be updated. 
+        if (_policyId == 0) revert("Policy ID cannot be 0. Create policy before updating");
+        return storePolicyData(_policyId, _signatures, functionSignatureIds, ruleIds);
+    }
+
+
+    /**
+     * Add a Policy to Storage and create the policy admin for the policy 
+     * @param _signatures all signatures in the policy
+     * @param functionSignatureIds corresponding signature ids in the policy. The elements in this array are one to one matches of the elements in _signatures array. They store the functionSignatureId for each of the signatures in _signatures array.
+     * @param ruleIds two dimensional array of the rules. This array contains a simple count at first level and the second level is the array of ruleId's within the policy.
+     * @return policyId generated policyId
+     * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
+     */
+    function createPolicy(bytes4[] calldata _signatures, uint256[] calldata functionSignatureIds, uint256[][] calldata ruleIds) public returns(uint256) {
+        // retrieve Policy Storage 
+        PolicyS storage data = lib.getPolicyStorage();
+        uint256 policyId; 
+        // If this is the first policy created increment by 1 to start id counter. 
+        if (policyId == 0) {
             unchecked{
                 ++data.policyId;
             }
-            _policyId = data.policyId;
-            data.policyStorageSets[_policyId].set = true;
+            policyId = data.policyId;
+            data.policyStorageSets[policyId].set = true;
         }
+        //This function is called as an external call intentionally. This allows for proper gating on the generatePolicyAdminRole fn to only be callable by the RulesEngine address. 
+        RulesEngineAdminRolesFacet(address(this)).generatePolicyAdminRole(policyId, address(msg.sender));
+
+        return storePolicyData(policyId, _signatures, functionSignatureIds, ruleIds);
+    }
+
+    /**
+     * @dev internal helper function for create and update policy functions  
+     * @param _policyId id of of the policy 
+     * @param _signatures all signatures in the policy
+     * @param functionSignatureIds corresponding signature ids in the policy. The elements in this array are one to one matches of the elements in _signatures array. They store the functionSignatureId for each of the signatures in _signatures array.
+     * @param ruleIds two dimensional array of the rules. This array contains a simple count at first level and the second level is the array of ruleId's within the policy.
+     * @return policyId updated policyId 
+     * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
+     */
+    function storePolicyData(uint256 _policyId, bytes4[] calldata _signatures, uint256[] calldata functionSignatureIds, uint256[][] calldata ruleIds) internal returns(uint256){   
+        // Load the policy data from storage
+        PolicyS storage data = lib.getPolicyStorage();
         // clear the iterator array
         delete data.policyStorageSets[_policyId].policy.signatures;
         if (ruleIds.length > 0) {
@@ -329,24 +363,6 @@ contract RulesEngineDataFacet is FacetCommonImports {
         }    
         
         return _policyId;
-    }
-
-
-    /**
-     * Add a Policy to Storage and create the policy admin for the policy 
-     * @param _policyId id of of the policy 
-     * @param _signatures all signatures in the policy
-     * @param functionSignatureIds corresponding signature ids in the policy. The elements in this array are one to one matches of the elements in _signatures array. They store the functionSignatureId for each of the signatures in _signatures array.
-     * @param ruleIds two dimensional array of the rules. This array contains a simple count at first level and the second level is the array of ruleId's within the policy.
-     * @return policyId generated policyId
-     * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
-     */
-    function createPolicy(uint256 _policyId, bytes4[] calldata _signatures, uint256[] calldata functionSignatureIds, uint256[][] calldata ruleIds) public returns(uint256) {
-        uint256 policyId = updatePolicy(_policyId, _signatures, functionSignatureIds, ruleIds);
-        //This function is called as an external call intentionally. This allows for proper gating on the generatePolicyAdminRole fn to only be callable by the RulesEngine address. 
-        RulesEngineAdminRolesFacet(address(this)).generatePolicyAdminRole(policyId, address(msg.sender));
-
-        return policyId; 
     }
 
     /**
@@ -404,3 +420,30 @@ contract RulesEngineDataFacet is FacetCommonImports {
         return lib.getPolicyAssociationStorage().contractPolicyIdMap[_contractAddress];
     }
 }
+
+ /**
+  NEEDED FUNCTIONS: 
+
+  Internalize update function logic to share internal function (i.e. updatePolicy and createPolicy will share internal logic function)
+
+  Delete Policy 
+
+  Create Rule 
+  Delete Rule 
+
+  CreateForeignCall 
+  DeleteForeignCall 
+
+  CreateTracker
+  DeleteTracker 
+  UpdateTrackerFromRuleCheck --this is to separate out tracker updates from a rule evaluation result and from manually updating the tracker from an admin perspective 
+
+State of the branch: 
+Internalized the create and update policy functions and updated tests 
+You can copy this logic for remaining functions that need create and update functions 
+ 
+ TODO is delete functions and seperated out Tracker functions 
+
+ TODO Delete comment block before PR 
+ 
+  */
