@@ -586,54 +586,63 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        string
-            memory functionSig = "testSig(uint256,string,uint256,string,address)";
-
-        PT[] memory parameterTypes = new PT[](5);
-        parameterTypes[0] = PT.UINT;
-        parameterTypes[1] = PT.STR;
-        parameterTypes[2] = PT.UINT;
-        parameterTypes[3] = PT.STR;
-        parameterTypes[4] = PT.ADDR;
-
-        bytes[] memory vals = new bytes[](5);
-        vals[0] = abi.encode(1);
-        vals[1] = abi.encode("test");
-        vals[2] = abi.encode(2);
-        vals[3] = abi.encode(
-            "superduperduperduperduperduperduperduperduperduperlongstring"
-        );
-        vals[4] = abi.encode(address(0x1234567));
-
-        uint256[] memory dynamicVarLengths = new uint256[](2);
-        dynamicVarLengths[0] = 4;
-        dynamicVarLengths[1] = 44;
-
-        bytes4 FUNC_SELECTOR = bytes4(keccak256(bytes(functionSig)));
-
-        bytes memory argsEncoded = RulesEngineMainFacet(address(red))
-            .assemblyEncode(
-                parameterTypes,
-                vals,
-                FUNC_SELECTOR,
-                dynamicVarLengths
-            );
-
+        string memory functionSig = "testSig(uint256,string,uint256,string,address)";
+        //string memory functionSig = "testSig(string)";
         ForeignCallTestContract foreignCall = new ForeignCallTestContract();
 
-        (bool response, bytes memory data) = address(foreignCall).call(
-            argsEncoded
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(foreignCall);
+        fc.signature = bytes4(keccak256(bytes(functionSig)));
+        fc.parameterTypes = new PT[](5);
+        fc.parameterTypes[0] = PT.UINT;
+        fc.parameterTypes[1] = PT.STR;
+        fc.parameterTypes[2] = PT.UINT;
+        fc.parameterTypes[3] = PT.STR;
+        fc.parameterTypes[4] = PT.ADDR;
+
+        fc.typeSpecificIndices = new uint8[](5);
+        fc.typeSpecificIndices[0] = 0;
+        fc.typeSpecificIndices[1] = 1;
+        fc.typeSpecificIndices[2] = 2;
+        fc.typeSpecificIndices[3] = 3;
+        fc.typeSpecificIndices[4] = 4;
+
+        bytes memory vals = abi.encode(
+            1, 
+            "test", 
+            2, 
+            "superduperduperduperduperduperduperduperduperduperduperlongstring", 
+            address(0x1234567)
         );
+
+        // bytes memory actualEncoding = abi.encodeWithSelector(fc.signature, "superduperduperduperduperduperduperduperduperduperduperduperlongstring");
+        // console.logBytes(actualEncoding);
+        // bytes memory callData = hex"ed37862e000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000467375706572647570657264757065726475706572647570657264757065726475706572647570657264757065726475706572647570657264757065726c6f6e67737472696e670000000000000000000000000000000000000000000000000000";
+
+        // console.logBytes(callData);
+        // (bool response, bytes memory data) = fc.foreignCallAddress.call(callData);
+
+        // bytes memory vals = abi.encode(
+        //     "superduperduperduperduperduperduperduperduperduperduperduperlongstring"
+        // );
+
+        
+
+        ForeignCallReturnValue memory retVal = RulesEngineMainFacet(address(red))
+            .evaluateForeignCallForRule(
+                fc,
+                vals
+            );
+
         assertEq(foreignCall.getDecodedIntOne(), 1);
         assertEq(foreignCall.getDecodedIntTwo(), 2);
         assertEq(foreignCall.getDecodedStrOne(), "test");
         assertEq(
             foreignCall.getDecodedStrTwo(),
-            "superduperduperduperduperduperduperduperduperduperlongstring"
+            "superduperduperduperduperduperduperduperduperduperduperlongstring"
         );
         assertEq(foreignCall.getDecodedAddr(), address(0x1234567));
-        response;
-        data; // added to silence warnings - we should have these in an assertion
+        retVal;
     }
 
     function testRulesEngine_Unit_EvaluateForeignCallForRule()

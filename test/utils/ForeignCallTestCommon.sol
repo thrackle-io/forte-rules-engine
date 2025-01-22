@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 
+import {console} from "forge-std/console.sol";
 /**
  * @title Example contract for testing the Foreign Call Encoding
  * @author @mpetersoCode55 
