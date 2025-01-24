@@ -828,8 +828,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         array4[3] = abi.encodeWithSelector(bytes4(keccak256(bytes("superduperduperduper(uint256)"))), 4);
         array4[4] = abi.encodeWithSelector(bytes4(keccak256(bytes("test(uint256,string,address)"))), 5, "superduperduperduperduperduperduperduperduperduperduperduperduperlongstring", address(0x1234567));
         bytes memory vals = abi.encode(array1, array2, array3, array4);
-        console.log("proper encoding");
-        console.logBytes(vals);
+
         ForeignCallReturnValue memory retVal = RulesEngineMainFacet(address(red))
             .evaluateForeignCallForRule(fc, vals);
         assertEq(foreignCall.getInternalArrayUint()[0], 1);
@@ -930,8 +929,6 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         bytes memory vals = abi.encode(array1, array3);
 
-        console.log("vals");
-        console.logBytes(vals);
         ForeignCallReturnValue memory retVal = RulesEngineMainFacet(address(red))
             .evaluateForeignCallForRule(fc, vals);
         
@@ -977,22 +974,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
             1, 
             "test", 
             2, 
-            "superduperduperduperduperduperduperduperduperduperduperlongstring", 
+            "superduperduperduperduperduperduperduperduperduperduperduperlongstring", 
             address(0x1234567)
         );
-
-        // bytes memory actualEncoding = abi.encodeWithSelector(fc.signature, "superduperduperduperduperduperduperduperduperduperduperduperlongstring");
-        // console.logBytes(actualEncoding);
-        // bytes memory callData = hex"ed37862e000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000467375706572647570657264757065726475706572647570657264757065726475706572647570657264757065726475706572647570657264757065726c6f6e67737472696e670000000000000000000000000000000000000000000000000000";
-
-        // console.logBytes(callData);
-        // (bool response, bytes memory data) = fc.foreignCallAddress.call(callData);
-
-        // bytes memory vals = abi.encode(
-        //     "superduperduperduperduperduperduperduperduperduperduperduperlongstring"
-        // );
-
-        
 
         ForeignCallReturnValue memory retVal = RulesEngineMainFacet(address(red))
             .evaluateForeignCallForRule(
@@ -1005,9 +989,46 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(foreignCall.getDecodedStrOne(), "test");
         assertEq(
             foreignCall.getDecodedStrTwo(),
-            "superduperduperduperduperduperduperduperduperduperduperlongstring"
+            "superduperduperduperduperduperduperduperduperduperduperduperlongstring"
         );
         assertEq(foreignCall.getDecodedAddr(), address(0x1234567));
+        retVal;
+    }
+
+    function testRulesEngine_Unit_EvaluateForeignCallForRule_WithStringAndDynamicAndStaticArray()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        ForeignCall memory fc;
+        ForeignCallTestContract foreignCall = new ForeignCallTestContract();
+        string memory functionSig = "testSigWithMultiArrays(string,uint256[],string[])";
+        fc.foreignCallAddress = address(foreignCall);
+        fc.signature = bytes4(keccak256(bytes(functionSig)));
+        fc.parameterTypes = new PT[](3);
+        fc.parameterTypes[0] = PT.STR;
+        fc.parameterTypes[1] = PT.STATIC_TYPE_ARRAY;
+        fc.parameterTypes[2] = PT.DYNAMIC_TYPE_ARRAY;
+        fc.typeSpecificIndices = new uint8[](3);
+        fc.typeSpecificIndices[0] = 2;
+        fc.typeSpecificIndices[1] = 1;
+        fc.typeSpecificIndices[2] = 0;
+
+        string memory str = "superduperduperduperduperduperduperduperduperduperduperduperlongstring";
+        uint256[] memory uintArray = new uint256[](5);
+        uintArray[0] = 1;
+        uintArray[1] = 2;
+        uintArray[2] = 3;
+        uintArray[3] = 4;
+        uintArray[4] = 5;
+        string[] memory strArray = new string[](5);
+        strArray[0] = "test";
+        strArray[1] = "superduper";
+        strArray[2] = "superduperduper";
+        strArray[3] = "superduperduperduper";
+        strArray[4] = "superduperduperduperduperduperduperduperduperduperduperduperlongstring";
+        bytes memory vals = abi.encode(strArray, uintArray, str);
+        ForeignCallReturnValue memory retVal = RulesEngineMainFacet(address(red)).evaluateForeignCallForRule(fc, vals);
         retVal;
     }
 

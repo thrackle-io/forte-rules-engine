@@ -77,6 +77,17 @@ contract ForeignCallTestContract {
         return true;
     }
 
+    function testSigWithMultiArrays(string memory str, uint256[] memory uintArray, string[] memory strArray) public returns (bool) {
+        decodedStrOne = str;
+        for(uint256 i = 0; i < uintArray.length; i++) {
+            internalArrayUint.push(uintArray[i]);
+        }
+        for(uint256 i = 0; i < strArray.length; i++) {
+            internalArrayStr.push(strArray[i]);
+        }
+        return true;
+    }
+
     function testSigWithMultiArrays(uint256[] memory encodedArrayUint, address[] memory encodedArrayAddr, string[] memory encodedArrayStr, bytes[] memory encodedArrayBytes) public returns (bool) {
         for(uint256 i = 0; i < encodedArrayUint.length; i++) {
             internalArrayUint.push(encodedArrayUint[i]);

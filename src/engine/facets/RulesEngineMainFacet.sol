@@ -220,36 +220,21 @@ contract RulesEngineMainFacet is FacetCommonImports{
             bytes32 value = bytes32(functionArguments[typeSpecificIndex * 32: (typeSpecificIndex + 1) * 32]);
             
             if (argType == PT.STR || argType == PT.BYTES) {
-                    // Add offset to head
+                // Add offset to head
                 uint256 dynamicOffset = 32 * (fc.parameterTypes.length) + lengthToAppend;
                 encodedCall = bytes.concat(encodedCall, bytes32(dynamicOffset));
-                
                 // Get the dynamic data
-                (bytes memory dynamicValue, uint256 length) = getDynamicVariableFromCalldataNoOffset(functionArguments, typeSpecificIndex);
-                
-                // Create padded data
-                uint256 numWords = (length + 31) / 32;
-                bytes memory paddedData = new bytes(numWords * 32);
-                assembly {
-                    // Copy all words
-                    let srcPtr := add(dynamicValue, 32)
-                    let destPtr := add(paddedData, 32)
-                    
-                    // Copy full words
-                    for { let j := 0 } lt(j, numWords) { j := add(j, 1) } {
-                        mstore(add(destPtr, mul(j, 32)), mload(add(srcPtr, mul(j, 32))))
-                    }
-                }
+                uint256 length = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
+                uint256 words = 32 + ((length / 32) + 1) * 32;
+                bytes memory dynamicValue = functionArguments[uint(value):uint(value) + words];
                 // Add length and data (data is already padded to 32 bytes)
                 dynamicData = bytes.concat(
-                    dynamicData, 
-                    bytes32(length),    // length
-                    paddedData      // data (already padded)
+                    dynamicData,
+                    dynamicValue      // data (already padded)
                 );
-                lengthToAppend += 32 + (numWords * 32);  // 32 for length + 32 for padded data
+                lengthToAppend += words;  // 32 for length + 32 for padded data
             } else if (argType == PT.STATIC_TYPE_ARRAY) {
                 // encode the dynamic offset
-                console.log("Length to append in static array: ", lengthToAppend);
                 encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
                 uint256 arrayLength = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
                 // Get the static type array
@@ -265,8 +250,6 @@ contract RulesEngineMainFacet is FacetCommonImports{
                 uint256 length = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
                 lengthToAppend += 32;
                 dynamicData = bytes.concat(dynamicData, abi.encode(length));
-                console.log("dynamicData");
-                console.logBytes(dynamicData);
                 (dynamicData, lengthToAppend) = getDynamicValueArrayData(functionArguments, dynamicData, length, lengthToAppend, uint(value));
             }
             else {
@@ -453,24 +436,6 @@ contract RulesEngineMainFacet is FacetCommonImports{
         return result;
     }
 
-    function getDynamicVariableFromCalldataNoOffset(bytes calldata data, uint256 index) public pure returns (bytes memory, uint256) {
-        uint256 offset = uint256(bytes32(data[index * 32:(index + 1) * 32]));
-        uint256 length = uint256(bytes32(data[offset:offset + 32]));
-        
-        // Just allocate space for the data (no length prefix needed)
-        bytes memory result = new bytes(length);
-
-        assembly {
-            calldatacopy(
-                add(result, 32),  // destination (after length word)
-                add(add(data.offset, offset), 32),  // source (after length in calldata)
-                length           // length of data
-            )
-        }
-        
-        return (result, length);
-    }
-
     /**
      * @dev Retrieves the instruction set and raw string representations of a value 
      * @param _ruleId the id of the rule the values belong to
@@ -520,9 +485,6 @@ contract RulesEngineMainFacet is FacetCommonImports{
     function getDynamicValueArrayData(bytes calldata data, bytes memory dynamicData, uint length, uint lengthToAppend, uint256 offset) public pure returns (bytes memory, uint256) {
         bytes memory arrayData;
         
-        console.log("data");
-        console.logBytes(data);
-
         lengthToAppend += (length * 0x20);
         uint256 baseDynamicOffset = 32 + ((length - 1) * 32);
         for (uint256 j = 1; j <= length; j++) {
