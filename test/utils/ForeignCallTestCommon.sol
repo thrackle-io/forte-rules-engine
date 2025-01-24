@@ -93,6 +93,26 @@ contract ForeignCallTestContract {
         return true;
     }
 
+    function testSigWithMultiArrays(uint256[] memory encodedArrayUint, string[] memory encodedArrayStr) public returns (bool) {
+        for (uint i = 0; i < encodedArrayUint.length; i++ ){
+            internalArrayUint.push(encodedArrayUint[i]);
+        }
+        for (uint i = 0; i < encodedArrayStr.length; i++ ){
+            internalArrayStr.push(encodedArrayStr[i]);
+        }
+        return true;
+    }
+
+    function testSigWithMultiArrays(string[] memory encodedArrayStr, uint256[] memory encodedArrayUint) public returns (bool) {
+        for (uint i = 0; i < encodedArrayUint.length; i++ ){
+            internalArrayUint.push(encodedArrayUint[i]);
+        }
+        for (uint i = 0; i < encodedArrayStr.length; i++ ){
+            internalArrayStr.push(encodedArrayStr[i]);
+        }
+        return true;
+    }
+
     function simpleCheck(uint256 value) public returns (uint256) {
         internalValue = value;
         return value;
@@ -146,7 +166,7 @@ contract ForeignCallTestContractOFAC {
         onTheNaughtyList[addr] = true;
     }
 
-    function getNaughty(address addr) public returns(bool) {
+    function getNaughty(address addr) public view returns(bool) {
         return onTheNaughtyList[addr];
     }
 }

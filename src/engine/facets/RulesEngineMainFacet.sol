@@ -249,6 +249,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
                 lengthToAppend += 32 + (numWords * 32);  // 32 for length + 32 for padded data
             } else if (argType == PT.STATIC_TYPE_ARRAY) {
                 // encode the dynamic offset
+                console.log("Length to append in static array: ", lengthToAppend);
                 encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
                 uint256 arrayLength = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
                 // Get the static type array
@@ -259,7 +260,8 @@ contract RulesEngineMainFacet is FacetCommonImports{
                 lengthToAppend += lengthToGrab;
             } else if (argType == PT.DYNAMIC_TYPE_ARRAY) {
                 // encode the dynamic offset
-                encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
+                uint256 baseDynamicOffset = 32 * (fc.parameterTypes.length) + lengthToAppend;
+                encodedCall = bytes.concat(encodedCall, bytes32(baseDynamicOffset));
                 uint256 length = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
                 lengthToAppend += 32;
                 dynamicData = bytes.concat(dynamicData, abi.encode(length));
@@ -520,35 +522,29 @@ contract RulesEngineMainFacet is FacetCommonImports{
         
         console.log("data");
         console.logBytes(data);
-        console.log("offset", offset);
-        console.log("current length", lengthToAppend);
-        console.log("Starting off dynamic data");
-        console.logBytes(dynamicData);
+
+        lengthToAppend += (length * 0x20);
+        uint256 baseDynamicOffset = 32 + ((length - 1) * 32);
         for (uint256 j = 1; j <= length; j++) {
-            uint256 baseOffset = (lengthToAppend + (length * 32)) - (32 * (j - 1)) - offset + 0x60;
+            // Add current offset to dynamic data
+            dynamicData = bytes.concat(dynamicData, bytes32(baseDynamicOffset));
+            
             uint getValueOffsetValue = offset + (j * 32);
-            console.log("getValueOffsetValue", getValueOffsetValue);
             uint256 dynamicValueOffset = uint256(bytes32(data[getValueOffsetValue:getValueOffsetValue + 32]));
-            console.log("dynamicValueOffset");
-            console.log(dynamicValueOffset);
-            console.log("Dynamic length slice value: ", dynamicValueOffset + offset + 32);
+            
+            // Get length of current string
             uint256 dynamicValueLength = uint256(bytes32(data[offset + dynamicValueOffset + 32:offset + dynamicValueOffset + 64]));
             
-            console.log("dynamicValueLength");
-            console.log(dynamicValueLength);
-            uint256 wordLength = (dynamicValueLength / 32) + 1;
+            // Calculate padded length for this string's data
+            uint256 paddedLength = 32 + ((dynamicValueLength + 31) / 32) * 32;
             
-            bytes memory dynamicValue = data[offset+dynamicValueOffset+32:offset+dynamicValueOffset+64+ (wordLength * 32)];
-                    // uint256 dynamicValueOffset = uint256(bytes32(functionArguments[uint(value) + (j * 32):uint(value) + ((j + 1) * 32)]));
-                    // uint256 dynamicValueLength = uint256(bytes32(functionArguments[dynamicValueOffset:dynamicValueOffset + 32])) / 32;
-            console.log("dynamicValue");
-            console.logBytes(dynamicValue);
-            console.log("baseOffset");
-            console.log(baseOffset);
-            dynamicData = bytes.concat(dynamicData, bytes32(baseOffset));
-            lengthToAppend += (wordLength + 2) * 32;
-                    // bytes memory dynamicValue = functionArguments[dynamicValueOffset:dynamicValueOffset + (dynamicValueLength + 1) * 32];
-            console.log("Length to append added");
+            // Get the string data (including length and value)
+            bytes memory dynamicValue = data[offset+dynamicValueOffset+32:offset+dynamicValueOffset+32+paddedLength];
+            
+            // Next offset should point after current string's data
+            baseDynamicOffset += paddedLength;
+            
+            lengthToAppend += paddedLength;
             arrayData = bytes.concat(arrayData, dynamicValue);
         }
 
