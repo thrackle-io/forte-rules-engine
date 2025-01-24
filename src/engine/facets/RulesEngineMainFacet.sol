@@ -247,7 +247,27 @@ contract RulesEngineMainFacet is FacetCommonImports{
                     paddedData      // data (already padded)
                 );
                 lengthToAppend += 32 + (numWords * 32);  // 32 for length + 32 for padded data
-            } else {
+            } else if (argType == PT.STATIC_TYPE_ARRAY) {
+                // encode the dynamic offset
+                encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
+                uint256 arrayLength = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
+                // Get the static type array
+                bytes memory staticArray = new bytes(arrayLength * 32);
+                uint256 lengthToGrab = ((arrayLength + 1) * 32);
+                staticArray = functionArguments[uint(value):uint(value) + lengthToGrab];
+                dynamicData = bytes.concat(dynamicData, staticArray);
+                lengthToAppend += lengthToGrab;
+            } else if (argType == PT.DYNAMIC_TYPE_ARRAY) {
+                // encode the dynamic offset
+                encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
+                uint256 length = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
+                lengthToAppend += 32;
+                dynamicData = bytes.concat(dynamicData, abi.encode(length));
+                console.log("dynamicData");
+                console.logBytes(dynamicData);
+                (dynamicData, lengthToAppend) = getDynamicValueArrayData(functionArguments, dynamicData, length, lengthToAppend, uint(value));
+            }
+            else {
                 encodedCall = bytes.concat(encodedCall, value);
             }
         }
@@ -493,6 +513,48 @@ contract RulesEngineMainFacet is FacetCommonImports{
                 break;
             }
         }
+    }
+
+    function getDynamicValueArrayData(bytes calldata data, bytes memory dynamicData, uint length, uint lengthToAppend, uint256 offset) public pure returns (bytes memory, uint256) {
+        bytes memory arrayData;
+        
+        console.log("data");
+        console.logBytes(data);
+        console.log("offset");
+        console.log(offset);
+        console.log("Starting off dynamic data");
+        console.logBytes(dynamicData);
+        for (uint256 j = 1; j <= length; j++) {
+            uint256 baseOffset = (lengthToAppend + (length * 32)) - (offset * j);
+            uint getValueOffsetValue = offset + (j * 32);
+            console.log("getValueOffsetValue", getValueOffsetValue);
+            uint256 dynamicValueOffset = uint256(bytes32(data[getValueOffsetValue:getValueOffsetValue + 32]));
+            console.log("dynamicValueOffset");
+            console.log(dynamicValueOffset);
+            console.log("Dynamic length slice value: ", dynamicValueOffset + offset + 32);
+            uint256 dynamicValueLength = uint256(bytes32(data[offset + dynamicValueOffset + 32:offset + dynamicValueOffset + 64]));
+            
+            console.log("dynamicValueLength");
+            console.log(dynamicValueLength);
+            uint256 wordLength = (dynamicValueLength / 32) + 1;
+            
+            bytes memory dynamicValue = data[offset+dynamicValueOffset+32:offset+dynamicValueOffset+64+ (wordLength * 32)];
+                    // uint256 dynamicValueOffset = uint256(bytes32(functionArguments[uint(value) + (j * 32):uint(value) + ((j + 1) * 32)]));
+                    // uint256 dynamicValueLength = uint256(bytes32(functionArguments[dynamicValueOffset:dynamicValueOffset + 32])) / 32;
+            console.log("dynamicValue");
+            console.logBytes(dynamicValue);
+            console.log("baseOffset");
+            console.log(baseOffset);
+            dynamicData = bytes.concat(dynamicData, bytes32(baseOffset));
+            lengthToAppend += (wordLength + 2) * 32;
+                    // bytes memory dynamicValue = functionArguments[dynamicValueOffset:dynamicValueOffset + (dynamicValueLength + 1) * 32];
+            console.log("Length to append added");
+            arrayData = bytes.concat(arrayData, dynamicValue);
+        }
+
+        dynamicData = bytes.concat(dynamicData, arrayData);
+        
+        return (dynamicData, lengthToAppend);
     }
     
 }

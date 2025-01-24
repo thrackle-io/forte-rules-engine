@@ -581,7 +581,278 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         userContract.transfer(address(0x7654321), 11);
     }
 
-    function testRulesEngine_Unit_EncodingForeignCall()
+    function testRulesEngine_Unit_EncodingForeignCallUint()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        string memory functionSig = "testSig(uint256)";
+        ForeignCallTestContract foreignCall = new ForeignCallTestContract();
+
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(foreignCall);
+        fc.signature = bytes4(keccak256(bytes(functionSig)));
+        fc.parameterTypes = new PT[](1);
+        fc.parameterTypes[0] = PT.UINT;
+        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices[0] = 0;
+        bytes memory vals = abi.encode(1);
+        ForeignCallReturnValue memory retVal = RulesEngineMainFacet(address(red))
+            .evaluateForeignCallForRule(
+                fc,
+                vals
+            );
+        assertEq(foreignCall.getDecodedIntOne(), 1);
+    }
+
+    function testRulesEngine_Unit_EncodingForeignCallAddress()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        string memory functionSig = "testSig(address)";
+        ForeignCallTestContract foreignCall = new ForeignCallTestContract();
+
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(foreignCall);
+        fc.signature = bytes4(keccak256(bytes(functionSig)));
+        fc.parameterTypes = new PT[](1);
+        fc.parameterTypes[0] = PT.ADDR;
+        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices[0] = 0;
+        bytes memory vals = abi.encode(address(0x1234567));
+        ForeignCallReturnValue memory retVal = RulesEngineMainFacet(address(red))
+            .evaluateForeignCallForRule(
+                fc,
+                vals
+            );
+        assertEq(foreignCall.getDecodedAddr(), address(0x1234567));
+    }
+
+    function testRulesEngine_Unit_EncodingForeignCallString()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        string memory functionSig = "testSig(string)";
+        ForeignCallTestContract foreignCall = new ForeignCallTestContract();
+
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(foreignCall);
+        fc.signature = bytes4(keccak256(bytes(functionSig)));
+        fc.parameterTypes = new PT[](1);
+        fc.parameterTypes[0] = PT.STR;
+        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices[0] = 0;
+        bytes memory vals = abi.encode("test");
+        ForeignCallReturnValue memory retVal = RulesEngineMainFacet(address(red))
+            .evaluateForeignCallForRule(
+                fc,
+                vals
+            );
+        assertEq(foreignCall.getDecodedStrOne(), "test");
+    }
+
+    function testRulesEngine_Unit_EncodingForeignCallArrayUint()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        string memory functionSig = "testSigWithArray(uint256[])";
+        ForeignCallTestContract foreignCall = new ForeignCallTestContract();
+
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(foreignCall);
+        fc.signature = bytes4(keccak256(bytes(functionSig)));
+        fc.parameterTypes = new PT[](1);
+        fc.parameterTypes[0] = PT.STATIC_TYPE_ARRAY;
+        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices[0] = 0;
+        uint256[] memory array = new uint256[](5);
+        array[0] = 1;
+        array[1] = 2;
+        array[2] = 3;
+        array[3] = 4;
+        array[4] = 5;
+        bytes memory vals = abi.encode(array);
+        ForeignCallReturnValue memory retVal = RulesEngineMainFacet(address(red))
+            .evaluateForeignCallForRule(
+                fc,
+                vals
+            );
+        assertEq(foreignCall.getInternalArrayUint()[0], 1);
+        assertEq(foreignCall.getInternalArrayUint()[1], 2);
+        assertEq(foreignCall.getInternalArrayUint()[2], 3);
+        assertEq(foreignCall.getInternalArrayUint()[3], 4);
+        assertEq(foreignCall.getInternalArrayUint()[4], 5);
+    }
+
+    function testRulesEngine_Unit_EncodingForeignCallArrayAddr()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        string memory functionSig = "testSigWithArray(address[])";
+        ForeignCallTestContract foreignCall = new ForeignCallTestContract();
+
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(foreignCall);
+        fc.signature = bytes4(keccak256(bytes(functionSig)));
+        fc.parameterTypes = new PT[](1);
+        fc.parameterTypes[0] = PT.STATIC_TYPE_ARRAY;
+        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices[0] = 0;
+        address[] memory array = new address[](5);
+        array[0] = address(0x1234567);
+        array[1] = address(0x7654321);
+        array[2] = address(0x1111111);
+        array[3] = address(0x2222222);
+        array[4] = address(0x3333333);
+        bytes memory vals = abi.encode(array);
+        ForeignCallReturnValue memory retVal = RulesEngineMainFacet(address(red))
+            .evaluateForeignCallForRule(fc, vals);
+        assertEq(foreignCall.getInternalArrayAddr()[0], address(0x1234567));
+        assertEq(foreignCall.getInternalArrayAddr()[1], address(0x7654321));
+        assertEq(foreignCall.getInternalArrayAddr()[2], address(0x1111111));
+        assertEq(foreignCall.getInternalArrayAddr()[3], address(0x2222222));
+        assertEq(foreignCall.getInternalArrayAddr()[4], address(0x3333333));
+    }
+
+    function testRulesEngine_Unit_EncodingForeignCallArrayStr()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        string memory functionSig = "testSigWithArray(string[])";
+        ForeignCallTestContract foreignCall = new ForeignCallTestContract();
+
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(foreignCall);
+        fc.signature = bytes4(keccak256(bytes(functionSig)));
+        fc.parameterTypes = new PT[](1);
+        fc.parameterTypes[0] = PT.DYNAMIC_TYPE_ARRAY;
+        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices[0] = 0;
+        string[] memory array = new string[](5);
+        array[0] = "test";
+        array[1] = "superduper";
+        array[2] = "superduperduper";
+        array[3] = "superduperduperduper";
+        array[4] = "superduperduperduperduperduperduperduperduperlongstring";
+        bytes memory vals = abi.encode(array);
+        ForeignCallReturnValue memory retVal = RulesEngineMainFacet(address(red))
+            .evaluateForeignCallForRule(fc, vals);
+        assertEq(foreignCall.getInternalArrayStr()[0], "test");
+        assertEq(foreignCall.getInternalArrayStr()[1], "superduper");
+        assertEq(foreignCall.getInternalArrayStr()[2], "superduperduper");
+        assertEq(foreignCall.getInternalArrayStr()[3], "superduperduperduper");
+        assertEq(foreignCall.getInternalArrayStr()[4], "superduperduperduperduperduperduperduperduperlongstring");
+    }
+
+    function testRulesEngine_Unit_EncodingForeignCallArrayBytes()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        string memory functionSig = "testSigWithArray(bytes[])";
+        ForeignCallTestContract foreignCall = new ForeignCallTestContract();
+
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(foreignCall);
+        fc.signature = bytes4(keccak256(bytes(functionSig)));
+        fc.parameterTypes = new PT[](1);
+        fc.parameterTypes[0] = PT.DYNAMIC_TYPE_ARRAY;
+        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices[0] = 0;
+        bytes[] memory array = new bytes[](5);
+        array[0] = abi.encodeWithSelector(bytes4(keccak256(bytes("test(uint256)"))), 1);
+        array[1] = abi.encodeWithSelector(bytes4(keccak256(bytes("superduper(uint256)"))), 2);
+        array[2] = abi.encodeWithSelector(bytes4(keccak256(bytes("superduperduper(uint256)"))), 3);
+        array[3] = abi.encodeWithSelector(bytes4(keccak256(bytes("superduperduperduper(uint256)"))), 4);
+        array[4] = abi.encodeWithSelector(bytes4(keccak256(bytes("test(uint256,string,address)"))), 5, "superduperduperduperduperduperduperduperduperduperduperduperlongstring", address(0x1234567));
+        bytes memory vals = abi.encode(array);
+        ForeignCallReturnValue memory retVal = RulesEngineMainFacet(address(red))
+            .evaluateForeignCallForRule(fc, vals);
+        assertEq(foreignCall.getInternalArrayBytes()[0], abi.encodeWithSelector(bytes4(keccak256(bytes("test(uint256)"))), 1));
+        assertEq(foreignCall.getInternalArrayBytes()[1], abi.encodeWithSelector(bytes4(keccak256(bytes("superduper(uint256)"))), 2));
+        assertEq(foreignCall.getInternalArrayBytes()[2], abi.encodeWithSelector(bytes4(keccak256(bytes("superduperduper(uint256)"))), 3));
+        assertEq(foreignCall.getInternalArrayBytes()[3], abi.encodeWithSelector(bytes4(keccak256(bytes("superduperduperduper(uint256)"))), 4));
+        assertEq(foreignCall.getInternalArrayBytes()[4], abi.encodeWithSelector(bytes4(keccak256(bytes("test(uint256,string,address)"))), 5, "superduperduperduperduperduperduperduperduperduperduperduperlongstring", address(0x1234567)));
+    }
+
+    function testRulesEngine_Unit_EncodingForeignCallArrayMixedTypes()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        string memory functionSig = "testSigWithMultiArrays(uint256[],address[],string[],bytes[])";
+        ForeignCallTestContract foreignCall = new ForeignCallTestContract();
+
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(foreignCall);
+        fc.signature = bytes4(keccak256(bytes(functionSig)));
+        fc.parameterTypes = new PT[](4);
+        fc.parameterTypes[0] = PT.STATIC_TYPE_ARRAY;
+        fc.parameterTypes[1] = PT.STATIC_TYPE_ARRAY;
+        fc.parameterTypes[2] = PT.DYNAMIC_TYPE_ARRAY;
+        fc.parameterTypes[3] = PT.DYNAMIC_TYPE_ARRAY;
+        fc.typeSpecificIndices = new uint8[](4);
+        fc.typeSpecificIndices[0] = 0;
+        fc.typeSpecificIndices[1] = 1;
+        fc.typeSpecificIndices[2] = 2;
+        fc.typeSpecificIndices[3] = 3;
+        uint256[] memory array1 = new uint256[](5);
+        array1[0] = 1;
+        array1[1] = 2;
+        array1[2] = 3;
+        array1[3] = 4;
+        array1[4] = 5;
+
+        address[] memory array2 = new address[](5);
+        array2[0] = address(0x1234567);
+        array2[1] = address(0x7654321);
+        array2[2] = address(0x1111111);
+        array2[3] = address(0x2222222);
+        array2[4] = address(0x3333333);
+
+        string[] memory array3 = new string[](5);
+        array3[0] = "test";
+        array3[1] = "superduper";
+        array3[2] = "superduperduper";
+        array3[3] = "superduperduperduper";
+        array3[4] = "superduperduperduperduperduperduperduperduperduperduperduperlongstring";
+        bytes[] memory array4 = new bytes[](5); 
+        array4[0] = abi.encodeWithSelector(bytes4(keccak256(bytes("test(uint256)"))), 1);
+        array4[1] = abi.encodeWithSelector(bytes4(keccak256(bytes("superduper(uint256)"))), 2);
+        array4[2] = abi.encodeWithSelector(bytes4(keccak256(bytes("superduperduper(uint256)"))), 3);
+        array4[3] = abi.encodeWithSelector(bytes4(keccak256(bytes("superduperduperduper(uint256)"))), 4);
+        array4[4] = abi.encodeWithSelector(bytes4(keccak256(bytes("test(uint256,string,address)"))), 5, "superduperduperduperduperduperduperduperduperduperduperduperduperlongstring", address(0x1234567));
+        bytes memory vals = abi.encode(array1, array2, array3, array4);
+        ForeignCallReturnValue memory retVal = RulesEngineMainFacet(address(red))
+            .evaluateForeignCallForRule(fc, vals);
+        assertEq(foreignCall.getInternalArrayUint()[0], 1);
+        assertEq(foreignCall.getInternalArrayUint()[1], 2);
+        assertEq(foreignCall.getInternalArrayUint()[2], 3);
+        assertEq(foreignCall.getInternalArrayUint()[3], 4);
+        assertEq(foreignCall.getInternalArrayUint()[4], 5);
+        assertEq(foreignCall.getInternalArrayAddr()[0], address(0x1234567));
+        assertEq(foreignCall.getInternalArrayAddr()[1], address(0x7654321));
+        assertEq(foreignCall.getInternalArrayAddr()[2], address(0x1111111));
+        assertEq(foreignCall.getInternalArrayAddr()[3], address(0x2222222));
+        assertEq(foreignCall.getInternalArrayAddr()[4], address(0x3333333));
+        assertEq(foreignCall.getInternalArrayStr()[0], "test");
+        assertEq(foreignCall.getInternalArrayStr()[1], "superduper");
+        assertEq(foreignCall.getInternalArrayStr()[2], "superduperduper");
+        assertEq(foreignCall.getInternalArrayStr()[3], "superduperduperduper");
+        assertEq(foreignCall.getInternalArrayStr()[4], "superduperduperduperduperduperduperduperduperduperduperduperlongstring");
+        assertEq(foreignCall.getInternalArrayBytes()[0], abi.encodeWithSelector(bytes4(keccak256(bytes("test(uint256)"))), 1));
+        assertEq(foreignCall.getInternalArrayBytes()[1], abi.encodeWithSelector(bytes4(keccak256(bytes("superduper(uint256)"))), 2));
+        assertEq(foreignCall.getInternalArrayBytes()[2], abi.encodeWithSelector(bytes4(keccak256(bytes("superduperduper(uint256)"))), 3));
+        assertEq(foreignCall.getInternalArrayBytes()[3], abi.encodeWithSelector(bytes4(keccak256(bytes("superduperduperduper(uint256)"))), 4));
+        assertEq(foreignCall.getInternalArrayBytes()[4], abi.encodeWithSelector(bytes4(keccak256(bytes("test(uint256,string,address)"))), 5, "superduperduperduperduperduperduperduperduperduperduperduperduperlongstring", address(0x1234567)));
+    }
+
+    function testRulesEngine_Unit_EncodingForeignCallMixedTypes()
         public
         ifDeploymentTestsEnabled
         endWithStopPrank
