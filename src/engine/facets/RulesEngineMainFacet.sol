@@ -489,16 +489,16 @@ contract RulesEngineMainFacet is FacetCommonImports{
             dynamicData = bytes.concat(dynamicData, bytes32(baseDynamicOffset));
             
             uint getValueOffsetValue = offset + (j * 32);
-            uint256 dynamicValueOffset = uint256(bytes32(data[getValueOffsetValue:getValueOffsetValue + 32]));
+            uint256 dynamicValueOffset = uint256(bytes32(data[getValueOffsetValue:getValueOffsetValue + 32])) + 32;
             
             // Get length of current string
-            uint256 dynamicValueLength = uint256(bytes32(data[offset + dynamicValueOffset + 32:offset + dynamicValueOffset + 64]));
+            uint256 dynamicValueLength = uint256(bytes32(data[offset + dynamicValueOffset:offset + dynamicValueOffset + 32]));
             
             // Calculate padded length for this string's data
             uint256 paddedLength = 32 + ((dynamicValueLength + 31) / 32) * 32;
             
             // Get the string data (including length and value)
-            bytes memory dynamicValue = data[offset+dynamicValueOffset+32:offset+dynamicValueOffset+32+paddedLength];
+            bytes memory dynamicValue = data[offset+dynamicValueOffset:offset+dynamicValueOffset+paddedLength];
             
             // Next offset should point after current string's data
             baseDynamicOffset += paddedLength;
