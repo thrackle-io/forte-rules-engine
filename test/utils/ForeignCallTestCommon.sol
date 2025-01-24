@@ -13,7 +13,8 @@ contract ForeignCallTestContract {
     uint256 decondedIntTwo;
     string decodedStrOne;
     string decodedStrTwo;
-    address decodedAddr;   
+    address decodedAddr;
+    address decodedAddrTwo;
     uint256 internalValue;
     uint256[] internalArrayUint;
     address[] internalArrayAddr;
@@ -32,6 +33,24 @@ contract ForeignCallTestContract {
         } else {
             return false;
         }
+    }
+
+    function testSig(uint256 encodedIntOne, uint256 encodedIntTwo) public returns (bool) {
+        decodedIntOne = encodedIntOne;
+        decondedIntTwo = encodedIntTwo;
+        return true;
+    }
+
+    function testSig(address encodedAddr, address encodedAddrTwo) public returns (bool) {
+        decodedAddr = encodedAddr;
+        decodedAddrTwo = encodedAddrTwo;
+        return true;
+    }
+
+    function testSig(string memory encodedStrOne, string memory encodedStrTwo) public returns (bool) {
+        decodedStrOne = encodedStrOne;
+        decodedStrTwo = encodedStrTwo;
+        return true;
     }
 
     function testSig(uint256 encodedIntOne) public returns (bool) {
@@ -56,6 +75,16 @@ contract ForeignCallTestContract {
         return true;
     }
 
+    function testSigWithArray(uint256[] memory encodedArray, uint256[] memory encodedArrayTwo) public returns (bool) {
+        for(uint256 i = 0; i < encodedArray.length; i++) {
+            internalArrayUint.push(encodedArray[i]);
+        }
+        for(uint256 i = 0; i < encodedArrayTwo.length; i++) {
+            internalArrayUint.push(encodedArrayTwo[i]);
+        }
+        return true;
+    }
+
     function testSigWithArray(address[] memory encodedArray) public returns (bool) {
         for(uint256 i = 0; i < encodedArray.length; i++) {
             internalArrayAddr.push(encodedArray[i]);
@@ -66,6 +95,16 @@ contract ForeignCallTestContract {
     function testSigWithArray(string[] memory encodedArray) public returns (bool) {
         for(uint256 i = 0; i < encodedArray.length; i++) {
             internalArrayStr.push(encodedArray[i]);
+        }
+        return true;
+    }
+
+    function testSigWithArray(string[] memory encodedArray, string[] memory encodedArrayTwo) public returns (bool) {
+        for(uint256 i = 0; i < encodedArray.length; i++) {
+            internalArrayStr.push(encodedArray[i]);
+        }
+        for(uint256 i = 0; i < encodedArrayTwo.length; i++) {
+            internalArrayStr.push(encodedArrayTwo[i]);
         }
         return true;
     }
@@ -167,6 +206,10 @@ contract ForeignCallTestContract {
 
     function getInternalArrayBytes() public view returns (bytes[] memory) {
         return internalArrayBytes;
+    }
+
+    function getDecodedAddrTwo() public view returns (address) {
+        return decodedAddrTwo;
     }
 
 }

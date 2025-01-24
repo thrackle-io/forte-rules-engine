@@ -257,8 +257,6 @@ contract RulesEngineMainFacet is FacetCommonImports{
         }
 
         bytes memory callData = bytes.concat(encodedCall, dynamicData);
-        console.log("callData");
-        console.logBytes(callData);
         // Place the foreign call
         (bool response, bytes memory data) = fc.foreignCallAddress.call(callData);
     
