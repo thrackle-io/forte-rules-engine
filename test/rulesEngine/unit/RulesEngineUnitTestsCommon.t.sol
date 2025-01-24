@@ -828,6 +828,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         array4[3] = abi.encodeWithSelector(bytes4(keccak256(bytes("superduperduperduper(uint256)"))), 4);
         array4[4] = abi.encodeWithSelector(bytes4(keccak256(bytes("test(uint256,string,address)"))), 5, "superduperduperduperduperduperduperduperduperduperduperduperduperlongstring", address(0x1234567));
         bytes memory vals = abi.encode(array1, array2, array3, array4);
+        console.log("proper encoding");
+        console.logBytes(vals);
         ForeignCallReturnValue memory retVal = RulesEngineMainFacet(address(red))
             .evaluateForeignCallForRule(fc, vals);
         assertEq(foreignCall.getInternalArrayUint()[0], 1);

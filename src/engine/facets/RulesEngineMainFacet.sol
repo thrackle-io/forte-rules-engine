@@ -520,12 +520,12 @@ contract RulesEngineMainFacet is FacetCommonImports{
         
         console.log("data");
         console.logBytes(data);
-        console.log("offset");
-        console.log(offset);
+        console.log("offset", offset);
+        console.log("current length", lengthToAppend);
         console.log("Starting off dynamic data");
         console.logBytes(dynamicData);
         for (uint256 j = 1; j <= length; j++) {
-            uint256 baseOffset = (lengthToAppend + (length * 32)) - (offset * j);
+            uint256 baseOffset = (lengthToAppend + (length * 32)) - (32 * (j - 1)) - offset + 0x60;
             uint getValueOffsetValue = offset + (j * 32);
             console.log("getValueOffsetValue", getValueOffsetValue);
             uint256 dynamicValueOffset = uint256(bytes32(data[getValueOffsetValue:getValueOffsetValue + 32]));
