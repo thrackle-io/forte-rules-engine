@@ -219,27 +219,46 @@ contract RulesEngineMainFacet is FacetCommonImports{
             bytes32 value = bytes32(functionArguments[typeSpecificIndex * 32: (typeSpecificIndex + 1) * 32]);
             
             if (argType == PT.STR || argType == PT.BYTES) {
-                // Get the dynamic value and length from the function arguments
-                (bytes memory dynamicValue, uint256 dynamicLength) = getDynamicVariableFromCalldataNoOffset(functionArguments, typeSpecificIndex);
-                // Get the offset of the dynamic value in the encoded call
-                uint256 dynamicOffset = (fc.parameterTypes.length * 32) + lengthToAppend;
-                // Add the dynamic offset to the encoded call
+                // Add offset to head
+                uint256 dynamicOffset = 32 * (fc.parameterTypes.length) + lengthToAppend;
                 encodedCall = bytes.concat(encodedCall, bytes32(dynamicOffset));
-                // Add dynamic value to the tail end of the encoded call
-                dynamicData = bytes.concat(dynamicData, dynamicValue);
-                // This is to take the dynamic length and convert it to the appropriate word length
-                // adding 31 to the length and then dividing by 32 will get us a truncated number of words, 
-                // we multiply by 32 to get the actual word length
-                uint dynamicLengthToWordLength = (dynamicLength + 31) / 32 * 32;
-                // Add the dynamic length to the lengthToAppend to get the total length of the encoded call
-                lengthToAppend += dynamicLengthToWordLength;
-            } else {
+                // Get the dynamic data
+                uint256 length = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
+                uint256 words = 32 + ((length / 32) + 1) * 32;
+                bytes memory dynamicValue = functionArguments[uint(value):uint(value) + words];
+                // Add length and data (data is already padded to 32 bytes)
+                dynamicData = bytes.concat(
+                    dynamicData,
+                    dynamicValue      // data (already padded)
+                );
+                lengthToAppend += words;  // 32 for length + 32 for padded data
+            } else if (argType == PT.STATIC_TYPE_ARRAY) {
+                // encode the dynamic offset
+                encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
+                uint256 arrayLength = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
+                // Get the static type array
+                bytes memory staticArray = new bytes(arrayLength * 32);
+                uint256 lengthToGrab = ((arrayLength + 1) * 32);
+                staticArray = functionArguments[uint(value):uint(value) + lengthToGrab];
+                dynamicData = bytes.concat(dynamicData, staticArray);
+                lengthToAppend += lengthToGrab;
+            } else if (argType == PT.DYNAMIC_TYPE_ARRAY) {
+                // encode the dynamic offset
+                uint256 baseDynamicOffset = 32 * (fc.parameterTypes.length) + lengthToAppend;
+                encodedCall = bytes.concat(encodedCall, bytes32(baseDynamicOffset));
+                uint256 length = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
+                lengthToAppend += 32;
+                dynamicData = bytes.concat(dynamicData, abi.encode(length));
+                (dynamicData, lengthToAppend) = getDynamicValueArrayData(functionArguments, dynamicData, length, lengthToAppend, uint(value));
+            }
+            else {
                 encodedCall = bytes.concat(encodedCall, value);
             }
         }
 
+        bytes memory callData = bytes.concat(encodedCall, dynamicData);
         // Place the foreign call
-        (bool response, bytes memory data) = fc.foreignCallAddress.call(bytes.concat(encodedCall, dynamicData));
+        (bool response, bytes memory data) = fc.foreignCallAddress.call(callData);
     
 
         // Verify that the foreign call was successful
@@ -380,95 +399,6 @@ contract RulesEngineMainFacet is FacetCommonImports{
         return x ? 1 : 0;
     }
 
-    /**
-     * @dev Uses assembly to encode a variable length array of variable type arguments so they can be used in a foreign call
-     * @param parameterTypes the parameter types of the arguments in order
-     * @param values the values to be encoded
-     * @param selector the selector of the function to be called
-     * @param dynamicVarLengths the lengths of the dynamic variables to be encoded
-     * @return encoded the encoded arguments
-     */
-    function assemblyEncode(PT[] memory parameterTypes, bytes[] memory values, bytes4 selector, uint[] memory dynamicVarLengths) public pure returns (bytes memory encoded) {
-        assert(parameterTypes.length == values.length);
-        assert(dynamicVarLengths.length <= parameterTypes.length);
-        uint256 headSize = parameterTypes.length * 32;
-        uint256 tailSize = dynamicVarLengths.length * 32;
-        for (uint i; i < dynamicVarLengths.length; ++i) {
-            tailSize += (dynamicVarLengths[i] + 31) / 32 * 32;
-        }
-
-        assembly {
-            let totalSize := add(4, add(headSize, tailSize))
-            encoded := mload(0x40)
-            mstore(encoded, totalSize)
-            mstore(add(encoded, 0x20), selector)
-            // Update the free memory pointer to the end of the encoded data
-            mstore(0x40, add(encoded, add(0x20, totalSize)))
-
-            let headPtr := 4  // Start after selector
-            let tailPtr := add(headSize, 4)  // Dynamic data starts after head
-            let dynamicValuesIndex := 0
-
-            // Main encoding loop
-            for { let i := 0 } lt(i, mload(parameterTypes)) { i := add(i, 1) } {
-                // Load the parameter type
-                let pType := mload(add(add(parameterTypes, 0x20), mul(i, 0x20)))
-                
-                // Get the current value pointer
-                let valuePtr := mload(add(add(values, 0x20), mul(i, 0x20)))
-
-                // Handle each type
-                switch pType
-                // Address (0)
-                case 0 {
-                    mstore(
-                        add(add(encoded, 0x20), headPtr),
-                        and(mload(add(valuePtr, 0x20)), 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
-                    )
-                }
-                // String (1)
-                case 1 {
-                    // Store offset in head
-                    mstore(add(add(encoded, 0x20), headPtr), sub(tailPtr, 4))
-        
-                    // Get the source bytes value
-                    let bytesValue := mload(add(add(values, 0x20), mul(i, 0x20)))
-                    
-                    // Get string length - need to read from the correct position
-                    // bytesValue points to the bytes array which contains our encoded string
-                    // The actual string length is at bytesValue + 0x40 (skip two words)
-                    let strLength := mload(add(bytesValue, 0x40))
-                    
-                    // Store length at tail position
-                    mstore(add(add(encoded, 0x20), tailPtr), strLength)
-                    
-                    // Copy the actual string data
-                    let srcPtr := add(bytesValue, 0x60)  // skip to actual string data
-                    let destPtr := add(add(encoded, 0x20), add(tailPtr, 0x20))
-                    let wordCount := div(add(strLength, 31), 32)
-                    
-                    // Copy each word
-                    for { let j := 0 } lt(j, wordCount) { j := add(j, 1) } {
-                        let word := mload(add(srcPtr, mul(j, 0x20)))
-                        mstore(add(destPtr, mul(j, 0x20)), word)
-                    }
-        
-                    // Update tail pointer
-                    tailPtr := add(tailPtr, add(0x20, mul(wordCount, 0x20)))    
-                    dynamicValuesIndex := add(dynamicValuesIndex, 1)
-                }
-                // Uint (2)
-                case 2 {
-                    mstore(
-                        add(add(encoded, 0x20), headPtr),
-                        mload(add(valuePtr, 0x20))
-                    )
-                }
-                headPtr := add(headPtr, 32)
-            }
-        }
-    }
-
 
     function stringToBytes32(string memory source) internal pure returns (bytes32 result) {
         assembly {
@@ -501,30 +431,6 @@ contract RulesEngineMainFacet is FacetCommonImports{
         }
         
         return result;
-    }
-
-    function getDynamicVariableFromCalldataNoOffset(bytes calldata data, uint256 index) public pure returns (bytes memory, uint256) {
-        // Get offset from parameter position
-        uint256 offset = uint256(bytes32(data[index * 32:(index + 1) * 32]));
-        // Get length from the offset position
-        uint256 length = uint256(bytes32(data[offset:offset + 32]));
-        
-        // Allocate memory for result: 32 (length) + data length
-        bytes memory result = new bytes(32 + length);
-        
-        assembly {
-            // Store length
-            mstore(add(result, 32), length)
-            
-            // Copy actual data
-            calldatacopy(
-                add(result, 64),           // destination (after length)
-                add(add(data.offset, offset), 32),  // source (after length in calldata)
-                length                     // length of data
-            )
-        }
-        
-        return (result, length);
     }
 
     /**
@@ -571,6 +477,39 @@ contract RulesEngineMainFacet is FacetCommonImports{
                 break;
             }
         }
+    }
+
+    function getDynamicValueArrayData(bytes calldata data, bytes memory dynamicData, uint length, uint lengthToAppend, uint256 offset) public pure returns (bytes memory, uint256) {
+        bytes memory arrayData;
+        
+        lengthToAppend += (length * 0x20);
+        uint256 baseDynamicOffset = 32 + ((length - 1) * 32);
+        for (uint256 j = 1; j <= length; j++) {
+            // Add current offset to dynamic data
+            dynamicData = bytes.concat(dynamicData, bytes32(baseDynamicOffset));
+            
+            uint getValueOffsetValue = offset + (j * 32);
+            uint256 dynamicValueOffset = uint256(bytes32(data[getValueOffsetValue:getValueOffsetValue + 32])) + 32;
+            
+            // Get length of current string
+            uint256 dynamicValueLength = uint256(bytes32(data[offset + dynamicValueOffset:offset + dynamicValueOffset + 32]));
+            
+            // Calculate padded length for this string's data
+            uint256 paddedLength = 32 + ((dynamicValueLength + 31) / 32) * 32;
+            
+            // Get the string data (including length and value)
+            bytes memory dynamicValue = data[offset+dynamicValueOffset:offset+dynamicValueOffset+paddedLength];
+            
+            // Next offset should point after current string's data
+            baseDynamicOffset += paddedLength;
+            
+            lengthToAppend += paddedLength;
+            arrayData = bytes.concat(arrayData, dynamicValue);
+        }
+
+        dynamicData = bytes.concat(dynamicData, arrayData);
+        
+        return (dynamicData, lengthToAppend);
     }
     
 }

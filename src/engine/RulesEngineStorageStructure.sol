@@ -45,7 +45,9 @@ enum PT {
     UINT,
     BOOL,
     VOID,
-    BYTES
+    BYTES,
+    STATIC_TYPE_ARRAY,
+    DYNAMIC_TYPE_ARRAY
 }
 /// Effect Storage Structures
 // Supported Effect Types
