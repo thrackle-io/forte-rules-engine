@@ -854,7 +854,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         return rule;
     }
 
-    function _createLTRule(uint256 _policyId, uint256 _amount) public returns (Rule memory) {
+    function _createLTRule(uint256 _policyId) public returns (Rule memory) {
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         // Set up some effects.
@@ -945,20 +945,20 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256[] memory emptyArray = new uint256[](1); 
         bytes memory encodedParam; 
         if (paramType == PT.UINT) {
-            uint256 param = abi.decode(param, (uint)); 
-            encodedParam = abi.encode(param); 
+            uint256 paramUint = abi.decode(param, (uint)); 
+            encodedParam = abi.encode(paramUint); 
         } else if (paramType == PT.ADDR) {
-            address param = abi.decode(param, (address));
-            encodedParam = abi.encode(param);
+            address paramAddress = abi.decode(param, (address));
+            encodedParam = abi.encode(paramAddress);
         } else if (paramType == PT.BOOL) {
-            bool param = abi.decode(param, (bool));
-            encodedParam = abi.encode(param);
+            bool paramBool = abi.decode(param, (bool));
+            encodedParam = abi.encode(paramBool);
         } else if (paramType == PT.STR) {
-            string memory param = abi.decode(param, (string));
-            encodedParam = abi.encode(param);
+            string memory paramString = abi.decode(param, (string));
+            encodedParam = abi.encode(paramString);
         } else if (paramType == PT.BYTES) {
-            bytes32 param = abi.decode(param, (bytes32));
-            encodedParam = abi.encode(param);
+            bytes32 paramBytes = abi.decode(param, (bytes32));
+            encodedParam = abi.encode(paramBytes);
         }
         // Create a event effect
         return
