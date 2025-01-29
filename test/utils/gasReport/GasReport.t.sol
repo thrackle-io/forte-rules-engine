@@ -515,7 +515,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         typeSpecificIndices[0] = 0;
 
         {
-            ForeignCall memory fc = RulesEngineDataFacet(address(red))
+            RulesEngineDataFacet(address(red))
                 .updateForeignCall(
                     policyIds[0],
                     _contractAddress,
@@ -553,7 +553,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             // Save the rule
             uint256 ruleId1 = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], rule1);
             rule2 = _createGTRule(policyIds[0], 4);
-            rule3 = _createLTRule(policyIds[0], 4);
+            rule3 = _createLTRule(policyIds[0]);
             rule2.posEffects[0] = effectId_revert;
             rule2.policyId = policyIds[0];
             // Swapping from posEffect to negEffects to make sure the revert doesn't trigger (for comparison with V1 numbers)

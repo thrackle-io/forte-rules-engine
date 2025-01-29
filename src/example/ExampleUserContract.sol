@@ -14,9 +14,10 @@ contract ExampleUserContract is RulesEngineClient {
      */
     function transfer(address to, uint256 value) public returns (bool) {
         uint256 retval = _invokeRulesEngine(msg.data);
-        if (retval > 0) return true;
         to;
         value;
+        if (retval > 0) return true;
+        else return false; 
     }
 
 }

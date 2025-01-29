@@ -54,7 +54,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
     }
 
     /**
-     * @dev Builds a foreign call structure and adds it to the contracts storage, mapped to the contract address it is associated with
+     * @dev Retrieve Foreign Call from storage 
      * @param _policyId the policy Id of the foreign call to retrieve
      * @param _foreignCallId the Id of the foreign call to retrieve
      * @return fc the foreign call structure
@@ -68,11 +68,11 @@ contract RulesEngineDataFacet is FacetCommonImports {
     }
 
     /**
-     * @dev Builds a foreign call structure and adds it to the contracts storage, mapped to the contract address it is associated with
+     * @dev Retrieve Foreign Call Set from storage 
      * @param _policyId the policy Id of the foreign call to retrieve
      * @return fc the foreign call set structure
      */
-    function getForeignCalls(uint256 _policyId) public view returns (ForeignCall[] memory fc) {
+    function getForeignCallSet(uint256 _policyId) public view returns (ForeignCall[] memory fc) {
         // Return the Foreign Call Set data from storage
         ForeignCall[] memory foreignCalls = new ForeignCall[](30);
         for (uint256 i = 0; i < 30; i++) {
@@ -174,7 +174,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _policyId the policyId the trackerStorage is associated with
      * @return trackerValuesSet
      */
-    function getTracker(uint256 _policyId) public view returns (TrackerValuesSet memory trackerValuesSet) {
+    function getTrackerValueSet(uint256 _policyId) public view returns (TrackerValuesSet memory trackerValuesSet) {
         // return the TrackerValuesSet data from storage
         return lib.getTrackerStorage().trackerValueSets[_policyId];
     }
@@ -310,7 +310,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
                             // get the foreign call using the type specific index which will be interpreted as a foreign call index since it has foreignCall bool set
                             require(getForeignCall(_policyId, ruleStore.rule.placeHolders[k].typeSpecificIndex).set, "Foreign Call referenced in rule not set");
                         } else if (ruleStore.rule.placeHolders[k].trackerValue) {
-                            require(getTracker(_policyId).set, "Tracker referenced in rule not set");
+                            require(getTrackerValueSet(_policyId).set, "Tracker referenced in rule not set");
                         }
                     }
                 }
