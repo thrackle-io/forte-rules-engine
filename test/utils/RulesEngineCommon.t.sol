@@ -945,20 +945,15 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256[] memory emptyArray = new uint256[](1); 
         bytes memory encodedParam; 
         if (paramType == PT.UINT) {
-            uint256 paramUint = abi.decode(param, (uint)); 
-            encodedParam = abi.encode(paramUint); 
+            encodedParam = abi.encode(abi.decode(param, (uint)));  
         } else if (paramType == PT.ADDR) {
-            address paramAddress = abi.decode(param, (address));
-            encodedParam = abi.encode(paramAddress);
+            encodedParam = abi.encode(abi.decode(param, (address)));
         } else if (paramType == PT.BOOL) {
-            bool paramBool = abi.decode(param, (bool));
-            encodedParam = abi.encode(paramBool);
+            encodedParam = abi.encode(abi.decode(param, (bool)));
         } else if (paramType == PT.STR) {
-            string memory paramString = abi.decode(param, (string));
-            encodedParam = abi.encode(paramString);
+            encodedParam = abi.encode(abi.decode(param, (string)));
         } else if (paramType == PT.BYTES) {
-            bytes32 paramBytes = abi.decode(param, (bytes32));
-            encodedParam = abi.encode(paramBytes);
+            encodedParam = abi.encode(abi.decode(param, (bytes32)));
         }
         // Create a event effect
         return
