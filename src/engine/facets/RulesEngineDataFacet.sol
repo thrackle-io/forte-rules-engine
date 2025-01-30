@@ -166,7 +166,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
     /**
      * Get all trackers from storage.
      * @param _policyId the policyId the trackers are associated with
-     * @return trackers the trackers
+     * @return trackers the trackers in the policy
      */
     function getAllTrackers(uint256 _policyId) public view returns (Trackers[] memory) {
         // Load the Tracker data from storage
