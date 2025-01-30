@@ -142,6 +142,13 @@ contract RulesEngineDataFacet is FacetCommonImports {
         _storeTracker(data, _policyId, _trackerIndex, _tracker);
     }
 
+    /**
+     * Store a tracker in the trackerStorage.
+     * @param _data the trackerStorage
+     * @param _policyId the policyId the tracker is associated with
+     * @param _trackerIndex the index of the tracker to store
+     * @param _tracker the tracker to store
+     */
     function _storeTracker(TrackerS storage _data, uint256 _policyId, uint256 _trackerIndex, Trackers memory _tracker) internal {
         _tracker.set = true;
         _data.trackers[_policyId][_trackerIndex] = _tracker;
