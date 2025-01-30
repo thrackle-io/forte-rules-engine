@@ -2,115 +2,29 @@
 pragma solidity ^0.8.24;
 
 import "./IRulesEngine.sol";
+import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 
 /**
  * @title Rules Engine Client
  * @author @ShaneDuncan602
- * @dev The abstract contract containing modifiers used by Rules Engine clients. It is intended to be inherited and implemented by client contracts. It is self-contained and requires no additional imports.
+ * @dev The abstract contract containing function to connect to the Rules Engine.
  */
-abstract contract RulesEngineClient {
+abstract contract RulesEngineClient is AccessControl {
 
     address public rulesEngineAddress;
+    bytes32 constant TOKEN_ADMIN_ROLE = keccak256("TOKEN_ADMIN_ROLE");
+
+    constructor() {
+        _grantRole(TOKEN_ADMIN_ROLE, msg.sender);
+        _setRoleAdmin(TOKEN_ADMIN_ROLE, TOKEN_ADMIN_ROLE);
+    }
 
     /**
      * Set the Rules Engine address
      * @param rulesEngine rules engine address
      */
-    function setRulesEngineAddress(address rulesEngine) public {
+    function setRulesEngineAddress(address rulesEngine) onlyRole(TOKEN_ADMIN_ROLE) public {
         rulesEngineAddress = rulesEngine;
-    }
-
-    /**
-     * @dev This is the modifier used by Rules Engine transfer function. It checks policies before executing the calling function's logic.
-     * @param to receiving address
-     * @param value amount transferred
-     */
-    modifier checksPoliciesERC20TransferBefore(address to, uint256 value) {
-        _checksPoliciesERC20Transfer(to, value);
-        _;
-    }
-
-    /**
-     * @dev This is the modifier used by Rules Engine transfer function. It checks policies after executing the calling function's logic.
-     * @param to receiving address
-     * @param value amount transferred
-     */
-    modifier checksPoliciesERC20TransferAfter(address to, uint256 value) {
-        _;
-        _checksPoliciesERC20Transfer(to, value);
-    }
-
-    /**
-     * @dev This is the modifier used by Rules Engine client transferFrom function. It checks policies before executing the calling function's logic.
-     * @param from sending address
-     * @param to receiving address
-     * @param value amount transferred
-     */
-    modifier checksPoliciesERC20TransferFromBefore(address from, address to, uint256 value) {
-        _checksPoliciesERC20TransferFrom(from, to, value);
-        _;
-    }
-
-    /**
-     * @dev This is the modifier used by Rules Engine client transferFrom function. It checks policies before executing the calling function's logic.
-     * @param from sending address
-     * @param to receiving address
-     * @param value amount transferred
-     */
-    modifier checksPoliciesERC20TransferFromAfter(address from, address to, uint256 value) {
-        _;
-        _checksPoliciesERC20TransferFrom(from, to, value);
-    }
-
-    /**
-     * @dev This is the modifier used by Rules Engine mint function. It checks policies before executing the calling function's logic.
-     * @param to receiving address
-     * @param amount amount transferred
-     */
-    modifier checksPoliciesERC20MintBefore(address to, uint256 amount) {
-        _checksPoliciesERC20Mint(to, amount);
-        _;
-    }
-
-    /**
-     * @dev This is the modifier used by Rules Engine mint function. It checks policies after executing the calling function's logic.
-     * @param to receiving address
-     * @param amount amount transferred
-     */
-    modifier checksPoliciesERC20MintAfter(address to, uint256 amount) {
-        _;
-        _checksPoliciesERC20Mint(to, amount);
-    }
-    
-    /**
-     * @dev This function makes the call to the Rules Engine with standard variables for ERC20 Transfer
-     * @param to receiving address
-     * @param value amount transferred
-     */
-    function _checksPoliciesERC20Transfer(address to, uint256 value) internal {
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, to, value, msg.sender);
-        _invokeRulesEngine(encoded);
-    }
-
-    /**
-     * @dev This function makes the call to the Rules Engine with standard variables for ERC20 transferFrom
-     * @param from sending address
-     * @param to receiving address
-     * @param value amount transferred
-     */
-    function _checksPoliciesERC20TransferFrom(address from, address to, uint256 value) internal {
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, from, to, value, msg.sender);
-        _invokeRulesEngine(encoded);
-    }
-
-    /**
-     * @dev This function makes the call to the Rules Engine with standard variables for ERC20 mint
-     * @param to receiving address
-     * @param amount amount transferred
-     */
-    function _checksPoliciesERC20Mint(address to, uint256 amount) internal {
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, to, amount, msg.sender);
-        _invokeRulesEngine(encoded);
     }
 
     /**
