@@ -24,7 +24,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
     function createForeignCall(
         uint256 _policyId, 
         ForeignCall calldata _foreignCall
-    ) external returns (uint256) {
+    ) external policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         // Load the Foreign Call data from storage
         ForeignCallS storage data = lib.getForeignCallStorage();
         uint256 foreignCallIndex = data.foreignCallIdxCounter[_policyId];
@@ -54,7 +54,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _policyId the policyId the foreign call is associated with
      * @param _foreignCallId the foreign call to delete
      */
-    function deleteForeignCall(uint256 _policyId, uint256 _foreignCallId) external {
+    function deleteForeignCall(uint256 _policyId, uint256 _foreignCallId) external policyAdminOnly(_policyId, msg.sender) {
         delete lib.getForeignCallStorage().foreignCalls[_policyId][_foreignCallId];
         emit ForeignCallDeleted(_policyId, _foreignCallId);
     }
@@ -66,7 +66,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _foreignCall the foreign call to update
      * @return fc the foreign call structure
      */
-    function updateForeignCall(uint256 _policyId, uint256 _foreignCallId, ForeignCall calldata _foreignCall) external returns (ForeignCall memory fc) {
+    function updateForeignCall(uint256 _policyId, uint256 _foreignCallId, ForeignCall calldata _foreignCall) external policyAdminOnly(_policyId, msg.sender) returns (ForeignCall memory fc) {
         fc = _foreignCall;
         fc.foreignCallIndex = _foreignCallId;
         storeForeignCall(_policyId, fc);
@@ -93,10 +93,11 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _policyId the policy Id of the foreign call to retrieve
      * @return fc the foreign call set structure
      */
-    function getForeignCallSet(uint256 _policyId) public view returns (ForeignCall[] memory fc) {
+    function getAllForeignCalls(uint256 _policyId) public view returns (ForeignCall[] memory fc) {
         // Return the Foreign Call Set data from storage
-        ForeignCall[] memory foreignCalls = new ForeignCall[](30);
-        for (uint256 i = 0; i < 30; i++) {
+        uint256 foreignCallCount = lib.getForeignCallStorage().foreignCallIdxCounter[_policyId];
+        ForeignCall[] memory foreignCalls = new ForeignCall[](foreignCallCount);
+        for (uint256 i = 0; i < foreignCallCount; i++) {
             if (lib.getForeignCallStorage().foreignCalls[_policyId][i].set) {
                 foreignCalls[i] = lib.getForeignCallStorage().foreignCalls[_policyId][i];
             }
@@ -114,7 +115,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
     function createTracker(
         uint256 _policyId,
         Trackers calldata _tracker
-    ) public returns (uint256) {
+    ) public policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         // Load the Tracker data from storage
         TrackerS storage data = lib.getTrackerStorage();
         Trackers memory tracker = _tracker;
@@ -137,7 +138,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         uint256 _policyId,
         uint256 _trackerIndex,
         Trackers calldata _tracker
-    ) public {
+    ) public policyAdminOnly(_policyId, msg.sender){
         // Load the Tracker data from storage
         TrackerS storage data = lib.getTrackerStorage();
         data.trackers[_policyId][_trackerIndex].set = true;
@@ -160,12 +161,26 @@ contract RulesEngineDataFacet is FacetCommonImports {
         return data.trackers[_policyId][index];
     }
 
+    function getAllTrackers(uint256 _policyId) public view returns (Trackers[] memory) {
+        // Load the Tracker data from storage
+        TrackerS storage data = lib.getTrackerStorage();
+        // return trackers for contract address at speficic index
+        uint256 trackerCount = data.trackerIndexCounter[_policyId];
+        Trackers[] memory trackers = new Trackers[](trackerCount);
+        for (uint256 i = 0; i < trackerCount; i++) {
+            if (data.trackers[_policyId][i].set) {
+                trackers[i] = data.trackers[_policyId][i];
+            }
+        }
+        return trackers;
+    }
+
     /**
      * Delete a tracker from the trackerStorage.
      * @param _policyId the policyId the trackerStorage is associated with
      * @param _trackerIndex the index of the tracker to delete
      */
-    function deleteTracker(uint256 _policyId, uint256 _trackerIndex) public {
+    function deleteTracker(uint256 _policyId, uint256 _trackerIndex) public policyAdminOnly(_policyId, msg.sender) {
         delete lib.getTrackerStorage().trackers[_policyId][_trackerIndex];
     }
 
@@ -305,7 +320,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * Delete a Policy from Storage
      * @param _policyId the id of the policy to delete
      */
-    function deletePolicy(uint256 _policyId) public {
+    function deletePolicy(uint256 _policyId) public policyAdminOnly(_policyId, msg.sender) {
         PolicyStorageSet storage data = lib.getPolicyStorage().policyStorageSets[_policyId];
         delete data.set;
 
@@ -430,7 +445,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _contractAddress address of the contract to have policies applied
      * @param _policyId the rule to add 
      */
-    function applyPolicy(address _contractAddress, uint256[] calldata _policyId) public {
+    function applyPolicy(address _contractAddress, uint256[] calldata _policyId) public policyAdminOnly(_policyId[0], msg.sender) {
         // Load the function signature data from storage
         PolicyAssociationS storage data = lib.getPolicyAssociationStorage();
         // TODO: atomic setting function plus an addToAppliedPolicies?

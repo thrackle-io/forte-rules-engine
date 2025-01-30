@@ -24,6 +24,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
     }
 
     function testRulesEngine_Unit_Diamond_ForeignCallStorage_Positive() public {
+        uint256 policyId = _createBlankPolicy(); // create blank policy just to assign policyAdmin
         address _address = address(22);
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
@@ -36,20 +37,21 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 0;
-        RulesEngineDataFacet(address(red))
+        uint256 foreignCallId = RulesEngineDataFacet(address(red))
             .createForeignCall(
-                1,
+                policyId,
                 fc
             );
 
         fc = RulesEngineDataFacet(address(red)).getForeignCall(
-            1,
-            0
+            policyId,
+            foreignCallId
         );
         assertEq(fc.foreignCallAddress, _address);
     }
 
     function testRulesEngine_Unit_Diamond_TrackerStorage_Positive() public {
+        uint256 policyId = _createBlankPolicy();
         // Build the tracker
         Trackers memory tracker;
         uint256 trackerValue = 5150;
@@ -59,13 +61,13 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         tracker.trackerValue = abi.encode(trackerValue);
         // Add the tracker
         uint256 trackerIndex = RulesEngineDataFacet(address(red)).createTracker(
-            1,
+            policyId,
             tracker
         );
         assertEq(
             abi.encode(trackerValue),
             RulesEngineDataFacet(address(red))
-                .getTracker(1, trackerIndex)
+                .getTracker(policyId, trackerIndex)
                 .trackerValue
         );
     }
