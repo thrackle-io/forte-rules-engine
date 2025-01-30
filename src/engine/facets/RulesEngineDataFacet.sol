@@ -97,9 +97,11 @@ contract RulesEngineDataFacet is FacetCommonImports {
         // Return the Foreign Call Set data from storage
         uint256 foreignCallCount = lib.getForeignCallStorage().foreignCallIdxCounter[_policyId];
         ForeignCall[] memory foreignCalls = new ForeignCall[](foreignCallCount);
+        uint256 j = 0;
         for (uint256 i = 0; i < foreignCallCount; i++) {
             if (lib.getForeignCallStorage().foreignCalls[_policyId][i].set) {
-                foreignCalls[i] = lib.getForeignCallStorage().foreignCalls[_policyId][i];
+                foreignCalls[j] = lib.getForeignCallStorage().foreignCalls[_policyId][i];
+                j++;
             }
         }
         return foreignCalls;
@@ -181,9 +183,11 @@ contract RulesEngineDataFacet is FacetCommonImports {
         // return trackers for contract address at speficic index
         uint256 trackerCount = data.trackerIndexCounter[_policyId];
         Trackers[] memory trackers = new Trackers[](trackerCount);
+        uint256 j = 0;
         for (uint256 i = 0; i < trackerCount; i++) {
             if (data.trackers[_policyId][i].set) {
-                trackers[i] = data.trackers[_policyId][i];
+                trackers[j] = data.trackers[_policyId][i];
+                j++;
             }
         }
         return trackers;
