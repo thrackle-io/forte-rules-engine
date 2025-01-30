@@ -172,13 +172,16 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         fcArgs[0] = PT.UINT;
         uint8[] memory typeSpecificIndices = new uint8[](1);
         typeSpecificIndices[0] = 1;
-        RulesEngineDataFacet(address(red)).updateForeignCall(
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineDataFacet(address(red)).createForeignCall(
             policyIds[0],
-            address(testContract),
-            "simpleCheck(uint256)",
-            PT.UINT,
-            fcArgs,
-            typeSpecificIndices
+            fc
         );
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -232,13 +235,16 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         fcArgs[0] = PT.UINT;
         uint8[] memory typeSpecificIndices = new uint8[](1);
         typeSpecificIndices[0] = 1;
-        RulesEngineDataFacet(address(red)).updateForeignCall(
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineDataFacet(address(red)).createForeignCall(
             policyIds[0],
-            address(testContract),
-            "simpleCheck(uint256)",
-            PT.UINT,
-            fcArgs,
-            typeSpecificIndices
+            fc
         );
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -424,7 +430,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         );
         Trackers memory tracker = RulesEngineDataFacet(address(red)).getTracker(
             policyId,
-            1
+            0
         );
         assertEq(tracker.trackerValue, abi.encode(7));
     }
@@ -1274,13 +1280,12 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         retVal = userContract.transfer(address(0x7654321), 3);
         /// manually update the tracker here to higher value so that rule fails
         //                  calling contract,  updated uint, empty address, empty string, bool, empty bytes
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(7);
         RulesEngineDataFacet(address(red)).updateTracker(
             policyId,
-            7,
-            address(0x00),
-            "",
-            true,
-            ""
+            1,
+            tracker
         );
 
         vm.expectRevert(abi.encodePacked(revert_text));
@@ -1335,7 +1340,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertTrue(retVal);
 
         Trackers memory testTracker = RulesEngineDataFacet(address(red))
-            .getTracker(policyId, 1);
+            .getTracker(policyId, 0);
 
         assertTrue(abi.decode(testTracker.trackerValue, (uint256)) == 2);
         assertFalse(abi.decode(testTracker.trackerValue, (uint256)) == 3);
@@ -1368,6 +1373,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders[0].typeSpecificIndex = 1;
         rule.placeHolders[1].pType = PT.UINT;
         rule.placeHolders[1].foreignCall = true;
+        rule.placeHolders[1].typeSpecificIndex = 0;
         rule.policyId = policyIds[0];
 
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
@@ -1408,6 +1414,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders[0].typeSpecificIndex = 1;
         rule.placeHolders[1].pType = PT.UINT;
         rule.placeHolders[1].trackerValue = true;
+        rule.placeHolders[1].typeSpecificIndex = 0;
         rule.policyId = policyIds[0];
 
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
@@ -1480,13 +1487,16 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         fcArgs[0] = PT.UINT;
         uint8[] memory typeSpecificIndices = new uint8[](1);
         typeSpecificIndices[0] = 1;
-        RulesEngineDataFacet(address(red)).updateForeignCall(
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineDataFacet(address(red)).createForeignCall(
             policyIds[0],
-            address(testContract),
-            "simpleCheck(uint256)",
-            PT.UINT,
-            fcArgs,
-            typeSpecificIndices
+            fc
         );
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -1624,14 +1634,15 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         bytes4[] memory blankSignatures = new bytes4[](0);
         uint256[] memory blankFunctionSignatureIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
-        uint256 policyID = RulesEngineDataFacet(address(red)).updatePolicy(
-            1,
+        uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(
             blankSignatures,
             blankFunctionSignatureIds,
             blankRuleIds
         );
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
         bool hasAdminRole = RulesEngineAdminRolesFacet(address(red))
-            .isPolicyAdmin(1, policyAdmin);
+            .isPolicyAdmin(policyID, newPolicyAdmin);
         assertFalse(hasAdminRole);
         vm.expectRevert(abi.encodeWithSignature("NotPolicyAdmin()"));
         RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(

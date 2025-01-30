@@ -114,7 +114,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
                     retVals[placeholderIndex] = retVal.value;
             } else if (placeholder.trackerValue) {
                 // Load the Tracker data from storage
-                Trackers memory tracker = lib.getTrackerStorage().trackerValueSets[_policyId].trackers[placeholder.typeSpecificIndex];
+                Trackers memory tracker = lib.getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex];
                 retVals[placeholderIndex] = tracker.trackerValue;
             } else {
                 // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
@@ -159,10 +159,9 @@ contract RulesEngineMainFacet is FacetCommonImports{
                 // TRU, tracker index, mem index
                 // TODO: Update to account for type
                 // Load the Tracker data from storage
-                TrackerValuesSet storage set = lib.getTrackerStorage().trackerValueSets[_policyId];
-                if(set.trackers[prog[idx + 1]].pType == PT.UINT) {
-                    set.trackers[prog[idx + 1]].trackerValue = abi.encode(mem[prog[idx+2]]);
-                    lib.getTrackerStorage().trackerValueSets[_policyId] = set;
+                Trackers storage set = lib.getTrackerStorage().trackers[_policyId][prog[idx + 1]];
+                if(set.pType == PT.UINT) {
+                    set.trackerValue = abi.encode(mem[prog[idx+2]]);
                 }
 
                 idx += 3;

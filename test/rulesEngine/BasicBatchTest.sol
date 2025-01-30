@@ -14,13 +14,20 @@ contract BasicBatchTest is RulesEngineCommon {
         bytes[] memory blankSignatures = new bytes[](0);
         uint256[] memory blankFunctionSignatureIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
-        calls[0] = abi.encodeWithSelector(RulesEngineDataFacet.updatePolicy.selector, 1, blankSignatures, blankFunctionSignatureIds, blankRuleIds);
+        calls[0] = abi.encodeWithSelector(RulesEngineDataFacet.createPolicy.selector, blankSignatures, blankFunctionSignatureIds, blankRuleIds);
         address _address = address(22);
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
         uint8[] memory typeSpecificIndices = new uint8[](1);
         typeSpecificIndices[0] = 1;
-        calls[1] = abi.encodeWithSelector(RulesEngineDataFacet.updateForeignCall.selector, 1, _address, "simpleCheck(uint256)", PT.UINT, fcArgs, typeSpecificIndices);
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = _address;
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 1;
+        calls[1] = abi.encodeWithSelector(RulesEngineDataFacet.createForeignCall.selector, 1, fc);
         calls[2] = abi.encodeWithSelector(RulesEngineDataFacet.updatePolicy.selector, 1, blankSignatures, blankFunctionSignatureIds, blankRuleIds);
         RulesEngineDiamond(red).batch(calls, true);
     }

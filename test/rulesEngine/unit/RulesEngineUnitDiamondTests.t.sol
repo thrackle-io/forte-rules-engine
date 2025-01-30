@@ -29,19 +29,22 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         fcArgs[0] = PT.UINT;
         uint8[] memory typeSpecificIndices = new uint8[](1);
         typeSpecificIndices[0] = 0;
-        ForeignCall memory fc = RulesEngineDataFacet(address(red))
-            .updateForeignCall(
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = _address;
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineDataFacet(address(red))
+            .createForeignCall(
                 1,
-                _address,
-                "simpleCheck(uint256)",
-                PT.UINT,
-                fcArgs,
-                typeSpecificIndices
+                fc
             );
 
         fc = RulesEngineDataFacet(address(red)).getForeignCall(
             1,
-            fc.foreignCallIndex
+            0
         );
         assertEq(fc.foreignCallAddress, _address);
     }
@@ -55,7 +58,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         tracker.pType = PT.UINT;
         tracker.trackerValue = abi.encode(trackerValue);
         // Add the tracker
-        uint256 trackerIndex = RulesEngineDataFacet(address(red)).addTracker(
+        uint256 trackerIndex = RulesEngineDataFacet(address(red)).createTracker(
             1,
             tracker
         );
