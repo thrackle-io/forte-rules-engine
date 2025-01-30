@@ -450,30 +450,3 @@ contract RulesEngineDataFacet is FacetCommonImports {
         return lib.getPolicyAssociationStorage().contractPolicyIdMap[_contractAddress];
     }
 }
-
- /**
-  NEEDED FUNCTIONS: 
-
-  Internalize update function logic to share internal function (i.e. updatePolicy and createPolicy will share internal logic function)
-
-  Delete Policy 
-
-  Create Rule 
-  Delete Rule 
-
-  CreateForeignCall 
-  DeleteForeignCall 
-
-  CreateTracker
-  DeleteTracker 
-  UpdateTrackerFromRuleCheck --this is to separate out tracker updates from a rule evaluation result and from manually updating the tracker from an admin perspective 
-
-State of the branch: 
-Internalized the create and update policy functions and updated tests 
-You can copy this logic for remaining functions that need create and update functions 
- 
- TODO is delete functions and seperated out Tracker functions 
-
- TODO Delete comment block before PR 
- 
-  */
