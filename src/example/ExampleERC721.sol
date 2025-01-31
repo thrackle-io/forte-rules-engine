@@ -83,7 +83,7 @@ contract ExampleERC721 is ERC721, ReentrancyGuard, ERC721Burnable, RulesEngineCl
      *
      * This function call must use less than 30 000 gas.
      */
-    function supportsInterface(bytes4 interfaceId) public view override(ERC721, AccessControl) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 
