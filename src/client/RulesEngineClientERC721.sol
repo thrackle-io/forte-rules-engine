@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import "./IRulesEngine.sol";
+import "./RulesEngineClient.sol";
 
 /**
  * @title Rules Engine Client ERC721
@@ -12,18 +12,8 @@ import "./IRulesEngine.sol";
  *          safeTransferFrom(address,address,uint256,bytes)
  *          safeMint(address)
  */
-abstract contract RulesEngineClientERC721 {
+abstract contract RulesEngineClientERC721 is RulesEngineClient {
     
-    address public rulesEngineAddress;
-
-    /**
-     * Set the Rules Engine address
-     * @param rulesEngine rules engine address
-     */
-    function setRulesEngineAddress(address rulesEngine) public {
-        rulesEngineAddress = rulesEngine;
-    }
-
     /**
      * @dev This is the modifier used by Rules Engine safeMint function. It checks policies before executing the calling function's logic.
      * @param to receiving address
@@ -118,14 +108,5 @@ abstract contract RulesEngineClientERC721 {
     function _checkPoliciesERC721TransferFrom(address from, address to, uint256 tokenId) internal {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, from, to, tokenId, msg.sender);
         _invokeRulesEngine(encoded);
-    }
-
-    /**
-     * @dev This function makes the call to the Rules Engine
-     * @param args function signature's arguments
-     * @return retval return value from the rules engine
-     */
-    function _invokeRulesEngine(bytes memory args) internal returns (uint256 retval) {
-        if (rulesEngineAddress != address(0)) return IRulesEngine(rulesEngineAddress).checkPolicies(address(this), args);
     }
 }
