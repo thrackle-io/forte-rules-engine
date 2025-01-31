@@ -95,7 +95,7 @@ struct Effect {
 
 /// Foreign Call Structures
 struct ForeignCallS {
-    uint256 foreignCallIndex;
+    mapping(uint256 policyId => uint256) foreignCallIdxCounter;
     mapping(uint256 policyId => mapping(uint256 foreignCallIndex => ForeignCall)) foreignCalls;
 }
 
@@ -143,16 +143,9 @@ struct ForeignCall {
 
 /// Tracker Structures
 struct TrackerS {
-    uint256 TrackerIndex;
-    mapping(uint256 policyId => TrackerValuesSet) trackerValueSets;
-}
-
-/**
- * Structure to hold Tracker structs
- */
-struct TrackerValuesSet {
-    bool set;
-    Trackers[] trackers;
+    //uint256 TrackerIndex;
+    mapping(uint256 policyId => uint256 trackerIndex) trackerIndexCounter;
+    mapping(uint256 policyId => mapping(uint256 trackerIndex => Trackers)) trackers;
 }
 
 /**
@@ -161,6 +154,8 @@ struct TrackerValuesSet {
  * Trackers must be initialized with a starting value and are updated outside of the run function. Therefore must have their own persistent storage for setting and getting of tracker values
  */
 struct Trackers {
+    // Whether the tracker has been set
+    bool set;
     // Define what type of tracker
     PT pType;
     // tracker types arrays

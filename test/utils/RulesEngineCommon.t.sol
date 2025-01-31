@@ -173,7 +173,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
          
-        policyIds[0] = RulesEngineDataFacet(address(red)).updatePolicy(0, signatures, functionSignatureIds, ruleIds);        
+        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signatures, functionSignatureIds, ruleIds);        
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
 
         return ruleId;
@@ -231,7 +231,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        policyIds[0] = RulesEngineDataFacet(address(red)).updatePolicy(0, signatures, functionSignatureIds, ruleIds);        
+        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signatures, functionSignatureIds, ruleIds);        
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
 
         return ruleId;
@@ -277,6 +277,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.effectPlaceHolders[0].typeSpecificIndex = 0;
         rule.effectPlaceHolders[1].pType = PT.UINT;
         rule.effectPlaceHolders[1].trackerValue = true;
+        rule.effectPlaceHolders[1].typeSpecificIndex = 0;
         rule.policyId = policyIds[0];
 
         ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
@@ -291,13 +292,20 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
 
-        RulesEngineDataFacet(address(red)).addTracker(policyIds[0], tracker);      
+        RulesEngineDataFacet(address(red)).createTracker(policyIds[0], tracker);      
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
         uint8[] memory typeSpecificIndices = new uint8[](1);
         typeSpecificIndices[0] = 1;
 
-        ForeignCall memory fc = RulesEngineDataFacet(address(red)).updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", PT.UINT, fcArgs, typeSpecificIndices);
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineDataFacet(address(red)).createForeignCall(policyIds[0], fc);
 
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
         fc;  //added to silence warnings during testing revamp 
@@ -341,17 +349,20 @@ contract RulesEngineCommon is DiamondMine, Test {
         fcArgs[0] = PT.UINT;
         uint8[] memory typeSpecificIndices = new uint8[](1);
         typeSpecificIndices[0] = 1;
-        ForeignCall memory fc = RulesEngineDataFacet(address(red))
-            .updateForeignCall(
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineDataFacet(address(red))
+            .createForeignCall(
                 policyIds[0],
-                address(testContract),
-                "simpleCheck(uint256)",
-                PT.UINT,
-                fcArgs,
-                typeSpecificIndices
+                fc
             );
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(rule);
 
 
         ruleIds.push(new uint256[](1));
@@ -713,6 +724,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders[0].typeSpecificIndex = 1;
         rule.placeHolders[1].pType = PT.UINT;
         rule.placeHolders[1].trackerValue = true;
+        rule.placeHolders[1].typeSpecificIndex = 0;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
@@ -729,7 +741,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         tracker.pType = PT.UINT;
         tracker.trackerValue = abi.encode(trackerValue);
         // Add the tracker
-        RulesEngineDataFacet(address(red)).addTracker(policyIds[0], tracker);
+        RulesEngineDataFacet(address(red)).createTracker(policyIds[0], tracker);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -745,7 +757,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256[] memory blankFunctionSignatureIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(
-            0,
             blankSignatures,
             blankFunctionSignatureIds,
             blankRuleIds
@@ -761,7 +772,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256[] memory blankFunctionSignatureIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(
-            0,
             blankSignatures,
             blankFunctionSignatureIds,
             blankRuleIds
@@ -1122,7 +1132,14 @@ contract RulesEngineCommon is DiamondMine, Test {
         fcArgs[0] = PT.UINT;
         uint8[] memory typeSpecificIndices = new uint8[](1);
         typeSpecificIndices[0] = 1;
-        RulesEngineDataFacet(address(red)).updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", PT.UINT, fcArgs, typeSpecificIndices);
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineDataFacet(address(red)).createForeignCall(policyIds[0], fc);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);       
@@ -1156,7 +1173,14 @@ contract RulesEngineCommon is DiamondMine, Test {
         fcArgs[0] = PT.UINT;
         uint8[] memory typeSpecificIndices = new uint8[](1);
         typeSpecificIndices[0] = 2;
-        RulesEngineDataFacet(address(red)).updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", PT.UINT, fcArgs, typeSpecificIndices);
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineDataFacet(address(red)).createForeignCall(policyIds[0], fc);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);       
@@ -1186,7 +1210,14 @@ contract RulesEngineCommon is DiamondMine, Test {
         fcArgs[0] = PT.UINT;
         uint8[] memory typeSpecificIndices = new uint8[](1);
         typeSpecificIndices[0] = 1;
-        RulesEngineDataFacet(address(red)).updateForeignCall(policyIds[0], address(testContract), "simpleCheck(uint256)", PT.UINT, fcArgs, typeSpecificIndices);
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineDataFacet(address(red)).createForeignCall(policyIds[0], fc);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);       

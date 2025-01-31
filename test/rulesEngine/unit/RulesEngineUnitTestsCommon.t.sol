@@ -96,7 +96,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ruleIds[0][0] = ruleId;
         assertGt(
             RulesEngineDataFacet(address(red)).updatePolicy(
-                0,
+                policyId,
                 signatures,
                 functionSignatureIds,
                 ruleIds
@@ -172,13 +172,16 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         fcArgs[0] = PT.UINT;
         uint8[] memory typeSpecificIndices = new uint8[](1);
         typeSpecificIndices[0] = 1;
-        RulesEngineDataFacet(address(red)).updateForeignCall(
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineDataFacet(address(red)).createForeignCall(
             policyIds[0],
-            address(testContract),
-            "simpleCheck(uint256)",
-            PT.UINT,
-            fcArgs,
-            typeSpecificIndices
+            fc
         );
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -232,13 +235,16 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         fcArgs[0] = PT.UINT;
         uint8[] memory typeSpecificIndices = new uint8[](1);
         typeSpecificIndices[0] = 1;
-        RulesEngineDataFacet(address(red)).updateForeignCall(
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineDataFacet(address(red)).createForeignCall(
             policyIds[0],
-            address(testContract),
-            "simpleCheck(uint256)",
-            PT.UINT,
-            fcArgs,
-            typeSpecificIndices
+            fc
         );
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -424,7 +430,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         );
         Trackers memory tracker = RulesEngineDataFacet(address(red)).getTracker(
             policyId,
-            1
+            0
         );
         assertEq(tracker.trackerValue, abi.encode(7));
     }
@@ -1274,13 +1280,12 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         retVal = userContract.transfer(address(0x7654321), 3);
         /// manually update the tracker here to higher value so that rule fails
         //                  calling contract,  updated uint, empty address, empty string, bool, empty bytes
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(7);
         RulesEngineDataFacet(address(red)).updateTracker(
             policyId,
-            7,
-            address(0x00),
-            "",
-            true,
-            ""
+            1,
+            tracker
         );
 
         vm.expectRevert(abi.encodePacked(revert_text));
@@ -1335,7 +1340,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertTrue(retVal);
 
         Trackers memory testTracker = RulesEngineDataFacet(address(red))
-            .getTracker(policyId, 1);
+            .getTracker(policyId, 0);
 
         assertTrue(abi.decode(testTracker.trackerValue, (uint256)) == 2);
         assertFalse(abi.decode(testTracker.trackerValue, (uint256)) == 3);
@@ -1368,6 +1373,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders[0].typeSpecificIndex = 1;
         rule.placeHolders[1].pType = PT.UINT;
         rule.placeHolders[1].foreignCall = true;
+        rule.placeHolders[1].typeSpecificIndex = 0;
         rule.policyId = policyIds[0];
 
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
@@ -1408,6 +1414,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders[0].typeSpecificIndex = 1;
         rule.placeHolders[1].pType = PT.UINT;
         rule.placeHolders[1].trackerValue = true;
+        rule.placeHolders[1].typeSpecificIndex = 0;
         rule.policyId = policyIds[0];
 
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
@@ -1480,13 +1487,16 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         fcArgs[0] = PT.UINT;
         uint8[] memory typeSpecificIndices = new uint8[](1);
         typeSpecificIndices[0] = 1;
-        RulesEngineDataFacet(address(red)).updateForeignCall(
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineDataFacet(address(red)).createForeignCall(
             policyIds[0],
-            address(testContract),
-            "simpleCheck(uint256)",
-            PT.UINT,
-            fcArgs,
-            typeSpecificIndices
+            fc
         );
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -1624,14 +1634,15 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         bytes4[] memory blankSignatures = new bytes4[](0);
         uint256[] memory blankFunctionSignatureIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
-        uint256 policyID = RulesEngineDataFacet(address(red)).updatePolicy(
-            0,
+        uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(
             blankSignatures,
             blankFunctionSignatureIds,
             blankRuleIds
         );
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
         bool hasAdminRole = RulesEngineAdminRolesFacet(address(red))
-            .isPolicyAdmin(1, policyAdmin);
+            .isPolicyAdmin(policyID, newPolicyAdmin);
         assertFalse(hasAdminRole);
         vm.expectRevert(abi.encodeWithSignature("NotPolicyAdmin()"));
         RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(
@@ -1729,6 +1740,516 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         bool hasAdminRole = RulesEngineAdminRolesFacet(address(red))
             .isPolicyAdmin(1, policyAdmin);
         assertTrue(hasAdminRole);
+    }
+
+    function testRulesEngine_unit_adminRoles_CreateTracker_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(
+            blankSignatures,
+            blankFunctionSignatureIds,
+            blankRuleIds
+        );
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red))
+            .isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = PT.ADDR;
+
+        RulesEngineDataFacet(address(red)).createTracker(
+            policyID,
+            tracker
+        );
+    }
+
+    function testRulesEngine_unit_adminRoles_CreateTracker_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(
+            blankSignatures,
+            blankFunctionSignatureIds,
+            blankRuleIds
+        );
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red))
+            .isPolicyAdmin(policyID, newPolicyAdmin);
+        assertFalse(hasAdminRole);
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = PT.ADDR;
+
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineDataFacet(address(red)).createTracker(
+            policyID,
+            tracker
+        );
+    }
+
+    function testRulesEngine_unit_adminRoles_UpdateTracker_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(
+            blankSignatures,
+            blankFunctionSignatureIds,
+            blankRuleIds
+        );
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red))
+            .isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = PT.ADDR;
+
+        uint256 trackerId = RulesEngineDataFacet(address(red)).createTracker(
+            policyID,
+            tracker
+        );
+
+        tracker.trackerValue = abi.encode(address(userContractAddress));
+        RulesEngineDataFacet(address(red)).updateTracker(
+            policyID,
+            trackerId,
+            tracker
+        );
+    }
+
+    function testRulesEngine_unit_adminRoles_UpdateTracker_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(
+            blankSignatures,
+            blankFunctionSignatureIds,
+            blankRuleIds
+        );
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = PT.ADDR;
+        uint256 trackerId = RulesEngineDataFacet(address(red)).createTracker(
+            policyID,
+            tracker
+        );
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red))
+            .isPolicyAdmin(policyID, newPolicyAdmin);
+        assertFalse(hasAdminRole);
+        tracker.trackerValue = abi.encode(address(userContractAddress));
+        tracker.pType = PT.ADDR;
+
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineDataFacet(address(red)).updateTracker(
+            policyID,
+            trackerId,
+            tracker
+        );
+    }
+
+    function testRulesEngine_unit_adminRoles_DeleteTracker_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(
+            blankSignatures,
+            blankFunctionSignatureIds,
+            blankRuleIds
+        );
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = PT.ADDR;
+        uint256 trackerId = RulesEngineDataFacet(address(red)).createTracker(
+            policyID,
+            tracker
+        );
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red))
+            .isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+        RulesEngineDataFacet(address(red)).deleteTracker(
+            policyID,
+            trackerId
+        );
+
+        tracker = RulesEngineDataFacet(address(red)).getTracker(
+            policyID,
+            trackerId
+        );
+        assertEq(tracker.set, false);
+        assertEq(uint8(tracker.pType), uint8(PT.ADDR));
+        assertEq(tracker.trackerValue, bytes(""));
+    }
+
+    function testRulesEngine_unit_adminRoles_DeleteTracker_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(
+            blankSignatures,
+            blankFunctionSignatureIds,
+            blankRuleIds
+        );
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = PT.ADDR;
+        uint256 trackerId = RulesEngineDataFacet(address(red)).createTracker(
+            policyID,
+            tracker
+        );
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red))
+            .isPolicyAdmin(policyID, newPolicyAdmin);
+        assertFalse(hasAdminRole);
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineDataFacet(address(red)).deleteTracker(
+            policyID,
+            trackerId
+        );
+    }
+
+    function testRulesEngine_unit_adminRoles_CreateForeignCall_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(
+            blankSignatures,
+            blankFunctionSignatureIds,
+            blankRuleIds
+        );
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red))
+            .isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.parameterTypes = new PT[](1);
+        fc.parameterTypes[0] = PT.UINT;
+        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices[0] = 1;
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+
+        RulesEngineDataFacet(address(red)).createForeignCall(
+            policyID,
+            fc
+        );
+    }
+
+    function testRulesEngine_unit_adminRoles_CreateForeignCall_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(
+            blankSignatures,
+            blankFunctionSignatureIds,
+            blankRuleIds
+        );
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red))
+            .isPolicyAdmin(policyID, newPolicyAdmin);
+        assertFalse(hasAdminRole);
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.parameterTypes = new PT[](1);
+        fc.parameterTypes[0] = PT.UINT;
+        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices[0] = 1;
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineDataFacet(address(red)).createForeignCall(
+            policyID,
+            fc
+        );
+    }
+
+    function testRulesEngine_unit_adminRoles_UpdateForeignCall_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(
+            blankSignatures,
+            blankFunctionSignatureIds,
+            blankRuleIds
+        );
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red))
+            .isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.parameterTypes = new PT[](1);
+        fc.parameterTypes[0] = PT.UINT;
+        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices[0] = 1;
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+
+        uint256 foreignCallId = RulesEngineDataFacet(address(red)).createForeignCall(
+            policyID,
+            fc
+        );
+        fc.foreignCallAddress = address(userContractAddress);
+        RulesEngineDataFacet(address(red)).updateForeignCall(
+            policyID,
+            foreignCallId,
+            fc
+        );
+    }
+
+    function testRulesEngine_unit_adminRoles_UpdateForeignCall_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(
+            blankSignatures,
+            blankFunctionSignatureIds,
+            blankRuleIds
+        );
+
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.parameterTypes = new PT[](1);
+        fc.parameterTypes[0] = PT.UINT;
+        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices[0] = 1;
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+
+        uint256 foreignCallId = RulesEngineDataFacet(address(red)).createForeignCall(
+            policyID,
+            fc
+        );
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red))
+            .isPolicyAdmin(policyID, newPolicyAdmin);
+        assertFalse(hasAdminRole);
+        fc.foreignCallAddress = address(userContractAddress);
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineDataFacet(address(red)).updateForeignCall(
+            policyID,
+            foreignCallId,
+            fc
+        );
+    }
+    
+    function testRulesEngine_unit_adminRoles_DeleteForeignCall_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(
+            blankSignatures,
+            blankFunctionSignatureIds,
+            blankRuleIds
+        );
+
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red))
+            .isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.parameterTypes = new PT[](1);
+        fc.parameterTypes[0] = PT.UINT;
+        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices[0] = 1;
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+
+        uint256 foreignCallId = RulesEngineDataFacet(address(red)).createForeignCall(
+            policyID,
+            fc
+        );
+
+        RulesEngineDataFacet(address(red)).deleteForeignCall(
+            policyID,
+            foreignCallId
+        );
+
+        ForeignCall memory fc2 = RulesEngineDataFacet(address(red)).getForeignCall(
+            policyID,
+            foreignCallId
+        );
+        assertEq(fc2.set, false);
+        assertEq(fc2.foreignCallAddress, address(0));
+        assertEq(fc2.signature, bytes4(0));
+        assertEq(fc2.parameterTypes.length, 0);
+        assertEq(fc2.typeSpecificIndices.length, 0);
+        assertEq(uint8(fc2.returnType), uint8(PT.ADDR));
+        assertEq(fc2.foreignCallIndex, 0);
+    }
+
+    function testRulesEngine_unit_adminRoles_DeleteForeignCall_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(
+            blankSignatures,
+            blankFunctionSignatureIds,
+            blankRuleIds
+        );
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.parameterTypes = new PT[](1);
+        fc.parameterTypes[0] = PT.UINT;
+        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices[0] = 1;
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        uint256 foreignCallId = RulesEngineDataFacet(address(red)).createForeignCall(
+            policyID,
+            fc
+        );
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red))
+            .isPolicyAdmin(policyID, newPolicyAdmin);
+        assertFalse(hasAdminRole);
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineDataFacet(address(red)).deleteForeignCall(
+            policyID,
+            foreignCallId
+        );
+    }
+
+    function testRulesEngine_Unit_GetAllForeignCallsTest()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.parameterTypes = new PT[](1);
+        fc.parameterTypes[0] = PT.UINT;
+        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices[0] = 1;
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        for (uint256 i = 0; i < 10; i++) {
+            uint256 foreignCallId = RulesEngineDataFacet(address(red)).createForeignCall(
+                policyId,
+                fc
+            );
+        }
+        
+        ForeignCall[] memory foreignCalls = RulesEngineDataFacet(address(red)).getAllForeignCalls(policyId);
+        assertEq(foreignCalls.length, 10);
+        RulesEngineDataFacet(address(red)).deleteForeignCall(policyId, 2);
+
+        foreignCalls = RulesEngineDataFacet(address(red)).getAllForeignCalls(policyId);
+        assertEq(foreignCalls.length, 10);
+
+        for (uint256 i = 0; i < 9; i++) {
+            if (i >= 2) {
+                assertEq(foreignCalls[i].foreignCallIndex, i + 1);
+            } else {
+                assertEq(foreignCalls[i].foreignCallIndex, i);
+            }
+        }
+    }
+
+    function testRulesEngine_Unit_GetAllTrackersTest()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+
+
+        for (uint256 i = 0; i < 10; i++) {
+            Trackers memory tracker;
+            tracker.trackerValue = abi.encode(uint256(i));
+            tracker.pType = PT.UINT;
+            uint256 trackerId = RulesEngineDataFacet(address(red)).createTracker(policyId, tracker);
+        }
+
+        Trackers[] memory trackers = RulesEngineDataFacet(address(red)).getAllTrackers(policyId);
+        assertEq(trackers.length, 10);
+        RulesEngineDataFacet(address(red)).deleteTracker(policyId, 2);
+
+        trackers = RulesEngineDataFacet(address(red)).getAllTrackers(policyId);
+        assertEq(trackers.length, 10);
+        for (uint256 i = 0; i < 9; i++) {
+            if (i >= 2) {
+                assertEq(trackers[i].trackerValue, abi.encode(uint256(i + 1)));
+            } else {
+                assertEq(trackers[i].trackerValue, abi.encode(uint256(i)));
+            }
+        }
     }
 
     /// Test the getter functions for Policy. These are specifically tested(rather than the other view functions that are used within the update tests) because they digest the policy into individual arrays.

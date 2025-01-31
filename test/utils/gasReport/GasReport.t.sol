@@ -201,14 +201,17 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fcArgs[0] = PT.ADDR;
         uint8[] memory typeSpecificIndices = new uint8[](1);
         typeSpecificIndices[0] = 0;
-        ForeignCall memory fc = RulesEngineDataFacet(address(red))
-            .updateForeignCall(
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = _contractAddress;
+        fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineDataFacet(address(red))
+            .createForeignCall(
                 policyIds[0],
-                address(_contractAddress),
-                "getNaughty(address)",
-                PT.UINT,
-                fcArgs,
-                typeSpecificIndices
+                fc
             );
 
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
@@ -270,14 +273,17 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fcArgs[0] = PT.ADDR;
         uint8[] memory typeSpecificIndices = new uint8[](1);
         typeSpecificIndices[0] = 0;
-        ForeignCall memory fc = RulesEngineDataFacet(address(red))
-            .updateForeignCall(
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = _contractAddress;
+        fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineDataFacet(address(red))
+            .createForeignCall(
                 policyIds[0],
-                address(_contractAddress),
-                "getNaughty(address)",
-                PT.UINT,
-                fcArgs,
-                typeSpecificIndices
+                fc
             );
 
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
@@ -286,7 +292,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Build the foreign call placeholder
         rule1.placeHolders = new Placeholder[](2);
         rule1.placeHolders[0].foreignCall = true;
-        rule1.placeHolders[0].typeSpecificIndex = 1;
+        rule1.placeHolders[0].typeSpecificIndex = 0;
         rule1.placeHolders[1].pType = PT.UINT;
         rule1.placeHolders[1].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
@@ -345,14 +351,17 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fcArgs[0] = PT.ADDR;
         uint8[] memory typeSpecificIndices = new uint8[](1);
         typeSpecificIndices[0] = 0;
-        ForeignCall memory fc = RulesEngineDataFacet(address(red))
-            .updateForeignCall(
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = _contractAddress;
+        fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineDataFacet(address(red))
+            .createForeignCall(
                 policyIds[0],
-                address(_contractAddress),
-                "getNaughty(address)",
-                PT.UINT,
-                fcArgs,
-                typeSpecificIndices
+                fc
             );
 
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
@@ -360,7 +369,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Build the foreign call placeholder
         rule1.placeHolders = new Placeholder[](2);
         rule1.placeHolders[0].foreignCall = true;
-        rule1.placeHolders[0].typeSpecificIndex = 2;
+        rule1.placeHolders[0].typeSpecificIndex = 0;
         rule1.placeHolders[1].pType = PT.UINT;
         rule1.placeHolders[1].typeSpecificIndex = 1;
 
@@ -429,14 +438,17 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fcArgs[0] = PT.ADDR;
         uint8[] memory typeSpecificIndices = new uint8[](1);
         typeSpecificIndices[0] = 0;
-        ForeignCall memory fc = RulesEngineDataFacet(address(red))
-            .updateForeignCall(
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = _contractAddress;
+        fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineDataFacet(address(red))
+            .createForeignCall(
                 policyIds[0],
-                address(_contractAddress),
-                "getNaughty(address)",
-                PT.UINT,
-                fcArgs,
-                typeSpecificIndices
+                fc
             );
 
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
@@ -445,7 +457,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Build the foreign call placeholder
         rule1.placeHolders = new Placeholder[](2);
         rule1.placeHolders[0].foreignCall = true;
-        rule1.placeHolders[0].typeSpecificIndex = 3;
+        rule1.placeHolders[0].typeSpecificIndex = 0;
         rule1.placeHolders[1].pType = PT.UINT;
         rule1.placeHolders[1].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
@@ -514,15 +526,19 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         uint8[] memory typeSpecificIndices = new uint8[](1);
         typeSpecificIndices[0] = 0;
 
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = _contractAddress;
+        fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+
         {
             RulesEngineDataFacet(address(red))
-                .updateForeignCall(
+                .createForeignCall(
                     policyIds[0],
-                    _contractAddress,
-                    "getNaughty(address)",
-                    PT.UINT,
-                    fcArgs,
-                    typeSpecificIndices
+                    fc
                 );
         }
 
@@ -534,7 +550,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             // Build the foreign call placeholder
             rule1.placeHolders = new Placeholder[](2);
             rule1.placeHolders[0].foreignCall = true;
-            rule1.placeHolders[0].typeSpecificIndex = 4;
+            rule1.placeHolders[0].typeSpecificIndex = 0;
             rule1.placeHolders[1].pType = PT.UINT;
             rule1.placeHolders[1].typeSpecificIndex = 1;
             // Build the instruction set for the rule (including placeholders)
