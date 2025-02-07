@@ -203,52 +203,92 @@ contract RulesEngineDataFacet is FacetCommonImports {
     }
 
     /// Function Signature Storage
+    
+    function createFunctionSignature(
+        uint256 _policyId,
+        bytes4 _functionSignature,
+        PT[] memory _pTypes
+    ) public policyAdminOnly(_policyId, msg.sender) returns (uint256) {
+        return _storeFunctionSignature(lib.getFunctionSignatureStorage(), _policyId, _functionSignature, _pTypes);
+    }
+
+    function _storeFunctionSignature(FunctionSignatureS storage _data, uint256 _policyId, bytes4 _functionSignature, PT[] memory _pTypes) internal returns (uint256) {
+        uint256 functionId = _data.functionIdCounter[_policyId];
+        _data.functionSignatureStorageSets[_policyId][functionId].set = true;
+        _data.functionSignatureStorageSets[_policyId][functionId].signature = _functionSignature;
+        _data.functionSignatureStorageSets[_policyId][functionId].parameterTypes = _pTypes;
+        unchecked {
+            ++_data.functionIdCounter[_policyId];
+        }
+        return functionId;
+    }
+    
     /**
-     * Add a function signature to the storage.
+     * Appends PTypes to an already existing function signature
+     * @param _policyId the policyId the function signature is associated with
      * @param _functionSignatureId functionSignatureId
      * @param _functionSignature the string representation of the function signature
      * @param _pTypes the types of the parameters for the function in order
      * @return functionId generated function Id
      */
     function updateFunctionSignature(
+        uint256 _policyId,
         uint256 _functionSignatureId,
         bytes4 _functionSignature,
         PT[] memory _pTypes
-    ) public returns (uint256) {
-        // TODO: Add validations for function signatures
-
+    ) public policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         // Load the function signature data from storage
         FunctionSignatureS storage data = lib.getFunctionSignatureStorage();
         // increment the functionSignatureId if necessary
-        if (_functionSignatureId == 0) {
-            unchecked {
-                data.functionId++;
-            }
-            _functionSignatureId = data.functionId;
+        FunctionSignatureStorageSet storage functionSignature = data.functionSignatureStorageSets[_policyId][_functionSignatureId];
+        require(functionSignature.signature == _functionSignature, "Delete function signature before updating to a new one");
+        require(functionSignature.parameterTypes.length <= _pTypes.length, "New parameter types must be of greater or equal length to the original");
+        for (uint256 i = 0; i < functionSignature.parameterTypes.length; i++) {
+            require(_pTypes[i] == functionSignature.parameterTypes[i], "New parameter types must be of the same type as the original");
         }
-        data.functionSignatureStorageSets[_functionSignatureId].set = true;
-        data
-            .functionSignatureStorageSets[_functionSignatureId]
-            .signature = _functionSignature;
-        data
-            .functionSignatureStorageSets[_functionSignatureId]
-            .parameterTypes = _pTypes;
+        if (functionSignature.parameterTypes.length < _pTypes.length) {
+            for (uint256 i = functionSignature.parameterTypes.length; i < _pTypes.length; i++) {
+                functionSignature.parameterTypes.push(_pTypes[i]);
+            }
+        }
+
         return _functionSignatureId;
     }
 
     /**
      * Get a function signature from storage.
+     * @param _policyId the policyId the function signature is associated with
      * @param _functionSignatureId functionSignatureId
      * @return functionSignatureSet function signature
      */
     function getFunctionSignature(
+        uint256 _policyId,
         uint256 _functionSignatureId
     ) public view returns (FunctionSignatureStorageSet memory) {
         // Load the function signature data from storage
         return
-            lib.getFunctionSignatureStorage().functionSignatureStorageSets[
-                _functionSignatureId
-            ];
+            lib.getFunctionSignatureStorage().functionSignatureStorageSets[_policyId][_functionSignatureId];
+    }
+
+
+    /**
+     * Get all function signatures from storage.
+     * @param _policyId the policyId the function signatures are associated with
+     * @return functionSignatureStorageSets function signatures
+     */
+    function getAllFunctionSignatures(uint256 _policyId) public view returns (FunctionSignatureStorageSet[] memory) {
+        // Load the function signature data from storage
+        FunctionSignatureS storage data = lib.getFunctionSignatureStorage();
+        uint256 functionIdCount = data.functionIdCounter[_policyId];
+        FunctionSignatureStorageSet[] memory functionSignatureStorageSets = new FunctionSignatureStorageSet[](functionIdCount);
+        uint256 j = 0;
+        for (uint256 i = 0; i < functionIdCount; i++) {
+            if (data.functionSignatureStorageSets[_policyId][i].set) {
+                functionSignatureStorageSets[j] = data.functionSignatureStorageSets[_policyId][i];
+                j++;
+            }
+        }
+        return functionSignatureStorageSets;
     }
 
     /**
@@ -391,7 +431,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
             // Loop through all the passed in signatures for the policy      
             for (uint256 i = 0; i < _signatures.length; i++) {
                 // make sure that all the function signatures exist
-                if(!getFunctionSignature(_functionSignatureIds[i]).set) revert("Invalid Signature");
+                if(!getFunctionSignature(_policyId, _functionSignatureIds[i]).set) revert("Invalid Signature");
                 // Load into the mapping
                 data.policyStorageSets[_policyId].policy.functionSignatureIdMap[_signatures[i]] = _functionSignatureIds[i];
                 // load the iterator array
@@ -417,7 +457,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
             // Solely loop through and add signatures to the policy
             for (uint256 i = 0; i < _signatures.length; i++) {
                 // make sure that all the function signatures exist
-                if(!getFunctionSignature(_functionSignatureIds[i]).set) revert("Invalid Signature");
+                if(!getFunctionSignature(_policyId, _functionSignatureIds[i]).set) revert("Invalid Signature");
                 // Load into the mapping
                 data.policyStorageSets[_policyId].policy.functionSignatureIdMap[_signatures[i]] = _functionSignatureIds[i];
                 // load the iterator array

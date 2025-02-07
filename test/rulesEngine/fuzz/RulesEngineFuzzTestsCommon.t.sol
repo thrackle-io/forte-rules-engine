@@ -28,7 +28,7 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         pTypes[0] =PT.ADDR;
         pTypes[1] =PT.UINT;
         // Save the function signature
-        uint256 functionSignatureId = RulesEngineDataFacet(address(red)).updateFunctionSignature(0, bytes4(keccak256(bytes(functionSignature))),pTypes);
+        uint256 functionSignatureId = RulesEngineDataFacet(address(red)).createFunctionSignature(policyIds[0], bytes4(keccak256(bytes(functionSignature))),pTypes);
         // Save the Policy
         signatures.push(bytes4(keccak256(bytes(functionSignature))));  
         functionSignatureIds.push(functionSignatureId);

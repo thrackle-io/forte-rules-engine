@@ -162,8 +162,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[1] = PT.STR;
         // Save the function signature
         uint256 functionSignatureId = RulesEngineDataFacet(address(red))
-            .updateFunctionSignature(
-                0,
+            .createFunctionSignature(
+                policyIds[0],
                 bytes4(keccak256(bytes(functionSignature2))),
                 pTypes
             );
@@ -221,8 +221,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[1] = PT.STR;
         // Save the function signature
         uint256 functionSignatureId = RulesEngineDataFacet(address(red))
-            .updateFunctionSignature(
-                0,
+            .createFunctionSignature(
+                policyIds[0],
                 bytes4(keccak256(bytes(functionSignature2))),
                 pTypes
             );
@@ -896,7 +896,7 @@ contract RulesEngineCommon is DiamondMine, Test {
     ) internal returns (uint256) {
         // Save the function signature
         uint256 functionSignatureId = RulesEngineDataFacet(address(red))
-            .updateFunctionSignature(0, bytes4(_functionSignature), pTypes);
+            .createFunctionSignature(policyId, bytes4(_functionSignature), pTypes);
         // Save the Policy
         signatures.push(_functionSignature);
         functionSignatureIds.push(functionSignatureId);
