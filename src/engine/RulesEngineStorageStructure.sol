@@ -177,8 +177,8 @@ struct FunctionSignatureStorageSet {
 
 /// Rule Structures
 struct RuleS {
-    uint256 ruleId;
-    mapping(uint256 ruleId => RuleStorageSet) ruleStorageSets;
+    mapping(uint256 policyId => uint256 ruleId) ruleIdCounter;
+    mapping(uint256 policyId => mapping(uint256 ruleId => RuleStorageSet)) ruleStorageSets;
 }
 
 /**
@@ -193,8 +193,6 @@ struct RuleStorageSet {
  * Structure used to represent an individual rule
  */
 struct Rule {
-    // Controlling policy
-    uint256 policyId;
     // The instruction set that will be run at rule evaluation
     uint256[] instructionSet;
     // The raw format string and addresses for values in the instruction set that have already been converted to uint256.
