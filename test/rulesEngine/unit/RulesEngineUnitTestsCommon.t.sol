@@ -1898,17 +1898,59 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
+        bytes4 deletedSignature;
         uint256 policyId = _createBlankPolicy();
+        bytes4[] memory _functionSigs;
+        uint256[] memory _functionSigIds;
+        uint256[][] memory _ruleIds;
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
         uint256 functionSignatureId = RulesEngineDataFacet(address(red)).createFunctionSignature(policyId, bytes4(keccak256(bytes(functionSignature))), pTypes);
         assertEq(functionSignatureId, 0);
+        FunctionSignatureStorageSet memory matchingSignature = RulesEngineDataFacet(address(red)).getFunctionSignature(policyId, functionSignatureId);
+        assertEq(matchingSignature.signature, bytes4(keccak256(bytes(functionSignature))));
+
         RulesEngineDataFacet(address(red)).deleteFunctionSignature(policyId, functionSignatureId); 
         FunctionSignatureStorageSet memory sig = RulesEngineDataFacet(address(red)).getFunctionSignature(policyId, functionSignatureId);
-        console.log(sig.set);
         assertEq(sig.set, false);
         assertEq(sig.signature, bytes4(""));
+    }
+
+    function testRulesEngine_Unit_deleteFunctionSignatureMultiple_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        bytes4 deletedSignature;
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory _functionSigs;
+        uint256[] memory _functionSigIds;
+        uint256[][] memory _ruleIds;
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+        uint256 functionSignatureId = RulesEngineDataFacet(address(red)).createFunctionSignature(policyId, bytes4(keccak256(bytes(functionSignature))), pTypes);
+        assertEq(functionSignatureId, 0);
+        uint256 functionSignatureId2 = RulesEngineDataFacet(address(red)).createFunctionSignature(policyId, bytes4(keccak256(bytes(functionSignature2))), pTypes);
+        assertEq(functionSignatureId2, 1);
+        FunctionSignatureStorageSet memory matchingSignature = RulesEngineDataFacet(address(red)).getFunctionSignature(policyId, functionSignatureId);
+        assertEq(matchingSignature.signature, bytes4(keccak256(bytes(functionSignature))));
+
+        FunctionSignatureStorageSet memory matchingSignature2 = RulesEngineDataFacet(address(red)).getFunctionSignature(policyId, functionSignatureId2);
+        assertEq(matchingSignature2.signature, bytes4(keccak256(bytes(functionSignature2))));
+
+        RulesEngineDataFacet(address(red)).deleteFunctionSignature(policyId, functionSignatureId); 
+        FunctionSignatureStorageSet memory sig = RulesEngineDataFacet(address(red)).getFunctionSignature(policyId, functionSignatureId);
+        assertEq(sig.set, false);
+        assertEq(sig.signature, bytes4(""));
+
+        FunctionSignatureStorageSet memory matchingSignature3 = RulesEngineDataFacet(address(red)).getFunctionSignature(policyId, functionSignatureId2);
+        assertEq(matchingSignature3.signature, bytes4(keccak256(bytes(functionSignature2))));
+
+        //check that policy signatures array is resized to 1 
+        (_functionSigs, _functionSigIds, _ruleIds) = RulesEngineDataFacet(address(red)).getPolicy(policyId);
+        assertEq(_functionSigs.length, 1);
     }
 
     function testRulesEngine_Unit_deleteFunctionSignature_Negative()
