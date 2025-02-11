@@ -272,13 +272,14 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.instructionSet[6] = 1;
 
         rule.effectPlaceHolders = new Placeholder[](2);
+        rule.effectPlaceHolders[0].pType = PT.UINT;
         rule.effectPlaceHolders[0].foreignCall = true;
-        rule.effectPlaceHolders[0].typeSpecificIndex = 0;
+        rule.effectPlaceHolders[0].typeSpecificIndex = 1;
         rule.effectPlaceHolders[1].pType = PT.UINT;
         rule.effectPlaceHolders[1].trackerValue = true;
-        rule.effectPlaceHolders[1].typeSpecificIndex = 0;
+        rule.effectPlaceHolders[1].typeSpecificIndex = 1;
 
-        ruleId = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 0, rule);
+        ruleId = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule);
 
         //build tracker
         Trackers memory tracker;
@@ -335,7 +336,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].foreignCall = true;
-        rule.placeHolders[0].typeSpecificIndex = 0;
+        rule.placeHolders[0].typeSpecificIndex = 1;
 
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(_amount);
@@ -720,7 +721,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders[0].typeSpecificIndex = 1;
         rule.placeHolders[1].pType = PT.UINT;
         rule.placeHolders[1].trackerValue = true;
-        rule.placeHolders[1].typeSpecificIndex = 0;
+        rule.placeHolders[1].typeSpecificIndex = 1;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
@@ -1037,7 +1038,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         effect.instructionSet[5] = 0;
         effect.instructionSet[6] = 1;
         effect.instructionSet[7] = uint(LC.TRU);
-        effect.instructionSet[8] = 0;
+        effect.instructionSet[8] = 1;
         effect.instructionSet[9] = 2;
 
         return effect;
@@ -1099,7 +1100,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](1); 
         rule.placeHolders[0].foreignCall = true;
-        rule.placeHolders[0].typeSpecificIndex = 0;
+        rule.placeHolders[0].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(transferValue);
         rule.negEffects = new Effect[](1);
@@ -1139,7 +1140,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](1); 
         rule.placeHolders[0].foreignCall = true;
-        rule.placeHolders[0].typeSpecificIndex = 0;
+        rule.placeHolders[0].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(transferValue);
         rule.negEffects = new Effect[](1);
@@ -1175,7 +1176,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](1); 
         rule.placeHolders[0].foreignCall = true;
-        rule.placeHolders[0].typeSpecificIndex = 0;
+        rule.placeHolders[0].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(transferValue);
         rule.negEffects = new Effect[](1);
@@ -1193,7 +1194,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.returnType = PT.UINT;
-        fc.foreignCallIndex = 0;
+
         RulesEngineDataFacet(address(red)).createForeignCall(policyIds[0], fc);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;

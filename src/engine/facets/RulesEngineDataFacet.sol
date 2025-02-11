@@ -27,13 +27,11 @@ contract RulesEngineDataFacet is FacetCommonImports {
     ) external policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         // Load the Foreign Call data from storage
         ForeignCallS storage data = lib.getForeignCallStorage();
-        uint256 foreignCallIndex = data.foreignCallIdxCounter[_policyId];
+        uint256 foreignCallIndex = ++data.foreignCallIdxCounter[_policyId];
         ForeignCall memory fc = _foreignCall;
         fc.foreignCallIndex = foreignCallIndex;
         _storeForeignCall(_policyId, fc);
-        unchecked {
-            ++data.foreignCallIdxCounter[_policyId];
-        }
+        data.foreignCallIdxCounter[_policyId] = foreignCallIndex;
         emit ForeignCallCreated(_policyId, foreignCallIndex);
         return foreignCallIndex;
     }
@@ -98,7 +96,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         uint256 foreignCallCount = lib.getForeignCallStorage().foreignCallIdxCounter[_policyId];
         ForeignCall[] memory foreignCalls = new ForeignCall[](foreignCallCount);
         uint256 j = 0;
-        for (uint256 i = 0; i < foreignCallCount; i++) {
+        for (uint256 i = 1; i <= foreignCallCount; i++) {
             if (lib.getForeignCallStorage().foreignCalls[_policyId][i].set) {
                 foreignCalls[j] = lib.getForeignCallStorage().foreignCalls[_policyId][i];
                 j++;
@@ -120,11 +118,9 @@ contract RulesEngineDataFacet is FacetCommonImports {
     ) public policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         // Load the Tracker data from storage
         TrackerS storage data = lib.getTrackerStorage();
-        uint256 trackerIndex = data.trackerIndexCounter[_policyId];
+        uint256 trackerIndex = ++data.trackerIndexCounter[_policyId];
         _storeTracker(data, _policyId, trackerIndex, _tracker);
-        unchecked {
-            ++data.trackerIndexCounter[_policyId];
-        }
+        data.trackerIndexCounter[_policyId] = trackerIndex;
         return trackerIndex;
     }
 
@@ -184,7 +180,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         uint256 trackerCount = data.trackerIndexCounter[_policyId];
         Trackers[] memory trackers = new Trackers[](trackerCount);
         uint256 j = 0;
-        for (uint256 i = 0; i < trackerCount; i++) {
+        for (uint256 i = 1; i <= trackerCount; i++) {
             if (data.trackers[_policyId][i].set) {
                 trackers[j] = data.trackers[_policyId][i];
                 j++;
@@ -329,15 +325,16 @@ contract RulesEngineDataFacet is FacetCommonImports {
      */
     function createRule(uint256 _policyId, Rule calldata _rule) public policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         RuleS storage data = lib.getRuleStorage();
-        uint256 ruleId = data.ruleIdCounter[_policyId];
-        unchecked {
-            data.ruleIdCounter[_policyId]++;
-        }
-        return _storeRule(data, _policyId, ruleId, _rule);
+        uint256 ruleId = ++data.ruleIdCounter[_policyId];
+        _storeRule(data, _policyId, ruleId, _rule);
+        data.ruleIdCounter[_policyId] = ruleId;
+        return ruleId;
     }
 
     /**
      * Add a rule to storage.
+     * @param _data the rule storage
+     * @param _policyId the policyId the rule is associated with
      * @param _ruleId the ruleId to add
      * @param _rule the rule to add
      * @return ruleId the generated ruleId
@@ -433,7 +430,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
     function createPolicy(FunctionSignatureStorageSet[] calldata _functionSignatures, Rule[] calldata _rules) public returns(uint256) {
         // retrieve Policy Storage 
         PolicyS storage data = lib.getPolicyStorage();
-        uint256 policyId; 
+        uint256 policyId = data.policyId; 
         // If this is the first policy created increment by 1 to start id counter. 
         unchecked{
             ++data.policyId;

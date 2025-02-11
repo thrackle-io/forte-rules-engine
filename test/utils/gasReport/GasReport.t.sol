@@ -217,7 +217,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](2);
         rule.placeHolders[0].foreignCall = true;
-        rule.placeHolders[0].typeSpecificIndex = 0;
+        rule.placeHolders[0].typeSpecificIndex = 1;
         rule.placeHolders[1].pType = PT.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1;
 
@@ -288,7 +288,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Build the foreign call placeholder
         rule1.placeHolders = new Placeholder[](2);
         rule1.placeHolders[0].foreignCall = true;
-        rule1.placeHolders[0].typeSpecificIndex = 0;
+        rule1.placeHolders[0].typeSpecificIndex = 1;
         rule1.placeHolders[1].pType = PT.UINT;
         rule1.placeHolders[1].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
@@ -363,7 +363,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Build the foreign call placeholder
         rule1.placeHolders = new Placeholder[](2);
         rule1.placeHolders[0].foreignCall = true;
-        rule1.placeHolders[0].typeSpecificIndex = 0;
+        rule1.placeHolders[0].typeSpecificIndex = 1;
         rule1.placeHolders[1].pType = PT.UINT;
         rule1.placeHolders[1].typeSpecificIndex = 1;
 
@@ -448,7 +448,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Build the foreign call placeholder
         rule1.placeHolders = new Placeholder[](2);
         rule1.placeHolders[0].foreignCall = true;
-        rule1.placeHolders[0].typeSpecificIndex = 0;
+        rule1.placeHolders[0].typeSpecificIndex = 1;
         rule1.placeHolders[1].pType = PT.UINT;
         rule1.placeHolders[1].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
@@ -540,7 +540,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             // Build the foreign call placeholder
             rule1.placeHolders = new Placeholder[](2);
             rule1.placeHolders[0].foreignCall = true;
-            rule1.placeHolders[0].typeSpecificIndex = 0;
+            rule1.placeHolders[0].typeSpecificIndex = 1;
             rule1.placeHolders[1].pType = PT.UINT;
             rule1.placeHolders[1].typeSpecificIndex = 1;
             // Build the instruction set for the rule (including placeholders)

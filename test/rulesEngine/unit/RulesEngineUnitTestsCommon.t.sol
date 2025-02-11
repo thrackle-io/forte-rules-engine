@@ -159,7 +159,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].foreignCall = true;
-        rule.placeHolders[0].typeSpecificIndex = 0;
+        rule.placeHolders[0].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(ruleValue);
         // Build the mapping between calling function arguments and foreign call arguments
@@ -221,7 +221,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].foreignCall = true;
-        rule.placeHolders[0].typeSpecificIndex = 0;
+        rule.placeHolders[0].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(ruleValue);
         // Build the mapping between calling function arguments and foreign call arguments
@@ -428,7 +428,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         );
         Trackers memory tracker = RulesEngineDataFacet(address(red)).getTracker(
             policyId,
-            0
+            1
         );
         assertEq(tracker.trackerValue, abi.encode(7));
     }
@@ -1338,7 +1338,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertTrue(retVal);
 
         Trackers memory testTracker = RulesEngineDataFacet(address(red))
-            .getTracker(policyId, 0);
+            .getTracker(policyId, 1);
 
         assertTrue(abi.decode(testTracker.trackerValue, (uint256)) == 2);
         assertFalse(abi.decode(testTracker.trackerValue, (uint256)) == 3);
@@ -1371,7 +1371,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders[0].typeSpecificIndex = 1;
         rule.placeHolders[1].pType = PT.UINT;
         rule.placeHolders[1].foreignCall = true;
-        rule.placeHolders[1].typeSpecificIndex = 0;
+        rule.placeHolders[1].typeSpecificIndex = 1;
 
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 0, rule);
 
@@ -1411,7 +1411,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders[0].typeSpecificIndex = 1;
         rule.placeHolders[1].pType = PT.UINT;
         rule.placeHolders[1].trackerValue = true;
-        rule.placeHolders[1].typeSpecificIndex = 0;
+        rule.placeHolders[1].typeSpecificIndex = 1;
 
         uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 0, rule);
 
@@ -1469,7 +1469,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].foreignCall = true;
-        rule.placeHolders[0].typeSpecificIndex = 0;
+        rule.placeHolders[0].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(4);
         // Build the mapping between calling function arguments and foreign call arguments
@@ -2384,16 +2384,16 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         
         ForeignCall[] memory foreignCalls = RulesEngineDataFacet(address(red)).getAllForeignCalls(policyId);
         assertEq(foreignCalls.length, 10);
-        RulesEngineDataFacet(address(red)).deleteForeignCall(policyId, 2);
+        RulesEngineDataFacet(address(red)).deleteForeignCall(policyId, 3);
 
         foreignCalls = RulesEngineDataFacet(address(red)).getAllForeignCalls(policyId);
         assertEq(foreignCalls.length, 10);
 
-        for (uint256 i = 0; i < 9; i++) {
+        for (uint256 i = 0; i < foreignCalls.length - 1; i++) {
             if (i >= 2) {
-                assertEq(foreignCalls[i].foreignCallIndex, i + 1);
+                assertEq(foreignCalls[i].foreignCallIndex, i + 2);
             } else {
-                assertEq(foreignCalls[i].foreignCallIndex, i);
+                assertEq(foreignCalls[i].foreignCallIndex, i + 1);
             }
         }
     }
@@ -2415,11 +2415,11 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         Trackers[] memory trackers = RulesEngineDataFacet(address(red)).getAllTrackers(policyId);
         assertEq(trackers.length, 10);
-        RulesEngineDataFacet(address(red)).deleteTracker(policyId, 2);
+        RulesEngineDataFacet(address(red)).deleteTracker(policyId, 3);
 
         trackers = RulesEngineDataFacet(address(red)).getAllTrackers(policyId);
         assertEq(trackers.length, 10);
-        for (uint256 i = 0; i < 9; i++) {
+        for (uint256 i = 0; i < trackers.length - 1; i++) {
             if (i >= 2) {
                 assertEq(trackers[i].trackerValue, abi.encode(uint256(i + 1)));
             } else {
