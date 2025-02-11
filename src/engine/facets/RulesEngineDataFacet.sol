@@ -256,6 +256,15 @@ contract RulesEngineDataFacet is FacetCommonImports {
     }
 
     /**
+     * Delete a function signature from storage.
+     * @param _policyId the policyId the functionSignatureId belongs to
+     * @param _functionSignatureId the index of the functionSignature to delete
+     */
+    function deleteFunctionSignature(uint256 _policyId, uint256 _functionSignatureId) public policyAdminOnly(_policyId, msg.sender) {
+        delete lib.getFunctionSignatureStorage().functionSignatureStorageSets[_policyId][_functionSignatureId];
+    }
+
+    /**
      * Get a function signature from storage.
      * @param _policyId the policyId the function signature is associated with
      * @param _functionSignatureId functionSignatureId
@@ -391,13 +400,12 @@ contract RulesEngineDataFacet is FacetCommonImports {
 
     /**
      * Add a Policy to Storage and create the policy admin for the policy 
-     * @param _signatures all signatures in the policy
-     * @param _functionSignatureIds corresponding signature ids in the policy. The elements in this array are one to one matches of the elements in _signatures array. They store the functionSignatureId for each of the signatures in _signatures array.
-     * @param _ruleIds two dimensional array of the rules. This array contains a simple count at first level and the second level is the array of ruleId's within the policy.
+     * @param _functionSignatures corresponding signature ids in the policy. The elements in this array are one to one matches of the elements in _signatures array. They store the functionSignatureId for each of the signatures in _signatures array.
+     * @param _rules two dimensional array of the rules. This array contains a simple count at first level and the second level is the array of ruleId's within the policy.
      * @return policyId generated policyId
      * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
      */
-    function createPolicy(bytes4[] calldata _signatures, uint256[] calldata _functionSignatureIds, uint256[][] calldata _ruleIds) public returns(uint256) {
+    function createPolicy(FunctionSignatureStorageSet[] calldata _functionSignatures, Rule[] calldata _rules) public returns(uint256) {
         // retrieve Policy Storage 
         PolicyS storage data = lib.getPolicyStorage();
         uint256 policyId; 
@@ -409,8 +417,12 @@ contract RulesEngineDataFacet is FacetCommonImports {
         data.policyStorageSets[policyId].set = true;
         //This function is called as an external call intentionally. This allows for proper gating on the generatePolicyAdminRole fn to only be callable by the RulesEngine address. 
         RulesEngineAdminRolesFacet(address(this)).generatePolicyAdminRole(policyId, address(msg.sender));
-
-        return _storePolicyData(policyId, _signatures, _functionSignatureIds, _ruleIds);
+        //TODO remove this when create policy is atomic 
+        // Temporarily disabling _storePolicyData
+        // return _storePolicyData(policyId, _functionSignatures, _rules);
+        _functionSignatures;
+        _rules;
+        return policyId;
     }
 
     /**

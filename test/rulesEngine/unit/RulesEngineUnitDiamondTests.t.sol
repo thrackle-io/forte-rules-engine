@@ -145,10 +145,9 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         instructionSet[6] = 1;
     }
      function _createBlankPolicy() internal returns (uint256) {
-        bytes4[] memory blankSignatures = new bytes4[](0);
-        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
-        uint256[][] memory blankRuleIds = new uint256[][](0);
-        uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(blankSignatures, blankFunctionSignatureIds, blankRuleIds);
+        FunctionSignatureStorageSet[] memory functionSignatures = new FunctionSignatureStorageSet[](0); 
+        Rule[] memory rules = new Rule[](0); 
+        uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(functionSignatures, rules);
         return policyId;
     }
 
