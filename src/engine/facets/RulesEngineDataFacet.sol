@@ -475,7 +475,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
                 data.policyStorageSets[_policyId].policy.signatures.push(_signatures[i]);
                 // make sure that all the rules attached to each function signature exist
                 for (uint256 j = 0; j < _ruleIds[i].length; j++) {
-                    RuleStorageSet memory ruleStore = getRule(_ruleIds[i][j]);
+                    RuleStorageSet memory ruleStore = getRule(_policyId, _ruleIds[i][j]);
                     if(!ruleStore.set) revert("Invalid Rule");
                     for (uint256 k = 0; k < ruleStore.rule.placeHolders.length; k++) {
                         if(ruleStore.rule.placeHolders[k].foreignCall) {

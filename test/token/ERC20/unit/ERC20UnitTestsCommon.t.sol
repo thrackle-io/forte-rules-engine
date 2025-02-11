@@ -128,9 +128,8 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         Rule memory rule =  _createGTRuleTransferFrom(4);
         rule.negEffects[0] = effectId_revert;
         rule.posEffects[0] = effectId_event;
-        rule.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 0, rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
@@ -149,9 +148,8 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         Rule memory rule =  _createGTRuleMint(4);
         rule.negEffects[0] = effectId_revert;
         rule.posEffects[0] = effectId_event;
-        rule.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 0, rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;

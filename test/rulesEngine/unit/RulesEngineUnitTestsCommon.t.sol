@@ -77,9 +77,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType = PT.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
-        rule.policyId = policyId;
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyId, 0, rule);
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
@@ -166,9 +165,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Build the mapping between calling function arguments and foreign call arguments
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
-        rule.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 0, rule);
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
         uint8[] memory typeSpecificIndices = new uint8[](1);
@@ -229,9 +227,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Build the mapping between calling function arguments and foreign call arguments
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
-        rule.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 0, rule);
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
         uint8[] memory typeSpecificIndices = new uint8[](1);
@@ -325,7 +322,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         uint256 ruleId = setupRuleWithStringComparison();
         StringVerificationStruct memory retVal = RulesEngineMainFacet(
             address(red)
-        ).retrieveRawStringFromInstructionSet(ruleId, 3);
+        ).retrieveRawStringFromInstructionSet(1, ruleId, 3);
         console2.log(retVal.instructionSetValue);
         console2.log(retVal.rawData);
         assertEq(
@@ -370,7 +367,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         uint256 ruleId = setupRuleWithAddressComparison();
         AddressVerificationStruct memory retVal = RulesEngineMainFacet(
             address(red)
-        ).retrieveRawAddressFromInstructionSet(ruleId, 3);
+        ).retrieveRawAddressFromInstructionSet(1, ruleId, 3);
         console2.log(retVal.instructionSetValue);
         console2.log(retVal.rawData);
         assertEq(
@@ -1375,9 +1372,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders[1].pType = PT.UINT;
         rule.placeHolders[1].foreignCall = true;
         rule.placeHolders[1].typeSpecificIndex = 0;
-        rule.policyId = policyIds[0];
 
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 0, rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -1416,9 +1412,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders[1].pType = PT.UINT;
         rule.placeHolders[1].trackerValue = true;
         rule.placeHolders[1].typeSpecificIndex = 0;
-        rule.policyId = policyIds[0];
 
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 0, rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -1480,9 +1475,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Build the mapping between calling function arguments and foreign call arguments
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
-        rule.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 0, rule);
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
@@ -2516,10 +2510,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.negEffects[0] = effectId_revert;
         rule.posEffects = new Effect[](1);
         rule.posEffects[0] = effectId_event;
-        rule.policyId = policyIds[0];        
 
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0, rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 0, rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -2552,12 +2545,11 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.negEffects[0] = effectId_revert;
         rule.posEffects = new Effect[](1);
         rule.posEffects[0] = effectId_event;
-        rule.policyId = policyId;
 
         // Change to non policy admin user
         vm.startPrank(NOT_POLICY_ADMIN_USER);
         vm.expectRevert("Not Authorized To Policy");
         // Attempt to Save the rule
-        RulesEngineDataFacet(address(red)).updateRule(0,rule);
+        RulesEngineDataFacet(address(red)).updateRule(policyId, 0, rule);
     }
 }

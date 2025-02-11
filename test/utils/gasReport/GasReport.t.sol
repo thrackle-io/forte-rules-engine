@@ -233,9 +233,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         // Swapping isPositive to make sure the revert doesn't trigger (for comparison with V1 numbers)
         rule = _setUpEffect(rule, _effectType, !isPositive);
-        rule.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 0, rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -305,14 +304,12 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule1.instructionSet[6] = 1;
 
         rule1 = _setUpEffect(rule1, _effectType, isPositive);
-        rule1.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId1 = RulesEngineDataFacet(address(red)).createRule(rule1);
-        rule2 = _createGTRule(policyIds[0], 4);
+        uint256 ruleId1 = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 0, rule1);
+        rule2 = _createGTRule(4);
         // Swapping from posEffect to negEffects to make sure the revert doesn't trigger (for comparison with V1 numbers)
         rule2.negEffects[0] = effectId_revert;
-        rule2.policyId = policyIds[0];
-        uint256 ruleId2 = RulesEngineDataFacet(address(red)).createRule(rule2);
+        uint256 ruleId2 = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 1, rule2);
 
         ruleIds.push(new uint256[](2));
         ruleIds[0][0] = ruleId1;
@@ -390,9 +387,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule1.instructionSet[16] = 5;
         // Swapping isPositive to make sure the revert doesn't trigger (for comparison with V1 numbers)
         rule1 = _setUpEffect(rule1, _effectType, !isPositive);
-        rule1.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId1 = RulesEngineDataFacet(address(red)).createRule(rule1);
+        uint256 ruleId1 = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 0, rule1);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId1;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
@@ -467,14 +463,12 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule1.instructionSet[5] = 0;
         rule1.instructionSet[6] = 1;
         rule1 = _setUpEffect(rule1, _effectType, isPositive);
-        rule1.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId1 = RulesEngineDataFacet(address(red)).createRule(rule1);
-        rule2 = _createGTRule(policyIds[1], 4);
+        uint256 ruleId1 = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 0, rule1);
+        rule2 = _createGTRule(4);
         // Swapping from posEffects to negEffects to make sure the revert doesn't trigger (for comparison with V1 numbers)
         rule2.negEffects[0] = effectId_revert;
-        rule2.policyId = policyIds[1];
-        uint256 ruleId2 = RulesEngineDataFacet(address(red)).createRule(rule2);
+        uint256 ruleId2 = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 1, rule2);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId1;
@@ -487,10 +481,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signaturesNew, functionSignatureIdsNew, ruleIds);
 
         // Add rules for the second policy
-        rule1.policyId = policyIds[1];
-        ruleId1 = RulesEngineDataFacet(address(red)).createRule(rule1);
-        rule2.policyId = policyIds[1];
-        ruleId2 = RulesEngineDataFacet(address(red)).createRule(rule2);
+        ruleId1 = RulesEngineDataFacet(address(red)).updateRule(policyIds[1], 0, rule1);
+        ruleId2 = RulesEngineDataFacet(address(red)).updateRule(policyIds[1], 1, rule2);
         ruleIds[0][0] = ruleId2;
 
         RulesEngineDataFacet(address(red)).updatePolicy(policyIds[1], signaturesNew, functionSignatureIdsNew, ruleIds);
@@ -563,18 +555,15 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             rule1.instructionSet[5] = 0;
             rule1.instructionSet[6] = 1;
             rule1 = _setUpEffect(rule1, _effectType, isPositive);
-            rule1.policyId = policyIds[0];
             // Save the rule
-            uint256 ruleId1 = RulesEngineDataFacet(address(red)).createRule(rule1);
-            rule2 = _createGTRule(policyIds[0], 4);
-            rule3 = _createLTRule(policyIds[0]);
+            uint256 ruleId1 = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 0, rule1);
+            rule2 = _createGTRule(4);
+            rule3 = _createLTRule();
             rule2.posEffects[0] = effectId_revert;
-            rule2.policyId = policyIds[0];
             // Swapping from posEffect to negEffects to make sure the revert doesn't trigger (for comparison with V1 numbers)
             rule3.negEffects[0] = effectId_revert;
-            rule3.policyId = policyIds[0];
-            uint256 ruleId2 = RulesEngineDataFacet(address(red)).createRule(rule2);
-            uint256 ruleId3 = RulesEngineDataFacet(address(red)).createRule(rule3);
+            uint256 ruleId2 = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 1, rule2);
+            uint256 ruleId3 = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 2, rule3);
             ruleIds.push(new uint256[](3));
             ruleIds[0][0] = ruleId1;
             ruleIds[0][1] = ruleId2;
@@ -859,9 +848,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule.instructionSet[193] = 59;
 
         rule.posEffects[0] = effectId_revert;
-        rule.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 0, rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -909,9 +897,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule.instructionSet[6] = 1;
 
         rule.posEffects[0] = effectId_event;
-        rule.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 0, rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;

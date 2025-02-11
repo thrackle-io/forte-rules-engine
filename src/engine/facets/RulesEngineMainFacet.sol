@@ -49,10 +49,10 @@ contract RulesEngineMainFacet is FacetCommonImports{
         // to rule specific argument array
         // note that arguments is being sliced, first 4 bytes are the function signature being passed (:4) and the rest (4:) 
         // are all the arguments associated for the rule to be invoked. This saves on further calculations so that we don't need to factor in the signature.
-        retVal = evaluateRulesAndExecuteEffects(ruleData ,_policyId, _loadApplicableRules(ruleData,policyStorageSet.policy, bytes4(arguments[:4])), arguments[4:]);
+        retVal = evaluateRulesAndExecuteEffects(ruleData ,_policyId, _loadApplicableRules(ruleData, policyStorageSet.policy, _policyId, bytes4(arguments[:4])), arguments[4:]);
     }
 
-    function _loadApplicableRules(RuleS storage ruleData, Policy storage policy, bytes4 functionSignature) internal view returns(uint256[] memory){
+    function _loadApplicableRules(RuleS storage ruleData, Policy storage policy, uint256 _policyId, bytes4 functionSignature) internal view returns(uint256[] memory){
         // Load the policy data from storage
         uint256[] memory applicableRules = new uint256[](policy.signatureToRuleIds[functionSignature].length);
 
@@ -60,7 +60,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
         // RuleS storage ruleData = lib.getRuleStorage();
 
         for(uint256 i = 0; i < applicableRules.length; i++) {
-            if(ruleData.ruleStorageSets[policy.signatureToRuleIds[functionSignature][i]].set) {
+            if(ruleData.ruleStorageSets[_policyId][policy.signatureToRuleIds[functionSignature][i]].set) {
                 applicableRules[i] = policy.signatureToRuleIds[functionSignature][i];
             }
         }
@@ -74,9 +74,9 @@ contract RulesEngineMainFacet is FacetCommonImports{
         for(uint256 i = 0; i < applicableRules.length; i++) { 
             if(!evaluateIndividualRule(ruleData, _policyId, applicableRules[i], functionSignatureArgs)) {
                 retVal = false;
-                doEffects(ruleData, _policyId, applicableRules[i], ruleData.ruleStorageSets[applicableRules[i]].rule.negEffects, functionSignatureArgs);
+                doEffects(ruleData, _policyId, applicableRules[i], ruleData.ruleStorageSets[_policyId][applicableRules[i]].rule.negEffects, functionSignatureArgs);
             } else{
-                doEffects(ruleData, _policyId, applicableRules[i], ruleData.ruleStorageSets[applicableRules[i]].rule.posEffects, functionSignatureArgs);
+                doEffects(ruleData, _policyId, applicableRules[i], ruleData.ruleStorageSets[_policyId][applicableRules[i]].rule.posEffects, functionSignatureArgs);
 
             }
         }
@@ -92,16 +92,16 @@ contract RulesEngineMainFacet is FacetCommonImports{
      */
     function evaluateIndividualRule(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, bytes calldata functionSignatureArgs) internal returns (bool response) {
         (bytes[] memory ruleArgs, Placeholder[] memory placeholders) = buildArguments(ruleData, _policyId, applicableRule, functionSignatureArgs, false);
-        response = run(ruleData.ruleStorageSets[applicableRule].rule.instructionSet, placeholders, _policyId, ruleArgs);
+        response = run(ruleData.ruleStorageSets[_policyId][applicableRule].rule.instructionSet, placeholders, _policyId, ruleArgs);
     }
 
     function buildArguments(RuleS storage ruleData, uint256 _policyId, uint256 applicableRule, bytes calldata functionSignatureArgs, bool effect) internal returns (bytes[] memory, Placeholder[] memory) {
         Placeholder[] memory placeHolders;
 
         if(effect) {
-            placeHolders = ruleData.ruleStorageSets[applicableRule].rule.effectPlaceHolders;
+            placeHolders = ruleData.ruleStorageSets[_policyId][applicableRule].rule.effectPlaceHolders;
         } else {
-            placeHolders = ruleData.ruleStorageSets[applicableRule].rule.placeHolders;
+            placeHolders = ruleData.ruleStorageSets[_policyId][applicableRule].rule.placeHolders;
         }       
 
         bytes[] memory retVals = new bytes[](placeHolders.length);
@@ -437,8 +437,8 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @param _ruleId the id of the rule the values belong to
      * @param instructionSetId the index into the instruction set where the converted value lives
      */
-    function retrieveRawStringFromInstructionSet(uint256 _ruleId, uint256 instructionSetId) public view returns (StringVerificationStruct memory retVal) {
-        (uint256 instructionSetValue, bytes memory encoded) = retreiveRawEncodedFromInstructionSet(_ruleId, instructionSetId, PT.STR);
+    function retrieveRawStringFromInstructionSet(uint256 _policyId, uint256 _ruleId, uint256 instructionSetId) public view returns (StringVerificationStruct memory retVal) {
+        (uint256 instructionSetValue, bytes memory encoded) = retreiveRawEncodedFromInstructionSet(_policyId, _ruleId, instructionSetId, PT.STR);
         retVal.rawData = abi.decode(encoded, (string));
         retVal.instructionSetValue = instructionSetValue;
     }
@@ -446,11 +446,12 @@ contract RulesEngineMainFacet is FacetCommonImports{
 
     /**
      * @dev Retrieves the instruction set and raw address representations of a value 
+     * @param _policyId the id of the policy the values belong to
      * @param _ruleId the id of the rule the values belong to
      * @param instructionSetId the index into the instruction set where the converted value lives
      */
-    function retrieveRawAddressFromInstructionSet(uint256 _ruleId, uint256 instructionSetId) public view returns (AddressVerificationStruct memory retVal) {
-        (uint256 instructionSetValue, bytes memory encoded) = retreiveRawEncodedFromInstructionSet(_ruleId, instructionSetId, PT.ADDR);
+    function retrieveRawAddressFromInstructionSet(uint256 _policyId, uint256 _ruleId, uint256 instructionSetId) public view returns (AddressVerificationStruct memory retVal) {
+        (uint256 instructionSetValue, bytes memory encoded) = retreiveRawEncodedFromInstructionSet(_policyId, _ruleId, instructionSetId, PT.ADDR);
         retVal.rawData = abi.decode(encoded, (address));
         retVal.instructionSetValue = instructionSetValue;
     }
@@ -461,8 +462,8 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @param instructionSetId the index into the instruction set where the converted value lives
      * @param pType the parameter type of the value
      */
-    function retreiveRawEncodedFromInstructionSet(uint256 _ruleId, uint256 instructionSetId, PT pType) internal view returns (uint256 instructionSetValue, bytes memory encoded) {
-        RuleStorageSet memory _ruleStorage = lib.getRuleStorage().ruleStorageSets[_ruleId];
+    function retreiveRawEncodedFromInstructionSet(uint256 _policyId, uint256 _ruleId, uint256 instructionSetId, PT pType) internal view returns (uint256 instructionSetValue, bytes memory encoded) {
+        RuleStorageSet memory _ruleStorage = lib.getRuleStorage().ruleStorageSets[_policyId][_ruleId];
         if(!_ruleStorage.set) {
             revert("Unknown Rule");
         }

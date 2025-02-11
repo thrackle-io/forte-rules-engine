@@ -93,10 +93,9 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType = PT.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
-        rule.policyId = policyId;
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
-        RuleStorageSet memory rss = RulesEngineDataFacet(address(red)).getRule(ruleId);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyId, 0, rule);
+        RuleStorageSet memory rss = RulesEngineDataFacet(address(red)).getRule(policyId, ruleId);
         assertEq(rss.rule.placeHolders[0].typeSpecificIndex, 1);
     }
 
@@ -119,9 +118,8 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType = PT.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
-        rule.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 0, rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
