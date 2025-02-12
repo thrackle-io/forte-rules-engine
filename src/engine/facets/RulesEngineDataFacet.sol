@@ -274,14 +274,8 @@ contract RulesEngineDataFacet is FacetCommonImports {
         FunctionSignatureStorageSet[] memory functionSignatureStructs = getAllFunctionSignatures(_policyId);
         // reset signature array for policy
         for(uint256 j; j < functionSignatureStructs.length; j++) {
-            console.log("signature");
-            console.logBytes4(functionSignatureStructs[j].signature);
-            console.log("set");
-            console.log(functionSignatureStructs[j].set);
             if(functionSignatureStructs[j].set) {
                 data.policy.signatures.push(functionSignatureStructs[j].signature);
-                console.log("signature");
-                console.logBytes4(functionSignatureStructs[j].signature);
             }
         }
     }
