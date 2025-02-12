@@ -28,7 +28,7 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         pTypes[0] =PT.ADDR;
         pTypes[1] =PT.UINT;
         // Save the function signature
-        uint256 functionSignatureId = RulesEngineDataFacet(address(red)).updateFunctionSignature(0, bytes4(keccak256(bytes(functionSignature))),pTypes);
+        uint256 functionSignatureId = RulesEngineDataFacet(address(red)).createFunctionSignature(policyIds[0], bytes4(keccak256(bytes(functionSignature))),pTypes);
         // Save the Policy
         signatures.push(bytes4(keccak256(bytes(functionSignature))));  
         functionSignatureIds.push(functionSignatureId);
@@ -54,10 +54,9 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         testAddressArray.push(newPolicyAdmin);
 
         vm.startPrank(policyAdmin); 
-        bytes4[] memory blankSignatures = new bytes4[](0);
-        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
-        uint256[][] memory blankRuleIds = new uint256[][](0);
-        uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(blankSignatures, blankFunctionSignatureIds, blankRuleIds);
+        FunctionSignatureStorageSet[] memory functionSignatures = new FunctionSignatureStorageSet[](0); 
+        Rule[] memory rules = new Rule[](0);
+        uint256 policyID = _createBlankPolicy();
 
         address sender = testAddressArray[addrIndex % testAddressArray.length];
         vm.stopPrank();
@@ -68,7 +67,7 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
             vm.stopPrank();
             vm.startPrank(newPolicyAdmin); 
             RulesEngineAdminRolesFacet(address(red)).confirmNewPolicyAdmin(policyID);
-            RulesEngineDataFacet(address(red)).createPolicy(blankSignatures, blankFunctionSignatureIds, blankRuleIds);
+            RulesEngineDataFacet(address(red)).createPolicy(functionSignatures, rules);
         } else {
             vm.expectRevert(abi.encodeWithSignature("NotPolicyAdmin()"));
             RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID);

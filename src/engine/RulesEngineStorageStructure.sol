@@ -165,8 +165,8 @@ struct Trackers {
 
 /// Function Signature Structures
 struct FunctionSignatureS {
-    uint256 functionId;
-    mapping(uint256 functionId => FunctionSignatureStorageSet) functionSignatureStorageSets;
+    mapping(uint256 policyId => uint256 functionId) functionIdCounter;
+    mapping(uint256 policyId => mapping(uint256 functionId => FunctionSignatureStorageSet)) functionSignatureStorageSets;
 }
 
 struct FunctionSignatureStorageSet {

@@ -21,3 +21,22 @@ contract ExampleUserContract is RulesEngineClient {
     }
 
 }
+
+/**
+ * @title Example contract for testing the Rules Engine
+ * @dev This contract provides the ability to test the rules engine with an external contract
+ * @author @mpetersoCode55
+ */
+contract ExampleUserContractExtraParams is RulesEngineClient {
+    /**
+     @dev This is a generic function that showcases custom arguments being sent to the Rules Engine
+     */
+    function transfer(address to, uint256 value) public returns (bool) {
+        uint256 retval = _invokeRulesEngine(abi.encode(msg.data, msg.sender));
+        to;
+        value;
+        if (retval > 0) return true;
+        else return false; 
+    }
+
+}

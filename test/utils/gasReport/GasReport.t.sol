@@ -419,19 +419,17 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-
+        
         _addFunctionSignatureToPolicy(
             policyIds[0],
             bytes4(keccak256(bytes(functionSignature))),
             pTypes
         );
 
-        uint256[][] memory blankRuleIds = new uint256[][](0);
-        RulesEngineDataFacet(address(red)).updatePolicy(
+        _addFunctionSignatureToPolicy(
             policyIds[1],
-            signatures,
-            functionSignatureIds,
-            blankRuleIds
+            bytes4(keccak256(bytes(functionSignature))),
+            pTypes
         );
 
         PT[] memory fcArgs = new PT[](1);
@@ -485,8 +483,12 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         ruleIds[0][0] = ruleId1;
 
 
+        bytes4[] memory signaturesNew = new bytes4[](1);
+        signaturesNew[0] = bytes4(keccak256(bytes(functionSignature)));
+        uint256[] memory functionSignatureIdsNew = new uint256[](1);
+        functionSignatureIdsNew[0] = 0;
         // ruleIds[0][1] = ruleId2;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signaturesNew, functionSignatureIdsNew, ruleIds);
 
         // Add rules for the second policy
         rule1.policyId = policyIds[1];
@@ -495,7 +497,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         ruleId2 = RulesEngineDataFacet(address(red)).updateRule(policyIds[1], rule2);
         ruleIds[0][0] = ruleId2;
 
-        _addRuleIdsToPolicy(policyIds[1], ruleIds);
+        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[1], signaturesNew, functionSignatureIdsNew, ruleIds);
         RulesEngineDataFacet(address(red)).applyPolicy(
             address(userContractFCPlusMinSeparatePolicy),
             policyIds

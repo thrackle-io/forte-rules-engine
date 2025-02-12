@@ -15,11 +15,11 @@ import "src/utils/FCEncodingLib.sol";
 contract RulesEngineCommon is DiamondMine, Test { 
     
     address userContractAddress;
+    address userContractExtraParamAddress; 
     ForeignCallTestContract testContract; 
 
     string functionSignature = "transfer(address,uint256)";
-    string functionSignature2 =
-        "updateInfo(address _to, string info)";
+    string functionSignature2 = "updateInfo(address _to, string info)";
     string constant event_text = "Rules Engine Event";
     string constant revert_text = "Rules Engine Revert";
     string constant event_text2 = "Rules Engine Event 2";
@@ -118,6 +118,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         
         // Apply the policy 
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        // Apply the policy 
+        RulesEngineDataFacet(address(red)).applyPolicy(userContractExtraParamAddress, policyIds);
     }
 
     function setupRuleWithStringComparison()
@@ -162,8 +164,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[1] = PT.STR;
         // Save the function signature
         uint256 functionSignatureId = RulesEngineDataFacet(address(red))
-            .updateFunctionSignature(
-                0,
+            .createFunctionSignature(
+                policyIds[0],
                 bytes4(keccak256(bytes(functionSignature2))),
                 pTypes
             );
@@ -221,8 +223,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[1] = PT.STR;
         // Save the function signature
         uint256 functionSignatureId = RulesEngineDataFacet(address(red))
-            .updateFunctionSignature(
-                0,
+            .createFunctionSignature(
+                policyIds[0],
                 bytes4(keccak256(bytes(functionSignature2))),
                 pTypes
             );
@@ -753,14 +755,9 @@ contract RulesEngineCommon is DiamondMine, Test {
 
     /// Test helper functions
     function _createBlankPolicy() internal returns (uint256) {
-        bytes4[] memory blankSignatures = new bytes4[](0);
-        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
-        uint256[][] memory blankRuleIds = new uint256[][](0);
-        uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(
-            blankSignatures,
-            blankFunctionSignatureIds,
-            blankRuleIds
-        );
+        FunctionSignatureStorageSet[] memory functionSignatures = new FunctionSignatureStorageSet[](0); 
+        Rule[] memory rules = new Rule[](0); 
+        uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(functionSignatures, rules);
         return policyId;
     }
 
@@ -768,15 +765,10 @@ contract RulesEngineCommon is DiamondMine, Test {
         internal
         returns (uint256)
     {
-        bytes4[] memory blankSignatures = new bytes4[](0);
-        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
-        uint256[][] memory blankRuleIds = new uint256[][](0);
-        uint256 policyID = RulesEngineDataFacet(address(red)).createPolicy(
-            blankSignatures,
-            blankFunctionSignatureIds,
-            blankRuleIds
-        );
-        return policyID;
+        FunctionSignatureStorageSet[] memory functionSignatures = new FunctionSignatureStorageSet[](0); 
+        Rule[] memory rules = new Rule[](0); 
+        uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(functionSignatures, rules);
+        return policyId;
     }
 
     // internal rule builder
@@ -896,7 +888,7 @@ contract RulesEngineCommon is DiamondMine, Test {
     ) internal returns (uint256) {
         // Save the function signature
         uint256 functionSignatureId = RulesEngineDataFacet(address(red))
-            .updateFunctionSignature(0, bytes4(_functionSignature), pTypes);
+            .createFunctionSignature(policyId, bytes4(_functionSignature), pTypes);
         // Save the Policy
         signatures.push(_functionSignature);
         functionSignatureIds.push(functionSignatureId);
