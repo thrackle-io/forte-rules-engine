@@ -1951,6 +1951,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         //check that policy signatures array is resized to 1 
         (_functionSigs, _functionSigIds, _ruleIds) = RulesEngineDataFacet(address(red)).getPolicy(policyId);
         assertEq(_functionSigs.length, 1);
+
     }
 
     function testRulesEngine_Unit_deleteFunctionSignature_Negative()
@@ -1968,6 +1969,29 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         vm.startPrank(newPolicyAdmin);
         vm.expectRevert("Not Authorized To Policy");
         RulesEngineDataFacet(address(red)).deleteFunctionSignature(policyId, functionSignatureId); 
+    }
+
+    function testRulesEngine_Unit_deleteFunctionSignatureWithRuleCheck_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        // create rule and set rule to user contract 
+        setupRuleWithoutForeignCall();
+        // test rule works for user contract 
+        bool response = userContract.transfer(address(0x7654321), 3);
+        assertFalse(response);
+        // create pTypes array for new contract + new transfer function 
+        PT[] memory pTypes = new PT[](3);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+        pTypes[2] = PT.ADDR;
+        FunctionSignatureStorageSet memory sig = RulesEngineDataFacet(address(red)).getFunctionSignature(1, 0);
+        RulesEngineDataFacet(address(red)).deleteFunctionSignature(1, 0); 
+        // test that rule no longer checks 
+        bool ruleCheck = userContract.transfer(address(0x7654321), 3);
+        assertTrue(ruleCheck);
+
     }
 
     function testRulesEngine_Unit_updateFunctionSignature_Negative_NewParameterTypesNotSameLength()

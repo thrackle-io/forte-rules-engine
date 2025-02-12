@@ -209,10 +209,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         bytes4 _functionSignature,
         PT[] memory _pTypes
     ) public policyAdminOnly(_policyId, msg.sender) returns (uint256) {
-        return _storeFunctionSignature(lib.getFunctionSignatureStorage(), _policyId, _functionSignature, _pTypes);
-    }
-
-    function _storeFunctionSignature(FunctionSignatureS storage _data, uint256 _policyId, bytes4 _functionSignature, PT[] memory _pTypes) internal returns (uint256) {
+        FunctionSignatureS storage _data = lib.getFunctionSignatureStorage();
         uint256 functionId = _data.functionIdCounter[_policyId];
         _data.functionSignatureStorageSets[_policyId][functionId].set = true;
         _data.functionSignatureStorageSets[_policyId][functionId].signature = _functionSignature;
@@ -271,14 +268,19 @@ contract RulesEngineDataFacet is FacetCommonImports {
         delete data.policy.signatures;
         // delete function signature to id map 
         delete data.policy.functionSignatureIdMap[signature];
+        // delete rule structures associated to function signature 
+        for(uint256 i; i < data.policy.signatureToRuleIds[signature].length; i++) {
+            // delete rules from storage 
+            delete lib.getRuleStorage().ruleStorageSets[i];
+        }
         // delete function signature to rule Ids mapping  
         delete data.policy.signatureToRuleIds[signature];
-        // retrieve remaining function signature structs from storage   
+        // retrieve remaining function signature structs from storage that were not removed   
         FunctionSignatureStorageSet[] memory functionSignatureStructs = getAllFunctionSignatures(_policyId);
         // reset signature array for policy
-        for(uint256 i; i < functionSignatureStructs.length; i++) {
-            if(functionSignatureStructs[i].set) {
-                data.policy.signatures.push(functionSignatureStructs[i].signature);
+        for(uint256 j; j < functionSignatureStructs.length; j++) {
+            if(functionSignatureStructs[j].set) {
+                data.policy.signatures.push(functionSignatureStructs[j].signature);
             }
         }
     }
