@@ -476,7 +476,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         bytes4[] memory signaturesNew = new bytes4[](1);
         signaturesNew[0] = bytes4(keccak256(bytes(functionSignature)));
         uint256[] memory functionSignatureIdsNew = new uint256[](1);
-        functionSignatureIdsNew[0] = 0;
+        functionSignatureIdsNew[0] = 1;
         // ruleIds[0][1] = ruleId2;
         RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signaturesNew, functionSignatureIdsNew, ruleIds);
 

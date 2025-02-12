@@ -1840,7 +1840,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
         uint256 functionSignatureId = RulesEngineDataFacet(address(red)).createFunctionSignature(policyId, bytes4(keccak256(bytes(functionSignature))), pTypes);
-        assertEq(functionSignatureId, 0);
+        assertEq(functionSignatureId, 1);
         FunctionSignatureStorageSet memory sig = RulesEngineDataFacet(address(red)).getFunctionSignature(policyId, functionSignatureId);
         assertEq(sig.set, true);
         assertEq(sig.signature, bytes4(keccak256(bytes(functionSignature))));
@@ -1901,7 +1901,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
         uint256 functionSignatureId = RulesEngineDataFacet(address(red)).createFunctionSignature(policyId, bytes4(keccak256(bytes(functionSignature))), pTypes);
-        assertEq(functionSignatureId, 0);
+        assertEq(functionSignatureId, 1);
         FunctionSignatureStorageSet memory matchingSignature = RulesEngineDataFacet(address(red)).getFunctionSignature(policyId, functionSignatureId);
         assertEq(matchingSignature.signature, bytes4(keccak256(bytes(functionSignature))));
 
@@ -1925,9 +1925,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
         uint256 functionSignatureId = RulesEngineDataFacet(address(red)).createFunctionSignature(policyId, bytes4(keccak256(bytes(functionSignature))), pTypes);
-        assertEq(functionSignatureId, 0);
+        assertEq(functionSignatureId, 1);
         uint256 functionSignatureId2 = RulesEngineDataFacet(address(red)).createFunctionSignature(policyId, bytes4(keccak256(bytes(functionSignature2))), pTypes);
-        assertEq(functionSignatureId2, 1);
+        assertEq(functionSignatureId2, 2);
         FunctionSignatureStorageSet memory matchingSignature = RulesEngineDataFacet(address(red)).getFunctionSignature(policyId, functionSignatureId);
         assertEq(matchingSignature.signature, bytes4(keccak256(bytes(functionSignature))));
 
@@ -1945,6 +1945,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         //check that policy signatures array is resized to 1 
         (_functionSigs, _functionSigIds, _ruleIds) = RulesEngineDataFacet(address(red)).getPolicy(policyId);
         assertEq(_functionSigs.length, 1);
+        assertEq(_functionSigs[0], bytes4(keccak256(bytes(functionSignature2))));
 
     }
 
@@ -1958,7 +1959,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
         uint256 functionSignatureId = RulesEngineDataFacet(address(red)).createFunctionSignature(policyId, bytes4(keccak256(bytes(functionSignature))), pTypes);
-        assertEq(functionSignatureId, 0);
+        assertEq(functionSignatureId, 1);
 
         vm.startPrank(newPolicyAdmin);
         vm.expectRevert("Not Authorized To Policy");
@@ -1981,7 +1982,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[1] = PT.UINT;
         pTypes[2] = PT.ADDR;
         FunctionSignatureStorageSet memory sig = RulesEngineDataFacet(address(red)).getFunctionSignature(1, 0);
-        RulesEngineDataFacet(address(red)).deleteFunctionSignature(1, 0); 
+        RulesEngineDataFacet(address(red)).deleteFunctionSignature(1, 1); 
         // test that rule no longer checks 
         bool ruleCheck = userContract.transfer(address(0x7654321), 3);
         assertTrue(ruleCheck);
@@ -2065,8 +2066,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
         pTypes[2] = PT.ADDR;
-        FunctionSignatureStorageSet memory sig = RulesEngineDataFacet(address(red)).getFunctionSignature(1, 0);
-        RulesEngineDataFacet(address(red)).updateFunctionSignature(1, 0, bytes4(keccak256(bytes(functionSignature))), pTypes);
+        FunctionSignatureStorageSet memory sig = RulesEngineDataFacet(address(red)).getFunctionSignature(1, 1);
+        RulesEngineDataFacet(address(red)).updateFunctionSignature(1, 1, bytes4(keccak256(bytes(functionSignature))), pTypes);
         assertEq(sig.set, true);
         // ensure orignal contract rule check works 
         bool ruleCheck = userContract.transfer(address(0x7654321), 47);
@@ -2091,8 +2092,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
         pTypes[2] = PT.ADDR;
-        FunctionSignatureStorageSet memory sig = RulesEngineDataFacet(address(red)).getFunctionSignature(1, 0);
-        RulesEngineDataFacet(address(red)).updateFunctionSignature(1, 0, bytes4(keccak256(bytes(functionSignature))), pTypes);
+        FunctionSignatureStorageSet memory sig = RulesEngineDataFacet(address(red)).getFunctionSignature(1, 1);
+        RulesEngineDataFacet(address(red)).updateFunctionSignature(1, 1, bytes4(keccak256(bytes(functionSignature))), pTypes);
         assertEq(sig.set, true);
         // ensure orignal contract rule check works 
         bool ruleCheck = userContract.transfer(address(0x7654321), 3);

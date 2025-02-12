@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
 import "src/engine/facets/RulesEngineAdminRolesFacet.sol";
-
 /**
  * @title Rules Engine Data Facet
  * @author @ShaneDuncan602 
@@ -206,14 +205,11 @@ contract RulesEngineDataFacet is FacetCommonImports {
         PT[] memory _pTypes
     ) public policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         FunctionSignatureS storage data = lib.getFunctionSignatureStorage();
-        uint256 functionId = data.functionIdCounter[_policyId];
+        uint256 functionId = ++data.functionIdCounter[_policyId];
         data.functionSignatureStorageSets[_policyId][functionId].set = true;
         data.functionSignatureStorageSets[_policyId][functionId].signature = _functionSignature;
-        data.functionSignatureStorageSets[_policyId][functionId].parameterTypes = _pTypes;
-        unchecked {
-            uint256 functionId = ++data.functionIdCounter[_policyId];   
-            data.functionIdCounter[_policyId] = functionId;
-        }
+        data.functionSignatureStorageSets[_policyId][functionId].parameterTypes = _pTypes;      
+        data.functionIdCounter[_policyId] = functionId;
         return functionId;
     }
     
@@ -259,6 +255,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         PolicyStorageSet storage data = lib.getPolicyStorage().policyStorageSets[_policyId];
         // retrieve function signature to delete  
         bytes4 signature = lib.getFunctionSignatureStorage().functionSignatureStorageSets[_policyId][_functionSignatureId].signature;  
+
         // delete the function signature storage set struct 
         delete lib.getFunctionSignatureStorage().functionSignatureStorageSets[_policyId][_functionSignatureId];
         // delete signatures array from policy 
@@ -268,16 +265,23 @@ contract RulesEngineDataFacet is FacetCommonImports {
         // delete rule structures associated to function signature 
         for(uint256 i; i < data.policy.signatureToRuleIds[signature].length; i++) {
             // delete rules from storage 
-            delete lib.getRuleStorage().ruleStorageSets[i];
+            delete lib.getRuleStorage().ruleStorageSets[_policyId][i];
         }
         // delete function signature to rule Ids mapping  
         delete data.policy.signatureToRuleIds[signature];
+
         // retrieve remaining function signature structs from storage that were not removed   
         FunctionSignatureStorageSet[] memory functionSignatureStructs = getAllFunctionSignatures(_policyId);
         // reset signature array for policy
         for(uint256 j; j < functionSignatureStructs.length; j++) {
+            console.log("signature");
+            console.logBytes4(functionSignatureStructs[j].signature);
+            console.log("set");
+            console.log(functionSignatureStructs[j].set);
             if(functionSignatureStructs[j].set) {
                 data.policy.signatures.push(functionSignatureStructs[j].signature);
+                console.log("signature");
+                console.logBytes4(functionSignatureStructs[j].signature);
             }
         }
     }
@@ -309,7 +313,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         uint256 functionIdCount = data.functionIdCounter[_policyId];
         FunctionSignatureStorageSet[] memory functionSignatureStorageSets = new FunctionSignatureStorageSet[](functionIdCount);
         uint256 j = 0;
-        for (uint256 i = 0; i < functionIdCount; i++) {
+        for (uint256 i = 1; i <= functionIdCount; i++) {
             if (data.functionSignatureStorageSets[_policyId][i].set) {
                 functionSignatureStorageSets[j] = data.functionSignatureStorageSets[_policyId][i];
                 j++;
