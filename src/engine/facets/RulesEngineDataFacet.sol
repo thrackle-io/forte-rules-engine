@@ -209,13 +209,14 @@ contract RulesEngineDataFacet is FacetCommonImports {
         bytes4 _functionSignature,
         PT[] memory _pTypes
     ) public policyAdminOnly(_policyId, msg.sender) returns (uint256) {
-        FunctionSignatureS storage _data = lib.getFunctionSignatureStorage();
-        uint256 functionId = _data.functionIdCounter[_policyId];
-        _data.functionSignatureStorageSets[_policyId][functionId].set = true;
-        _data.functionSignatureStorageSets[_policyId][functionId].signature = _functionSignature;
-        _data.functionSignatureStorageSets[_policyId][functionId].parameterTypes = _pTypes;
+        FunctionSignatureS storage data = lib.getFunctionSignatureStorage();
+        uint256 functionId = data.functionIdCounter[_policyId];
+        data.functionSignatureStorageSets[_policyId][functionId].set = true;
+        data.functionSignatureStorageSets[_policyId][functionId].signature = _functionSignature;
+        data.functionSignatureStorageSets[_policyId][functionId].parameterTypes = _pTypes;
         unchecked {
-            ++_data.functionIdCounter[_policyId];
+            uint256 functionId = ++data.functionIdCounter[_policyId];   
+            data.functionIdCounter[_policyId] = functionId;
         }
         return functionId;
     }
