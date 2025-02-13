@@ -22,7 +22,7 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         rule.placeHolders[0].typeSpecificIndex = 1;
         rule.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(policyIds[0],rule);
 
         PT[] memory pTypes = new PT[](2);
         pTypes[0] =PT.ADDR;

@@ -327,12 +327,12 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _rule the rule to create
      * @return ruleId the generated ruleId
      */
-    function createRule(Rule calldata _rule) public policyAdminOnly(_rule.policyId, msg.sender) returns (uint256) {
+    function createRule(uint256 _policyId, Rule calldata _rule) public policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         RuleS storage data = lib.getRuleStorage();
         unchecked {
             data.ruleId++;
         }
-        return _storeRule(data, data.ruleId, _rule);
+        return _storeRule(data, _policyId, data.ruleId, _rule);
     }
 
     /**
@@ -341,12 +341,12 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _rule the rule to add
      * @return ruleId the generated ruleId
      */
-    function _storeRule(RuleS storage _data, uint256 _ruleId, Rule calldata _rule) internal returns (uint256) {
+    function _storeRule(RuleS storage _data, uint256 _policyId, uint256 _ruleId, Rule calldata _rule) internal returns (uint256) {
         // TODO: Add validations for rule
         
         // Validate that the policy exists
         if(!lib.getPolicyStorage().policyStorageSets[_rule.policyId].set) revert ("Invalid PolicyId");
-
+        assert(_rule.policyId == _policyId);
         _data.ruleStorageSets[_ruleId].set = true;
         _data.ruleStorageSets[_ruleId].rule = _rule;
         return _ruleId;
@@ -360,30 +360,51 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @return ruleId the generated ruleId
      */
     function updateRule(
+        uint256 _policyId,
         uint256 _ruleId,
         Rule calldata _rule
-    ) public policyAdminOnly(_rule.policyId, msg.sender) returns (uint256) {
+    ) public policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         // Load the function signature data from storage
         RuleS storage data = lib.getRuleStorage();
-        _storeRule(data, _ruleId, _rule);
+        _storeRule(data, _policyId, _ruleId, _rule);
         return _ruleId;
     }
 
     /**
      * Get a rule from storage.
+     * @param _policyId policyId
      * @param _ruleId ruleId
      * @return ruleStorageSets rule
      */
-    function getRule(uint256 _ruleId) public view returns (RuleStorageSet memory) {
+    function getRule(uint256 _policyId, uint256 _ruleId) public view returns (RuleStorageSet memory) {
         // Load the function signature data from storage
+        _policyId; // Silence warnings and conform to standard API
         return lib.getRuleStorage().ruleStorageSets[_ruleId];
+    }
+
+    function getAllRules(uint256 _policyId) public view returns (Rule[][] memory) {
+        // Load the function signature data from storage
+        Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
+        bytes4[] memory signatures = data.signatures;
+        Rule[][] memory rules = new Rule[][](signatures.length);
+        for (uint256 i = 0; i < signatures.length; i++) {
+            uint256[] memory ruleIds = data.signatureToRuleIds[signatures[i]];
+            rules[i] = new Rule[](ruleIds.length);
+            for (uint256 j = 0; j < ruleIds.length; j++) {
+                if (lib.getRuleStorage().ruleStorageSets[ruleIds[j]].set) {
+                    rules[i][j] = lib.getRuleStorage().ruleStorageSets[ruleIds[j]].rule;
+                }
+            }
+        }
+        return rules;
     }
 
     /**
      * Delete a rule from storage.
      * @param _ruleId the id of the rule to delete
      */
-    function deleteRule(uint256 _ruleId) public policyAdminOnly(lib.getRuleStorage().ruleStorageSets[_ruleId].rule.policyId, msg.sender) {
+    function deleteRule(uint256 _policyId, uint256 _ruleId) public policyAdminOnly(_policyId, msg.sender) {
+        assert(lib.getRuleStorage().ruleStorageSets[_ruleId].rule.policyId == _policyId);
         delete lib.getRuleStorage().ruleStorageSets[_ruleId];
     }
 
@@ -472,7 +493,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
                 data.policyStorageSets[_policyId].policy.signatures.push(_signatures[i]);
                 // make sure that all the rules attached to each function signature exist
                 for (uint256 j = 0; j < _ruleIds[i].length; j++) {
-                    RuleStorageSet memory ruleStore = getRule(_ruleIds[i][j]);
+                    RuleStorageSet memory ruleStore = getRule(_policyId, _ruleIds[i][j]);
                     if(!ruleStore.set) revert("Invalid Rule");
                     for (uint256 k = 0; k < ruleStore.rule.placeHolders.length; k++) {
                         if(ruleStore.rule.placeHolders[k].foreignCall) {

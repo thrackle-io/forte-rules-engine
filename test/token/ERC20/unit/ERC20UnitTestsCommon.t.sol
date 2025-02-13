@@ -130,7 +130,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         rule.posEffects[0] = effectId_event;
         rule.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(policyIds[0],rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
@@ -151,7 +151,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         rule.posEffects[0] = effectId_event;
         rule.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(0,rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(policyIds[0],rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
