@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
+import "forge-std/console.sol";
 
 contract RulesEngineMainFacet is FacetCommonImports{
     /**
@@ -58,12 +59,14 @@ contract RulesEngineMainFacet is FacetCommonImports{
 
         // Load the function signature data from storage
         // RuleS storage ruleData = lib.getRuleStorage();
-
+        uint256 gasBefore = gasleft();
         for(uint256 i = 0; i < applicableRules.length; i++) {
             if(ruleData.ruleStorageSets[policy.signatureToRuleIds[functionSignature][i]].set) {
                 applicableRules[i] = policy.signatureToRuleIds[functionSignature][i];
             }
         }
+        uint256 gasUsed = gasBefore - gasleft();
+        console.log("gasUsed in _loadApplicableRules: ", gasUsed);
         return applicableRules;
     }
     
@@ -99,9 +102,15 @@ contract RulesEngineMainFacet is FacetCommonImports{
         Placeholder[] memory placeHolders;
 
         if(effect) {
+            uint256 gasBefore = gasleft();
             placeHolders = ruleData.ruleStorageSets[applicableRule].rule.effectPlaceHolders;
+            uint256 gasUsed = gasBefore - gasleft();
+            console.log("gasUsed in buildArguments for effect placeholders loading: ", gasUsed);
         } else {
+            uint256 gasBefore = gasleft();
             placeHolders = ruleData.ruleStorageSets[applicableRule].rule.placeHolders;
+            uint256 gasUsed = gasBefore - gasleft();
+            console.log("gasUsed in buildArguments for placeholders loading: ", gasUsed);
         }       
 
         bytes[] memory retVals = new bytes[](placeHolders.length);
