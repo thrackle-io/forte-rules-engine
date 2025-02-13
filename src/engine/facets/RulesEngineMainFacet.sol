@@ -59,14 +59,14 @@ contract RulesEngineMainFacet is FacetCommonImports{
         uint256[] storage storagePointer = policy.signatureToRuleIds[functionSignature];
         // Load the function signature data from storage
         // RuleS storage ruleData = lib.getRuleStorage();
-        uint256 gasBefore = gasleft();
+        // uint256 gasBefore = gasleft();
         for(uint256 i = 0; i < applicableRules.length; i++) {
             if(ruleData.ruleStorageSets[storagePointer[i]].set) {
                 applicableRules[i] = storagePointer[i];
             }
         }
-        uint256 gasUsed = gasBefore - gasleft();
-        console.log("gasUsed in _loadApplicableRules: ", gasUsed);
+        // uint256 gasUsed = gasBefore - gasleft();
+        // console.log("gasUsed in _loadApplicableRules: ", gasUsed);
         return applicableRules;
     }
     
@@ -103,15 +103,9 @@ contract RulesEngineMainFacet is FacetCommonImports{
         Placeholder[] memory placeHolders;
 
         if(effect) {
-            uint256 gasBefore = gasleft();
             placeHolders = rule.effectPlaceHolders;
-            uint256 gasUsed = gasBefore - gasleft();
-            console.log("gasUsed in buildArguments for effect placeholders loading: ", gasUsed);
         } else {
-            uint256 gasBefore = gasleft();
             placeHolders = rule.placeHolders;
-            uint256 gasUsed = gasBefore - gasleft();
-            console.log("gasUsed in buildArguments for placeholders loading: ", gasUsed);
         }       
 
         bytes[] memory retVals = new bytes[](placeHolders.length);
