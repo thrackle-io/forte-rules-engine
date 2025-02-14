@@ -329,10 +329,11 @@ contract RulesEngineDataFacet is FacetCommonImports {
      */
     function createRule(uint256 _policyId, Rule calldata _rule) public policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         RuleS storage data = lib.getRuleStorage();
+        uint256 ruleId = _storeRule(data, _policyId, data.ruleId, _rule);
         unchecked {
-            data.ruleId++;
+            ++data.ruleId;
         }
-        return _storeRule(data, _policyId, data.ruleId, _rule);
+        return ruleId;
     }
 
     /**
