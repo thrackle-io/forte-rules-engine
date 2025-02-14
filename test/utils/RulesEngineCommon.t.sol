@@ -420,7 +420,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         // Rule memory rule = _createGTRule(policyIds[0], 4);
         Rule memory rule;
-        _setupEffectProcessor();
         // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType = PT.UINT;
@@ -428,7 +427,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
-        rule.policyId = policyIds[0];
 
         rule.instructionSet = new uint256[](7);
         rule.instructionSet[0] = uint(LC.PLH);
@@ -438,10 +436,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.instructionSet[4] = uint(LC.GT); // register 2
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
-
         rule.posEffects[0] = effectId_revert;
+        
+        rule.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
