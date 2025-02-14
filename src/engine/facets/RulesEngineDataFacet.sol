@@ -378,6 +378,28 @@ contract RulesEngineDataFacet is FacetCommonImports {
     }
 
     /**
+     * Get all rules from storage.
+     * @param _policyId the policyId the rules are associated with
+     * @return rules rules
+     */
+    function getAllRules(uint256 _policyId) public view returns (Rule[][] memory) {
+        // Load the function signature data from storage
+        Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
+        bytes4[] memory signatures = data.signatures;
+        Rule[][] memory rules = new Rule[][](signatures.length);
+        for (uint256 i = 0; i < signatures.length; i++) {
+            uint256[] memory ruleIds = data.signatureToRuleIds[signatures[i]];
+            rules[i] = new Rule[](ruleIds.length);
+            for (uint256 j = 0; j < ruleIds.length; j++) {
+                if (lib.getRuleStorage().ruleStorageSets[_policyId][ruleIds[j]].set) {
+                    rules[i][j] = lib.getRuleStorage().ruleStorageSets[_policyId][ruleIds[j]].rule;
+                }
+            }
+        }
+        return rules;
+    }
+
+    /**
      * Delete a rule from storage.
      * @param _ruleId the id of the rule to delete
      */
