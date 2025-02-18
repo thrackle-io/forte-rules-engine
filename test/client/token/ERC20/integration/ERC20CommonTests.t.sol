@@ -1405,6 +1405,143 @@ abstract contract ERC20CommonTests is TestCommonFoundry, DummyAMM, ERC20Util {
         ERC20Burnable(address(testCaseToken)).burn(1 * ATTO);
     }
 
+    /// Account Max Received by Access Level
+    function testERC20_ERC20CommonTests_MaxReceivedByAccessLevel_Transfer_Positive() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountMaxReceivedByAccessLevelSetup(ActionTypes.P2P_TRANSFER, user1, false);
+        // Perform transfers at access level = 0
+        vm.startPrank(user1, user1);
+        testCaseToken.transfer(user4, 5 * ATTO);
+        testCaseToken.transfer(user4, 4 * ATTO);
+        /// User 4(access level =0) now at "received" limit for access level
+        testCaseToken.transfer(user4, 1 * ATTO);
+        assertEq(testCaseToken.balanceOf(user4), 10 * ATTO);
+
+        switchToAccessLevelAdmin();
+        applicationAppManager.addAccessLevel(user2, 1);
+        applicationAppManager.addAccessLevel(user3, 2);
+        applicationAppManager.addAccessLevel(user6, 3);
+        applicationAppManager.addAccessLevel(user5, 4);
+
+        // Perform transfers at access level = 1
+        vm.startPrank(user1, user1);
+        uint256 beginningBalance = testCaseToken.balanceOf(user2);
+        testCaseToken.transfer(user2, 50 * ATTO);
+        testCaseToken.transfer(user2, 40 * ATTO);
+        /// User 2(access level =1) now at "received" limit for access level
+        testCaseToken.transfer(user2, 10 * ATTO);
+        assertEq(testCaseToken.balanceOf(user2), (100 * ATTO)+beginningBalance);
+
+        // Perform transfers at access level = 2
+        beginningBalance = testCaseToken.balanceOf(user3);
+        testCaseToken.transfer(user3, 500 * ATTO);
+        testCaseToken.transfer(user3, 400 * ATTO);
+        /// User 3(access level =2) now at "received" limit for access level
+        testCaseToken.transfer(user3, 100 * ATTO);
+        assertEq(testCaseToken.balanceOf(user3), (1000 * ATTO)+beginningBalance);
+
+        // Perform transfers at access level = 3
+        beginningBalance = testCaseToken.balanceOf(user6);
+        testCaseToken.transfer(user6, 5000 * ATTO);
+        testCaseToken.transfer(user6, 4000 * ATTO);
+        /// User 6(access level =3) now at "received" limit for access level
+        testCaseToken.transfer(user6, 1000 * ATTO);
+        assertEq(testCaseToken.balanceOf(user6), 10000 * ATTO+beginningBalance);
+
+        // Perform transfers at access level = 4
+        beginningBalance = testCaseToken.balanceOf(user5);
+        testCaseToken.transfer(user5, 50000 * ATTO);
+        testCaseToken.transfer(user5, 40000 * ATTO);
+        /// User 5(access level =4) now at "received" limit for access level
+        testCaseToken.transfer(user5, 10000 * ATTO);
+        assertEq(testCaseToken.balanceOf(user5), 100000 * ATTO+beginningBalance);
+    }
+
+    function testERC20_ERC20CommonTests_MaxReceivedByAccessLevel_Transfer_Negative() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountMaxReceivedByAccessLevelSetup(ActionTypes.P2P_TRANSFER, user1, false);
+        // Perform transfers at access level = 0
+        vm.startPrank(user1, user1);
+        testCaseToken.transfer(user4, 5 * ATTO);
+        testCaseToken.transfer(user4, 4 * ATTO);
+        /// User 4(access level =0) attempt to go over limit for access level
+        vm.expectRevert(abi.encodeWithSignature("OverMaxReceivedByAccessLevel()"));
+        testCaseToken.transfer(user4, 2 * ATTO);
+
+        switchToAccessLevelAdmin();
+        applicationAppManager.addAccessLevel(user2, 1);
+        applicationAppManager.addAccessLevel(user3, 2);
+        applicationAppManager.addAccessLevel(user6, 3);
+        applicationAppManager.addAccessLevel(user5, 4);
+
+        // Perform transfers at access level = 1
+        vm.startPrank(user1, user1);
+        testCaseToken.transfer(user2, 50 * ATTO);
+        testCaseToken.transfer(user2, 40 * ATTO);
+        /// User 2(access level =1) attempt to go over limit for access level
+        vm.expectRevert(abi.encodeWithSignature("OverMaxReceivedByAccessLevel()"));
+        testCaseToken.transfer(user2, 20 * ATTO);
+
+        // Perform transfers at access level = 2
+        testCaseToken.transfer(user3, 500 * ATTO);
+        testCaseToken.transfer(user3, 400 * ATTO);
+        /// User 3(access level =2) attempt to go over limit for access level
+        vm.expectRevert(abi.encodeWithSignature("OverMaxReceivedByAccessLevel()"));
+        testCaseToken.transfer(user3, 200 * ATTO);
+
+        // Perform transfers at access level = 3
+        testCaseToken.transfer(user6, 5000 * ATTO);
+        testCaseToken.transfer(user6, 4000 * ATTO);
+        /// User 6(access level =3) attempt to go over limit for access level
+        vm.expectRevert(abi.encodeWithSignature("OverMaxReceivedByAccessLevel()"));
+        testCaseToken.transfer(user6, 2000 * ATTO);
+
+        // Perform transfers at access level = 4
+        testCaseToken.transfer(user5, 50000 * ATTO);
+        testCaseToken.transfer(user5, 40000 * ATTO);
+        /// User 5(access level =4) attempt to go over limit for access level
+        vm.expectRevert(abi.encodeWithSignature("OverMaxReceivedByAccessLevel()"));
+        testCaseToken.transfer(user5, 20000 * ATTO);
+    }
+
+    function testERC20_ERC20CommonTests_MaxReceivedByAccessLevel_Mint_Positive() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountMaxReceivedByAccessLevelSetup(ActionTypes.MINT, address(0), false);
+        vm.startPrank(user4, user4);
+        UtilApplicationERC20(address(testCaseToken)).mint(user4, 1);
+        assertEq(testCaseToken.balanceOf(user4), 1);
+    }
+
+    function testERC20_ERC20CommonTests_MaxReceivedByAccessLevel_Mint_Negative() public endWithStopPrank ifDeploymentTestsEnabled {
+        _accountMaxReceivedByAccessLevelSetup(ActionTypes.MINT, address(0), false);
+        vm.startPrank(user4, user4);
+        UtilApplicationERC20(address(testCaseToken)).mint(user4, 10 * ATTO);
+        /// this one is over the limit and should fail
+        vm.expectRevert(abi.encodeWithSignature("OverMaxReceivedByAccessLevel()"));
+        UtilApplicationERC20(address(testCaseToken)).mint(user4, 1 * ATTO);
+    }
+
+    function testERC20_ERC20CommonTests_MaxReceivedByAccessLevel_Buy_Positive() public endWithStopPrank ifDeploymentTestsEnabled {
+        // sending address(0) signals the setup to use the AMM address as the source
+        DummyAMM amm = _accountMaxReceivedByAccessLevelSetup(ActionTypes.BUY, address(0), true);
+        vm.startPrank(rich_user, rich_user);
+        /// make sure that transfer under the threshold works
+        testCaseToken.approve(address(amm), 10000 * ATTO);
+        applicationCoin2.approve(address(amm), 50000);
+        /// this one is within the limit and should pass
+        amm.dummyTrade(address(applicationCoin2), address(testCaseToken), 10, 5 * ATTO, true);
+    }
+
+    function testERC20_ERC20CommonTests_MaxReceivedByAccessLevel_Buy_Negative() public endWithStopPrank ifDeploymentTestsEnabled {
+        // sending useAMMasSource signals the setup to use the AMM address as the source
+        DummyAMM amm = _accountMaxReceivedByAccessLevelSetup(ActionTypes.BUY, address(0), true);
+        vm.startPrank(rich_user, rich_user);
+        /// make sure that transfer under the threshold works
+        testCaseToken.approve(address(amm), 10000 * ATTO);
+        applicationCoin2.approve(address(amm), 50000);
+        /// this one is over the limit and should fail
+        vm.expectRevert(abi.encodeWithSignature("OverMaxReceivedByAccessLevel()"));
+        amm.dummyTrade(address(applicationCoin2), address(testCaseToken), 101, 101 * ATTO, true);
+    }
+
+
     /// Max Value Out
     function testERC20_ERC20CommonTests_MaxValueOutByAccessLevel_Transfer_Positive() public endWithStopPrank ifDeploymentTestsEnabled {
         _maxValueOutByAccessLevelSetup(ActionTypes.P2P_TRANSFER);
@@ -3016,6 +3153,53 @@ abstract contract ERC20CommonTests is TestCommonFoundry, DummyAMM, ERC20Util {
         ruleIds[0] = createAccountMaxValueOutByAccessLevelRule(10, 100, 1000, 10000, 100000);
         setAccountMaxValueOutByAccessLevelRuleFull(createActionTypeArray(action), ruleIds);
         /// test transfers pass under rule value
+        //User 1 currently has 950 tokens valued at $950
+        //User3 currently has 50 tokens valued at $50
+        switchToAccessLevelAdmin();
+        applicationAppManager.addAccessLevel(user1, 1);
+        applicationAppManager.addAccessLevel(user3, 0);
+        applicationAppManager.addAccessLevel(user4, 0);
+
+        return amm;
+    }
+
+    function _accountMaxReceivedByAccessLevelSetup(ActionTypes action, address sender, bool useAMMasSource) private endWithStopPrank returns (DummyAMM) {
+        switchToAppAdministrator();
+        testCaseToken.transfer(rich_user, 10000 * ATTO);
+        /// load non admin user with application coin
+        testCaseToken.transfer(user1, 1000000 * ATTO);
+        vm.startPrank(user1, user1);
+        /// check transfer without access level with the rule turned off
+        testCaseToken.transfer(user3, 50 * ATTO);
+        assertEq(testCaseToken.balanceOf(user3), 50 * ATTO);
+
+        switchToAppAdministrator();
+        applicationCoin2.mint(appAdministrator, 10000000000000000000000 * ATTO);
+        applicationCoin2.mint(user1, 10000);
+        applicationCoin2.mint(user2, 10000);
+        applicationCoin2.mint(rich_user, 10000);
+        switchToAppAdministrator();
+        DummyAMM amm = new DummyAMM();
+
+        UtilApplicationERC20(address(testCaseToken)).mint(user1, 10000);
+        ///perform buy that checks rule setup
+        testCaseToken.approve(address(amm), 50);
+        applicationCoin2.approve(address(amm), 50);
+        vm.startPrank(rich_user, rich_user);
+        testCaseToken.transfer(address(amm), 10000 * ATTO);
+        applicationCoin2.transfer(address(amm), 900);
+
+        /// price the tokens
+        switchToAppAdministrator();
+        erc20Pricer.setSingleTokenPrice(address(testCaseToken), 1 * ATTO); //setting at $1
+        assertEq(erc20Pricer.getTokenPrice(address(testCaseToken)), 1 * ATTO);
+        /// create and activate rule
+        switchToRuleAdmin();
+        uint32[] memory ruleIds = new uint32[](1);
+        /// if useAMMasSource, use the AMM address
+        if(useAMMasSource) sender = address(amm);
+        ruleIds[0] = createAccountMaxReceivedByAccessLevelRule(10, 100, 1000, 10000, 100000, sender);
+        setAccountMaxReceivedByAccessLevelIdFull(createActionTypeArray(action), ruleIds);
         //User 1 currently has 950 tokens valued at $950
         //User3 currently has 50 tokens valued at $50
         switchToAccessLevelAdmin();

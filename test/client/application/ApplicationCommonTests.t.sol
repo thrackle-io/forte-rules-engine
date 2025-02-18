@@ -748,6 +748,49 @@ abstract contract ApplicationCommonTests is Test, TestCommonFoundry, ERC721Util 
         for (uint i; i < actions.length; i++) assertTrue(applicationHandler.isAccountMaxValueByAccessLevelActive(actions[i]));
     }
 
+    /* AccountMaxReceivedByAccessLevel */
+    function testApplication_ApplicationCommonTests_AccountMaxReceivedByAccessLevelAtomicFullSet() public ifDeploymentTestsEnabled {
+        uint32[] memory ruleIds = new uint32[](3);
+        // Set up rule
+        ruleIds[0] = createAccountMaxReceivedByAccessLevelRule(0, 10, 50, 100, 300, address(1));
+        ruleIds[1] = createAccountMaxReceivedByAccessLevelRule(0, 10, 50, 100, 400, address(1));
+        ruleIds[2] = createAccountMaxReceivedByAccessLevelRule(0, 10, 50, 100, 500, address(1));
+        ActionTypes[] memory actions = createActionTypeArray(ActionTypes.P2P_TRANSFER, ActionTypes.BUY, ActionTypes.MINT);
+        // Apply the rules to all actions
+        setAccountMaxReceivedByAccessLevelIdFull(actions, ruleIds);
+        // Verify that all the rule id's were set correctly
+        for (uint i; i < actions.length; i++) assertEq(applicationHandler.getAccountMaxReceivedByAccessLevelId(actions[i]), ruleIds[i]);
+        // Verify that all the rules were activated
+        for (uint i; i < actions.length; i++) assertTrue(applicationHandler.isAccountMaxReceivedByAccessLevelActive(actions[i]));
+    }
+
+    function testApplication_ApplicationCommonTests_AccountMaxReceivedByAccessLevelAtomicFullReSet() public ifDeploymentTestsEnabled {
+        uint32[] memory ruleIds = new uint32[](3);
+        // Set up rule
+        ruleIds[0] = createAccountMaxReceivedByAccessLevelRule(0, 10, 50, 100, 300, address(1));
+        ruleIds[1] = createAccountMaxReceivedByAccessLevelRule(0, 10, 50, 100, 400, address(1));
+        ruleIds[2] = createAccountMaxReceivedByAccessLevelRule(0, 10, 50, 100, 500, address(1));
+        ActionTypes[] memory actions = createActionTypeArray(ActionTypes.P2P_TRANSFER, ActionTypes.BUY, ActionTypes.MINT);
+        // Apply the rules to all actions
+        setAccountMaxReceivedByAccessLevelIdFull(actions, ruleIds);
+        // Reset with a partial list of rules and insure that the changes are saved correctly
+        ruleIds = new uint32[](2);
+        ruleIds[0] = createAccountMaxReceivedByAccessLevelRule(0, 10, 50, 100, 800, address(1));
+        ruleIds[1] = createAccountMaxReceivedByAccessLevelRule(0, 10, 50, 100, 900, address(1));
+        actions = createActionTypeArray(ActionTypes.P2P_TRANSFER, ActionTypes.BUY);
+        // Apply the new set of rules
+        setAccountMaxReceivedByAccessLevelIdFull(actions, ruleIds);
+        // Verify that all the rule id's were set correctly
+        for (uint i; i < actions.length; i++) assertEq(applicationHandler.getAccountMaxReceivedByAccessLevelId(actions[i]), ruleIds[i]);
+        // Verify that the old ones were cleared
+        assertEq(applicationHandler.getAccountMaxReceivedByAccessLevelId(ActionTypes.MINT), 0);
+        // Verify that the new rules were activated
+        for (uint i; i < actions.length; i++) assertTrue(applicationHandler.isAccountMaxReceivedByAccessLevelActive(actions[i]));
+        // Verify that the old rules are not activated
+        assertFalse(applicationHandler.isAccountMaxReceivedByAccessLevelActive(ActionTypes.MINT));
+    }
+
+
     function testApplication_ApplicationCommonTests_AccountMaxValueByAccessLevelAtomicFullReSet() public ifDeploymentTestsEnabled {
         uint32[] memory ruleIds = new uint32[](3);
         // Set up rule

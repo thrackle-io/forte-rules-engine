@@ -84,7 +84,7 @@ An online Keccak-256 hash digester can be found at https://emn178.github.io/onli
 | 0x09a92f2d | OverMaxDailyTrades()                                             |
 | 0xaee8b993 | OverMaxValueByAccessLevel()                                      |
 | 0x77743e4a | PricingModuleNotConfigured(address,address)                      |
-| 0x6f65fbb7 | BalanceAmountsShouldHave5Levels(uint8)                           |
+| 0xb6d18b13 | AccessLevelRulesShouldHave5Levels(uint8)                         |
 | 0x8312246e | OverMaxAccValueByRiskScore()                                     |
 | 0x2b3f1e6e | InvalidTimeUnit()                                                |
 | 0x523976c2 | InvalidAction()                                                  |
@@ -131,3 +131,4 @@ An online Keccak-256 hash digester can be found at https://emn178.github.io/onli
 | 0x6bb35a99 | TagListMustBeSingleBlankOrValueList()                            |
 | 0xad3a8b9e | NotEnoughBalance()                                               |
 | 0x7c6d8d3b | ProposedAddressCannotBeSuperAdmin()                              |
+| 0x3ebf4f43 | OverMaxReceivedByAccessLevel()                                   |

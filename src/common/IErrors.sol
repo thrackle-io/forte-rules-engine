@@ -25,6 +25,7 @@ interface IRuleProcessorErrors {
 interface IAccessLevelErrors {
     error OverMaxValueByAccessLevel();
     error OverMaxValueOutByAccessLevel();
+    error OverMaxReceivedByAccessLevel();
     error NotAllowedForAccessLevel();
     error AccessLevelIsNotValid(uint8 accessLevel);
 }
@@ -80,8 +81,7 @@ interface IInputErrors {
 
 interface IAppRuleInputErrors {
     error InvalidHourOfTheDay();
-    error BalanceAmountsShouldHave5Levels(uint8 inputLevels);
-    error WithdrawalAmountsShouldHave5Levels(uint8 inputLevels);
+    error AccessLevelRulesShouldHave5Levels(uint8 inputLevels);
 }
 
 interface IRiskInputErrors {

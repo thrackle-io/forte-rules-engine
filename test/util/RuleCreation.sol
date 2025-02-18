@@ -182,6 +182,27 @@ abstract contract RuleCreation is TestCommonFoundry {
         return ruleId;
     }
 
+    function createAccountMaxReceivedByAccessLevelRule(
+        uint48 receivedLimits1,
+        uint48 receivedLimits2,
+        uint48 receivedLimits3,
+        uint48 receivedLimits4,
+        uint48 receivedLimits5,
+        address sender
+    ) public returns (uint32) {
+        switchToRuleAdmin();
+        uint48[] memory receivedLimits = createUint48Array(receivedLimits1, receivedLimits2, receivedLimits3, receivedLimits4, receivedLimits5);
+        // check event emission
+        vm.expectEmit(true, false, true, true);
+        emit AD1467_ProtocolRuleCreated(ACC_MAX_RECEIVED_ACCESS_LEVEL, 0, new bytes32[](0));
+        uint32 ruleId = AppRuleDataFacet(address(ruleProcessor)).addAccountMaxReceivedByAccessLevel(address(applicationAppManager), receivedLimits, sender);
+        uint256 balance = ApplicationAccessLevelProcessorFacet(address(ruleProcessor)).getAccountMaxReceivedByAccessLevel(ruleId, 2);
+        assertEq(balance, receivedLimits3);
+        vm.stopPrank();
+        return ruleId;
+    }
+
+
     function createAccountMinMaxTokenBalanceRule(bytes32[] memory ruleTags, uint256[] memory minAmounts, uint256[] memory maxAmounts) public returns (uint32) {
         switchToRuleAdmin();
         uint16[] memory periods;

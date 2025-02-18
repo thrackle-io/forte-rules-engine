@@ -63,7 +63,27 @@ contract ApplicationAccessLevelProcessorFacet is IInputErrors, IRuleProcessorErr
         else _usdWithdrawalTotal += _usdAmountTransferring;
         return _usdWithdrawalTotal;
     }
-    
+
+    /**
+     * @dev Rule that checks if the value received from specific address exceeds the limit size in USD for a specific access level
+     * @notice that these ranges are set by ranges.
+     * @param _ruleId to check against.
+     * @param _accessLevel access level of the sending account
+     * @param _usdTotalReceived the amount, in USD, of previously received assets
+     * @param _from sending address
+     * @param _usdAmountTransferring total value of the transfer
+     * @return Sending account's new total received.
+     */
+    function checkAccountMaxReceivedByAccessLevel(uint32 _ruleId, uint8 _accessLevel, uint128 _usdTotalReceived, address _from, uint128 _usdAmountTransferring) external view returns (uint128) {
+        (uint48 max, bool applicable) = getAccountMaxReceivedByAccessLevel(_ruleId, _accessLevel, _from);
+        /// max has to be multiplied by 10 ** 18 to take decimals in token pricing into account
+        if (applicable){
+            if ((_usdAmountTransferring + _usdTotalReceived) > (uint256(max) * (10 ** 18))) revert OverMaxReceivedByAccessLevel();
+            else _usdTotalReceived += _usdAmountTransferring;
+        } 
+        return _usdTotalReceived;
+    }
+
     /**
      * @dev Function to get the Account Max Value Out By Access Level rule in the rule set that belongs to the Access Level
      * @param _index position of rule in array
@@ -93,5 +113,43 @@ contract ApplicationAccessLevelProcessorFacet is IInputErrors, IRuleProcessorErr
         if (_accessLevel == 0) {
             revert NotAllowedForAccessLevel();
         }
+    }
+
+
+     /**
+     * @dev Function to get the Account Max Received By Access Level rule in the rule set that belongs to the Access Level
+     * @param _index position of rule in array
+     * @param _accessLevel AccessLevel Level to check
+     * @param _sender sender of the token
+     * @return balanceAmount balance allowed for access level
+     */
+    function getAccountMaxReceivedByAccessLevel(uint32 _index, uint8 _accessLevel, address _sender) internal view returns (uint48, bool applicable) {
+        RuleS.AccountMaxReceivedByAccessLevelS storage data = Storage.accountMaxReceivedByAccessLevelStorage();
+        if (data.accountMaxReceivedByAccessLevelRules[_index].sender == _sender){
+            applicable = true;
+            if (_index >= data.accountMaxReceivedByAccessLevelIndex) revert IndexOutOfRange();
+        }
+        return (data.accountMaxReceivedByAccessLevelRules[_index].accountMaxReceivedLimits[_accessLevel], applicable);
+    }
+
+    /**
+     * @dev Function to get the Account Max Received By Access Level rule in the rule set that belongs to the Access Level
+     * @param _index position of rule in array
+     * @param _accessLevel AccessLevel Level to check
+     * @return balanceAmount balance allowed for access level
+     */
+    function getAccountMaxReceivedByAccessLevel(uint32 _index, uint8 _accessLevel) public view returns (uint48) {
+        RuleS.AccountMaxReceivedByAccessLevelS storage data = Storage.accountMaxReceivedByAccessLevelStorage();
+        if (_index >= data.accountMaxReceivedByAccessLevelIndex) revert IndexOutOfRange();
+        return data.accountMaxReceivedByAccessLevelRules[_index].accountMaxReceivedLimits[_accessLevel];
+    }
+
+    /**
+     * @dev Function to get total Account Max Received By Access Level rules
+     * @return Total number of access level withdrawal rules
+     */
+    function getTotalAccountMaxReceivedByAccessLevel() external view returns (uint32) {
+        RuleS.AccountMaxReceivedByAccessLevelS storage data = Storage.accountMaxReceivedByAccessLevelStorage();
+        return data.accountMaxReceivedByAccessLevelIndex;
     }
 }

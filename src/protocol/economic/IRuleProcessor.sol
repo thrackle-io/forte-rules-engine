@@ -204,6 +204,18 @@ interface IRuleProcessor {
     function checkAccountMaxValueOutByAccessLevel(uint32 _ruleId, uint8 _accessLevel, uint128 _withdrawal, uint128 _amountToTransfer) external view returns (uint128);
 
     /**
+     * @dev Rule that checks if the value received from specific address exceeds the limit size in USD for a specific access level
+     * @notice that these ranges are set by ranges.
+     * @param _ruleId to check against.
+     * @param _accessLevel access level of the sending account
+     * @param _usdTotalReceived the amount, in USD, of previously received assets
+     * @param _from sending address
+     * @param _usdAmountTransferring total value of the transfer
+     * @return Sending account's new total received.
+     */
+    function checkAccountMaxReceivedByAccessLevel(uint32 _ruleId, uint8 _accessLevel, uint128 _usdTotalReceived, address _from, uint128 _usdAmountTransferring) external view returns (uint128);
+
+    /**
      * @dev This function checks if the requested action is valid according to pause rules.
      * @param _dataServer address of the Application Rule Processor Diamond contract
      */
@@ -349,6 +361,12 @@ interface IRuleProcessor {
      * @param _ruleId Rule Identifier
      */
     function validateAccountMaxValueOutByAccessLevel(ActionTypes[] memory _actions, uint32 _ruleId) external view;
+
+    /**
+     * @dev Validate the existence of the rule
+     * @param _ruleId Rule Identifier
+     */
+    function validateAccountMaxReceivedByAccessLevel(ActionTypes[] memory _actions, uint32 _ruleId) external view;
 
     /**
      * @dev Validate the existence of the rule

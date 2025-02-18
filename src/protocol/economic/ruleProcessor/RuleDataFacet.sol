@@ -18,6 +18,7 @@ contract RuleDataFacet is Context, RuleAdministratorOnly, IEconomicEvents, IInpu
     uint16 constant MAX_TOKEN_PERCENTAGE = 9999;
     uint16 constant MAX_PERCENTAGE = 10000;
     uint24 constant MAX_VOLUME_PERCENTAGE = 100000;
+    uint8 constant MAX_ACCESSLEVELS = 5;
 
     /**
      * Note that no update method is implemented for rules. Since reutilization of
@@ -279,5 +280,7 @@ contract RuleDataFacet is Context, RuleAdministratorOnly, IEconomicEvents, IInpu
         ++data.tokenMinHoldTimeIndex;
         return ruleId;
     }
+
+    
 
 }

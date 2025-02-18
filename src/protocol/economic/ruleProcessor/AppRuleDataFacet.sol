@@ -31,7 +31,7 @@ contract AppRuleDataFacet is Context, RuleAdministratorOnly, IEconomicEvents, II
     function addAccountMaxValueByAccessLevel(address _appManagerAddr, uint48[] calldata _maxValues) external ruleAdministratorOnly(_appManagerAddr) returns (uint32) {
         RuleS.AccountMaxValueByAccessLevelS storage data = Storage.accountMaxValueByAccessLevelStorage();
         uint32 index = data.accountMaxValueByAccessLevelIndex;
-        if (_maxValues.length != MAX_ACCESSLEVELS) revert BalanceAmountsShouldHave5Levels(uint8(_maxValues.length));
+        if (_maxValues.length != MAX_ACCESSLEVELS) revert AccessLevelRulesShouldHave5Levels(uint8(_maxValues.length));
         uint256 length = _maxValues.length;
         for (uint256 i = 1; i < length; ++i) {
             if (_maxValues[i] < _maxValues[i - 1]) revert WrongArrayOrder();
@@ -48,7 +48,7 @@ contract AppRuleDataFacet is Context, RuleAdministratorOnly, IEconomicEvents, II
      * @dev Function add an Account Max Value Out By Access Level rule
      * @dev Function has ruleAdministratorOnly Modifier and takes AppManager Address Param
      * @param _appManagerAddr Address of App Manager
-     * @param _withdrawalAmounts withdrawal amaount restrictions for each 5 levels from level 0 to 4 in whole USD.
+     * @param _withdrawalAmounts withdrawal amount restrictions for each 5 levels from level 0 to 4 in whole USD.
      * @notice The position within the array matters. Position 0 represents access level 0,
      * and position 4 represents level 4.
      * @return position of new rule in array
@@ -56,7 +56,7 @@ contract AppRuleDataFacet is Context, RuleAdministratorOnly, IEconomicEvents, II
     function addAccountMaxValueOutByAccessLevel(address _appManagerAddr, uint48[] calldata _withdrawalAmounts) external ruleAdministratorOnly(_appManagerAddr) returns (uint32) {
         RuleS.AccountMaxValueOutByAccessLevelS storage data = Storage.accountMaxValueOutByAccessLevelStorage();
         uint32 index = data.accountMaxValueOutByAccessLevelIndex;
-        if (_withdrawalAmounts.length != MAX_ACCESSLEVELS) revert WithdrawalAmountsShouldHave5Levels(uint8(_withdrawalAmounts.length));
+        if (_withdrawalAmounts.length != MAX_ACCESSLEVELS) revert AccessLevelRulesShouldHave5Levels(uint8(_withdrawalAmounts.length));
         uint256 length = _withdrawalAmounts.length;
         for (uint256 i = 1; i < length; ++i) {
             if (_withdrawalAmounts[i] < _withdrawalAmounts[i - 1]) revert WrongArrayOrder();
@@ -169,4 +169,31 @@ contract AppRuleDataFacet is Context, RuleAdministratorOnly, IEconomicEvents, II
         emit AD1467_ProtocolRuleCreated(ACC_MAX_VALUE_BY_RISK_SCORE, ruleId, new bytes32[](0));
         return ruleId;
     }
+
+    /**
+     * @dev Function add an Account Max Received By Access Level rule
+     * @dev Function has ruleAdministratorOnly Modifier and takes AppManager Address Param
+     * @param _appManagerAddr Address of App Manager
+     * @param _receivedAmounts received amounts allowed for each 5 levels from level 0 to 4 in whole USD.
+     * @notice The position within the array matters. Position 0 represents access level 0,
+     * and position 4 represents level 4.
+     * @return position of new rule in array
+     */
+    function addAccountMaxReceivedByAccessLevel(address _appManagerAddr, uint48[] calldata _receivedAmounts, address _fromAddress) external ruleAdministratorOnly(_appManagerAddr) returns (uint32) {
+        RuleS.AccountMaxReceivedByAccessLevelS storage data = Storage.accountMaxReceivedByAccessLevelStorage();
+        uint32 index = data.accountMaxReceivedByAccessLevelIndex;
+        if (_receivedAmounts.length != MAX_ACCESSLEVELS) revert AccessLevelRulesShouldHave5Levels(uint8(_receivedAmounts.length));
+        uint256 length = _receivedAmounts.length;
+        for (uint256 i = 1; i < length; ++i) {
+            if (_receivedAmounts[i] < _receivedAmounts[i - 1]) revert WrongArrayOrder();
+        }
+        for (uint8 i; i < length; ++i) {
+            data.accountMaxReceivedByAccessLevelRules[index].accountMaxReceivedLimits[i] = _receivedAmounts[i];
+        }
+        data.accountMaxReceivedByAccessLevelRules[index].sender = _fromAddress;
+        ++data.accountMaxReceivedByAccessLevelIndex;
+        emit AD1467_ProtocolRuleCreated(ACC_MAX_RECEIVED_ACCESS_LEVEL, index, new bytes32[](0));
+        return index;
+    }
+
 }

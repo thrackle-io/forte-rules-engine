@@ -118,4 +118,10 @@ interface IApplicationRules {
         uint8[] riskScore; //
         uint48[] maxValue; /// whole USD (no cents) -> 1 = 1 USD (Max allowed: 281 trillion USD)
     }
+
+    /// ******** Account Max Received By Access Level ********
+    struct AccountMaxReceivedByAccessLevel{
+        mapping(uint8 => uint48) accountMaxReceivedLimits;
+        address sender;
+    }
 }

@@ -67,6 +67,22 @@ abstract contract TokenUtils is IApplicationHandlerEvents, RuleCreation {
         applicationHandler.setAccountMaxValueByAccessLevelIdFull(actions, ruleIds);
     }
 
+    function setAccountMaxReceivedByAccessLevelIdFull(ActionTypes[] memory actions, uint32[] memory ruleIds) public endWithStopPrank {
+        switchToRuleAdmin();
+        // check the event emission when setting
+        vm.expectEmit(true, true, true, true);
+        emit AD1467_ApplicationRuleAppliedFull(ACC_MAX_RECEIVED_BY_ACCESS_LEVEL, actions, ruleIds);
+        applicationHandler.setAccountMaxReceivedByAccessLevelIdFull(actions, ruleIds);
+    }
+
+    function setAccountMaxReceivedByAccessLevelSingleAction(ActionTypes action, uint32 ruleId) public endWithStopPrank {
+        switchToRuleAdmin();
+        // check the event emission when setting
+        vm.expectEmit(true, true, true, true);
+        emit AD1467_ApplicationRuleApplied(ACC_MAX_RECEIVED_BY_ACCESS_LEVEL, action, ruleId);
+        applicationHandler.setAccountMaxReceivedByAccessLevelId(createActionTypeArray(action), ruleId);
+    }
+
     function setAccountMaxValueByRiskRule(uint32 ruleId) public endWithStopPrank {
         switchToRuleAdmin();
         ActionTypes[] memory actionTypes = createActionTypeArray(ActionTypes.P2P_TRANSFER, ActionTypes.BUY, ActionTypes.MINT);

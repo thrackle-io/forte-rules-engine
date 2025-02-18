@@ -101,6 +101,12 @@ interface IRuleStorage {
         uint32 accountMaxValueOutByAccessLevelIndex;
     }
 
+    /// ******** Account Max Received by Access Level ********
+    struct AccountMaxReceivedByAccessLevelS {
+        mapping(uint32 => IApplicationRules.AccountMaxReceivedByAccessLevel) accountMaxReceivedByAccessLevelRules;
+        uint32 accountMaxReceivedByAccessLevelIndex;
+    }
+
     /*****************************************
     *************** NFT Rules ****************
     /*****************************************/

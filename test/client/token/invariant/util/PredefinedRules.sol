@@ -15,6 +15,7 @@ contract PredefinedRules is ITaggedRules, INonTaggedRules, IApplicationRules, Te
         AccountMaxTxValueByRiskScore(createUint48Array(uint48(50), uint48(35), uint48(25)), createUint8Array(uint8(9), uint8(39), uint8(69)), 24, 0);
 
     uint48[] accountMaxValueOutByAccessLevel = createUint48Array(5, 20, 40, 100, 100_000);
+    uint48[] accountMaxReceivedByAccessLevel = createUint48Array(5, 20, 40, 100, 100_000);
 
     TokenMaxTradingVolume public tokenMaxTradingVolumeRuleA = TokenMaxTradingVolume(10, 24, 0, 0);
     TokenMaxTradingVolume public tokenMaxTradingVolumeRuleB = TokenMaxTradingVolume(10, 24, 0, 10_000 * 10 ** 18);

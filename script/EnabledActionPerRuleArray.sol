@@ -42,6 +42,7 @@ contract EnabledActionPerRuleArray is ActionTypesArray {
             EnabledActionPerRule(ACC_MAX_TX_VALUE_BY_RISK_SCORE, createActionTypesArray(ActionTypes.P2P_TRANSFER, ActionTypes.BUY, ActionTypes.SELL, ActionTypes.MINT, ActionTypes.BURN))
         );
         enabledActionPerRuleArray.push(EnabledActionPerRule(ACC_MAX_VALUE_BY_ACCESS_LEVEL, createActionTypesArray(ActionTypes.P2P_TRANSFER, ActionTypes.BUY, ActionTypes.MINT)));
+        enabledActionPerRuleArray.push(EnabledActionPerRule(ACC_MAX_RECEIVED_BY_ACCESS_LEVEL, createActionTypesArray(ActionTypes.P2P_TRANSFER, ActionTypes.BUY, ActionTypes.SELL, ActionTypes.MINT)));
         enabledActionPerRuleArray.push(EnabledActionPerRule(ACC_MAX_VALUE_BY_RISK_SCORE, createActionTypesArray(ActionTypes.P2P_TRANSFER, ActionTypes.BUY, ActionTypes.MINT)));
         enabledActionPerRuleArray.push(EnabledActionPerRule(ACC_MAX_VALUE_OUT_ACCESS_LEVEL, createActionTypesArray(ActionTypes.P2P_TRANSFER, ActionTypes.SELL, ActionTypes.BURN)));
         enabledActionPerRuleArray.push(

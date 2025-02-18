@@ -384,4 +384,5 @@ contract ERC20RuleProcessorFacet is IInputErrors, IRuleProcessorErrors, IERC20Er
         RuleS.TokenMaxBuySellVolumeS storage data = Storage.accountMaxBuySellVolumeStorage();
         return data.tokenMaxBuySellVolumeIndex;
     }
+
 }

@@ -42,6 +42,7 @@ contract ProtocolApplicationHandler is
 
     /// Rule mappings
     mapping(ActionTypes => Rule) accountMaxValueByAccessLevel;
+    mapping(ActionTypes => Rule) accountMaxReceivedByAccessLevel;
     mapping(ActionTypes => Rule) accountMaxValueByRiskScore;
     mapping(ActionTypes => Rule) accountMaxTxValueByRiskScore;
     mapping(ActionTypes => Rule) accountMaxValueOutByAccessLevel;
@@ -60,6 +61,9 @@ contract ProtocolApplicationHandler is
     mapping(address => uint128) usdValueTransactedInRiskPeriod;
     mapping(address => uint64) lastTxDateRiskRule;
     mapping(address => uint128) usdValueTotalWithrawals;
+
+    /// Account Max Received by Access Level Accumulator
+    mapping(address => uint128) usdValueAccountMaxReceived;
 
     /**
      * @dev Initializes the contract setting the AppManager address as the one provided and setting the ruleProcessor for protocol access
@@ -83,6 +87,7 @@ contract ProtocolApplicationHandler is
             accountMaxTxValueByRiskScore[_action].active ||
             accountMaxValueByAccessLevel[_action].active ||
             accountMaxValueOutByAccessLevel[_action].active ||
+            accountMaxReceivedByAccessLevel[_action].active ||
             accountDenyForNoAccessLevel[_action].active;
     }
 
@@ -203,7 +208,7 @@ contract ProtocolApplicationHandler is
      */
     function _checkAccessLevelRules(address _from, address _to, address _sender, uint128 _balanceValuation, uint128 _transferValuation, ActionTypes _action) internal {
         uint8 score = appManager.getAccessLevel(_to);
-        uint8 fromScore = appManager.getAccessLevel(_from);
+        uint8 fromScore = appManager.getAccessLevel(_from);        
         if (_action == ActionTypes.P2P_TRANSFER) {
             if (accountDenyForNoAccessLevel[_action].active) {
                 ruleProcessor.checkAccountDenyForNoAccessLevel(fromScore);
@@ -216,6 +221,15 @@ contract ProtocolApplicationHandler is
                     accountMaxValueOutByAccessLevel[_action].ruleId,
                     fromScore,
                     usdValueTotalWithrawals[_from],
+                    _transferValuation
+                );
+            }
+            if (accountMaxReceivedByAccessLevel[_action].active) {
+                usdValueAccountMaxReceived[_to] = ruleProcessor.checkAccountMaxReceivedByAccessLevel(
+                    accountMaxReceivedByAccessLevel[_action].ruleId,
+                    score,
+                    usdValueAccountMaxReceived[_to],
+                    _from,
                     _transferValuation
                 );
             }
@@ -232,6 +246,15 @@ contract ProtocolApplicationHandler is
                         _transferValuation
                     );
                 }
+                if (accountMaxReceivedByAccessLevel[ActionTypes.SELL].active) {
+                    usdValueAccountMaxReceived[_to] = ruleProcessor.checkAccountMaxReceivedByAccessLevel(
+                    accountMaxReceivedByAccessLevel[ActionTypes.SELL].ruleId,
+                    score,
+                    usdValueAccountMaxReceived[_to],
+                    _from,
+                    _transferValuation
+                );
+            }
             }
             if (accountDenyForNoAccessLevel[_action].active) ruleProcessor.checkAccountDenyForNoAccessLevel(score);
             if (accountMaxValueByAccessLevel[_action].active && _to != address(0))
@@ -241,6 +264,15 @@ contract ProtocolApplicationHandler is
                     accountMaxValueOutByAccessLevel[_action].ruleId,
                     fromScore,
                     usdValueTotalWithrawals[_from],
+                    _transferValuation
+                );
+            }
+            if (accountMaxReceivedByAccessLevel[_action].active) {
+                usdValueAccountMaxReceived[_to] = ruleProcessor.checkAccountMaxReceivedByAccessLevel(
+                    accountMaxReceivedByAccessLevel[_action].ruleId,
+                    score,
+                    usdValueAccountMaxReceived[_to],
+                    _from,
                     _transferValuation
                 );
             }
@@ -254,6 +286,15 @@ contract ProtocolApplicationHandler is
                         accountMaxValueOutByAccessLevel[_action].ruleId,
                         fromScore,
                         usdValueTotalWithrawals[_from],
+                        _transferValuation
+                    );
+                }
+                if (accountMaxReceivedByAccessLevel[ActionTypes.BUY].active) {
+                        usdValueAccountMaxReceived[_to] = ruleProcessor.checkAccountMaxReceivedByAccessLevel(
+                        accountMaxReceivedByAccessLevel[ActionTypes.BUY].ruleId,
+                        score,
+                        usdValueAccountMaxReceived[_to],
+                        _from,
                         _transferValuation
                     );
                 }
@@ -278,6 +319,15 @@ contract ProtocolApplicationHandler is
                     accountMaxValueOutByAccessLevel[_action].ruleId,
                     fromScore,
                     usdValueTotalWithrawals[_from],
+                    _transferValuation
+                );
+            }
+            if (accountMaxReceivedByAccessLevel[_action].active) {
+                usdValueAccountMaxReceived[_to] = ruleProcessor.checkAccountMaxReceivedByAccessLevel(
+                    accountMaxReceivedByAccessLevel[_action].ruleId,
+                    score,
+                    usdValueAccountMaxReceived[_to],
+                    _from,
                     _transferValuation
                 );
             }
@@ -582,6 +632,91 @@ contract ProtocolApplicationHandler is
      */
     function isAccountDenyForNoAccessLevelActive(ActionTypes _action) external view returns (bool) {
         return accountDenyForNoAccessLevel[_action].active;
+    }
+
+    /**
+     * @dev Set the accountMaxReceivedByAccessLevelRule. Restricted to app administrators only.
+     * @notice that setting a rule will automatically activate it.
+     * @param _actions action types in which to apply the rules
+     * @param _ruleId Rule Id to set
+     */
+    function setAccountMaxReceivedByAccessLevelId(ActionTypes[] calldata _actions, uint32 _ruleId) external ruleAdministratorOnly(appManagerAddress) {
+        for (uint i; i < _actions.length; ++i) {
+            setAccountMaxReceivedbyAccessLevelIdUpdate(_actions[i], _ruleId);
+            emit AD1467_ApplicationRuleApplied(ACC_MAX_RECEIVED_BY_ACCESS_LEVEL, _actions[i], _ruleId);
+        }
+    }
+
+    /**
+     * @dev Set the accountMaxReceivedByAccessLevelRule. Restricted to app administrators only.
+     * @notice that setting a rule will automatically activate it.
+     * @param _actions actions to have the rule applied to
+     * @param _ruleIds Rule Id corresponding to the actions
+     */
+    function setAccountMaxReceivedByAccessLevelIdFull(ActionTypes[] calldata _actions, uint32[] calldata _ruleIds) external ruleAdministratorOnly(appManagerAddress) {
+        validateRuleInputFull(_actions, _ruleIds);
+        clearAccountMaxReceivedByAccessLevel();
+        for (uint i; i < _actions.length; ++i) {
+            setAccountMaxReceivedbyAccessLevelIdUpdate(_actions[i], _ruleIds[i]);
+        }
+        emit AD1467_ApplicationRuleAppliedFull(ACC_MAX_RECEIVED_BY_ACCESS_LEVEL, _actions, _ruleIds);
+    }
+
+    /**
+     * @dev Clear the rule data structure
+     */
+    function clearAccountMaxReceivedByAccessLevel() internal {
+        for (uint i; i <= lastPossibleAction; ++i) {
+            delete accountMaxReceivedByAccessLevel[ActionTypes(i)];
+        }
+    }
+
+    /**
+     * @dev Set the AccountMaxReceivedbyAccessLevelRuleId.
+     * @notice that setting a rule will automatically activate it.
+     * @param _action the action type to set the rule
+     * @param _ruleId Rule Id to set
+     */
+    // slither-disable-next-line calls-loop
+    function setAccountMaxReceivedbyAccessLevelIdUpdate(ActionTypes _action, uint32 _ruleId) internal {
+        // slither-disable-next-line calls-loop
+        IRuleProcessor(ruleProcessor).validateAccountMaxReceivedByAccessLevel(createActionTypesArray(_action), _ruleId);
+        accountMaxReceivedByAccessLevel[_action].ruleId = _ruleId;
+        accountMaxReceivedByAccessLevel[_action].active = true;
+    }
+
+    /**
+     * @dev enable/disable rule. Disabling a rule will save gas on transfer transactions.
+     * @param _actions action types
+     * @param _on boolean representing if a rule must be checked or not.
+     */
+    function activateAccountMaxReceivedByAccessLevel(ActionTypes[] calldata _actions, bool _on) external ruleAdministratorOnly(appManagerAddress) {
+        for (uint i; i < _actions.length; ++i) {
+            accountMaxReceivedByAccessLevel[_actions[i]].active = _on;
+        }
+        if (_on) {
+            emit AD1467_ApplicationHandlerActivated(ACC_MAX_RECEIVED_BY_ACCESS_LEVEL, _actions);
+        } else {
+            emit AD1467_ApplicationHandlerDeactivated(ACC_MAX_RECEIVED_BY_ACCESS_LEVEL, _actions);
+        }
+    }
+
+    /**
+     * @dev Tells you if the accountMaxReceivedByAccessLevel Rule is active or not.
+     * @param _action the action type
+     * @return boolean representing if the rule is active
+     */
+    function isAccountMaxReceivedByAccessLevelActive(ActionTypes _action) external view returns (bool) {
+        return accountMaxReceivedByAccessLevel[_action].active;
+    }
+
+    /**
+     * @dev Retrieve the accountMaxReceivedByAccessLevel rule id
+     * @param _action action type
+     * @return accountMaxReceivedByAccessLevelId rule id
+     */
+    function getAccountMaxReceivedByAccessLevelId(ActionTypes _action) external view returns (uint32) {
+        return accountMaxReceivedByAccessLevel[_action].ruleId;
     }
 
     /**

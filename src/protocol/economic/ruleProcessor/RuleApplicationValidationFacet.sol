@@ -263,12 +263,30 @@ contract RuleApplicationValidationFacet is ERC173 {
     }
 
     /**
+     * @dev Validate the existence of the rule
+     * @param _ruleId Rule Identifier
+     */
+    function validateAccountMaxReceivedByAccessLevel(ActionTypes[] memory _actions, uint32 _ruleId) external view {
+        _ruleId.checkRuleExistence(getTotalAccountMaxReceivedByAccessLevel());
+        require(areActionsEnabledInRule(ACC_MAX_RECEIVED_BY_ACCESS_LEVEL, _actions), "Action Validation Failed");
+    }
+
+    /**
      * @dev Function to get total Account Max Value Out By Access Level rules
      * @return Total number of access level withdrawal rules
      */
     function getTotalAccountMaxValueOutByAccessLevel() internal view returns (uint32) {
         RuleS.AccountMaxValueOutByAccessLevelS storage data = Storage.accountMaxValueOutByAccessLevelStorage();
         return data.accountMaxValueOutByAccessLevelIndex;
+    }
+
+    /**
+     * @dev Function to get total Account Max Received By Access Level rules
+     * @return Total number of access level withdrawal rules
+     */
+    function getTotalAccountMaxReceivedByAccessLevel() internal view returns (uint32) {
+        RuleS.AccountMaxReceivedByAccessLevelS storage data = Storage.accountMaxReceivedByAccessLevelStorage();
+        return data.accountMaxReceivedByAccessLevelIndex;
     }
 
     /**
