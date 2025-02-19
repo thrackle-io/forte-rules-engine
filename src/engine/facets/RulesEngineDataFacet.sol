@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
 import "src/engine/facets/RulesEngineAdminRolesFacet.sol";
-
 /**
  * @title Rules Engine Data Facet
  * @author @ShaneDuncan602 
@@ -27,13 +26,11 @@ contract RulesEngineDataFacet is FacetCommonImports {
     ) external policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         // Load the Foreign Call data from storage
         ForeignCallS storage data = lib.getForeignCallStorage();
-        uint256 foreignCallIndex = data.foreignCallIdxCounter[_policyId];
+        uint256 foreignCallIndex = ++data.foreignCallIdxCounter[_policyId];
         ForeignCall memory fc = _foreignCall;
         fc.foreignCallIndex = foreignCallIndex;
         _storeForeignCall(_policyId, fc);
-        unchecked {
-            ++data.foreignCallIdxCounter[_policyId];
-        }
+        data.foreignCallIdxCounter[_policyId] = foreignCallIndex;
         emit ForeignCallCreated(_policyId, foreignCallIndex);
         return foreignCallIndex;
     }
@@ -98,7 +95,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         uint256 foreignCallCount = lib.getForeignCallStorage().foreignCallIdxCounter[_policyId];
         ForeignCall[] memory foreignCalls = new ForeignCall[](foreignCallCount);
         uint256 j = 0;
-        for (uint256 i = 0; i < foreignCallCount; i++) {
+        for (uint256 i = 1; i <= foreignCallCount; i++) {
             if (lib.getForeignCallStorage().foreignCalls[_policyId][i].set) {
                 foreignCalls[j] = lib.getForeignCallStorage().foreignCalls[_policyId][i];
                 j++;
@@ -120,11 +117,9 @@ contract RulesEngineDataFacet is FacetCommonImports {
     ) public policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         // Load the Tracker data from storage
         TrackerS storage data = lib.getTrackerStorage();
-        uint256 trackerIndex = data.trackerIndexCounter[_policyId];
+        uint256 trackerIndex = ++data.trackerIndexCounter[_policyId];
         _storeTracker(data, _policyId, trackerIndex, _tracker);
-        unchecked {
-            ++data.trackerIndexCounter[_policyId];
-        }
+        data.trackerIndexCounter[_policyId] = trackerIndex;
         return trackerIndex;
     }
 
@@ -184,7 +179,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         uint256 trackerCount = data.trackerIndexCounter[_policyId];
         Trackers[] memory trackers = new Trackers[](trackerCount);
         uint256 j = 0;
-        for (uint256 i = 0; i < trackerCount; i++) {
+        for (uint256 i = 1; i <= trackerCount; i++) {
             if (data.trackers[_policyId][i].set) {
                 trackers[j] = data.trackers[_policyId][i];
                 j++;
@@ -210,14 +205,11 @@ contract RulesEngineDataFacet is FacetCommonImports {
         PT[] memory _pTypes
     ) public policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         FunctionSignatureS storage data = lib.getFunctionSignatureStorage();
-        uint256 functionId = data.functionIdCounter[_policyId];
+        uint256 functionId = ++data.functionIdCounter[_policyId];
         data.functionSignatureStorageSets[_policyId][functionId].set = true;
         data.functionSignatureStorageSets[_policyId][functionId].signature = _functionSignature;
-        data.functionSignatureStorageSets[_policyId][functionId].parameterTypes = _pTypes;
-        unchecked {
-            uint256 functionId = ++data.functionIdCounter[_policyId];   
-            data.functionIdCounter[_policyId] = functionId;
-        }
+        data.functionSignatureStorageSets[_policyId][functionId].parameterTypes = _pTypes;      
+        data.functionIdCounter[_policyId] = functionId;
         return functionId;
     }
     
@@ -263,6 +255,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         PolicyStorageSet storage data = lib.getPolicyStorage().policyStorageSets[_policyId];
         // retrieve function signature to delete  
         bytes4 signature = lib.getFunctionSignatureStorage().functionSignatureStorageSets[_policyId][_functionSignatureId].signature;  
+
         // delete the function signature storage set struct 
         delete lib.getFunctionSignatureStorage().functionSignatureStorageSets[_policyId][_functionSignatureId];
         // delete signatures array from policy 
@@ -272,10 +265,11 @@ contract RulesEngineDataFacet is FacetCommonImports {
         // delete rule structures associated to function signature 
         for(uint256 i; i < data.policy.signatureToRuleIds[signature].length; i++) {
             // delete rules from storage 
-            delete lib.getRuleStorage().ruleStorageSets[i];
+            delete lib.getRuleStorage().ruleStorageSets[_policyId][i];
         }
         // delete function signature to rule Ids mapping  
         delete data.policy.signatureToRuleIds[signature];
+
         // retrieve remaining function signature structs from storage that were not removed   
         FunctionSignatureStorageSet[] memory functionSignatureStructs = getAllFunctionSignatures(_policyId);
         // reset signature array for policy
@@ -313,7 +307,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         uint256 functionIdCount = data.functionIdCounter[_policyId];
         FunctionSignatureStorageSet[] memory functionSignatureStorageSets = new FunctionSignatureStorageSet[](functionIdCount);
         uint256 j = 0;
-        for (uint256 i = 0; i < functionIdCount; i++) {
+        for (uint256 i = 1; i <= functionIdCount; i++) {
             if (data.functionSignatureStorageSets[_policyId][i].set) {
                 functionSignatureStorageSets[j] = data.functionSignatureStorageSets[_policyId][i];
                 j++;
@@ -327,28 +321,30 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _rule the rule to create
      * @return ruleId the generated ruleId
      */
-    function createRule(Rule calldata _rule) public policyAdminOnly(_rule.policyId, msg.sender) returns (uint256) {
+    function createRule(uint256 _policyId, Rule calldata _rule) public policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         RuleS storage data = lib.getRuleStorage();
-        unchecked {
-            data.ruleId++;
-        }
-        return _storeRule(data, data.ruleId, _rule);
+        uint256 ruleId = ++data.ruleIdCounter[_policyId];
+        _storeRule(data, _policyId, ruleId, _rule);
+        data.ruleIdCounter[_policyId] = ruleId;
+        return ruleId;
     }
 
     /**
      * Add a rule to storage.
+     * @param _data the rule storage
+     * @param _policyId the policyId the rule is associated with
      * @param _ruleId the ruleId to add
      * @param _rule the rule to add
      * @return ruleId the generated ruleId
      */
-    function _storeRule(RuleS storage _data, uint256 _ruleId, Rule calldata _rule) internal returns (uint256) {
+    function _storeRule(RuleS storage _data, uint256 _policyId, uint256 _ruleId, Rule calldata _rule) internal returns (uint256) {
         // TODO: Add validations for rule
         
         // Validate that the policy exists
-        if(!lib.getPolicyStorage().policyStorageSets[_rule.policyId].set) revert ("Invalid PolicyId");
+        if(!lib.getPolicyStorage().policyStorageSets[_policyId].set) revert ("Invalid PolicyId");
 
-        _data.ruleStorageSets[_ruleId].set = true;
-        _data.ruleStorageSets[_ruleId].rule = _rule;
+        _data.ruleStorageSets[_policyId][_ruleId].set = true;
+        _data.ruleStorageSets[_policyId][_ruleId].rule = _rule;
         return _ruleId;
     }
 
@@ -360,12 +356,14 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @return ruleId the generated ruleId
      */
     function updateRule(
+        uint256 _policyId,
         uint256 _ruleId,
         Rule calldata _rule
-    ) public policyAdminOnly(_rule.policyId, msg.sender) returns (uint256) {
+    ) public policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         // Load the function signature data from storage
         RuleS storage data = lib.getRuleStorage();
-        _storeRule(data, _ruleId, _rule);
+
+        _storeRule(data, _policyId, _ruleId, _rule);
         return _ruleId;
     }
 
@@ -374,17 +372,39 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _ruleId ruleId
      * @return ruleStorageSets rule
      */
-    function getRule(uint256 _ruleId) public view returns (RuleStorageSet memory) {
+    function getRule(uint256 _policyId, uint256 _ruleId) public view returns (RuleStorageSet memory) {
         // Load the function signature data from storage
-        return lib.getRuleStorage().ruleStorageSets[_ruleId];
+        return lib.getRuleStorage().ruleStorageSets[_policyId][_ruleId];
+    }
+
+    /**
+     * Get all rules from storage.
+     * @param _policyId the policyId the rules are associated with
+     * @return rules rules
+     */
+    function getAllRules(uint256 _policyId) public view returns (Rule[][] memory) {
+        // Load the function signature data from storage
+        Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
+        bytes4[] memory signatures = data.signatures;
+        Rule[][] memory rules = new Rule[][](signatures.length);
+        for (uint256 i = 0; i < signatures.length; i++) {
+            uint256[] memory ruleIds = data.signatureToRuleIds[signatures[i]];
+            rules[i] = new Rule[](ruleIds.length);
+            for (uint256 j = 0; j < ruleIds.length; j++) {
+                if (lib.getRuleStorage().ruleStorageSets[_policyId][ruleIds[j]].set) {
+                    rules[i][j] = lib.getRuleStorage().ruleStorageSets[_policyId][ruleIds[j]].rule;
+                }
+            }
+        }
+        return rules;
     }
 
     /**
      * Delete a rule from storage.
      * @param _ruleId the id of the rule to delete
      */
-    function deleteRule(uint256 _ruleId) public policyAdminOnly(lib.getRuleStorage().ruleStorageSets[_ruleId].rule.policyId, msg.sender) {
-        delete lib.getRuleStorage().ruleStorageSets[_ruleId];
+    function deleteRule(uint256 _policyId, uint256 _ruleId) public policyAdminOnly(_policyId, msg.sender) {
+        delete lib.getRuleStorage().ruleStorageSets[_policyId][_ruleId];
     }
 
     /// Policy Storage
@@ -430,7 +450,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
     function createPolicy(FunctionSignatureStorageSet[] calldata _functionSignatures, Rule[] calldata _rules) public returns(uint256) {
         // retrieve Policy Storage 
         PolicyS storage data = lib.getPolicyStorage();
-        uint256 policyId; 
+        uint256 policyId = data.policyId; 
         // If this is the first policy created increment by 1 to start id counter. 
         unchecked{
             ++data.policyId;
@@ -472,7 +492,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
                 data.policyStorageSets[_policyId].policy.signatures.push(_signatures[i]);
                 // make sure that all the rules attached to each function signature exist
                 for (uint256 j = 0; j < _ruleIds[i].length; j++) {
-                    RuleStorageSet memory ruleStore = getRule(_ruleIds[i][j]);
+                    RuleStorageSet memory ruleStore = getRule(_policyId, _ruleIds[i][j]);
                     if(!ruleStore.set) revert("Invalid Rule");
                     for (uint256 k = 0; k < ruleStore.rule.placeHolders.length; k++) {
                         if(ruleStore.rule.placeHolders[k].foreignCall) {

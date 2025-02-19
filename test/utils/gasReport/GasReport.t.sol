@@ -204,8 +204,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fc.foreignCallAddress = _contractAddress;
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
         fc.returnType = PT.UINT;
-        fc.foreignCallIndex = 0;
-        RulesEngineDataFacet(address(red))
+        fc.foreignCallIndex = 1;
+        uint256 foreignCallId = RulesEngineDataFacet(address(red))
             .createForeignCall(
                 policyIds[0],
                 fc
@@ -217,7 +217,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](2);
         rule.placeHolders[0].foreignCall = true;
-        rule.placeHolders[0].typeSpecificIndex = 0;
+        rule.placeHolders[0].typeSpecificIndex = uint128(foreignCallId);
         rule.placeHolders[1].pType = PT.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1;
 
@@ -233,9 +233,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         // Swapping isPositive to make sure the revert doesn't trigger (for comparison with V1 numbers)
         rule = _setUpEffect(rule, _effectType, !isPositive);
-        rule.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -276,8 +275,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fc.foreignCallAddress = _contractAddress;
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
         fc.returnType = PT.UINT;
-        fc.foreignCallIndex = 0;
-        RulesEngineDataFacet(address(red))
+        fc.foreignCallIndex = 1;
+        uint256 foreignCallId = RulesEngineDataFacet(address(red))
             .createForeignCall(
                 policyIds[0],
                 fc
@@ -289,7 +288,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Build the foreign call placeholder
         rule1.placeHolders = new Placeholder[](2);
         rule1.placeHolders[0].foreignCall = true;
-        rule1.placeHolders[0].typeSpecificIndex = 0;
+        rule1.placeHolders[0].typeSpecificIndex = uint128(foreignCallId);
         rule1.placeHolders[1].pType = PT.UINT;
         rule1.placeHolders[1].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
@@ -305,14 +304,12 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule1.instructionSet[6] = 1;
 
         rule1 = _setUpEffect(rule1, _effectType, isPositive);
-        rule1.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId1 = RulesEngineDataFacet(address(red)).createRule(rule1);
-        rule2 = _createGTRule(policyIds[0], 4);
+        uint256 ruleId1 = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule1);
+        rule2 = _createGTRule(4);
         // Swapping from posEffect to negEffects to make sure the revert doesn't trigger (for comparison with V1 numbers)
         rule2.negEffects[0] = effectId_revert;
-        rule2.policyId = policyIds[0];
-        uint256 ruleId2 = RulesEngineDataFacet(address(red)).createRule(rule2);
+        uint256 ruleId2 = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule2);
 
         ruleIds.push(new uint256[](2));
         ruleIds[0][0] = ruleId1;
@@ -347,15 +344,15 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
         uint8[] memory typeSpecificIndices = new uint8[](1);
-        typeSpecificIndices[0] = 0;
+        typeSpecificIndices[0] = 1;
         ForeignCall memory fc;
         fc.typeSpecificIndices = typeSpecificIndices;
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = _contractAddress;
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
         fc.returnType = PT.UINT;
-        fc.foreignCallIndex = 0;
-        RulesEngineDataFacet(address(red))
+        fc.foreignCallIndex = 1;
+        uint256 foreignCallId = RulesEngineDataFacet(address(red))
             .createForeignCall(
                 policyIds[0],
                 fc
@@ -366,7 +363,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Build the foreign call placeholder
         rule1.placeHolders = new Placeholder[](2);
         rule1.placeHolders[0].foreignCall = true;
-        rule1.placeHolders[0].typeSpecificIndex = 0;
+        rule1.placeHolders[0].typeSpecificIndex = uint128(foreignCallId);
         rule1.placeHolders[1].pType = PT.UINT;
         rule1.placeHolders[1].typeSpecificIndex = 1;
 
@@ -389,10 +386,9 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule1.instructionSet[15] = 2;
         rule1.instructionSet[16] = 5;
         // Swapping isPositive to make sure the revert doesn't trigger (for comparison with V1 numbers)
-        rule1 = _setUpEffect(rule1, _effectType, !isPositive);
-        rule1.policyId = policyIds[0];
+        rule1 = _setUpEffect(rule1, _effectType, isPositive);
         // Save the rule
-        uint256 ruleId1 = RulesEngineDataFacet(address(red)).createRule(rule1);
+        uint256 ruleId1 = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule1);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId1;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
@@ -439,8 +435,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fc.foreignCallAddress = _contractAddress;
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
         fc.returnType = PT.UINT;
-        fc.foreignCallIndex = 0;
-        RulesEngineDataFacet(address(red))
+        fc.foreignCallIndex = 1;
+        uint256 foreignCallId = RulesEngineDataFacet(address(red))
             .createForeignCall(
                 policyIds[0],
                 fc
@@ -452,7 +448,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Build the foreign call placeholder
         rule1.placeHolders = new Placeholder[](2);
         rule1.placeHolders[0].foreignCall = true;
-        rule1.placeHolders[0].typeSpecificIndex = 0;
+        rule1.placeHolders[0].typeSpecificIndex = uint128(foreignCallId);
         rule1.placeHolders[1].pType = PT.UINT;
         rule1.placeHolders[1].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
@@ -467,14 +463,12 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule1.instructionSet[5] = 0;
         rule1.instructionSet[6] = 1;
         rule1 = _setUpEffect(rule1, _effectType, isPositive);
-        rule1.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId1 = RulesEngineDataFacet(address(red)).createRule(rule1);
-        rule2 = _createGTRule(policyIds[1], 4);
+        uint256 ruleId1 = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule1);
+        rule2 = _createGTRule(4);
         // Swapping from posEffects to negEffects to make sure the revert doesn't trigger (for comparison with V1 numbers)
         rule2.negEffects[0] = effectId_revert;
-        rule2.policyId = policyIds[1];
-        uint256 ruleId2 = RulesEngineDataFacet(address(red)).createRule(rule2);
+        uint256 ruleId2 = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule2);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId1;
@@ -482,15 +476,13 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         bytes4[] memory signaturesNew = new bytes4[](1);
         signaturesNew[0] = bytes4(keccak256(bytes(functionSignature)));
         uint256[] memory functionSignatureIdsNew = new uint256[](1);
-        functionSignatureIdsNew[0] = 0;
+        functionSignatureIdsNew[0] = 1;
         // ruleIds[0][1] = ruleId2;
         RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signaturesNew, functionSignatureIdsNew, ruleIds);
 
         // Add rules for the second policy
-        rule1.policyId = policyIds[1];
-        ruleId1 = RulesEngineDataFacet(address(red)).createRule(rule1);
-        rule2.policyId = policyIds[1];
-        ruleId2 = RulesEngineDataFacet(address(red)).createRule(rule2);
+        ruleId1 = RulesEngineDataFacet(address(red)).createRule(policyIds[1], rule1);
+        ruleId2 = RulesEngineDataFacet(address(red)).createRule(policyIds[1], rule2);
         ruleIds[0][0] = ruleId2;
 
         RulesEngineDataFacet(address(red)).updatePolicy(policyIds[1], signaturesNew, functionSignatureIdsNew, ruleIds);
@@ -530,10 +522,10 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fc.foreignCallAddress = _contractAddress;
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
         fc.returnType = PT.UINT;
-        fc.foreignCallIndex = 0;
-
+        fc.foreignCallIndex = 1;
+        uint256 foreignCallId; 
         {
-            RulesEngineDataFacet(address(red))
+            foreignCallId = RulesEngineDataFacet(address(red))
                 .createForeignCall(
                     policyIds[0],
                     fc
@@ -548,7 +540,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             // Build the foreign call placeholder
             rule1.placeHolders = new Placeholder[](2);
             rule1.placeHolders[0].foreignCall = true;
-            rule1.placeHolders[0].typeSpecificIndex = 0;
+            rule1.placeHolders[0].typeSpecificIndex = uint128(foreignCallId);
             rule1.placeHolders[1].pType = PT.UINT;
             rule1.placeHolders[1].typeSpecificIndex = 1;
             // Build the instruction set for the rule (including placeholders)
@@ -563,18 +555,15 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             rule1.instructionSet[5] = 0;
             rule1.instructionSet[6] = 1;
             rule1 = _setUpEffect(rule1, _effectType, isPositive);
-            rule1.policyId = policyIds[0];
             // Save the rule
-            uint256 ruleId1 = RulesEngineDataFacet(address(red)).createRule(rule1);
-            rule2 = _createGTRule(policyIds[0], 4);
-            rule3 = _createLTRule(policyIds[0]);
+            uint256 ruleId1 = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule1);
+            rule2 = _createGTRule(4);
+            rule3 = _createLTRule();
             rule2.posEffects[0] = effectId_revert;
-            rule2.policyId = policyIds[0];
             // Swapping from posEffect to negEffects to make sure the revert doesn't trigger (for comparison with V1 numbers)
             rule3.negEffects[0] = effectId_revert;
-            rule3.policyId = policyIds[0];
-            uint256 ruleId2 = RulesEngineDataFacet(address(red)).createRule(rule2);
-            uint256 ruleId3 = RulesEngineDataFacet(address(red)).createRule(rule3);
+            uint256 ruleId2 = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule2);
+            uint256 ruleId3 = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule3);
             ruleIds.push(new uint256[](3));
             ruleIds[0][0] = ruleId1;
             ruleIds[0][1] = ruleId2;
@@ -859,9 +848,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule.instructionSet[193] = 59;
 
         rule.posEffects[0] = effectId_revert;
-        rule.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -909,9 +897,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule.instructionSet[6] = 1;
 
         rule.posEffects[0] = effectId_event;
-        rule.policyId = policyIds[0];
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(rule);
+        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
