@@ -36,7 +36,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
             policyId,
             signatures,
             functionSignatureIds,
-            ruleIds
+            ruleIds,
+            PolicyType.CLOSED_POLICY
         );
     }
 
@@ -56,7 +57,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
             policyId,
             signatures,
             functionSignatureIds,
-            ruleIds
+            ruleIds,
+            PolicyType.CLOSED_POLICY
         );
     }
 
@@ -99,7 +101,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
                 policyId,
                 signatures,
                 functionSignatureIds,
-                ruleIds
+                ruleIds,
+                PolicyType.CLOSED_POLICY
             ),
             0
         );
@@ -2552,5 +2555,45 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         vm.expectRevert("Not Authorized To Policy");
         // Attempt to Save the rule
         RulesEngineDataFacet(address(red)).updateRule(policyId, 0, rule);
+    }
+
+    function testRulesEngine_Unit_ApplyPolicy_ClosedPolicy_NotSubscriber() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEngineDataFacet(address(red)).updatePolicy(policyId, blankSignatures, blankFunctionSignatureIds, blankRuleIds, PolicyType.CLOSED_POLICY);
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = policyId;
+        address potentialSubscriber = address(0xdeadbeef);
+        vm.startPrank(address(1));
+        vm.expectRevert("Only policy admin or verified policy subscriber can apply closed policies");
+        RulesEngineDataFacet(address(red)).applyPolicy(potentialSubscriber, policyIds);
+    }
+
+    function testRulesEngine_Unit_ApplyPolicy_OpenPolicy_NotSubscriber() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEngineDataFacet(address(red)).updatePolicy(policyId, blankSignatures, blankFunctionSignatureIds, blankRuleIds, PolicyType.OPEN_POLICY);
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = policyId;
+        address potentialSubscriber = address(0xdeadbeef);
+        RulesEngineDataFacet(address(red)).applyPolicy(potentialSubscriber, policyIds);
+    }
+
+    function testRulesEngine_Unit_ApplyPolicy_ClosedPolicy_Subscriber() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEngineDataFacet(address(red)).updatePolicy(policyId, blankSignatures, blankFunctionSignatureIds, blankRuleIds, PolicyType.CLOSED_POLICY);
+        RulesEngineDataFacet(address(red)).addClosedPolicySubscriber(policyId, address(1));
+        assertTrue(RulesEngineDataFacet(address(red)).isClosedPolicySubscriber(policyId, address(1)));
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = policyId;
+        vm.startPrank(address(1));
+        RulesEngineDataFacet(address(red)).applyPolicy(address(0xdeadbeef), policyIds);
     }
 }

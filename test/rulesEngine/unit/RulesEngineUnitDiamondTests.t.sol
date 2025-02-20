@@ -145,7 +145,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
      function _createBlankPolicy() internal returns (uint256) {
         FunctionSignatureStorageSet[] memory functionSignatures = new FunctionSignatureStorageSet[](0); 
         Rule[] memory rules = new Rule[](0); 
-        uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(functionSignatures, rules);
+        uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(functionSignatures, rules, PolicyType.CLOSED_POLICY);
         return policyId;
     }
 
@@ -156,11 +156,11 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         signatures.push(_functionSignature);
         functionSignatureIds.push(functionSignatureId);
         uint256[][] memory blankRuleIds = new uint256[][](0);
-        RulesEngineDataFacet(address(red)).updatePolicy(policyId, signatures, functionSignatureIds, blankRuleIds);
+        RulesEngineDataFacet(address(red)).updatePolicy(policyId, signatures, functionSignatureIds, blankRuleIds, PolicyType.CLOSED_POLICY);
         return functionSignatureId;
     }
 
     function _addRuleIdsToPolicy(uint256 policyId, uint256[][] memory _ruleIds) internal {
-        RulesEngineDataFacet(address(red)).updatePolicy(policyId, signatures, functionSignatureIds, _ruleIds);
+        RulesEngineDataFacet(address(red)).updatePolicy(policyId, signatures, functionSignatureIds, _ruleIds, PolicyType.CLOSED_POLICY);
     }
 }

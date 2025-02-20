@@ -241,6 +241,12 @@ struct PolicyS {
     mapping(uint256 policyId => PolicyStorageSet) policyStorageSets;
 }
 
+// Policy Type enum to determine if policy is open or closed
+enum PolicyType {
+    CLOSED_POLICY,
+    OPEN_POLICY
+}
+
 // Policy storage with set
 struct PolicyStorageSet {
     bool set;
@@ -254,6 +260,10 @@ struct Policy {
     mapping(bytes4 => uint256[]) signatureToRuleIds;
     // Array to hold the function sigs for iterating
     bytes4[] signatures;
+    // Policy type to determine if policy is open or closed
+    PolicyType policyType;
+
+    mapping(address => bool) closedPolicySubscribers;
 }
 
 /// Policy Association Storage Structures
