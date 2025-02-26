@@ -500,12 +500,13 @@ contract RulesEngineDataFacet is FacetCommonImports {
             ++data.policyId;
         }
         policyId = data.policyId;
-        data.policyStorageSets[policyId].set = true;
+        data.policyStorageSets[policyId].set = true; 
         //This function is called as an external call intentionally. This allows for proper gating on the generatePolicyAdminRole fn to only be callable by the RulesEngine address. 
         RulesEngineAdminRolesFacet(address(this)).generatePolicyAdminRole(policyId, address(msg.sender));
         //TODO remove this when create policy is atomic 
         // Temporarily disabling _storePolicyData
         // return _storePolicyData(policyId, _functionSignatures, _rules);
+        _policyType; //silence warning until TODO for atomic setting policy 
         _functionSignatures;
         _rules;
         return policyId;

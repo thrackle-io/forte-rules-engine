@@ -1895,11 +1895,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        bytes4 deletedSignature;
         uint256 policyId = _createBlankPolicy();
-        bytes4[] memory _functionSigs;
-        uint256[] memory _functionSigIds;
-        uint256[][] memory _ruleIds;
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
@@ -1919,7 +1915,6 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        bytes4 deletedSignature;
         uint256 policyId = _createBlankPolicy();
         bytes4[] memory _functionSigs;
         uint256[] memory _functionSigIds;
@@ -1984,7 +1979,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
         pTypes[2] = PT.ADDR;
-        FunctionSignatureStorageSet memory sig = RulesEngineDataFacet(address(red)).getFunctionSignature(1, 0);
+        RulesEngineDataFacet(address(red)).getFunctionSignature(1, 0);
         RulesEngineDataFacet(address(red)).deleteFunctionSignature(1, 1); 
         // test that rule no longer checks 
         bool ruleCheck = userContract.transfer(address(0x7654321), 3);
