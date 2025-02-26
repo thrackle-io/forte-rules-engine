@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
 import "src/engine/facets/RulesEngineAdminRolesFacet.sol";
+
 /**
  * @title Rules Engine Data Facet
  * @author @ShaneDuncan602 
@@ -95,7 +96,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         uint256 foreignCallCount = lib.getForeignCallStorage().foreignCallIdxCounter[_policyId];
         ForeignCall[] memory foreignCalls = new ForeignCall[](foreignCallCount);
         uint256 j = 0;
-        for (uint256 i = 1; i <= foreignCallCount; i++) {
+        for (uint256 i = 0; i <= foreignCallCount; i++) {
             if (lib.getForeignCallStorage().foreignCalls[_policyId][i].set) {
                 foreignCalls[j] = lib.getForeignCallStorage().foreignCalls[_policyId][i];
                 j++;
@@ -172,7 +173,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _policyId the policyId the trackers are associated with
      * @return trackers the trackers in the policy
      */
-    function getAllTrackers(uint256 _policyId) public view returns (Trackers[] memory) {
+    function getAllTrackers(uint256 _policyId) external view returns (Trackers[] memory) {
         // Load the Tracker data from storage
         TrackerS storage data = lib.getTrackerStorage();
         // return trackers for contract address at speficic index
@@ -255,7 +256,6 @@ contract RulesEngineDataFacet is FacetCommonImports {
         PolicyStorageSet storage data = lib.getPolicyStorage().policyStorageSets[_policyId];
         // retrieve function signature to delete  
         bytes4 signature = lib.getFunctionSignatureStorage().functionSignatureStorageSets[_policyId][_functionSignatureId].signature;  
-
         // delete the function signature storage set struct 
         delete lib.getFunctionSignatureStorage().functionSignatureStorageSets[_policyId][_functionSignatureId];
         // delete signatures array from policy 
@@ -269,7 +269,6 @@ contract RulesEngineDataFacet is FacetCommonImports {
         }
         // delete function signature to rule Ids mapping  
         delete data.policy.signatureToRuleIds[signature];
-
         // retrieve remaining function signature structs from storage that were not removed   
         FunctionSignatureStorageSet[] memory functionSignatureStructs = getAllFunctionSignatures(_policyId);
         // reset signature array for policy
@@ -318,10 +317,11 @@ contract RulesEngineDataFacet is FacetCommonImports {
 
     /**
      * Create a rule in storage.
+     * @param _policyId ID of the policy the rule will be added to
      * @param _rule the rule to create
      * @return ruleId the generated ruleId
      */
-    function createRule(Rule calldata _rule) external policyAdminOnly(_rule.policyId, msg.sender) returns (uint256) {
+    function createRule(uint256 _policyId, Rule calldata _rule) public policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         RuleS storage data = lib.getRuleStorage();
         uint256 ruleId = ++data.ruleIdCounter[_policyId];
         _storeRule(data, _policyId, ruleId, _rule);
@@ -331,8 +331,6 @@ contract RulesEngineDataFacet is FacetCommonImports {
 
     /**
      * Add a rule to storage.
-     * @param _data the rule storage
-     * @param _policyId the policyId the rule is associated with
      * @param _ruleId the ruleId to add
      * @param _rule the rule to add
      * @return ruleId the generated ruleId
@@ -351,6 +349,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
     /// Rule Storage
     /**
      * Update a rule in storage.
+     * @param _policyId ID of the policy the rule belongs to
      * @param _ruleId the id of the rule
      * @param _rule the rule to update
      * @return ruleId the generated ruleId
@@ -359,10 +358,9 @@ contract RulesEngineDataFacet is FacetCommonImports {
         uint256 _policyId,
         uint256 _ruleId,
         Rule calldata _rule
-    ) external policyAdminOnly(_rule.policyId, msg.sender) returns (uint256) {
+    ) external policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         // Load the function signature data from storage
         RuleS storage data = lib.getRuleStorage();
-
         _storeRule(data, _policyId, _ruleId, _rule);
         return _ruleId;
     }
@@ -382,7 +380,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _policyId the policyId the rules are associated with
      * @return rules rules
      */
-    function getAllRules(uint256 _policyId) public view returns (Rule[][] memory) {
+    function getAllRules(uint256 _policyId) external view returns (Rule[][] memory) {
         // Load the function signature data from storage
         Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
         bytes4[] memory signatures = data.signatures;
@@ -397,14 +395,6 @@ contract RulesEngineDataFacet is FacetCommonImports {
             }
         }
         return rules;
-    }
-
-    /**
-     * Delete a rule from storage.
-     * @param _ruleId the id of the rule to delete
-     */
-    function deleteRule(uint256 _ruleId) external policyAdminOnly(lib.getRuleStorage().ruleStorageSets[_ruleId].rule.policyId, msg.sender) {
-        delete lib.getRuleStorage().ruleStorageSets[_ruleId];
     }
 
     /// Policy Storage
@@ -511,8 +501,6 @@ contract RulesEngineDataFacet is FacetCommonImports {
         }
         policyId = data.policyId;
         data.policyStorageSets[policyId].set = true;
-        data.policyStorageSets[policyId].policy.policyType = _policyType;
-        
         //This function is called as an external call intentionally. This allows for proper gating on the generatePolicyAdminRole fn to only be callable by the RulesEngine address. 
         RulesEngineAdminRolesFacet(address(this)).generatePolicyAdminRole(policyId, address(msg.sender));
         //TODO remove this when create policy is atomic 
