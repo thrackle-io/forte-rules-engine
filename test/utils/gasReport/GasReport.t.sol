@@ -478,14 +478,14 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         uint256[] memory functionSignatureIdsNew = new uint256[](1);
         functionSignatureIdsNew[0] = 1;
         // ruleIds[0][1] = ruleId2;
-        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signaturesNew, functionSignatureIdsNew, ruleIds);
+        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signaturesNew, functionSignatureIdsNew, ruleIds, PolicyType.CLOSED_POLICY);
 
         // Add rules for the second policy
         ruleId1 = RulesEngineDataFacet(address(red)).createRule(policyIds[1], rule1);
         ruleId2 = RulesEngineDataFacet(address(red)).createRule(policyIds[1], rule2);
         ruleIds[0][0] = ruleId2;
 
-        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[1], signaturesNew, functionSignatureIdsNew, ruleIds);
+        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[1], signaturesNew, functionSignatureIdsNew, ruleIds, PolicyType.CLOSED_POLICY);
         RulesEngineDataFacet(address(red)).applyPolicy(
             address(userContractFCPlusMinSeparatePolicy),
             policyIds

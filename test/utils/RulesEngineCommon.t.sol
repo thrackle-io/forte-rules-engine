@@ -173,7 +173,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
          
-        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signatures, functionSignatureIds, ruleIds);        
+        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signatures, functionSignatureIds, ruleIds, PolicyType.CLOSED_POLICY);        
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
 
         return ruleId;
@@ -230,7 +230,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signatures, functionSignatureIds, ruleIds);        
+        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signatures, functionSignatureIds, ruleIds, PolicyType.CLOSED_POLICY);        
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
 
         return ruleId;
@@ -750,7 +750,7 @@ contract RulesEngineCommon is DiamondMine, Test {
     function _createBlankPolicy() internal returns (uint256) {
         FunctionSignatureStorageSet[] memory functionSignatures = new FunctionSignatureStorageSet[](0); 
         Rule[] memory rules = new Rule[](0); 
-        uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(functionSignatures, rules);
+        uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(functionSignatures, rules, PolicyType.CLOSED_POLICY);
         return policyId;
     }
 
@@ -760,7 +760,7 @@ contract RulesEngineCommon is DiamondMine, Test {
     {
         FunctionSignatureStorageSet[] memory functionSignatures = new FunctionSignatureStorageSet[](0); 
         Rule[] memory rules = new Rule[](0); 
-        uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(functionSignatures, rules);
+        uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(functionSignatures, rules, PolicyType.CLOSED_POLICY);
         return policyId;
     }
 
@@ -885,7 +885,8 @@ contract RulesEngineCommon is DiamondMine, Test {
             policyId,
             signatures,
             functionSignatureIds,
-            blankRuleIds
+            blankRuleIds,
+            PolicyType.CLOSED_POLICY
         );
         return functionSignatureId;
     }
@@ -898,7 +899,8 @@ contract RulesEngineCommon is DiamondMine, Test {
             policyId,
             signatures,
             functionSignatureIds,
-            _ruleIds
+            _ruleIds,
+            PolicyType.CLOSED_POLICY
         );
     }
 
