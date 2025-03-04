@@ -15,7 +15,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
     function testERC20_Transfer_Before_Unit_checkRule_ForeignCall_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
         // set up the ERC20
         userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
-        _setup_checkRule_ForeignCall_Positive(ruleValue, ERC20_TRANSFER_SIGNATURE);
+        _setup_checkRule_ForeignCall_Positive(ruleValue);
 
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly 
         vm.startPrank(USER_ADDRESS);
@@ -31,7 +31,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         pTypes[1] = PT.UINT;
         ruleValue = 15; 
         transferValue = 10;
-        _setup_checkRule_ForeignCall_Negative(ruleValue, ERC20_TRANSFER_SIGNATURE, pTypes);
+        _setup_checkRule_ForeignCall_Negative(ruleValue);
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly 
         vm.startPrank(USER_ADDRESS);
         vm.expectRevert(abi.encodePacked(revert_text)); 
@@ -41,7 +41,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
     function testERC20_TransferFrom_Before_Unit_checkRule_ForeignCall_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
         // set up the ERC20
         userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
-        _setup_checkRule_TransferFrom_ForeignCall_Positive(ruleValue, ERC20_TRANSFER_FROM_SIGNATURE);
+        _setup_checkRule_TransferFrom_ForeignCall_Positive(ruleValue);
 
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly 
         vm.startPrank(USER_ADDRESS);

@@ -131,6 +131,45 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEngineDataFacet(address(red)).applyPolicy(userContractExtraParamAddress, policyIds);
     }
 
+    function setUpRuleSimple()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+        returns (uint256 policyId, uint256 ruleId)
+    {
+        // Initial setup for what we'll need later
+        uint256[] memory policyIds = new uint256[](1);
+        // blank slate policy
+        policyIds[0] = _createBlankPolicy();
+        // Add the function signature to the policy
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+        _addFunctionSignatureToPolicy(policyIds[0]);
+        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        Rule memory rule;
+        // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = _createInstructionSet(4);
+        // Build the calling function argument placeholder
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        // Save the rule
+        ruleId = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule);
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0] = ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        
+        // Apply the policy 
+        RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        // Apply the policy 
+        RulesEngineDataFacet(address(red)).applyPolicy(userContractExtraParamAddress, policyIds);
+
+        return (policyIds[0], ruleId);
+    }
+
     function setupRuleWithStringComparison()
         public
         ifDeploymentTestsEnabled
@@ -321,7 +360,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256 _amount,
         ET _effectType,
         bool isPositive
-    ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables {
+    ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256 policyId) {
         uint256[] memory policyIds = new uint256[](1);
 
         policyIds[0] = _createBlankPolicy();
@@ -356,11 +395,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 0;
-        RulesEngineDataFacet(address(red))
-            .createForeignCall(
-                policyIds[0],
-                fc
-            );
+        RulesEngineDataFacet(address(red)).createForeignCall(policyIds[0], fc);
         // Save the rule
         uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule);
 
@@ -369,6 +404,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds[0][0]= ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);       
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+
+        return policyIds[0];
     }
 
     function _setUpEffect(
@@ -1078,7 +1115,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         instructionSet[6] = 1;
     }
 
-    function _setup_checkRule_ForeignCall_Positive(uint256 transferValue, string memory _functionSignature) public ifDeploymentTestsEnabled endWithStopPrank {
+    function _setup_checkRule_ForeignCall_Positive(uint256 _transferValue) public ifDeploymentTestsEnabled endWithStopPrank {
        
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicy();
@@ -1093,7 +1130,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders[0].foreignCall = true;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet(transferValue);
+        rule.instructionSet = _createInstructionSet(_transferValue);
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
@@ -1117,7 +1154,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
-    function _setup_checkRule_TransferFrom_ForeignCall_Positive(uint256 transferValue, string memory _functionSignature) public ifDeploymentTestsEnabled endWithStopPrank {
+    function _setup_checkRule_TransferFrom_ForeignCall_Positive(uint256 _transferValue) public ifDeploymentTestsEnabled endWithStopPrank {
        
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicy();
@@ -1133,7 +1170,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders[0].foreignCall = true;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet(transferValue);
+        rule.instructionSet = _createInstructionSet(_transferValue);
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
@@ -1157,7 +1194,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
-    function _setup_checkRule_ForeignCall_Negative(uint256 transferValue, string memory _functionSignature, PT[] memory pTypes)  public ifDeploymentTestsEnabled endWithStopPrank {
+    function _setup_checkRule_ForeignCall_Negative(uint256 _transferValue)  public ifDeploymentTestsEnabled endWithStopPrank {
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicy();
         
@@ -1169,7 +1206,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders[0].foreignCall = true;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet(transferValue);
+        rule.instructionSet = _createInstructionSet(_transferValue);
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule

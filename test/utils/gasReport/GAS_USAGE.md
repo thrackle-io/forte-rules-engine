@@ -11,7 +11,7 @@ The gas tests were done using a simple contract with very little overhead. The c
 These gas tests can be run with the following command:
 
 ```
-forge test --match-test testGasReport -vv --ffi
+forge test --ffi --match-test testGas -vv 
 ```
 
 Column Definitions
@@ -21,13 +21,16 @@ Column Definitions
 ---
 | Rule | Gas |
 |:-|:-|
-| Base | 800 |
-| Using REv2 No Policies Active | 7439 |
-| Hardcoding Min Transfer Not Triggered | 844 |
-| Using REv2 Min Transfer Not Triggered | 47774 |
-| Hardcoding Min Transfer Triggered With Event Effect | 2477 |
-| Using REv2 Min Transfer Triggered With Event Effect | 51821 |
-| Hardcoding Min Transfer With Foreign Call Not Triggered | 1729 |
-| Using REv2 Min Transfer With Foreign Call Not Triggered | 57433 |
-| Hardcoding Min Transfer With Foreign Call Triggered With Event Effect | 3362 |
-| Using REv2 Min Transfer With Foreign Call Triggered With Event Effect | 61480 |
+| Base | 42851 |
+| Using REv2 No Policies Active | 57073 |
+| Hardcoding Min Transfer Revert | 44980 |
+| Using REv2 Min Transfer With Revert | 109836 |
+| Hardcoding Multiple Min Transfer Revert | 93922 |
+| Using REv2 Multiple Min Transfer Revert | 584781 |
+| Hardcoding With Foreign Call | 50354 |
+| Using REv2 With Foreign Call | 122105 |
+| Hardcoding Min Transfer With Foreign Call | 52485 |
+| Using REv2 Min Transfer With Foreign Call | 169197 |
+| Hardcoding Min And Max Transfer With Foreign Call | 52505 |
+| Using REv2 Min And Max Transfer With Foreign Call | 216048 |
+
