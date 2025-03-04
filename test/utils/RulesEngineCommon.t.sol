@@ -8,16 +8,15 @@ import "src/utils/DiamondMine.sol";
 import "src/utils/FCEncodingLib.sol";
 
 /**
- * Shared testing logic and set up helper functions for Rules Engine Testing Framework
+ * Shared testing logic, set ups, helper functions and global test variables for Rules Engine Testing Framework
  * Code used across multiple testing directories belogns here
  */
 
 contract RulesEngineCommon is DiamondMine, Test { 
-    
-    address userContractAddress;
-    address userContractExtraParamAddress; 
+    // contract objects 
     ForeignCallTestContract testContract; 
 
+    // strings 
     string functionSignature = "transfer(address,uint256)";
     string functionSignature2 = "updateInfo(address _to, string info)";
     string constant event_text = "Rules Engine Event";
@@ -25,8 +24,15 @@ contract RulesEngineCommon is DiamondMine, Test {
     string constant event_text2 = "Rules Engine Event 2";
     string constant revert_text2 = "Rules Engine Revert 2";
     string constant customEventText = "Custom Event"; 
+
+    //bytes32 
     bytes32 public constant EVENTTEXT = bytes32("Rules Engine Event"); 
     bytes32 public constant EVENTTEXT2 = bytes32("Rules Engine Event 2");
+
+    //bytes4 
+    bytes4[] signatures;
+
+    // Effect structures 
     Effect effectId_revert;
     Effect effectId_revert2;
     Effect effectId_event;
@@ -35,18 +41,22 @@ contract RulesEngineCommon is DiamondMine, Test {
     Effect effectId_Log2;
     Effect effectId_Log3;
     Effect effectId_Log;
-    bytes4[] signatures;
+    Effect effectId_expression;
+    Effect effectId_expression2;
+    
+    //uint256 arrays 
     uint256[] functionSignatureIds;
     uint256[][] ruleIds;
 
-    Effect effectId_expression;
-    Effect effectId_expression2;
+    // uint256
+    uint256 ruleValue = 10; 
+    uint256 transferValue = 15;
+    uint256 constant ATTO = 10 ** 18;
 
+    // bool
     bool public testDeployments = true;
 
-    address policyAdmin = address(0x54321);
-    address newPolicyAdmin = address(0x0Add);
-
+    // address arrays 
     address[] testAddressArray = [
         address(0xFF1),
         address(0xFF2),
@@ -58,10 +68,14 @@ contract RulesEngineCommon is DiamondMine, Test {
         address(0xFF8)
     ];
 
-    //test modifiers
+    // addresses 
+    address user1 = address(0x001);
+    address policyAdmin = address(0x54321);
+    address newPolicyAdmin = address(0x0Add);
     address constant USER_ADDRESS = address(0xd00d); 
     address constant USER_ADDRESS_2 = address(0xBADd00d);
-    uint256 constant ATTO = 10 ** 18;
+    address userContractAddress;
+    address userContractExtraParamAddress;
 
     //test modifiers 
     modifier ifDeploymentTestsEnabled() {
@@ -94,11 +108,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
+        _addFunctionSignatureToPolicy(policyIds[0]);
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
@@ -251,11 +261,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
+        _addFunctionSignatureToPolicy(policyIds[0]);
 
         // Rule: 1 == 1 -> TRU:someTracker += FC:simpleCheck(amount) -> transfer(address _to, uint256 amount) returns (bool)
 
@@ -324,11 +330,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
+        _addFunctionSignatureToPolicy(policyIds[0]);
 
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
@@ -367,7 +369,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds[0][0]= ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);       
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-        fc;  //added to silence warnings during testing revamp 
     }
 
     function _setUpEffect(
@@ -407,11 +408,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
+        _addFunctionSignatureToPolicy(policyIds[0]);
 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         // Rule memory rule = _createGTRule(policyIds[0], 4);
@@ -456,11 +453,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
+        _addFunctionSignatureToPolicy(policyIds[0]);
 
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule = _createGTRule(4);
@@ -489,11 +482,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
+        _addFunctionSignatureToPolicy(policyIds[0]);
 
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule = _createGTRuleWithCustomEventParams(4, param, pType);
@@ -522,11 +511,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
+        _addFunctionSignatureToPolicy(policyIds[0]);
         Rule memory rule;
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         if(pType == PT.ADDR){
@@ -557,11 +542,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
+        _addFunctionSignatureToPolicy(policyIds[0]);
 
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule = _createGTRule(threshold);
@@ -599,11 +580,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
+        _addFunctionSignatureToPolicy(policyIds[0]);
 
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         // Rule 1: GT 4
@@ -664,11 +641,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
+        _addFunctionSignatureToPolicy(policyIds[0]);
 
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule = _createGTRule(4);
@@ -703,11 +676,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
+        _addFunctionSignatureToPolicy(policyIds[0]);
 
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
@@ -868,6 +837,27 @@ contract RulesEngineCommon is DiamondMine, Test {
         return rule;
     }
 
+
+    function _addFunctionSignatureToPolicy(uint256 policyId) internal returns (uint256) {
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+        // Save the function signature
+        uint256 functionSignatureId = RulesEngineDataFacet(address(red))
+            .createFunctionSignature(policyId, bytes4(bytes4(keccak256(bytes(functionSignature)))), pTypes);
+        // Save the Policy
+        signatures.push(bytes4(keccak256(bytes(functionSignature))));
+        functionSignatureIds.push(functionSignatureId);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEngineDataFacet(address(red)).updatePolicy(
+            policyId,
+            signatures,
+            functionSignatureIds,
+            blankRuleIds,
+            PolicyType.CLOSED_POLICY
+        );
+        return functionSignatureId;
+    }
 
     function _addFunctionSignatureToPolicy(
         uint256 policyId,
@@ -1095,7 +1085,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-        _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
+        _addFunctionSignatureToPolicy(policyIds[0]);
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
         Rule memory rule;
         // Build the foreign call placeholder
@@ -1135,7 +1125,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.ADDR;
         pTypes[2] = PT.UINT;
-        _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
+        _addFunctionSignatureToPolicy(policyIds[0]);
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
         Rule memory rule;
         // Build the foreign call placeholder
@@ -1171,7 +1161,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicy();
         
-        _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
+        _addFunctionSignatureToPolicy(policyIds[0]);
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
         Rule memory rule;
         // Build the foreign call placeholder

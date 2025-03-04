@@ -188,11 +188,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
+        _addFunctionSignatureToPolicy(policyIds[0]);
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
@@ -259,11 +255,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
+        _addFunctionSignatureToPolicy(policyIds[0]);
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
@@ -335,11 +327,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
+        _addFunctionSignatureToPolicy(policyIds[0]);
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
@@ -413,17 +401,9 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
         
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
+        _addFunctionSignatureToPolicy(policyIds[0]);
 
-        _addFunctionSignatureToPolicy(
-            policyIds[1],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
+        _addFunctionSignatureToPolicy(policyIds[1]);
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
@@ -506,11 +486,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
+        _addFunctionSignatureToPolicy(policyIds[0]);
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
         uint8[] memory typeSpecificIndices = new uint8[](1);
@@ -592,11 +568,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
+        _addFunctionSignatureToPolicy(policyIds[0]);
 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         // Rule memory rule = _createGTRule(4);
@@ -869,11 +841,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(
-            policyIds[0],
-            bytes4(keccak256(bytes(functionSignature))),
-            pTypes
-        );
+        _addFunctionSignatureToPolicy(policyIds[0]);
 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         // Rule memory rule = _createGTRule(4);
