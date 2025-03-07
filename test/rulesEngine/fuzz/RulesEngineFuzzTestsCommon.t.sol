@@ -34,7 +34,9 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
          
-        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signatures, functionSignatureIds, ruleIds, PolicyType.CLOSED_POLICY);        
+        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signatures, functionSignatureIds, ruleIds, PolicyType.CLOSED_POLICY);    
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);    
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly 
 

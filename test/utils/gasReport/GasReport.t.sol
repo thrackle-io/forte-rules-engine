@@ -47,17 +47,20 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         userContractNoPolicy = new ExampleERC20("Token Name", "SYMB");
         userContractNoPolicy.mint(USER_ADDRESS, 1_000_000 * ATTO);
         userContractNoPolicy.setRulesEngineAddress(address(red));
+        userContractNoPolicy.setCallingContractAdmin(callingContractAdmin);
 
         // Min Transfer
         userContractMinTransfer = new ExampleERC20("Token Name", "SYMB");
         userContractMinTransfer.mint(USER_ADDRESS, 1_000_000 * ATTO);
         userContractMinTransfer.setRulesEngineAddress(address(red));
+        userContractMinTransfer.setCallingContractAdmin(callingContractAdmin);
         _setupRuleWithRevert(address(userContractMinTransfer));
 
         // OFAC
         userContractFC = new ExampleERC20("Token Name", "SYMB");
         userContractFC.mint(USER_ADDRESS, 1_000_000 * ATTO);
         userContractFC.setRulesEngineAddress(address(red));
+        userContractFC.setCallingContractAdmin(callingContractAdmin);
         testContract2 = new ForeignCallTestContractOFAC();
         setupRuleWithOFACForeignCall(address(testContract2), ET.REVERT, true);
         testContract2.addToNaughtyList(address(0x7654321));
@@ -66,44 +69,36 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         userContractFCPlusMin = new ExampleERC20("Token Name", "SYMB");
         userContractFCPlusMin.mint(USER_ADDRESS, 1_000_000 * ATTO);
         userContractFCPlusMin.setRulesEngineAddress(address(red));
+        userContractFCPlusMin.setCallingContractAdmin(callingContractAdmin);
         setupRulesWithForeignCallAndMinTransfer(address(testContract2), ET.REVERT, true);
 
         // OFAC Plus Min In One Rule        
         userContractFCPlusMinPlusMaxOneRule = new ExampleERC20("Token Name", "SYMB");
         userContractFCPlusMinPlusMaxOneRule.mint(USER_ADDRESS, 1_000_000 * ATTO);
         userContractFCPlusMinPlusMaxOneRule.setRulesEngineAddress(address(red));
+        userContractFCPlusMinPlusMaxOneRule.setCallingContractAdmin(callingContractAdmin);
         setupRulesWithForeignCallPlusMinTransferAndMaxTransferInOneRule(address(testContract2), ET.REVERT, true);
 
         // OFAC Plus Min In Separate Policies
         userContractFCPlusMinSeparatePolicy = new ExampleERC20("Token Name", "SYMB");
         userContractFCPlusMinSeparatePolicy.mint(USER_ADDRESS, 1_000_000 * ATTO);
         userContractFCPlusMinSeparatePolicy.setRulesEngineAddress(address(red));
+        userContractFCPlusMinSeparatePolicy.setCallingContractAdmin(callingContractAdmin);
         setupRulesWithForeignCallAndMinTransferSeparatePolicies(address(testContract2), ET.REVERT, true);
 
         // Min Transfer 20 iterations 
         userContractManyChecksMin = new ExampleERC20("Token Name", "SYMB");
         userContractManyChecksMin.mint(USER_ADDRESS, 1_000_000 * ATTO);
         userContractManyChecksMin.setRulesEngineAddress(address(red));
+        userContractManyChecksMin.setCallingContractAdmin(callingContractAdmin);
         _setupRuleWithRevertManyCondition();
 
         // OFAC Plus Min Plus Max Transfer 
         userContractFCPlusMinPlusMax = new ExampleERC20("Token Name", "SYMB");
         userContractFCPlusMinPlusMax.mint(USER_ADDRESS, 1_000_000 * ATTO);
         userContractFCPlusMinPlusMax.setRulesEngineAddress(address(red));
+        userContractFCPlusMinPlusMax.setCallingContractAdmin(callingContractAdmin);
         setupRulesWithForeignCallPlusMinTransferAndMaxTransfer(address(testContract2), ET.REVERT, true);
-
-        // Min Transfer with Event 
-        userContractMTplusEvent = new ExampleERC20("Token Name", "SYMB");
-        userContractMTplusEvent.mint(USER_ADDRESS, 1_000_000 * ATTO);
-        userContractMTplusEvent.setRulesEngineAddress(address(red));
-        bytes memory eventParam = abi.encode(uint256(5));
-        _setupRuleWithEventParamsMinTransfer(eventParam, PT.UINT); 
-
-        // Min Transfer with dynamic Event 
-        userContractMTplusEventDynamic = new ExampleERC20("Token Name", "SYMB");
-        userContractMTplusEventDynamic.mint(USER_ADDRESS, 1_000_000 * ATTO);
-        userContractMTplusEventDynamic.setRulesEngineAddress(address(red));
-        _setupRuleWithPosEventDynamicParamsFromCallingFunctionParams(PT.UINT);
 
         //-------------------------------------------------------------------------------------
 
@@ -235,6 +230,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(
             address(userContractFC),
             policyIds
@@ -307,6 +304,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         ruleIds[0][0] = ruleId1;
         ruleIds[0][1] = ruleId2;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(
             address(userContractFCPlusMin),
             policyIds
@@ -380,6 +379,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId1;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(
             address(userContractFCPlusMinPlusMaxOneRule),
             policyIds
@@ -466,6 +467,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         ruleIds[0][0] = ruleId2;
 
         RulesEngineDataFacet(address(red)).updatePolicy(policyIds[1], signaturesNew, functionSignatureIdsNew, ruleIds, PolicyType.CLOSED_POLICY);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(
             address(userContractFCPlusMinSeparatePolicy),
             policyIds
@@ -548,7 +551,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         }
         
         
-
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(
             address(userContractFCPlusMinPlusMax),
             policyIds
@@ -826,6 +830,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(address(userContractManyChecksMin), policyIds);
     }
 
@@ -871,6 +877,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 

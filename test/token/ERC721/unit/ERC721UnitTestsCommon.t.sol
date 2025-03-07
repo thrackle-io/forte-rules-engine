@@ -92,7 +92,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         // if the address equals the mint to address, then emit event, else revert
         uint256[] memory policyIds = new uint256[](1);
         
-        policyIds[0] = _createBlankPolicy();
+        policyIds[0] = _createBlankPolicyOpen();
 
         _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
 
@@ -104,7 +104,9 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
@@ -112,7 +114,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         // if the address equals the mint to address, then emit event, else revert
         uint256[] memory policyIds = new uint256[](1);
         
-        policyIds[0] = _createBlankPolicy();
+        policyIds[0] = _createBlankPolicyOpen();
 
         _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
 
@@ -124,7 +126,9 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
@@ -132,7 +136,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         // if the address equals the mint to address, then emit event, else revert
         uint256[] memory policyIds = new uint256[](1);
         
-        policyIds[0] = _createBlankPolicy();
+        policyIds[0] = _createBlankPolicyOpen();
 
         _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
 
@@ -144,7 +148,9 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 

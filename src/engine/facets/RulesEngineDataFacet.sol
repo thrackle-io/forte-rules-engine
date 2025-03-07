@@ -444,7 +444,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _contractAddress address of the contract to have policies applied
      * @param _policyId the rule to add 
      */
-    function applyPolicy(address _contractAddress, uint256[] calldata _policyId) external {
+    function applyPolicy(address _contractAddress, uint256[] calldata _policyId) callingContractAdminOnly(_contractAddress, msg.sender) external { 
         // Load the function signature data from storage
         PolicyAssociationS storage data = lib.getPolicyAssociationStorage();
         
@@ -458,9 +458,8 @@ contract RulesEngineDataFacet is FacetCommonImports {
 
             // If policy is closed, only admin can apply it
             if(policySet.policy.policyType == PolicyType.CLOSED_POLICY) {
-                require(
-                    RulesEngineAdminRolesFacet(address(this)).isPolicyAdmin(_policyId[i], msg.sender) || policySet.policy.closedPolicySubscribers[msg.sender],
-                    "Only policy admin or verified policy subscriber can apply closed policies"
+                require(policySet.policy.closedPolicySubscribers[msg.sender],
+                    "Only verified policy subscriber can apply closed policies"
                 );
             }
         }
@@ -471,6 +470,8 @@ contract RulesEngineDataFacet is FacetCommonImports {
            data.contractPolicyIdMap[_contractAddress][i] = _policyId[i];
         }
     }
+
+    // TODO add removePolicy fn
 
     /**
      * Get an applied policyId from storage. 
@@ -504,12 +505,13 @@ contract RulesEngineDataFacet is FacetCommonImports {
         }
         policyId = data.policyId;
         data.policyStorageSets[policyId].set = true; 
+        data.policyStorageSets[policyId].policy.policyType = _policyType;
         //This function is called as an external call intentionally. This allows for proper gating on the generatePolicyAdminRole fn to only be callable by the RulesEngine address. 
         RulesEngineAdminRolesFacet(address(this)).generatePolicyAdminRole(policyId, address(msg.sender));
         //TODO remove this when create policy is atomic 
         // Temporarily disabling _storePolicyData
         // return _storePolicyData(policyId, _functionSignatures, _rules);
-        _policyType; //silence warning until TODO for atomic setting policy 
+        
         _functionSignatures;
         _rules;
         return policyId;
