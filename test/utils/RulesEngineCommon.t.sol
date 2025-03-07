@@ -1230,4 +1230,31 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
+    function _setUpForeignCallSimple(uint256 _policyId) public ifDeploymentTestsEnabled  returns(ForeignCall memory) {
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.parameterTypes = new PT[](1);
+        fc.parameterTypes[0] = PT.UINT;
+        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices[0] = 1;
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineDataFacet(address(red)).createForeignCall(_policyId, fc);
+        return fc; 
+    }
+
+    function _setUpForeignCallSimpleReturnID(uint256 _policyId) public ifDeploymentTestsEnabled  returns(ForeignCall memory, uint256) {
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.parameterTypes = new PT[](1);
+        fc.parameterTypes[0] = PT.UINT;
+        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices[0] = 1;
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        uint256 foreignCallId = RulesEngineDataFacet(address(red)).createForeignCall(_policyId, fc);
+        return (fc, foreignCallId); 
+    }
 }
