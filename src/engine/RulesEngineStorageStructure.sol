@@ -263,7 +263,8 @@ struct Policy {
     bytes4[] signatures;
     // Policy type to determine if policy is open or closed
     PolicyType policyType;
-
+    // Cemented status
+    bool cemented;
     mapping(address => bool) closedPolicySubscribers;
 }
 

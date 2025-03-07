@@ -24,7 +24,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
     function createForeignCall(
         uint256 _policyId, 
         ForeignCall calldata _foreignCall
-    ) external policyAdminOnly(_policyId, msg.sender) returns (uint256) {
+    ) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) returns (uint256) {
         // Load the Foreign Call data from storage
         ForeignCallS storage data = lib.getForeignCallStorage();
         uint256 foreignCallIndex = ++data.foreignCallIdxCounter[_policyId];
@@ -52,7 +52,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _policyId the policyId the foreign call is associated with
      * @param _foreignCallId the foreign call to delete
      */
-    function deleteForeignCall(uint256 _policyId, uint256 _foreignCallId) external policyAdminOnly(_policyId, msg.sender) {
+    function deleteForeignCall(uint256 _policyId, uint256 _foreignCallId) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         delete lib.getForeignCallStorage().foreignCalls[_policyId][_foreignCallId];
         emit ForeignCallDeleted(_policyId, _foreignCallId);
     }
@@ -64,7 +64,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _foreignCall the foreign call to update
      * @return fc the foreign call structure
      */
-    function updateForeignCall(uint256 _policyId, uint256 _foreignCallId, ForeignCall calldata _foreignCall) external policyAdminOnly(_policyId, msg.sender) returns (ForeignCall memory fc) {
+    function updateForeignCall(uint256 _policyId, uint256 _foreignCallId, ForeignCall calldata _foreignCall) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) returns (ForeignCall memory fc) {
         fc = _foreignCall;
         fc.foreignCallIndex = _foreignCallId;
         _storeForeignCall(_policyId, fc);
@@ -115,7 +115,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
     function createTracker(
         uint256 _policyId,
         Trackers calldata _tracker
-    ) external policyAdminOnly(_policyId, msg.sender) returns (uint256) {
+    ) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) returns (uint256) {
         // Load the Tracker data from storage
         TrackerS storage data = lib.getTrackerStorage();
         uint256 trackerIndex = ++data.trackerIndexCounter[_policyId];
@@ -134,7 +134,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         uint256 _policyId,
         uint256 _trackerIndex,
         Trackers calldata _tracker
-    ) external policyAdminOnly(_policyId, msg.sender){
+    ) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         // Load the Tracker data from storage
         TrackerS storage data = lib.getTrackerStorage();
         _storeTracker(data, _policyId, _trackerIndex, _tracker);
@@ -194,7 +194,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _policyId the policyId the trackerStorage is associated with
      * @param _trackerIndex the index of the tracker to delete
      */
-    function deleteTracker(uint256 _policyId, uint256 _trackerIndex) external policyAdminOnly(_policyId, msg.sender) {
+    function deleteTracker(uint256 _policyId, uint256 _trackerIndex) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         delete lib.getTrackerStorage().trackers[_policyId][_trackerIndex];
     }
 
@@ -204,7 +204,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         uint256 _policyId,
         bytes4 _functionSignature,
         PT[] memory _pTypes
-    ) external policyAdminOnly(_policyId, msg.sender) returns (uint256) {
+    ) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) returns (uint256) {
         FunctionSignatureS storage data = lib.getFunctionSignatureStorage();
         uint256 functionId = ++data.functionIdCounter[_policyId];
         data.functionSignatureStorageSets[_policyId][functionId].set = true;
@@ -227,7 +227,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         uint256 _functionSignatureId,
         bytes4 _functionSignature,
         PT[] memory _pTypes
-    ) external policyAdminOnly(_policyId, msg.sender) returns (uint256) {
+    ) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) returns (uint256) {
         // Load the function signature data from storage
         FunctionSignatureS storage data = lib.getFunctionSignatureStorage();
         // increment the functionSignatureId if necessary
@@ -251,7 +251,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _policyId the policyId the functionSignatureId belongs to
      * @param _functionSignatureId the index of the functionSignature to delete
      */
-    function deleteFunctionSignature(uint256 _policyId, uint256 _functionSignatureId) external policyAdminOnly(_policyId, msg.sender) {
+    function deleteFunctionSignature(uint256 _policyId, uint256 _functionSignatureId) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         // retrieve policy from storage 
         PolicyStorageSet storage data = lib.getPolicyStorage().policyStorageSets[_policyId];
         // retrieve function signature to delete  
@@ -321,7 +321,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _rule the rule to create
      * @return ruleId the generated ruleId
      */
-    function createRule(uint256 _policyId, Rule calldata _rule) public policyAdminOnly(_policyId, msg.sender) returns (uint256) {
+    function createRule(uint256 _policyId, Rule calldata _rule) public policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) returns (uint256) {
         RuleS storage data = lib.getRuleStorage();
         uint256 ruleId = ++data.ruleIdCounter[_policyId];
         _storeRule(data, _policyId, ruleId, _rule);
@@ -358,7 +358,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         uint256 _policyId,
         uint256 _ruleId,
         Rule calldata _rule
-    ) external policyAdminOnly(_policyId, msg.sender) returns (uint256) {
+    ) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) returns (uint256) {
         // Load the function signature data from storage
         RuleS storage data = lib.getRuleStorage();
         _storeRule(data, _policyId, _ruleId, _rule);
@@ -414,7 +414,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         uint256[] calldata _functionSignatureIds, 
         uint256[][] calldata _ruleIds,
         PolicyType _policyType
-    ) external policyAdminOnly(_policyId, msg.sender) returns(uint256) {
+    ) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) returns(uint256) {
         // signature length must match the signature id length
         if (_signatures.length != _functionSignatureIds.length) revert("Signatures and signature id's are inconsistent"); 
         // if policy ID is zero no policy has been created and cannot be updated. 
@@ -428,7 +428,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * Delete a Policy from Storage
      * @param _policyId the id of the policy to delete
      */
-    function deletePolicy(uint256 _policyId) public policyAdminOnly(_policyId, msg.sender) {
+    function deletePolicy(uint256 _policyId) public policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         PolicyStorageSet storage data = lib.getPolicyStorage().policyStorageSets[_policyId];
         delete data.set;
 
@@ -453,6 +453,9 @@ contract RulesEngineDataFacet is FacetCommonImports {
             PolicyStorageSet storage policySet = lib.getPolicyStorage().policyStorageSets[_policyId[i]];
             require(policySet.set, "Policy does not exist");
             
+            // If policy is cemented, no one can apply it
+            if(isCemented(_policyId[i])) revert("Not allowed for cemented policy");
+
             // If policy is closed, only admin can apply it
             if(policySet.policy.policyType == PolicyType.CLOSED_POLICY) {
                 require(
@@ -604,7 +607,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _policyId policyId
      * @param _subscriber address to add to policy subscription 
      */
-    function addClosedPolicySubscriber(uint256 _policyId, address _subscriber) external policyAdminOnly(_policyId, msg.sender) {
+    function addClosedPolicySubscriber(uint256 _policyId, address _subscriber) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         lib.getPolicyStorage().policyStorageSets[_policyId].policy.closedPolicySubscribers[_subscriber] = true;
     }
 
@@ -622,7 +625,33 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _policyId policyId
      * @param _subscriber address to remove from policy subscription 
      */
-    function removeClosedPolicySubscriber(uint256 _policyId, address _subscriber) external policyAdminOnly(_policyId, msg.sender) {
+    function removeClosedPolicySubscriber(uint256 _policyId, address _subscriber) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         delete lib.getPolicyStorage().policyStorageSets[_policyId].policy.closedPolicySubscribers[_subscriber];
+    }
+
+    /**
+     * Function to check Policy's cemented status
+     * @param _policyId policyId
+     * @return _cemented cemented (true/false)
+     */
+     function isCemented(uint256 _policyId) public view returns(bool _cemented){
+        return lib.getPolicyStorage().policyStorageSets[_policyId].policy.cemented;
+     }
+
+     /**
+     * @dev This is the modifier used to ensure that cemented policies can't be changed.
+     * @param _policyId policyId
+     */
+    modifier notCemented(uint256 _policyId) {
+        if(isCemented(_policyId)) revert ("Not allowed for cemented policy");
+        _;
+    }
+
+    /**
+     * Function to cement a specified policy
+     * @param _policyId policyId
+     */
+    function cementPolicy(uint256 _policyId) external policyAdminOnly(_policyId, msg.sender) {
+        lib.getPolicyStorage().policyStorageSets[_policyId].policy.cemented = true;
     }
 }
