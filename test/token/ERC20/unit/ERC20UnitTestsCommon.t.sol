@@ -11,12 +11,11 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
     string constant ERC20_TRANSFER_FROM_SIGNATURE = "transferFrom(address,address,uint256)";
     string constant ERC20_MINT_SIGNATURE = "mint(address,uint256)";
 
+
     function testERC20_Transfer_Before_Unit_checkRule_ForeignCall_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
         // set up the ERC20
         userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
-        uint256 ruleValue = 10; 
-        uint256 transferValue = 15;
-        _setup_checkRule_ForeignCall_Positive(ruleValue, ERC20_TRANSFER_SIGNATURE);
+        _setup_checkRule_ForeignCall_Positive(ruleValue);
 
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly 
         vm.startPrank(USER_ADDRESS);
@@ -27,12 +26,12 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
     function testERC20_Transfer_Before_Unit_checkRule_ForeignCall_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
         // set up the ERC20
         userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
-        uint256 ruleValue = 15; 
-        uint256 transferValue = 10;
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-        _setup_checkRule_ForeignCall_Negative(ruleValue, ERC20_TRANSFER_SIGNATURE, pTypes);
+        ruleValue = 15; 
+        transferValue = 10;
+        _setup_checkRule_ForeignCall_Negative(ruleValue);
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly 
         vm.startPrank(USER_ADDRESS);
         vm.expectRevert(abi.encodePacked(revert_text)); 
@@ -42,9 +41,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
     function testERC20_TransferFrom_Before_Unit_checkRule_ForeignCall_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
         // set up the ERC20
         userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
-        uint256 ruleValue = 10; 
-        uint256 transferValue = 15;
-        _setup_checkRule_TransferFrom_ForeignCall_Positive(ruleValue, ERC20_TRANSFER_FROM_SIGNATURE);
+        _setup_checkRule_TransferFrom_ForeignCall_Positive(ruleValue);
 
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly 
         vm.startPrank(USER_ADDRESS);
