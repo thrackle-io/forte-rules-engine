@@ -134,7 +134,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         uint256 _policyId,
         uint256 _trackerIndex,
         Trackers calldata _tracker
-    ) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
+    ) external policyAdminOnly(_policyId, msg.sender) {
         // Load the Tracker data from storage
         TrackerS storage data = lib.getTrackerStorage();
         _storeTracker(data, _policyId, _trackerIndex, _tracker);
