@@ -12,5 +12,7 @@ interface IRulesEngineErrors {
     error OnlyCallingContractCanCreateAdmin();
     error CallingContractAdminRoleNotGrantedFromCallingContract();
     error CallingContractAdminAlreadyGranted();
+    error NotCallingContractAdmin();
+    error NotProposedCallingContractAdmin();
     
 }

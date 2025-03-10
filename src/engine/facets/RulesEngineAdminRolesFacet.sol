@@ -171,11 +171,8 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard,
      */
     function grantCallingContractRoleAccessControl(address _callingContract, address _account) public nonReentrant returns (bytes32) {
         if (_account == address(0)) revert ZeroAddressCannotBeAdmin(); 
-        // check if the calling Contract supports the hasRole function through access control  
-        if (IERC165(_callingContract).supportsInterface(0x91d14854)) {
-            // if interface is supported check that msg.sender has approved role 
-            if (!IAccessControl(_callingContract).hasRole(CALLING_CONTRACT_ADMIN, msg.sender)) revert CallingContractAdminRoleNotGrantedFromCallingContract();
-        }      
+        // check that msg.sender has approved role 
+        if (!IAccessControl(_callingContract).hasRole(CALLING_CONTRACT_ADMIN, msg.sender)) revert CallingContractAdminRoleNotGrantedFromCallingContract();
         // Create Admin Role for Calling Contract Role: concat the calling contract address and adminRole key together and keccak them. Cast to bytes32 for Admin Role identifier 
         bytes32 adminRoleId = _generateCallingContractAdminRoleId(_callingContract, CALLING_CONTRACT_ADMIN); 
         if (hasRole(adminRoleId, _account)) revert CallingContractAdminAlreadyGranted();
@@ -193,14 +190,11 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard,
      * @return bytes32 adminRoleId 
      */
     function grantCallingContractRoleOwnable(address _callingContract, address _account) public nonReentrant returns (bytes32) {
-        if (_account == address(0)) revert ZeroAddressCannotBeAdmin(); 
-        // check if the calling Contract supports the owner() function through Ownable
-        if (IERC165(_callingContract).supportsInterface(0x8da5cb5b)) {
-            // if interface is supported check that msg.sender has approved role 
-            if (msg.sender != Ownable(_callingContract).owner()) revert CallingContractAdminRoleNotGrantedFromCallingContract();
-        }      
         // Create Admin Role for Calling Contract Role: concat the calling contract address and adminRole key together and keccak them. Cast to bytes32 for Admin Role identifier 
         bytes32 adminRoleId = _generateCallingContractAdminRoleId(_callingContract, CALLING_CONTRACT_ADMIN); 
+        if (_account == address(0)) revert ZeroAddressCannotBeAdmin(); 
+        // check that msg.sender is owner of calling contract  
+        if (msg.sender != Ownable(_callingContract).owner()) revert CallingContractAdminRoleNotGrantedFromCallingContract();
         if (hasRole(adminRoleId, _account)) revert CallingContractAdminAlreadyGranted();
         // grant the admin role to the calling address of the createPolicy function from RulesEngineDataFacet 
         _grantRole(adminRoleId, _account); 
@@ -222,11 +216,11 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard,
      * @dev This function grants the proposed admin role to the newPolicyAdmin address 
      * @dev Calling Contract Admin does not have a revoke or renounce function. Only Use Propose and Confirm to transfer Role. 
      * @notice There can only ever be one Calling Contract Admin per calling contract 
-     * @param newCallingContractAdmin address of new admin.
      * @param callingContractAddress address of the calling contract.
+     * @param newCallingContractAdmin address of new admin.
      */
-    function proposeNewCallingContractAdmin(address newCallingContractAdmin, address callingContractAddress) public {
-        if(!isCallingContractAdmin(callingContractAddress, msg.sender)) revert NotPolicyAdmin(); 
+    function proposeNewCallingContractAdmin(address callingContractAddress, address newCallingContractAdmin) public {
+        if(!isCallingContractAdmin(callingContractAddress, msg.sender)) revert NotCallingContractAdmin(); 
         if (newCallingContractAdmin == address(0)) revert ZeroAddressCannotBeAdmin();
         // grant proposed role to new admin address 
         _grantRole(_generateCallingContractAdminRoleId(callingContractAddress, PROPOSED_CALLING_CONTRACT_ADMIN), newCallingContractAdmin);
@@ -239,7 +233,7 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard,
      */
     function confirmNewCallingContractAdmin(address callingContractAddress) public { 
         address oldPolicyAdmin = getRoleMember(_generateCallingContractAdminRoleId(callingContractAddress, CALLING_CONTRACT_ADMIN), 0);
-        if (!hasRole(_generateCallingContractAdminRoleId(callingContractAddress, PROPOSED_CALLING_CONTRACT_ADMIN), msg.sender)) revert NotProposedPolicyAdmin(); 
+        if (!hasRole(_generateCallingContractAdminRoleId(callingContractAddress, PROPOSED_CALLING_CONTRACT_ADMIN), msg.sender)) revert NotProposedCallingContractAdmin(); 
         _revokeRole(_generateCallingContractAdminRoleId(callingContractAddress, PROPOSED_CALLING_CONTRACT_ADMIN), msg.sender);
         _revokeRole(_generateCallingContractAdminRoleId(callingContractAddress, CALLING_CONTRACT_ADMIN), oldPolicyAdmin);
         _grantRole(_generateCallingContractAdminRoleId(callingContractAddress, CALLING_CONTRACT_ADMIN), msg.sender); 

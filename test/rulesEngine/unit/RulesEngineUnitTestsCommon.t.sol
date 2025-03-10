@@ -3,10 +3,13 @@ pragma solidity ^0.8.24;
 
 import "test/utils/RulesEngineCommon.t.sol";
 import "src/example/ExampleUserContract.sol";
+import "src/example/ExampleUserOwnableContract.sol";
+import "src/example/ExampleUserAccessControl.sol";
 
 abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
     ExampleUserContract userContract;
+    ExampleUserContract newUserContract;
     ExampleUserContractExtraParams userContract2;
     
     /// TestRulesEngine: 
@@ -1149,7 +1152,6 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         vm.startPrank(newPolicyAdmin);
         bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
         assertFalse(hasAdminRole);
-        ForeignCall memory fc;
 
         vm.expectRevert("Not Authorized To Policy");
         _setUpForeignCallSimple(policyID);
@@ -1241,9 +1243,6 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         uint256 policyId = _createBlankPolicy();
-        ForeignCall memory fc;
-    
-        
         for (uint256 i = 0; i < 10; i++) {
             _setUpForeignCallSimpleReturnID(policyId);
         }
@@ -1421,9 +1420,6 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
     function testRulesEngine_Unit_DeletePolicy_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
         uint256 policyId = _createBlankPolicy();
-        bytes4[] memory blankSignatures = new bytes4[](0);
-        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
-        uint256[][] memory blankRuleIds = new uint256[][](0);
         RulesEngineDataFacet(address(red)).cementPolicy(policyId);
         vm.expectRevert("Not allowed for cemented policy");
         RulesEngineDataFacet(address(red)).deletePolicy(policyId);
@@ -1439,8 +1435,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = policyId;
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         vm.expectRevert("Not allowed for cemented policy");
-        RulesEngineDataFacet(address(red)).applyPolicy(address(0xdeadbeef), policyIds);
+        RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
     function testRulesEngine_Unit_CreateForeignCall_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
@@ -1539,7 +1537,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         // create rule and set rule to user contract 
         (uint256 policyID, uint256 ruleID) = setUpRuleSimple();
-        FunctionSignatureStorageSet memory sig = RulesEngineDataFacet(address(red)).getFunctionSignature(1, 1);
+        ruleID;
+        RulesEngineDataFacet(address(red)).getFunctionSignature(1, 1);
         RulesEngineDataFacet(address(red)).cementPolicy(policyID);
         vm.expectRevert("Not allowed for cemented policy");
         RulesEngineDataFacet(address(red)).updateFunctionSignature(1, 1, bytes4(keccak256(bytes(functionSignature))), new PT[](3));
@@ -1603,7 +1602,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         RulesEngineDataFacet(address(red)).cementPolicy(policyId);
         vm.expectRevert("Not allowed for cemented policy");
-        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(policyId, rule);
+        RulesEngineDataFacet(address(red)).createRule(policyId, rule);
     }
 
     function testRulesEngine_Unit_RemoveClosedPolicy_Subscriber_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
@@ -1616,6 +1615,92 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         RulesEngineDataFacet(address(red)).cementPolicy(policyId);
         vm.expectRevert("Not allowed for cemented policy");
         RulesEngineDataFacet(address(red)).removeClosedPolicySubscriber(policyId, address(1));
+    }
+
+    function testRulesEngine_Unit_CreateCallingContractAdmin_ThroughCallingContract_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
+        newUserContract.setCallingContractAdmin(callingContractAdmin);
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(newUserContractAddress, callingContractAdmin));
+    }
+
+    function testRulesEngine_Unit_CreateCallingContractAdmin_ThroughCallingContract_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        newUserContract.setCallingContractAdmin(policyAdmin);
+        assertFalse(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(newUserContractAddress, callingContractAdmin));
+    }
+
+        function testRulesEngine_Unit_ProposeAndConfirm_CallingContractAdmin_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
+        newUserContract.setCallingContractAdmin(callingContractAdmin);
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(newUserContractAddress, callingContractAdmin));
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        RulesEngineAdminRolesFacet(address(red)).proposeNewCallingContractAdmin(newUserContractAddress, user1);
+        vm.stopPrank();
+        vm.startPrank(user1);
+        RulesEngineAdminRolesFacet(address(red)).confirmNewCallingContractAdmin(newUserContractAddress); 
+
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(newUserContractAddress, user1));
+        assertFalse(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(newUserContractAddress, callingContractAdmin));
+    }
+
+    function testRulesEngine_Unit_ProposeAndConfirm_CallingContractAdmin_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        newUserContract.setCallingContractAdmin(callingContractAdmin);
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(newUserContractAddress, callingContractAdmin));
+        vm.stopPrank();
+        vm.startPrank(user1);
+        vm.expectRevert(abi.encodeWithSignature("NotCallingContractAdmin()"));
+        RulesEngineAdminRolesFacet(address(red)).proposeNewCallingContractAdmin(newUserContractAddress, user1);
+    }
+
+    function testRulesEngine_Unit_CreateCallingContractAdmin_ThroughEngineOwnable_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        ExampleUserOwnableContract ownableUserContract = new ExampleUserOwnableContract(callingContractAdmin);
+        address ownableUserContractAddress = address(ownableUserContract);
+        ownableUserContract.setRulesEngineAddress(address(red));
+        RulesEngineAdminRolesFacet(address(red)).grantCallingContractRoleOwnable(ownableUserContractAddress, callingContractAdmin);
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(ownableUserContractAddress, callingContractAdmin));
+    }
+
+    function testRulesEngine_Unit_CreateCallingContractAdmin_ThroughEngineOwnable_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        ExampleUserOwnableContract ownableUserContract = new ExampleUserOwnableContract(policyAdmin);
+        address ownableUserContractAddress = address(ownableUserContract);
+        ownableUserContract.setRulesEngineAddress(address(red));
+        vm.expectRevert(abi.encodeWithSignature("CallingContractAdminRoleNotGrantedFromCallingContract()"));
+        RulesEngineAdminRolesFacet(address(red)).grantCallingContractRoleOwnable(ownableUserContractAddress, callingContractAdmin);
+        assertFalse(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(ownableUserContractAddress, callingContractAdmin));
+    }
+
+    function testRulesEngine_Unit_CreateCallingContractAdmin_ThroughEngine_NonSupportedType_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        ExampleUserOwnableContract ownableUserContract = new ExampleUserOwnableContract(policyAdmin);
+        address ownableUserContractAddress = address(ownableUserContract);
+        ownableUserContract.setRulesEngineAddress(address(red));
+        vm.expectRevert(); // results in evmError: revert since the function is not inside contract 
+        RulesEngineAdminRolesFacet(address(red)).grantCallingContractRoleAccessControl(ownableUserContractAddress, callingContractAdmin);
+        assertFalse(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(ownableUserContractAddress, callingContractAdmin));
+    }
+
+    function testRulesEngine_Unit_CreateCallingContractAdmin_ThroughEngineAccessControl_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        ExampleUserAccessControl acUserContract = new ExampleUserAccessControl(callingContractAdmin);
+        address acUserContractAddress = address(acUserContract);
+        acUserContract.setRulesEngineAddress(address(red));
+        RulesEngineAdminRolesFacet(address(red)).grantCallingContractRoleAccessControl(acUserContractAddress, callingContractAdmin);
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(acUserContractAddress, callingContractAdmin));
+    }
+
+    function testRulesEngine_Unit_CreateCallingContractAdmin_ThroughEngineAccessControl_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        ExampleUserAccessControl acUserContract = new ExampleUserAccessControl(policyAdmin);
+        address acUserContractAddress = address(acUserContract);
+        acUserContract.setRulesEngineAddress(address(red));
+        vm.expectRevert(abi.encodeWithSignature("CallingContractAdminRoleNotGrantedFromCallingContract()"));
+        RulesEngineAdminRolesFacet(address(red)).grantCallingContractRoleAccessControl(acUserContractAddress, callingContractAdmin);
+        assertFalse(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(acUserContractAddress, callingContractAdmin));
     }
 
 }

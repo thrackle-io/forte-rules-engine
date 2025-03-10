@@ -76,6 +76,7 @@ contract RulesEngineCommon is DiamondMine, Test {
     address constant USER_ADDRESS = address(0xd00d); 
     address constant USER_ADDRESS_2 = address(0xBADd00d);
     address userContractAddress;
+    address newUserContractAddress;
     address userContractExtraParamAddress;
 
     //test modifiers 
@@ -1306,7 +1307,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
-    function _setUpForeignCallSimple(uint256 _policyId) public ifDeploymentTestsEnabled  returns(ForeignCall memory fc) {
+    function _setUpForeignCallSimple(uint256 _policyId) public ifDeploymentTestsEnabled  returns(ForeignCall memory foreignCall) {
         ForeignCall memory fc;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
@@ -1320,7 +1321,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         return fc; 
     }
 
-    function _setUpForeignCallSimpleReturnID(uint256 _policyId) public ifDeploymentTestsEnabled  returns(ForeignCall memory fc, uint256 fcId) {
+    function _setUpForeignCallSimpleReturnID(uint256 _policyId) public ifDeploymentTestsEnabled  returns(ForeignCall memory foreignCall, uint256 fcId) {
         ForeignCall memory fc;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
@@ -1334,7 +1335,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         return (fc, foreignCallId); 
     }
 
-    function _switchCallingContractAdminRole(address newAdmin, address userContract) public ifDeploymentTestsEnabled returns (address newCallingContractAdmin) {
+    function _switchCallingContractAdminRole(address newAdmin, address userContract) public ifDeploymentTestsEnabled {
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
         RulesEngineAdminRolesFacet(address(red)).proposeNewCallingContractAdmin(newAdmin, userContract); 
@@ -1342,5 +1343,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         vm.stopPrank();
         vm.startPrank(newAdmin);
         RulesEngineAdminRolesFacet(address(red)).confirmNewCallingContractAdmin(userContract);
+
     }
 }

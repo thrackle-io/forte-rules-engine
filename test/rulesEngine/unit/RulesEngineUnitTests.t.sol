@@ -13,6 +13,9 @@ contract RulesEngineUnitTests is RulesEngineUnitTestsCommon {
         userContract.setRulesEngineAddress(address(red));
         testContract = new ForeignCallTestContract();
         userContract.setCallingContractAdmin(callingContractAdmin);
+        newUserContract = new ExampleUserContract();
+        newUserContractAddress = address(newUserContract);
+        newUserContract.setRulesEngineAddress(address(red));
         _setupEffectProcessor();        
     }
 
