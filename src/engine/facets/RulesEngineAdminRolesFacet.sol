@@ -99,7 +99,7 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard,
         return bytes32(abi.encodePacked(keccak256(bytes(string.concat(string(abi.encode(_policyId)), string(abi.encode(_adminRole)))))));
     }
 
-        /**
+    /**
      * @dev This function is used to renounce Role. It is also preventing policyAdmins from renouncing ther role.
      * They must set another policyAdmin through the function proposeNewPolicyAdmin().
      * @param role the role to renounce.
