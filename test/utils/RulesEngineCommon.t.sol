@@ -1115,7 +1115,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         instructionSet[6] = 1;
     }
 
-    function _setup_checkRule_ForeignCall_Positive(uint256 _transferValue) public ifDeploymentTestsEnabled endWithStopPrank {
+    function _setup_checkRule_ForeignCall_Positive(uint256 _transferValue) public ifDeploymentTestsEnabled endWithStopPrank returns(uint256 _policyId) {
        
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicy();
@@ -1152,6 +1152,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds[0][0]= ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);       
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        return policyIds[0];
     }
 
     function _setup_checkRule_TransferFrom_ForeignCall_Positive(uint256 _transferValue) public ifDeploymentTestsEnabled endWithStopPrank {

@@ -1403,7 +1403,213 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         RulesEngineDataFacet(address(red)).applyPolicy(address(0xdeadbeef), policyIds);
     }
 
+    function testRulesEngine_Unit_UpdatePolicy_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEngineDataFacet(address(red)).cementPolicy(policyId);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineDataFacet(address(red)).updatePolicy(policyId, blankSignatures, blankFunctionSignatureIds, blankRuleIds, PolicyType.CLOSED_POLICY);
+    }
+
+    function testRulesEngine_Unit_DeletePolicy_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEngineDataFacet(address(red)).cementPolicy(policyId);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineDataFacet(address(red)).deletePolicy(policyId);
+    }
+
+    function testRulesEngine_Unit_ApplyPolicy_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEngineDataFacet(address(red)).updatePolicy(policyId, blankSignatures, blankFunctionSignatureIds, blankRuleIds, PolicyType.OPEN_POLICY);
+        RulesEngineDataFacet(address(red)).cementPolicy(policyId);
+        
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = policyId;
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineDataFacet(address(red)).applyPolicy(address(0xdeadbeef), policyIds);
+    }
+
+    function testRulesEngine_Unit_CreateForeignCall_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEngineDataFacet(address(red)).updatePolicy(policyId, blankSignatures, blankFunctionSignatureIds, blankRuleIds, PolicyType.OPEN_POLICY);
+        RulesEngineDataFacet(address(red)).cementPolicy(policyId);
+
+        ForeignCall memory fc;
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineDataFacet(address(red)).createForeignCall(policyId, fc);
+    }
 
 
+    function testRulesEngine_Unit_DeleteForeignCall_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
+
+        // set up the ERC20
+        uint256 policyId = _setup_checkRule_ForeignCall_Positive(ruleValue);
+        RulesEngineDataFacet(address(red)).cementPolicy(policyId);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineDataFacet(address(red)).deleteForeignCall(policyId,0);
+    }
+
+    function testRulesEngine_unit_UpdateForeignCall_Negative_CementedPolicy()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        ForeignCall memory fc;
+        fc = _setUpForeignCallSimple(policyID);
+
+        uint256 foreignCallId = RulesEngineDataFacet(address(red)).createForeignCall(policyID, fc);
+        fc.foreignCallAddress = address(userContractAddress);
+        RulesEngineDataFacet(address(red)).cementPolicy(policyID);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineDataFacet(address(red)).updateForeignCall(policyID, foreignCallId, fc);
+    }
+
+    function testRulesEngine_unit_CreateTracker_Negative_CementedPolicy()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = PT.ADDR;
+        RulesEngineDataFacet(address(red)).cementPolicy(policyID);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineDataFacet(address(red)).createTracker(policyID, tracker);
+    }
+
+    function testRulesEngine_unit_DeleteTracker_Negative_CementedPolicy()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = PT.ADDR;
+        uint256 trackerId = RulesEngineDataFacet(address(red)).createTracker(policyID, tracker);
+        RulesEngineDataFacet(address(red)).cementPolicy(policyID);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineDataFacet(address(red)).deleteTracker(policyID, trackerId);
+    }
+
+    function testRulesEngine_Unit_createFunctionSignature_Negative_CementedPolicy()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyID = _createBlankPolicy();
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+        RulesEngineDataFacet(address(red)).cementPolicy(policyID);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineDataFacet(address(red)).createFunctionSignature(policyID, bytes4(keccak256(bytes(functionSignature))), pTypes);
+    }
+
+    function testRulesEngine_Unit_updateFunctionSignature_Negative_CementedPolicy()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        // create rule and set rule to user contract 
+        (uint256 policyID, uint256 ruleID) = setUpRuleSimple();
+        FunctionSignatureStorageSet memory sig = RulesEngineDataFacet(address(red)).getFunctionSignature(1, 1);
+        RulesEngineDataFacet(address(red)).cementPolicy(policyID);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineDataFacet(address(red)).updateFunctionSignature(1, 1, bytes4(keccak256(bytes(functionSignature))), new PT[](3));
+    }
+
+    function testRulesEngine_Unit_deleteFunctionSignature_Negative_CementedPolicy()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+        uint256 functionSignatureId = _addFunctionSignatureToPolicy(policyId);
+        assertEq(functionSignatureId, 1);
+        FunctionSignatureStorageSet memory matchingSignature = RulesEngineDataFacet(address(red)).getFunctionSignature(policyId, functionSignatureId);
+        assertEq(matchingSignature.signature, bytes4(keccak256(bytes(functionSignature))));
+
+        RulesEngineDataFacet(address(red)).cementPolicy(policyId);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineDataFacet(address(red)).deleteFunctionSignature(policyId, functionSignatureId); 
+    }
+
+    function testRulesEngine_Unit_updateRule_Negative_CementedPolicy()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+        Rule memory rule;
+
+        // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
+        rule.instructionSet = _createInstructionSet(0, 1);
+
+        rule.placeHolders = new Placeholder[](2);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].trackerValue = true;
+        rule.placeHolders[1].typeSpecificIndex = 1;
+        // Add a negative/positive effects
+        rule.negEffects = new Effect[](1);
+        rule.posEffects = new Effect[](1);
+        rule.negEffects[0] = effectId_revert;
+        rule.posEffects[0] = effectId_event;
+
+        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(policyId, rule);
+        RulesEngineDataFacet(address(red)).cementPolicy(policyId);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineDataFacet(address(red)).updateRule(policyId, ruleId, rule);
+    }
+
+    function testRulesEngine_Unit_createRule_Negative_CementedPolicy()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+        Rule memory rule;
+
+        RulesEngineDataFacet(address(red)).cementPolicy(policyId);
+        vm.expectRevert("Not allowed for cemented policy");
+        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(policyId, rule);
+    }
+
+    function testRulesEngine_Unit_RemoveClosedPolicy_Subscriber_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEngineDataFacet(address(red)).updatePolicy(policyId, blankSignatures, blankFunctionSignatureIds, blankRuleIds, PolicyType.CLOSED_POLICY);
+        RulesEngineDataFacet(address(red)).addClosedPolicySubscriber(policyId, address(1));
+        RulesEngineDataFacet(address(red)).cementPolicy(policyId);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineDataFacet(address(red)).removeClosedPolicySubscriber(policyId, address(1));
+    }
 
 }
