@@ -15,6 +15,7 @@ contract RulesEngineFuzzTests is RulesEngineFuzzTestsCommon {
         userContractAddress = address(userContract);
         userContract.setRulesEngineAddress(address(red));
         testContract = new ForeignCallTestContract();
+        userContract.setCallingContractAdmin(callingContractAdmin);
         _setupEffectProcessor();
     }
 

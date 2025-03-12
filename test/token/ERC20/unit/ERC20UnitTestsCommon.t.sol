@@ -117,9 +117,9 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
     function _setupRuleWithRevertTransferFrom(string memory _functionSignature, PT[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
         uint256[] memory policyIds = new uint256[](1);
         
-        policyIds[0] = _createBlankPolicy();
+        policyIds[0] = _createBlankPolicyOpen();
 
-        _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
+        _addFunctionSignatureToPolicyOpen(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule =  _createGTRuleTransferFrom(4);
@@ -130,16 +130,18 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
     function _setupRuleWithRevertMint(string memory _functionSignature, PT[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
         uint256[] memory policyIds = new uint256[](1);
         
-        policyIds[0] = _createBlankPolicy();
+        policyIds[0] = _createBlankPolicyOpen();
 
-        _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
+        _addFunctionSignatureToPolicyOpen(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule =  _createGTRuleMint(4);
@@ -150,7 +152,9 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 

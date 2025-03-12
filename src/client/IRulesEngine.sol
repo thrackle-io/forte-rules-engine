@@ -23,4 +23,13 @@ interface IRulesEngine {
      * @param arguments Think of this as msg.data and whatever other context and global variables you would like to pass in to check.
      */
     function checkPolicies(address contractAddress, bytes calldata arguments) external returns (uint256);
+
+     /**
+     * @dev Function to grant calling contract admin role 
+     * @dev Call this function from your contract to set calling contract admin 
+     * @param _callingContract policy Id 
+     * @param _account address to assign admin role Id 
+     * @return bytes32 adminRoleId 
+     */
+    function grantCallingContractRole(address _callingContract, address _account) external returns (bytes32);
 }

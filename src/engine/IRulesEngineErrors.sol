@@ -9,5 +9,10 @@ interface IRulesEngineErrors {
     error BelowMinAdminThreshold();
     error ZeroAddressCannotBeAdmin(); 
     error PolicyAdminAlreadyCreated(); 
+    error OnlyCallingContractCanCreateAdmin();
+    error CallingContractAdminRoleNotGrantedFromCallingContract();
+    error CallingContractAdminAlreadyGranted();
+    error NotCallingContractAdmin();
+    error NotProposedCallingContractAdmin();
     
 }

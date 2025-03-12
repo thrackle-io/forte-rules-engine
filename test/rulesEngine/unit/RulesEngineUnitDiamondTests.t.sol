@@ -6,6 +6,7 @@ import "lib/forge-std/src/Test.sol";
 import "src/engine/facets/NativeFacet.sol";
 import "src/engine/facets/RulesEngineDataFacet.sol";
 import "src/engine/RulesEngineStorageStructure.sol";
+import "src/example/ExampleUserContract.sol";
 
 contract RulesEngineUnitDiamondTests is DiamondMine, Test {
     
@@ -13,10 +14,16 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
     bytes4[] signatures;        
     uint256[] functionSignatureIds;
     uint256[][] ruleIds;
-    address constant CONTRACT_ADDRESS = address(22);
+    ExampleUserContract userContract;
+    address userContractAddress; 
+    address callingContractAdmin = address(0x12345);
 
     function setUp() public {
-        red = _createRulesEngineDiamond(address(0xB0b));        
+        red = _createRulesEngineDiamond(address(0xB0b)); 
+        userContract = new ExampleUserContract();
+        userContractAddress = address(userContract); 
+        userContract.setRulesEngineAddress(address(red));
+        userContract.setCallingContractAdmin(callingContractAdmin);     
     }
 
     function testRulesEngine_Unit_Diamond_diamondOwner_Positive() public view {
@@ -125,9 +132,11 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         ruleIds[0][0]= ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
         // Apply the policy 
-        RulesEngineDataFacet(address(red)).applyPolicy(CONTRACT_ADDRESS, policyIds);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
         // unable to add a getter for policy because it contains a nested mapping. If the components added without reversion, it passes.
-        uint256[] memory savedPolicies = RulesEngineDataFacet(address(red)).getAppliedPolicyIds(CONTRACT_ADDRESS);
+        uint256[] memory savedPolicies = RulesEngineDataFacet(address(red)).getAppliedPolicyIds(userContractAddress);
         assertEq(savedPolicies.length, policyIds.length);
         assertEq(savedPolicies[0], policyIds[0]);        
     }
@@ -146,6 +155,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         FunctionSignatureStorageSet[] memory functionSignatures = new FunctionSignatureStorageSet[](0); 
         Rule[] memory rules = new Rule[](0); 
         uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(functionSignatures, rules, PolicyType.CLOSED_POLICY);
+        RulesEngineDataFacet(address(red)).addClosedPolicySubscriber(policyId, callingContractAdmin); 
         return policyId;
     }
 

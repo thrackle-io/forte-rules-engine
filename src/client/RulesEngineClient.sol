@@ -29,4 +29,11 @@ abstract contract RulesEngineClient {
     function _invokeRulesEngine(bytes memory encoded) internal returns (uint256 retval) {
         if (rulesEngineAddress != address(0)) return IRulesEngine(rulesEngineAddress).checkPolicies(address(this), encoded);
     }
+
+    /**
+     * @dev Set the calling contract admin address 
+     */
+    function setCallingContractAdmin(address callingContractAdmin) external {
+        IRulesEngine(rulesEngineAddress).grantCallingContractRole(address(this), callingContractAdmin);
+    }
 }

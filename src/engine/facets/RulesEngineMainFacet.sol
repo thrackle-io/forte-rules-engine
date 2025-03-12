@@ -72,11 +72,11 @@ contract RulesEngineMainFacet is FacetCommonImports{
         uint256 ruleCount = applicableRules.length;
         for(uint256 i = 0; i < ruleCount; i++) { 
             Rule storage rule = ruleData[applicableRules[i]].rule;
-            if(!evaluateIndividualRule(rule, _policyId, functionSignatureArgs)) {
+            if(!_evaluateIndividualRule(rule, _policyId, functionSignatureArgs)) {
                 retVal = false;
-                doEffects(rule, _policyId, rule.negEffects, functionSignatureArgs);
+                _doEffects(rule, _policyId, rule.negEffects, functionSignatureArgs);
             } else{
-                doEffects(rule, _policyId, rule.posEffects, functionSignatureArgs);
+                _doEffects(rule, _policyId, rule.posEffects, functionSignatureArgs);
             }
         }
     }
@@ -89,12 +89,12 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @return response the result of the rule condition evaluation 
      * TODO: Look into the relationship between policy and foreign calls
      */
-    function evaluateIndividualRule(Rule storage rule, uint256 _policyId, bytes calldata functionSignatureArgs) internal returns (bool response) {
-        (bytes[] memory ruleArgs, Placeholder[] memory placeholders) = buildArguments(rule, _policyId, functionSignatureArgs, false);
-        response = run(rule.instructionSet, placeholders, _policyId, ruleArgs);
+    function _evaluateIndividualRule(Rule storage rule, uint256 _policyId, bytes calldata functionSignatureArgs) internal returns (bool response) {
+        (bytes[] memory ruleArgs, Placeholder[] memory placeholders) = _buildArguments(rule, _policyId, functionSignatureArgs, false);
+        response = _run(rule.instructionSet, placeholders, _policyId, ruleArgs);
     }
 
-    function buildArguments(Rule storage rule, uint256 _policyId, bytes calldata functionSignatureArgs, bool effect) internal returns (bytes[] memory, Placeholder[] memory) {
+    function _buildArguments(Rule storage rule, uint256 _policyId, bytes calldata functionSignatureArgs, bool effect) internal returns (bytes[] memory, Placeholder[] memory) {
         Placeholder[] memory placeHolders;
 
         if(effect) {
@@ -133,7 +133,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
         return (retVals, placeHolders);
     }
 
-    function run(uint256[] memory prog, Placeholder[] memory placeHolders, uint256 _policyId, bytes[] memory arguments) internal returns (bool ans) {
+    function _run(uint256[] memory prog, Placeholder[] memory placeHolders, uint256 _policyId, bytes[] memory arguments) internal returns (bool ans) {
         uint256[90] memory mem;
         uint256 idx = 0;
         uint256 opi = 0;
@@ -275,18 +275,18 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @dev Loop through effects for a given rule and execute them
      * @param _effects list of effects
      */
-    function doEffects(Rule storage rule, uint256 _policyId, Effect[] memory _effects, bytes calldata functionSignatureArgs) internal {
+    function _doEffects(Rule storage rule, uint256 _policyId, Effect[] memory _effects, bytes calldata functionSignatureArgs) internal {
 
         // Load the Effect data from storage
         for(uint256 i = 0; i < _effects.length; i++) {
             Effect memory effect = _effects[i];
             if(effect.valid) {
                 if (effect.effectType == ET.REVERT) { 
-                    doRevert(effect.errorMessage);
+                    _doRevert(effect.errorMessage);
                 } else if (effect.effectType == ET.EVENT) {
-                    buildEvent(rule, _effects[i].dynamicParam, _policyId, _effects[i].text, _effects[i], functionSignatureArgs);
+                    _buildEvent(rule, _effects[i].dynamicParam, _policyId, _effects[i].text, _effects[i], functionSignatureArgs);
                 } else {
-                    evaluateExpression(rule, _policyId, functionSignatureArgs, effect.instructionSet);
+                    _evaluateExpression(rule, _policyId, functionSignatureArgs, effect.instructionSet);
                 }
             }
         }
@@ -295,7 +295,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
     /**
      * @dev Define event to be fired 
      */
-    function buildEvent(Rule storage rule,
+    function _buildEvent(Rule storage rule,
         bool isDynamicParam, 
         uint256 _policyId, 
         bytes32 _message, 
@@ -305,15 +305,15 @@ contract RulesEngineMainFacet is FacetCommonImports{
         // determine if we need to dynamically build event key 
         if (isDynamicParam){
             // fire event by param type based on return value 
-            fireDynamicEvent(rule, _policyId, _message, functionSignatureArgs);
+            _fireDynamicEvent(rule, _policyId, _message, functionSignatureArgs);
         } else {
-            fireEvent(_policyId, _message, effectStruct);
+            _fireEvent(_policyId, _message, effectStruct);
         }
     }
 
-    function fireDynamicEvent(Rule storage rule, uint256 _policyId, bytes32 _message, bytes calldata functionSignatureArgs) internal {
+    function _fireDynamicEvent(Rule storage rule, uint256 _policyId, bytes32 _message, bytes calldata functionSignatureArgs) internal {
         // Build the effect arguments struct for event parameters:  
-        (bytes[] memory effectArguments, Placeholder[] memory placeholders) = buildArguments(rule, _policyId, functionSignatureArgs, true);
+        (bytes[] memory effectArguments, Placeholder[] memory placeholders) = _buildArguments(rule, _policyId, functionSignatureArgs, true);
         for(uint256 i = 0; i < effectArguments.length; i++) { 
             // loop through PT types and set eventParam 
             if (placeholders[i].pType == PT.UINT) {
@@ -335,7 +335,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
         }
     }
 
-    function fireEvent(uint256 _policyId, bytes32 _message, Effect memory effectStruct) internal { 
+    function _fireEvent(uint256 _policyId, bytes32 _message, Effect memory effectStruct) internal { 
         if (effectStruct.pType == PT.UINT) {
             uint256 uintParam = abi.decode(effectStruct.param, (uint));
             emit RulesEngineEvent(_policyId, _message, uintParam);
@@ -358,7 +358,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @dev Reverts the transaction
      * @param _message the reversion message
      */
-    function doRevert(string memory _message) internal pure{
+    function _doRevert(string memory _message) internal pure{
         revert(_message);
     }
 
@@ -369,10 +369,10 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @param functionSignatureArgs arguments of the function signature
      * @param instructionSet instruction set 
      */
-    function evaluateExpression(Rule storage rule, uint256 _policyId, bytes calldata functionSignatureArgs, uint256[] memory instructionSet) internal {
-        (bytes[] memory effectArguments, Placeholder[] memory placeholders) = buildArguments(rule, _policyId, functionSignatureArgs, true);
+    function _evaluateExpression(Rule storage rule, uint256 _policyId, bytes calldata functionSignatureArgs, uint256[] memory instructionSet) internal {
+        (bytes[] memory effectArguments, Placeholder[] memory placeholders) = _buildArguments(rule, _policyId, functionSignatureArgs, true);
         if(instructionSet.length > 1) {
-            run(instructionSet, placeholders, _policyId, effectArguments);
+            _run(instructionSet, placeholders, _policyId, effectArguments);
         }
     }
 
@@ -397,7 +397,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
     }
 
 
-    function stringToBytes32(string memory source) internal pure returns (bytes32 result) {
+    function _stringToBytes32(string memory source) internal pure returns (bytes32 result) {
         assembly {
             result := mload(add(source, 32))
         }
@@ -436,7 +436,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @param instructionSetId the index into the instruction set where the converted value lives
      */
     function retrieveRawStringFromInstructionSet(uint256 _policyId, uint256 _ruleId, uint256 instructionSetId) public view returns (StringVerificationStruct memory retVal) {
-        (uint256 instructionSetValue, bytes memory encoded) = retreiveRawEncodedFromInstructionSet(_policyId, _ruleId, instructionSetId, PT.STR);
+        (uint256 instructionSetValue, bytes memory encoded) = _retreiveRawEncodedFromInstructionSet(_policyId, _ruleId, instructionSetId, PT.STR);
         retVal.rawData = abi.decode(encoded, (string));
         retVal.instructionSetValue = instructionSetValue;
     }
@@ -449,7 +449,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @param instructionSetId the index into the instruction set where the converted value lives
      */
     function retrieveRawAddressFromInstructionSet(uint256 _policyId, uint256 _ruleId, uint256 instructionSetId) public view returns (AddressVerificationStruct memory retVal) {
-        (uint256 instructionSetValue, bytes memory encoded) = retreiveRawEncodedFromInstructionSet(_policyId, _ruleId, instructionSetId, PT.ADDR);
+        (uint256 instructionSetValue, bytes memory encoded) = _retreiveRawEncodedFromInstructionSet(_policyId, _ruleId, instructionSetId, PT.ADDR);
         retVal.rawData = abi.decode(encoded, (address));
         retVal.instructionSetValue = instructionSetValue;
     }
@@ -460,7 +460,7 @@ contract RulesEngineMainFacet is FacetCommonImports{
      * @param instructionSetId the index into the instruction set where the converted value lives
      * @param pType the parameter type of the value
      */
-    function retreiveRawEncodedFromInstructionSet(uint256 _policyId, uint256 _ruleId, uint256 instructionSetId, PT pType) internal view returns (uint256 instructionSetValue, bytes memory encoded) {
+    function _retreiveRawEncodedFromInstructionSet(uint256 _policyId, uint256 _ruleId, uint256 instructionSetId, PT pType) internal view returns (uint256 instructionSetValue, bytes memory encoded) {
         RuleStorageSet memory _ruleStorage = lib.getRuleStorage().ruleStorageSets[_policyId][_ruleId];
         if(!_ruleStorage.set) {
             revert("Unknown Rule");

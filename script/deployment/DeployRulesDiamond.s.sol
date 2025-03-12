@@ -27,6 +27,10 @@ contract DeployRulesDiamond is DiamondMine {
         string memory contractAddress = vm.toString(address(cont));
         setENVAddress("EXAMPLE_CONTRACT_ADDRESS", contractAddress);
 
+        // connect User Contract to Rules Engine and Set Calling Contract Admin 
+        cont.setRulesEngineAddress(address(diamond));
+        cont.setCallingContractAdmin(owner); 
+
         vm.stopBroadcast();
     }
 

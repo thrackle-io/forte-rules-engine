@@ -72,9 +72,11 @@ contract RulesEngineCommon is DiamondMine, Test {
     address user1 = address(0x001);
     address policyAdmin = address(0x54321);
     address newPolicyAdmin = address(0x0Add);
+    address callingContractAdmin = address(0x12345);
     address constant USER_ADDRESS = address(0xd00d); 
     address constant USER_ADDRESS_2 = address(0xBADd00d);
     address userContractAddress;
+    address newUserContractAddress;
     address userContractExtraParamAddress;
 
     //test modifiers 
@@ -125,10 +127,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
         
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         // Apply the policy 
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-        // Apply the policy 
-        RulesEngineDataFacet(address(red)).applyPolicy(userContractExtraParamAddress, policyIds);
+        
     }
 
     function setUpRuleSimple()
@@ -163,9 +166,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
         
         // Apply the policy 
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-        // Apply the policy 
-        RulesEngineDataFacet(address(red)).applyPolicy(userContractExtraParamAddress, policyIds);
+
+        
 
         return (policyIds[0], ruleId);
     }
@@ -221,8 +226,10 @@ contract RulesEngineCommon is DiamondMine, Test {
         functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-         
-        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signatures, functionSignatureIds, ruleIds, PolicyType.CLOSED_POLICY);        
+        
+        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signatures, functionSignatureIds, ruleIds, PolicyType.CLOSED_POLICY); 
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);       
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
 
         return ruleId;
@@ -279,7 +286,9 @@ contract RulesEngineCommon is DiamondMine, Test {
         functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signatures, functionSignatureIds, ruleIds, PolicyType.CLOSED_POLICY);        
+        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signatures, functionSignatureIds, ruleIds, PolicyType.CLOSED_POLICY);    
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);    
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
 
         return ruleId;
@@ -351,6 +360,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.foreignCallIndex = 0;
         RulesEngineDataFacet(address(red)).createForeignCall(policyIds[0], fc);
 
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
         fc;  //added to silence warnings during testing revamp 
         return policyIds[0];
@@ -403,6 +414,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);       
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
 
         return policyIds[0];
@@ -439,7 +452,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         resetsGlobalVariables {
         uint256[] memory policyIds = new uint256[](1);
 
-        policyIds[0] = _createBlankPolicy();
+        policyIds[0] = _createBlankPolicyOpen();
 
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
@@ -473,7 +486,9 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(userContractMinTransferAddress, policyIds);
     }
 
@@ -502,6 +517,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
@@ -531,6 +548,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
@@ -565,6 +584,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
@@ -591,10 +612,9 @@ contract RulesEngineCommon is DiamondMine, Test {
         if (ruleIds.length == 0) ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
-        RulesEngineDataFacet(address(red)).applyPolicy(
-            address(contractAddress),
-            policyIds
-        );
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        RulesEngineDataFacet(address(red)).applyPolicy(address(contractAddress), policyIds);
     }
 
     function _resetGlobalVariables() public {
@@ -661,6 +681,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds[0][3] = ruleId;
 
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
@@ -692,6 +714,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
@@ -748,6 +772,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
 
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
         return policyIds[0];
     }
@@ -757,6 +783,14 @@ contract RulesEngineCommon is DiamondMine, Test {
         FunctionSignatureStorageSet[] memory functionSignatures = new FunctionSignatureStorageSet[](0); 
         Rule[] memory rules = new Rule[](0); 
         uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(functionSignatures, rules, PolicyType.CLOSED_POLICY);
+        RulesEngineDataFacet(address(red)).addClosedPolicySubscriber(policyId, callingContractAdmin); 
+        return policyId;
+    }
+
+    function _createBlankPolicyOpen() internal returns (uint256) {
+        FunctionSignatureStorageSet[] memory functionSignatures = new FunctionSignatureStorageSet[](0); 
+        Rule[] memory rules = new Rule[](0); 
+        uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(functionSignatures, rules, PolicyType.OPEN_POLICY);
         return policyId;
     }
 
@@ -918,6 +952,29 @@ contract RulesEngineCommon is DiamondMine, Test {
         return functionSignatureId;
     }
 
+    function _addFunctionSignatureToPolicyOpen(
+        uint256 policyId,
+        bytes4 _functionSignature,
+        PT[] memory pTypes
+    ) internal returns (uint256) {
+        // Save the function signature
+        uint256 functionSignatureId = RulesEngineDataFacet(address(red))
+            .createFunctionSignature(policyId, bytes4(_functionSignature), pTypes);
+        // Save the Policy
+        signatures.push(_functionSignature);
+        functionSignatureIds.push(functionSignatureId);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEngineDataFacet(address(red)).updatePolicy(
+            policyId,
+            signatures,
+            functionSignatureIds,
+            blankRuleIds,
+            PolicyType.OPEN_POLICY
+        );
+        return functionSignatureId;
+    }
+    
+
     function _addRuleIdsToPolicy(
         uint256 policyId,
         uint256[][] memory _ruleIds
@@ -928,6 +985,19 @@ contract RulesEngineCommon is DiamondMine, Test {
             functionSignatureIds,
             _ruleIds,
             PolicyType.CLOSED_POLICY
+        );
+    }
+
+    function _addRuleIdsToPolicyOpen(
+        uint256 policyId,
+        uint256[][] memory _ruleIds
+    ) internal {
+        RulesEngineDataFacet(address(red)).updatePolicy(
+            policyId,
+            signatures,
+            functionSignatureIds,
+            _ruleIds,
+            PolicyType.OPEN_POLICY
         );
     }
 
@@ -1118,7 +1188,7 @@ contract RulesEngineCommon is DiamondMine, Test {
     function _setup_checkRule_ForeignCall_Positive(uint256 _transferValue) public ifDeploymentTestsEnabled endWithStopPrank returns(uint256 _policyId) {
        
         uint256[] memory policyIds = new uint256[](1);
-        policyIds[0] = _createBlankPolicy();
+        policyIds[0] = _createBlankPolicyOpen();
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
@@ -1150,7 +1220,9 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEngineDataFacet(address(red)).createForeignCall(policyIds[0], fc);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);       
+        _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);      
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
         return policyIds[0];
     }
@@ -1158,7 +1230,7 @@ contract RulesEngineCommon is DiamondMine, Test {
     function _setup_checkRule_TransferFrom_ForeignCall_Positive(uint256 _transferValue) public ifDeploymentTestsEnabled endWithStopPrank {
        
         uint256[] memory policyIds = new uint256[](1);
-        policyIds[0] = _createBlankPolicy();
+        policyIds[0] = _createBlankPolicyOpen();
         PT[] memory pTypes = new PT[](3);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.ADDR;
@@ -1191,7 +1263,9 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEngineDataFacet(address(red)).createForeignCall(policyIds[0], fc);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);       
+        _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);   
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);    
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
@@ -1227,11 +1301,13 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEngineDataFacet(address(red)).createForeignCall(policyIds[0], fc);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);       
+        _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);    
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);   
         RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
-    function _setUpForeignCallSimple(uint256 _policyId) public ifDeploymentTestsEnabled  returns(ForeignCall memory) {
+    function _setUpForeignCallSimple(uint256 _policyId) public ifDeploymentTestsEnabled  returns(ForeignCall memory foreignCall) {
         ForeignCall memory fc;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
@@ -1245,7 +1321,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         return fc; 
     }
 
-    function _setUpForeignCallSimpleReturnID(uint256 _policyId) public ifDeploymentTestsEnabled  returns(ForeignCall memory, uint256) {
+    function _setUpForeignCallSimpleReturnID(uint256 _policyId) public ifDeploymentTestsEnabled  returns(ForeignCall memory foreignCall, uint256 fcId) {
         ForeignCall memory fc;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
@@ -1257,5 +1333,16 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.foreignCallIndex = 0;
         uint256 foreignCallId = RulesEngineDataFacet(address(red)).createForeignCall(_policyId, fc);
         return (fc, foreignCallId); 
+    }
+
+    function _switchCallingContractAdminRole(address newAdmin, address userContract) public ifDeploymentTestsEnabled {
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        RulesEngineAdminRolesFacet(address(red)).proposeNewCallingContractAdmin(newAdmin, userContract); 
+
+        vm.stopPrank();
+        vm.startPrank(newAdmin);
+        RulesEngineAdminRolesFacet(address(red)).confirmNewCallingContractAdmin(userContract);
+
     }
 }
