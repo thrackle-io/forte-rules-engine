@@ -618,11 +618,11 @@ contract RulesEngineDataFacet is FacetCommonImports {
         Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
         if (_policyType == PolicyType.CLOSED_POLICY){
             // Load the function signature data from storage
-            PolicyAssociationS storage assData = lib.getPolicyAssociationStorage();
-            for (uint256 i = 0; i < assData.policyIdContractMap[_policyId].length; i++) { 
-                delete assData.contractPolicyIdMap[assData.policyIdContractMap[_policyId][i]];
+            PolicyAssociationS storage assocData = lib.getPolicyAssociationStorage();
+            for (uint256 i = 0; i < assocData.policyIdContractMap[_policyId].length; i++) { 
+                delete assocData.contractPolicyIdMap[assocData.policyIdContractMap[_policyId][i]];
             }
-            delete assData.policyIdContractMap[_policyId];
+            delete assocData.policyIdContractMap[_policyId];
         } 
         data.policyType = _policyType;
     }
