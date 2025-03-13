@@ -16,6 +16,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
     event ForeignCallCreated(uint256 indexed policyId, uint256 indexed foreignCallId);
     event ForeignCallUpdated(uint256 indexed policyId, uint256 indexed foreignCallId);
     event ForeignCallDeleted(uint256 indexed policyId, uint256 indexed foreignCallId);
+
     /**
      * @dev Builds a foreign call structure and adds it to the contracts storage, mapped to the contract address it is associated with
      * @param _policyId the policy Id of the policy the foreign call will be mapped to
@@ -420,8 +421,38 @@ contract RulesEngineDataFacet is FacetCommonImports {
         // if policy ID is zero no policy has been created and cannot be updated. 
         if (_policyId == 0) revert("Policy ID cannot be 0. Create policy before updating");
         
+        
         // Update the policy type
         return _storePolicyData(_policyId, _signatures, _functionSignatureIds, _ruleIds, _policyType);
+    }
+
+    /**
+     * Close the Policy 
+     * @param _policyId id of of the policy 
+     * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
+     */
+    function closePolicy(uint256 _policyId) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) {
+        _processPolicyTypeChange(_policyId, PolicyType.CLOSED_POLICY);        
+        Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
+    }
+
+    /**
+     * Open the policy
+     * @param _policyId id of of the policy 
+     * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
+     */
+    function openPolicy(uint256 _policyId) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) {
+        _processPolicyTypeChange(_policyId, PolicyType.OPEN_POLICY);        
+        Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
+    }
+
+    /**
+     * Function to check if a policy is closed
+     * @param _policyId policyId
+     * @return true/false
+     */
+    function isClosedPolicy(uint256 _policyId) external view returns (bool) {
+        return (lib.getPolicyStorage().policyStorageSets[_policyId].policy.policyType == PolicyType.CLOSED_POLICY);
     }
 
     /**
@@ -468,6 +499,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         data.contractPolicyIdMap[_contractAddress] = new uint256[](_policyId.length);
         for(uint256 i = 0; i < _policyId.length; i++) {
            data.contractPolicyIdMap[_contractAddress][i] = _policyId[i];
+           data.policyIdContractMap[_policyId[i]].push(_contractAddress);
         }
     }
 
@@ -523,14 +555,16 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _signatures all signatures in the policy
      * @param _functionSignatureIds corresponding signature ids in the policy. The elements in this array are one to one matches of the elements in _signatures array. They store the functionSignatureId for each of the signatures in _signatures array.
      * @param _ruleIds two dimensional array of the rules. This array contains a simple count at first level and the second level is the array of ruleId's within the policy.
+     * @param _policyType type of the policy(OPEN/CLOSED)
      * @return policyId updated policyId 
      * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
      */
     function _storePolicyData(uint256 _policyId, bytes4[] calldata _signatures, uint256[] calldata _functionSignatureIds, uint256[][] calldata _ruleIds, PolicyType _policyType) internal returns(uint256){   
         // Load the policy data from storage
         Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
+        // if the policy type is changing, perform all data maintenance
+        _processPolicyTypeChange(_policyId, _policyType);
         // clear the iterator array
-
         delete data.signatures;
         if (_ruleIds.length > 0) {
             // Loop through all the passed in signatures for the policy      
@@ -539,7 +573,6 @@ contract RulesEngineDataFacet is FacetCommonImports {
                 if(!getFunctionSignature(_policyId, _functionSignatureIds[i]).set) revert("Invalid Signature");
                 // Load into the mapping
                 data.functionSignatureIdMap[_signatures[i]] = _functionSignatureIds[i];
-                data.policyType = _policyType;
                 // load the iterator array
                 data.signatures.push(_signatures[i]);
                 // make sure that all the rules attached to each function signature exist
@@ -572,6 +605,26 @@ contract RulesEngineDataFacet is FacetCommonImports {
         }    
         
         return _policyId;
+    }
+
+    /**
+     * @dev internal helper function to clean up data during policy type changes.
+     * @param _policyId id of of the policy 
+     * @param _policyType type of the policy(OPEN/CLOSED)
+     * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
+     */
+    function _processPolicyTypeChange(uint256 _policyId, PolicyType _policyType) internal {
+        // If closing, remove all applied contract associations
+        Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
+        if (_policyType == PolicyType.CLOSED_POLICY){
+            // Load the function signature data from storage
+            PolicyAssociationS storage assocData = lib.getPolicyAssociationStorage();
+            for (uint256 i = 0; i < assocData.policyIdContractMap[_policyId].length; i++) { 
+                delete assocData.contractPolicyIdMap[assocData.policyIdContractMap[_policyId][i]];
+            }
+            delete assocData.policyIdContractMap[_policyId];
+        } 
+        data.policyType = _policyType;
     }
 
     /**

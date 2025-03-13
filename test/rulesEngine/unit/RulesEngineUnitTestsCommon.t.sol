@@ -1378,6 +1378,53 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         RulesEngineDataFacet(address(red)).applyPolicy(potentialSubscriber, policyIds);
     }
 
+    function testRulesEngine_Unit_UpdatePolicy_ClosePolicy_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.startPrank(policyAdmin);
+        uint256 policyId = _createBlankPolicy();
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = policyId;
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEngineDataFacet(address(red)).updatePolicy(policyId, blankSignatures, blankFunctionSignatureIds, blankRuleIds, PolicyType.OPEN_POLICY);
+        ExampleUserContract potentialSubscriber = new ExampleUserContract();
+        potentialSubscriber.setRulesEngineAddress(address(red));
+        potentialSubscriber.setCallingContractAdmin(callingContractAdmin);
+        vm.startPrank(callingContractAdmin);
+        RulesEngineDataFacet(address(red)).applyPolicy(address(potentialSubscriber), policyIds);
+        assertEq(RulesEngineDataFacet(address(red)).getAppliedPolicyIds(address(potentialSubscriber)).length, 1);
+        vm.startPrank(policyAdmin);
+        RulesEngineDataFacet(address(red)).updatePolicy(policyId, blankSignatures, blankFunctionSignatureIds, blankRuleIds, PolicyType.CLOSED_POLICY);
+        assertEq(RulesEngineDataFacet(address(red)).getAppliedPolicyIds(address(potentialSubscriber)).length, 0);
+    }
+
+    function testRulesEngine_Unit_ClosePolicy_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.startPrank(policyAdmin);
+        uint256 policyId = _createBlankPolicy();
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = policyId;
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEngineDataFacet(address(red)).updatePolicy(policyId, blankSignatures, blankFunctionSignatureIds, blankRuleIds, PolicyType.OPEN_POLICY);
+        ExampleUserContract potentialSubscriber = new ExampleUserContract();
+        potentialSubscriber.setRulesEngineAddress(address(red));
+        potentialSubscriber.setCallingContractAdmin(callingContractAdmin);
+        vm.startPrank(callingContractAdmin);
+        RulesEngineDataFacet(address(red)).applyPolicy(address(potentialSubscriber), policyIds);
+        assertEq(RulesEngineDataFacet(address(red)).getAppliedPolicyIds(address(potentialSubscriber)).length, 1);
+        vm.startPrank(policyAdmin);
+        RulesEngineDataFacet(address(red)).closePolicy(policyId);
+        assertEq(RulesEngineDataFacet(address(red)).getAppliedPolicyIds(address(potentialSubscriber)).length, 0);
+    }
+
+    function testRulesEngine_Unit_OpenPolicy_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        assertTrue(RulesEngineDataFacet(address(red)).isClosedPolicy(policyId));
+        RulesEngineDataFacet(address(red)).openPolicy(policyId);
+        assertFalse(RulesEngineDataFacet(address(red)).isClosedPolicy(policyId));
+    }
+
     function testRulesEngine_Unit_ApplyPolicy_OpenPolicy_NotSubscriber() public ifDeploymentTestsEnabled endWithStopPrank {
         
         uint256 policyId = _createBlankPolicy();
