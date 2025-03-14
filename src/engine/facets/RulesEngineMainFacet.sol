@@ -318,19 +318,19 @@ contract RulesEngineMainFacet is FacetCommonImports{
             // loop through PT types and set eventParam 
             if (placeholders[i].pType == PT.UINT) {
                 uint256 uintParam = abi.decode(effectArguments[i], (uint)); 
-                emit RulesEngineEvent(_policyId, _message, uintParam);
+                emit x5f6d49ad_RulesEngineEvent(_policyId, _message, uintParam);
             } else if (placeholders[i].pType == PT.ADDR) {
                 address addrParam = abi.decode(effectArguments[i], (address));
-                emit RulesEngineEvent(_policyId, _message, addrParam);
+                emit x5f6d49ad_RulesEngineEvent(_policyId, _message, addrParam);
             } else if (placeholders[i].pType == PT.BOOL) {
                 bool boolParam = abi.decode(effectArguments[i], (bool));
-                emit RulesEngineEvent(_policyId, _message, boolParam);
+                emit x5f6d49ad_RulesEngineEvent(_policyId, _message, boolParam);
             } else if (placeholders[i].pType == PT.STR) {
                 string memory textParam = abi.decode(effectArguments[i], (string));
-                emit RulesEngineEvent(_policyId, _message, textParam);
+                emit x5f6d49ad_RulesEngineEvent(_policyId, _message, textParam);
             } else if (placeholders[i].pType == PT.BYTES) {
                 bytes32 bytesParam = abi.decode(effectArguments[i], (bytes32));
-                emit RulesEngineEvent(_policyId, _message, bytesParam);
+                emit x5f6d49ad_RulesEngineEvent(_policyId, _message, bytesParam);
             }
         }
     }
@@ -338,19 +338,19 @@ contract RulesEngineMainFacet is FacetCommonImports{
     function _fireEvent(uint256 _policyId, bytes32 _message, Effect memory effectStruct) internal { 
         if (effectStruct.pType == PT.UINT) {
             uint256 uintParam = abi.decode(effectStruct.param, (uint));
-            emit RulesEngineEvent(_policyId, _message, uintParam);
+            emit x5f6d49ad_RulesEngineEvent(_policyId, _message, uintParam);
         } else if (effectStruct.pType == PT.ADDR) {
             address addrParam = abi.decode(effectStruct.param, (address));
-            emit RulesEngineEvent(_policyId, _message, addrParam);
+            emit x5f6d49ad_RulesEngineEvent(_policyId, _message, addrParam);
         } else if (effectStruct.pType == PT.BOOL) {
             bool boolParam = abi.decode(effectStruct.param, (bool));
-            emit RulesEngineEvent(_policyId, _message, boolParam);
+            emit x5f6d49ad_RulesEngineEvent(_policyId, _message, boolParam);
         } else if (effectStruct.pType == PT.STR) {
             string memory textParam = abi.decode(effectStruct.param, (string));
-            emit RulesEngineEvent(_policyId, _message, textParam);
+            emit x5f6d49ad_RulesEngineEvent(_policyId, _message, textParam);
         } else if (effectStruct.pType == PT.BYTES) {
             bytes32 bytesParam = abi.decode(effectStruct.param, (bytes32));
-            emit RulesEngineEvent(_policyId, _message, bytesParam);
+            emit x5f6d49ad_RulesEngineEvent(_policyId, _message, bytesParam);
         }
     }
 

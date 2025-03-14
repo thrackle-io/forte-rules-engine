@@ -300,7 +300,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         _setupRuleWithPosEvent();
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT, event_text);
+        emit x5f6d49ad_RulesEngineEvent(1, EVENTTEXT, event_text);
         userContract.transfer(address(0x7654321), 5);
     }
 
@@ -312,7 +312,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         bytes memory eventParam = abi.encode(uint256(100)); 
         _setupRuleWithPosEventParams(eventParam, PT.UINT);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT, 100);
+        emit x5f6d49ad_RulesEngineEvent(1, EVENTTEXT, 100);
         userContract.transfer(address(0x7654321), 5);
     }
 
@@ -324,7 +324,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         bytes memory eventParam = abi.encode(string("Test")); 
         _setupRuleWithPosEventParams(eventParam, PT.STR);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT, string("test"));
+        emit x5f6d49ad_RulesEngineEvent(1, EVENTTEXT, string("test"));
         userContract.transfer(address(0x7654321), 5);
     }
 
@@ -336,7 +336,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         bytes memory eventParam = abi.encode(address(0x100)); 
         _setupRuleWithPosEventParams(eventParam, PT.ADDR);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT, address(0x100));
+        emit x5f6d49ad_RulesEngineEvent(1, EVENTTEXT, address(0x100));
         userContract.transfer(address(0x7654321), 5);
     }
 
@@ -348,7 +348,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         bytes memory eventParam = abi.encode(bool(true)); 
         _setupRuleWithPosEventParams(eventParam, PT.BOOL);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT, true);
+        emit x5f6d49ad_RulesEngineEvent(1, EVENTTEXT, true);
         userContract.transfer(address(0x7654321), 5);
     }
 
@@ -360,7 +360,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         bytes memory eventParam = abi.encode(bytes32("Bytes32 Test")); 
         _setupRuleWithPosEventParams(eventParam, PT.BYTES);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT, bytes32("Bytes32 Test"));
+        emit x5f6d49ad_RulesEngineEvent(1, EVENTTEXT, bytes32("Bytes32 Test"));
         userContract.transfer(address(0x7654321), 5);
     }
 
@@ -371,7 +371,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         _setupRuleWithPosEventDynamicParamsFromCallingFunctionParams(PT.UINT);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT, 100);
+        emit x5f6d49ad_RulesEngineEvent(1, EVENTTEXT, 100);
         userContract.transfer(address(0x7654321), 100);
     }
 
@@ -383,7 +383,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         _setupRuleWithPosEventDynamicParamsFromCallingFunctionParams(PT.ADDR);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT, address(0x7654321));
+        emit x5f6d49ad_RulesEngineEvent(1, EVENTTEXT, address(0x7654321));
         userContract.transfer(address(0x7654321), 100);
     }
 
@@ -395,13 +395,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         _setupPolicyWithMultipleRulesWithPosEvents();
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT, event_text);
+        emit x5f6d49ad_RulesEngineEvent(1, EVENTTEXT, event_text);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT2, event_text2);
+        emit x5f6d49ad_RulesEngineEvent(1, EVENTTEXT2, event_text2);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT, event_text);
+        emit x5f6d49ad_RulesEngineEvent(1, EVENTTEXT, event_text);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT2, event_text2);
+        emit x5f6d49ad_RulesEngineEvent(1, EVENTTEXT2, event_text2);
         userContract.transfer(address(0x7654321), 11);
     }
 
@@ -413,9 +413,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         _setupRuleWith2PosEvent();
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT, event_text);
+        emit x5f6d49ad_RulesEngineEvent(1, EVENTTEXT, event_text);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT2, event_text2);
+        emit x5f6d49ad_RulesEngineEvent(1, EVENTTEXT2, event_text2);
         userContract.transfer(address(0x7654321), 11);
     }
 
@@ -426,7 +426,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         setupRuleWithTracker(2);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT, event_text);
+        emit x5f6d49ad_RulesEngineEvent(1, EVENTTEXT, event_text);
         bool retVal = userContract.transfer(address(0x7654321), 3);
         assertTrue(retVal);
     }
@@ -683,7 +683,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         vm.startPrank(newPolicyAdmin);
         bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
         assertFalse(hasAdminRole);
-        vm.expectRevert(abi.encodeWithSignature("NotPolicyAdmin()"));
+        vm.expectRevert("NotPolicyAdmin");
         RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID);
     }
 
@@ -712,7 +712,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID);
         vm.stopPrank();
         vm.startPrank(newPolicyAdmin);
-        vm.expectRevert(abi.encodeWithSignature("NotPolicyAdmin()"));
+        vm.expectRevert("NotPolicyAdmin");
         RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID);
     }
 
@@ -730,7 +730,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
                 )
             )
         );
-        vm.expectRevert(abi.encodeWithSignature("BelowMinAdminThreshold()"));
+        vm.expectRevert("BelowMinAdminThreshold");
         RulesEngineAdminRolesFacet(address(red)).revokeRole(adminRole, policyAdmin, policyId);
         bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(1, policyAdmin);
         assertTrue(hasAdminRole);
@@ -750,7 +750,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
                 )
             )
         );
-        vm.expectRevert(abi.encodeWithSignature("BelowMinAdminThreshold()"));
+        vm.expectRevert("BelowMinAdminThreshold");
         RulesEngineAdminRolesFacet(address(red)).renounceRole(adminRole, policyAdmin, 
             policyId);
         bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(1, policyAdmin);
@@ -1693,7 +1693,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertTrue(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(newUserContractAddress, callingContractAdmin));
         vm.stopPrank();
         vm.startPrank(user1);
-        vm.expectRevert(abi.encodeWithSignature("NotCallingContractAdmin()"));
+        vm.expectRevert("NotCallingContractAdmin");
         RulesEngineAdminRolesFacet(address(red)).proposeNewCallingContractAdmin(newUserContractAddress, user1);
     }
 
@@ -1713,7 +1713,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ExampleUserOwnableContract ownableUserContract = new ExampleUserOwnableContract(policyAdmin);
         address ownableUserContractAddress = address(ownableUserContract);
         ownableUserContract.setRulesEngineAddress(address(red));
-        vm.expectRevert(abi.encodeWithSignature("CallingContractAdminRoleNotGrantedFromCallingContract()"));
+        vm.expectRevert("CallingContractAdminRoleNotGrantedFromCallingContract");
         RulesEngineAdminRolesFacet(address(red)).grantCallingContractRoleOwnable(ownableUserContractAddress, callingContractAdmin);
         assertFalse(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(ownableUserContractAddress, callingContractAdmin));
     }
@@ -1745,7 +1745,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ExampleUserAccessControl acUserContract = new ExampleUserAccessControl(policyAdmin);
         address acUserContractAddress = address(acUserContract);
         acUserContract.setRulesEngineAddress(address(red));
-        vm.expectRevert(abi.encodeWithSignature("CallingContractAdminRoleNotGrantedFromCallingContract()"));
+        vm.expectRevert("CallingContractAdminRoleNotGrantedFromCallingContract");
         RulesEngineAdminRolesFacet(address(red)).grantCallingContractRoleAccessControl(acUserContractAddress, callingContractAdmin);
         assertFalse(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(acUserContractAddress, callingContractAdmin));
     }

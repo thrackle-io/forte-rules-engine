@@ -28,7 +28,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         _setupRuleWithRevertSafeMint(ERC721_SAFEMINT_SIGNATURE, pTypes);
         vm.startPrank(USER_ADDRESS);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT, event_text); 
+        emit x5f6d49ad_RulesEngineEvent(1, EVENTTEXT, event_text); 
         userContract.safeMint(USER_ADDRESS);
     }
 
@@ -57,7 +57,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         _setupRuleWithRevertSafeTransferFrom(ERC721_SAFETRANSFERFROM_SIGNATURE, pTypes);
         vm.startPrank(USER_ADDRESS_2);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT, event_text);
+        emit x5f6d49ad_RulesEngineEvent(1, EVENTTEXT, event_text);
         userContract.safeTransferFrom(USER_ADDRESS_2, USER_ADDRESS, 0, "");
     }
 
@@ -71,7 +71,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         _setupRuleWithRevertTransferFrom(ERC721_TRANSFERFROM_SIGNATURE, pTypes);
         vm.startPrank(USER_ADDRESS_2);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT, event_text);
+        emit x5f6d49ad_RulesEngineEvent(1, EVENTTEXT, event_text);
         userContract.transferFrom(USER_ADDRESS_2, USER_ADDRESS, 0);
     }
 
