@@ -434,7 +434,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      */
     function closePolicy(uint256 _policyId) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) {
         _processPolicyTypeChange(_policyId, PolicyType.CLOSED_POLICY);        
-        Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
+        emit x5f6d49ad_PolicyClosed(_policyId);
     }
 
     /**
@@ -444,7 +444,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      */
     function openPolicy(uint256 _policyId) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) {
         _processPolicyTypeChange(_policyId, PolicyType.OPEN_POLICY);        
-        Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
+        emit x5f6d49ad_PolicyOpened(_policyId);
     }
 
     /**
@@ -501,6 +501,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         data.contractPolicyIdMap[_contractAddress] = new uint256[](_policyIds.length);
         for(uint256 i = 0; i < _policyIds.length; i++) {
            data.contractPolicyIdMap[_contractAddress][i] = _policyIds[i];
+           data.policyIdContractMap[_policyIds[i]].push(_contractAddress);
         }
         emit x5f6d49ad_PolicyApplied(_policyIds, _contractAddress);
     }

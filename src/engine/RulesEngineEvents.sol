@@ -30,6 +30,8 @@ event x5f6d49ad_PolicyCreated(uint256 indexed policyId);
 event x5f6d49ad_PolicyUpdated(uint256 indexed policyId);
 event x5f6d49ad_PolicyDeleted(uint256 indexed policyId);
 event x5f6d49ad_PolicyCemented(uint256 indexed policyId);
+event x5f6d49ad_PolicyOpened(uint256 indexed policyId);
+event x5f6d49ad_PolicyClosed(uint256 indexed policyId);
 event x5f6d49ad_PolicyApplied(uint256[] policyIds, address indexed callingContract);
 event x5f6d49ad_PolicyRemoved(uint256 indexed removedPolicyId, address indexed callingContract);
 event x5f6d49ad_PolicySubsciberAdded(uint256 indexed policyId, address indexed subscriber);
