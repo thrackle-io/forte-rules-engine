@@ -151,14 +151,14 @@ contract GasReports is GasHelpers, RulesEngineCommon {
     function _testGasExampleMinTransferWithSetEventParams() public {
         vm.startPrank(USER_ADDRESS);
         vm.expectEmit(true, true, false, false);
-        emit x5f6d49ad_RulesEngineEvent(1, EVENTTEXT, 5);
+        emit RulesEngineEvent(1, EVENTTEXT, 5);
         _exampleContractGasReport(5, address(userContractMTplusEvent), "Using REv2 Event Effect with min transfer gas report"); 
     }
 
     function _testGasExampleMinTransferWithDynamicEventParams() public {
         vm.startPrank(USER_ADDRESS);
         vm.expectEmit(true, true, false, false);
-        emit x5f6d49ad_RulesEngineEvent(1, EVENTTEXT, 5);
+        emit RulesEngineEvent(1, EVENTTEXT, 5);
         _exampleContractGasReport(5, address(userContractMTplusEventDynamic), "Using REv2 Event Effect with min transfer gas report"); 
     }
 

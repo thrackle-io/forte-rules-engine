@@ -46,7 +46,7 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
         bytes32 adminRoleId = _generatePolicyAdminRoleId(_policyId, POLICY_ADMIN);  
         // grant the admin role to the calling address of the createPolicy function from RulesEngineDataFacet 
         _grantRolePolicyAdmin(adminRoleId, _account); 
-        emit x5f6d49ad_PolicyAdminRoleGranted(_account, _policyId); 
+        emit PolicyAdminRoleGranted(_account, _policyId); 
         return adminRoleId;
     }
 
@@ -73,7 +73,7 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
         if (newPolicyAdmin == address(0)) revert("ZeroAddressCannotBeAdmin");
         // grant proposed role to new admin address 
         _grantRole(_generatePolicyAdminRoleId(policyId, PROPOSED_POLICY_ADMIN), newPolicyAdmin);
-        emit x5f6d49ad_PolicyAdminRoleProposed(newPolicyAdmin, policyId);
+        emit PolicyAdminRoleProposed(newPolicyAdmin, policyId);
     }
 
     /**
@@ -86,7 +86,7 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
         _revokeRole(_generatePolicyAdminRoleId(policyId, PROPOSED_POLICY_ADMIN), msg.sender);
         _revokeRole(_generatePolicyAdminRoleId(policyId, POLICY_ADMIN), oldPolicyAdmin);
         _grantRole(_generatePolicyAdminRoleId(policyId, POLICY_ADMIN), msg.sender); 
-        emit x5f6d49ad_PolicyAdminRoleProposed(msg.sender, policyId);
+        emit PolicyAdminRoleConfirmed(msg.sender, policyId);
     }
 
     /**
@@ -109,7 +109,7 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
         /// enforcing the min-1-admin requirement.
         if (isPolicyAdmin(policyId, account)) revert("BelowMinAdminThreshold");
         AccessControl.renounceRole(role, account);
-        emit x5f6d49ad_PolicyAdminRoleRenounced(account, policyId);
+        emit PolicyAdminRoleRenounced(account, policyId);
     }
 
     /**
@@ -124,7 +124,7 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
         if (isPolicyAdmin(policyId, account)) revert("BelowMinAdminThreshold");
         // slither-disable-next-line reentrancy-events
         AccessControl.revokeRole(role, account);
-        emit x5f6d49ad_PolicyAdminRoleRevoked(account, policyId); 
+        emit PolicyAdminRoleRevoked(account, policyId); 
     }
 
 
@@ -157,7 +157,7 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
         if (hasRole(adminRoleId, _account)) revert("CallingContractAdminAlreadyGranted");
         // grant the admin role to the calling address of the createPolicy function from RulesEngineDataFacet 
         _grantRole(adminRoleId, _account); 
-        emit x5f6d49ad_CallingContractAdminRoleGranted(_callingContract, _account); 
+        emit CallingContractAdminRoleGranted(_callingContract, _account); 
         return adminRoleId;
     }
 
@@ -177,7 +177,7 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
         if (hasRole(adminRoleId, _account)) revert("CallingContractAdminAlreadyGranted");
         // grant the admin role to the calling address of the createPolicy function from RulesEngineDataFacet 
         _grantRole(adminRoleId, _account); 
-        emit x5f6d49ad_CallingContractAdminRoleGranted(_callingContract, _account); 
+        emit CallingContractAdminRoleGranted(_callingContract, _account); 
         return adminRoleId;
     }
 
@@ -197,7 +197,7 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
         if (hasRole(adminRoleId, _account)) revert("CallingContractAdminAlreadyGranted");
         // grant the admin role to the calling address of the createPolicy function from RulesEngineDataFacet 
         _grantRole(adminRoleId, _account); 
-        emit x5f6d49ad_CallingContractAdminRoleGranted(_callingContract, _account);  
+        emit CallingContractAdminRoleGranted(_callingContract, _account);  
         return adminRoleId;
     }
 
@@ -223,7 +223,7 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
         if (newCallingContractAdmin == address(0)) revert("ZeroAddressCannotBeAdmin");
         // grant proposed role to new admin address 
         _grantRole(_generateCallingContractAdminRoleId(callingContractAddress, PROPOSED_CALLING_CONTRACT_ADMIN), newCallingContractAdmin);
-        emit x5f6d49ad_CallingContractAdminRoleProposed(callingContractAddress, newCallingContractAdmin);  
+        emit CallingContractAdminRoleProposed(callingContractAddress, newCallingContractAdmin);  
     }
 
     /**
@@ -236,7 +236,7 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
         _revokeRole(_generateCallingContractAdminRoleId(callingContractAddress, PROPOSED_CALLING_CONTRACT_ADMIN), msg.sender);
         _revokeRole(_generateCallingContractAdminRoleId(callingContractAddress, CALLING_CONTRACT_ADMIN), oldPolicyAdmin);
         _grantRole(_generateCallingContractAdminRoleId(callingContractAddress, CALLING_CONTRACT_ADMIN), msg.sender); 
-        emit x5f6d49ad_CallingContractAdminRoleConfirmed(callingContractAddress, msg.sender);  
+        emit CallingContractAdminRoleConfirmed(callingContractAddress, msg.sender);  
     }
 
     //-------------------------------------------------------------------------------------------------------------------------------------------------------

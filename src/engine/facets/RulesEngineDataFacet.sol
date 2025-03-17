@@ -28,7 +28,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         fc.foreignCallIndex = foreignCallIndex;
         _storeForeignCall(_policyId, fc);
         data.foreignCallIdxCounter[_policyId] = foreignCallIndex;
-        emit x5f6d49ad_ForeignCallCreated(_policyId, foreignCallIndex);
+        emit ForeignCallCreated(_policyId, foreignCallIndex);
         return foreignCallIndex;
     }
 
@@ -50,7 +50,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      */
     function deleteForeignCall(uint256 _policyId, uint256 _foreignCallId) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         delete lib.getForeignCallStorage().foreignCalls[_policyId][_foreignCallId];
-        emit x5f6d49ad_ForeignCallDeleted(_policyId, _foreignCallId);
+        emit ForeignCallDeleted(_policyId, _foreignCallId);
     }
 
     /**
@@ -64,7 +64,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         fc = _foreignCall;
         fc.foreignCallIndex = _foreignCallId;
         _storeForeignCall(_policyId, fc);
-        emit x5f6d49ad_ForeignCallUpdated(_policyId, _foreignCallId);
+        emit ForeignCallUpdated(_policyId, _foreignCallId);
         return fc;
     }
 
@@ -117,7 +117,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         uint256 trackerIndex = ++data.trackerIndexCounter[_policyId];
         _storeTracker(data, _policyId, trackerIndex, _tracker);
         data.trackerIndexCounter[_policyId] = trackerIndex;
-        emit x5f6d49ad_TrackerCreated(_policyId, trackerIndex); 
+        emit TrackerCreated(_policyId, trackerIndex); 
         return trackerIndex;
     }
 
@@ -135,7 +135,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         // Load the Tracker data from storage
         TrackerS storage data = lib.getTrackerStorage();
         _storeTracker(data, _policyId, _trackerIndex, _tracker);
-        emit x5f6d49ad_TrackerUpdated(_policyId, _trackerIndex); 
+        emit TrackerUpdated(_policyId, _trackerIndex); 
     }
 
     /**
@@ -194,7 +194,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      */
     function deleteTracker(uint256 _policyId, uint256 _trackerIndex) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         delete lib.getTrackerStorage().trackers[_policyId][_trackerIndex];
-        emit x5f6d49ad_TrackerDeleted(_policyId, _trackerIndex); 
+        emit TrackerDeleted(_policyId, _trackerIndex); 
     }
 
     /// Function Signature Storage
@@ -210,7 +210,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         data.functionSignatureStorageSets[_policyId][functionId].signature = _functionSignature;
         data.functionSignatureStorageSets[_policyId][functionId].parameterTypes = _pTypes;      
         data.functionIdCounter[_policyId] = functionId;
-        emit x5f6d49ad_FunctionSignatureCreated(_policyId, functionId);
+        emit FunctionSignatureCreated(_policyId, functionId);
         return functionId;
     }
     
@@ -242,7 +242,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
                 functionSignature.parameterTypes.push(_pTypes[i]);
             }
         }
-        emit x5f6d49ad_FunctionSignatureUpdated(_policyId, _functionSignatureId);
+        emit FunctionSignatureUpdated(_policyId, _functionSignatureId);
         return _functionSignatureId;
     }
 
@@ -266,6 +266,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         for(uint256 i; i < data.policy.signatureToRuleIds[signature].length; i++) {
             // delete rules from storage 
             delete lib.getRuleStorage().ruleStorageSets[_policyId][i];
+            emit AssociatedRuleDeleted(_policyId, _functionSignatureId);
         }
         // delete function signature to rule Ids mapping  
         delete data.policy.signatureToRuleIds[signature];
@@ -277,7 +278,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
                 data.policy.signatures.push(functionSignatureStructs[j].signature);
             }
         }
-        emit x5f6d49ad_FunctionSignatureDeleted(_policyId, _functionSignatureId);
+        emit FunctionSignatureDeleted(_policyId, _functionSignatureId);
     }
 
     /**
@@ -327,7 +328,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         uint256 ruleId = ++data.ruleIdCounter[_policyId];
         _storeRule(data, _policyId, ruleId, _rule);
         data.ruleIdCounter[_policyId] = ruleId;
-        emit x5f6d49ad_RuleCreated(_policyId, ruleId);
+        emit RuleCreated(_policyId, ruleId);
         return ruleId;
     }
 
@@ -364,7 +365,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         // Load the function signature data from storage
         RuleS storage data = lib.getRuleStorage();
         _storeRule(data, _policyId, _ruleId, _rule);
-        emit x5f6d49ad_RuleUpdated(_policyId, _ruleId);
+        emit RuleUpdated(_policyId, _ruleId);
         return _ruleId;
     }
 
@@ -422,7 +423,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         if (_signatures.length != _functionSignatureIds.length) revert("Signatures and signature id's are inconsistent"); 
         // if policy ID is zero no policy has been created and cannot be updated. 
         if (_policyId == 0) revert("Policy ID cannot be 0. Create policy before updating");
-        emit x5f6d49ad_PolicyUpdated(_policyId);
+        emit PolicyUpdated(_policyId);
         // Update the policy type
         return _storePolicyData(_policyId, _signatures, _functionSignatureIds, _ruleIds, _policyType);
     }
@@ -434,7 +435,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      */
     function closePolicy(uint256 _policyId) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) {
         _processPolicyTypeChange(_policyId, PolicyType.CLOSED_POLICY);        
-        emit x5f6d49ad_PolicyClosed(_policyId);
+        emit PolicyClosed(_policyId);
     }
 
     /**
@@ -444,7 +445,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      */
     function openPolicy(uint256 _policyId) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) {
         _processPolicyTypeChange(_policyId, PolicyType.OPEN_POLICY);        
-        emit x5f6d49ad_PolicyOpened(_policyId);
+        emit PolicyOpened(_policyId);
     }
 
     /**
@@ -468,7 +469,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
             delete data.policy.functionSignatureIdMap[data.policy.signatures[i]];
             delete data.policy.signatureToRuleIds[data.policy.signatures[i]];
         }
-        emit x5f6d49ad_PolicyDeleted(_policyId);
+        emit PolicyDeleted(_policyId);
     }
 
 
@@ -503,7 +504,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
            data.contractPolicyIdMap[_contractAddress][i] = _policyIds[i];
            data.policyIdContractMap[_policyIds[i]].push(_contractAddress);
         }
-        emit x5f6d49ad_PolicyApplied(_policyIds, _contractAddress);
+        emit PolicyApplied(_policyIds, _contractAddress);
     }
 
     // TODO add removePolicy fn
@@ -549,7 +550,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         
         _functionSignatures;
         _rules;
-        emit x5f6d49ad_PolicyCreated(policyId);
+        emit PolicyCreated(policyId);
         return policyId;
     }
 
@@ -668,7 +669,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      */
     function addClosedPolicySubscriber(uint256 _policyId, address _subscriber) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         lib.getPolicyStorage().policyStorageSets[_policyId].policy.closedPolicySubscribers[_subscriber] = true;
-        emit x5f6d49ad_PolicySubsciberAdded(_policyId, _subscriber);
+        emit PolicySubsciberAdded(_policyId, _subscriber);
     }
 
     /**
@@ -687,7 +688,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      */
     function removeClosedPolicySubscriber(uint256 _policyId, address _subscriber) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         delete lib.getPolicyStorage().policyStorageSets[_policyId].policy.closedPolicySubscribers[_subscriber];
-        emit x5f6d49ad_PolicySubsciberRemoved(_policyId, _subscriber);
+        emit PolicySubsciberRemoved(_policyId, _subscriber);
     }
 
     /**ub
@@ -714,6 +715,6 @@ contract RulesEngineDataFacet is FacetCommonImports {
      */
     function cementPolicy(uint256 _policyId) external policyAdminOnly(_policyId, msg.sender) {
         lib.getPolicyStorage().policyStorageSets[_policyId].policy.cemented = true;
-        emit x5f6d49ad_PolicyCemented(_policyId);
+        emit PolicyCemented(_policyId);
     }
 }
