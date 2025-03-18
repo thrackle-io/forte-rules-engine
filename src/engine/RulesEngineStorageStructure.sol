@@ -72,13 +72,6 @@ struct Placeholder {
     bool foreignCall;
 }
 
-// Effect Events
-event RulesEngineEvent(uint256 indexed _eventKey, bytes32 _eventString, string _message);
-event RulesEngineEvent(uint256 indexed _eventKey, bytes32 _eventString, bytes32 _bytes);
-event RulesEngineEvent(uint256 indexed _eventKey, bytes32 _eventString, uint256 indexed _num);
-event RulesEngineEvent(uint256 indexed _eventKey, bytes32 _eventString, address indexed _address);
-event RulesEngineEvent(uint256 indexed _eventKey, bytes32 _eventString, bool indexed _bool);
-
 // Effect Structure
 struct Effect {
     bool valid;
@@ -273,4 +266,5 @@ struct PolicyAssociationS {
     mapping(address contractAddress => uint256[]) contractPolicyIdMap;
     mapping(uint256 policyId => address[]) policyIdContractMap;
 }
+
 

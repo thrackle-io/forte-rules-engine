@@ -12,11 +12,6 @@ import "src/engine/facets/RulesEngineAdminRolesFacet.sol";
  */
 contract RulesEngineDataFacet is FacetCommonImports {
 
-    /// Foreign Call Storage
-    event ForeignCallCreated(uint256 indexed policyId, uint256 indexed foreignCallId);
-    event ForeignCallUpdated(uint256 indexed policyId, uint256 indexed foreignCallId);
-    event ForeignCallDeleted(uint256 indexed policyId, uint256 indexed foreignCallId);
-
     /**
      * @dev Builds a foreign call structure and adds it to the contracts storage, mapped to the contract address it is associated with
      * @param _policyId the policy Id of the policy the foreign call will be mapped to
@@ -122,6 +117,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         uint256 trackerIndex = ++data.trackerIndexCounter[_policyId];
         _storeTracker(data, _policyId, trackerIndex, _tracker);
         data.trackerIndexCounter[_policyId] = trackerIndex;
+        emit TrackerCreated(_policyId, trackerIndex); 
         return trackerIndex;
     }
 
@@ -139,6 +135,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         // Load the Tracker data from storage
         TrackerS storage data = lib.getTrackerStorage();
         _storeTracker(data, _policyId, _trackerIndex, _tracker);
+        emit TrackerUpdated(_policyId, _trackerIndex); 
     }
 
     /**
@@ -197,6 +194,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      */
     function deleteTracker(uint256 _policyId, uint256 _trackerIndex) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         delete lib.getTrackerStorage().trackers[_policyId][_trackerIndex];
+        emit TrackerDeleted(_policyId, _trackerIndex); 
     }
 
     /// Function Signature Storage
@@ -212,6 +210,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         data.functionSignatureStorageSets[_policyId][functionId].signature = _functionSignature;
         data.functionSignatureStorageSets[_policyId][functionId].parameterTypes = _pTypes;      
         data.functionIdCounter[_policyId] = functionId;
+        emit FunctionSignatureCreated(_policyId, functionId);
         return functionId;
     }
     
@@ -243,7 +242,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
                 functionSignature.parameterTypes.push(_pTypes[i]);
             }
         }
-
+        emit FunctionSignatureUpdated(_policyId, _functionSignatureId);
         return _functionSignatureId;
     }
 
@@ -267,6 +266,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         for(uint256 i; i < data.policy.signatureToRuleIds[signature].length; i++) {
             // delete rules from storage 
             delete lib.getRuleStorage().ruleStorageSets[_policyId][i];
+            emit AssociatedRuleDeleted(_policyId, _functionSignatureId);
         }
         // delete function signature to rule Ids mapping  
         delete data.policy.signatureToRuleIds[signature];
@@ -278,6 +278,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
                 data.policy.signatures.push(functionSignatureStructs[j].signature);
             }
         }
+        emit FunctionSignatureDeleted(_policyId, _functionSignatureId);
     }
 
     /**
@@ -327,6 +328,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         uint256 ruleId = ++data.ruleIdCounter[_policyId];
         _storeRule(data, _policyId, ruleId, _rule);
         data.ruleIdCounter[_policyId] = ruleId;
+        emit RuleCreated(_policyId, ruleId);
         return ruleId;
     }
 
@@ -363,6 +365,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         // Load the function signature data from storage
         RuleS storage data = lib.getRuleStorage();
         _storeRule(data, _policyId, _ruleId, _rule);
+        emit RuleUpdated(_policyId, _ruleId);
         return _ruleId;
     }
 
@@ -417,11 +420,10 @@ contract RulesEngineDataFacet is FacetCommonImports {
         PolicyType _policyType
     ) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) returns(uint256) {
         // signature length must match the signature id length
-        if (_signatures.length != _functionSignatureIds.length) revert("Signatures and signature id's are inconsistent"); 
+        if (_signatures.length != _functionSignatureIds.length) revert(SIGNATURES_INCONSISTENT); 
         // if policy ID is zero no policy has been created and cannot be updated. 
-        if (_policyId == 0) revert("Policy ID cannot be 0. Create policy before updating");
-        
-        
+        if (_policyId == 0) revert(POLICY_ID_0);
+        emit PolicyUpdated(_policyId);
         // Update the policy type
         return _storePolicyData(_policyId, _signatures, _functionSignatureIds, _ruleIds, _policyType);
     }
@@ -433,7 +435,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      */
     function closePolicy(uint256 _policyId) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) {
         _processPolicyTypeChange(_policyId, PolicyType.CLOSED_POLICY);        
-        Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
+        emit PolicyClosed(_policyId);
     }
 
     /**
@@ -443,7 +445,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      */
     function openPolicy(uint256 _policyId) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) {
         _processPolicyTypeChange(_policyId, PolicyType.OPEN_POLICY);        
-        Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
+        emit PolicyOpened(_policyId);
     }
 
     /**
@@ -467,40 +469,42 @@ contract RulesEngineDataFacet is FacetCommonImports {
             delete data.policy.functionSignatureIdMap[data.policy.signatures[i]];
             delete data.policy.signatureToRuleIds[data.policy.signatures[i]];
         }
+        emit PolicyDeleted(_policyId);
     }
 
 
     /**
      * Apply the policies to the contracts.
      * @param _contractAddress address of the contract to have policies applied
-     * @param _policyId the rule to add 
+     * @param _policyIds the rule to add 
      */
-    function applyPolicy(address _contractAddress, uint256[] calldata _policyId) callingContractAdminOnly(_contractAddress, msg.sender) external { 
+    function applyPolicy(address _contractAddress, uint256[] calldata _policyIds) callingContractAdminOnly(_contractAddress, msg.sender) external { 
         // Load the function signature data from storage
         PolicyAssociationS storage data = lib.getPolicyAssociationStorage();
         
         // Check policy type for each policy being applied
-        for(uint256 i = 0; i < _policyId.length; i++) {
-            PolicyStorageSet storage policySet = lib.getPolicyStorage().policyStorageSets[_policyId[i]];
-            require(policySet.set, "Policy does not exist");
+        for(uint256 i = 0; i < _policyIds.length; i++) {
+            PolicyStorageSet storage policySet = lib.getPolicyStorage().policyStorageSets[_policyIds[i]];
+            require(policySet.set, POLICY_DOES_NOT_EXIST);
             
             // If policy is cemented, no one can apply it
-            if(isCemented(_policyId[i])) revert("Not allowed for cemented policy");
+            if(isCemented(_policyIds[i])) revert(POLICY_CEMENTED);
 
             // If policy is closed, only admin can apply it
             if(policySet.policy.policyType == PolicyType.CLOSED_POLICY) {
                 require(policySet.policy.closedPolicySubscribers[msg.sender],
-                    "Only verified policy subscriber can apply closed policies"
+                    VERIFIED_SUBSCRIBER_ONLY
                 );
             }
         }
 
         // Apply the policies
-        data.contractPolicyIdMap[_contractAddress] = new uint256[](_policyId.length);
-        for(uint256 i = 0; i < _policyId.length; i++) {
-           data.contractPolicyIdMap[_contractAddress][i] = _policyId[i];
-           data.policyIdContractMap[_policyId[i]].push(_contractAddress);
+        data.contractPolicyIdMap[_contractAddress] = new uint256[](_policyIds.length);
+        for(uint256 i = 0; i < _policyIds.length; i++) {
+           data.contractPolicyIdMap[_contractAddress][i] = _policyIds[i];
+           data.policyIdContractMap[_policyIds[i]].push(_contractAddress);
         }
+        emit PolicyApplied(_policyIds, _contractAddress);
     }
 
     // TODO add removePolicy fn
@@ -546,6 +550,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
         
         _functionSignatures;
         _rules;
+        emit PolicyCreated(policyId);
         return policyId;
     }
 
@@ -570,7 +575,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
             // Loop through all the passed in signatures for the policy      
             for (uint256 i = 0; i < _signatures.length; i++) {
                 // make sure that all the function signatures exist
-                if(!getFunctionSignature(_policyId, _functionSignatureIds[i]).set) revert("Invalid Signature");
+                if(!getFunctionSignature(_policyId, _functionSignatureIds[i]).set) revert(INVALID_SIGNATURE);
                 // Load into the mapping
                 data.functionSignatureIdMap[_signatures[i]] = _functionSignatureIds[i];
                 // load the iterator array
@@ -578,13 +583,13 @@ contract RulesEngineDataFacet is FacetCommonImports {
                 // make sure that all the rules attached to each function signature exist
                 for (uint256 j = 0; j < _ruleIds[i].length; j++) {
                     RuleStorageSet memory ruleStore = getRule(_policyId, _ruleIds[i][j]);
-                    if(!ruleStore.set) revert("Invalid Rule");
+                    if(!ruleStore.set) revert(INVALID_RULE);
                     for (uint256 k = 0; k < ruleStore.rule.placeHolders.length; k++) {
                         if(ruleStore.rule.placeHolders[k].foreignCall) {
                             // get the foreign call using the type specific index which will be interpreted as a foreign call index since it has foreignCall bool set
-                            require(getForeignCall(_policyId, ruleStore.rule.placeHolders[k].typeSpecificIndex).set, "Foreign Call referenced in rule not set");
+                            require(getForeignCall(_policyId, ruleStore.rule.placeHolders[k].typeSpecificIndex).set, FOREIGN_CALL_NOT_SET);
                         } else if (ruleStore.rule.placeHolders[k].trackerValue) {
-                            require(getTracker(_policyId, ruleStore.rule.placeHolders[k].typeSpecificIndex).set, "Tracker referenced in rule not set");
+                            require(getTracker(_policyId, ruleStore.rule.placeHolders[k].typeSpecificIndex).set, TRACKER_NOT_SET);
                         }
 
                     }
@@ -596,7 +601,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
             // Solely loop through and add signatures to the policy
             for (uint256 i = 0; i < _signatures.length; i++) {
                 // make sure that all the function signatures exist
-                if(!getFunctionSignature(_policyId, _functionSignatureIds[i]).set) revert("Invalid Signature");
+                if(!getFunctionSignature(_policyId, _functionSignatureIds[i]).set) revert(INVALID_SIGNATURE);
                 // Load into the mapping
                 data.functionSignatureIdMap[_signatures[i]] = _functionSignatureIds[i];
                 // load the iterator array
@@ -664,6 +669,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      */
     function addClosedPolicySubscriber(uint256 _policyId, address _subscriber) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         lib.getPolicyStorage().policyStorageSets[_policyId].policy.closedPolicySubscribers[_subscriber] = true;
+        emit PolicySubsciberAdded(_policyId, _subscriber);
     }
 
     /**
@@ -682,9 +688,10 @@ contract RulesEngineDataFacet is FacetCommonImports {
      */
     function removeClosedPolicySubscriber(uint256 _policyId, address _subscriber) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         delete lib.getPolicyStorage().policyStorageSets[_policyId].policy.closedPolicySubscribers[_subscriber];
+        emit PolicySubsciberRemoved(_policyId, _subscriber);
     }
 
-    /**
+    /**ub
      * Function to check Policy's cemented status
      * @param _policyId policyId
      * @return _cemented cemented (true/false)
@@ -698,7 +705,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _policyId policyId
      */
     modifier notCemented(uint256 _policyId) {
-        if(isCemented(_policyId)) revert ("Not allowed for cemented policy");
+        if(isCemented(_policyId)) revert (POLICY_CEMENTED);
         _;
     }
 
@@ -708,5 +715,6 @@ contract RulesEngineDataFacet is FacetCommonImports {
      */
     function cementPolicy(uint256 _policyId) external policyAdminOnly(_policyId, msg.sender) {
         lib.getPolicyStorage().policyStorageSets[_policyId].policy.cemented = true;
+        emit PolicyCemented(_policyId);
     }
 }

@@ -5,7 +5,8 @@ import {RulesEngineStoragePositionLib as lib} from "src/engine/RulesEngineStorag
 import "src/engine/AccessModifiers.sol";
 import "src/engine/RulesEngineStorageStructure.sol";
 import "src/engine/facets/FacetUtils.sol";
-import "src/engine/IRulesEngineErrors.sol";
+import "src/engine/RulesEngineEvents.sol";
+import "src/engine/RulesEngineErrors.sol";
 
 
-abstract contract FacetCommonImports is AccessModifiers, IRulesEngineErrors{}
+abstract contract FacetCommonImports is AccessModifiers {}

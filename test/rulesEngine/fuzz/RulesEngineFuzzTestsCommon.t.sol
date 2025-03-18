@@ -70,7 +70,7 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
             RulesEngineAdminRolesFacet(address(red)).confirmNewPolicyAdmin(policyID);
             RulesEngineDataFacet(address(red)).createPolicy(functionSignatures, rules, PolicyType.CLOSED_POLICY);
         } else {
-            vm.expectRevert(abi.encodeWithSignature("NotPolicyAdmin()"));
+            vm.expectRevert("Not Policy Admin");
             RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID);
         }
 
