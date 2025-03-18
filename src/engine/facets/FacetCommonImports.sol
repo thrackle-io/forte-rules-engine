@@ -6,6 +6,7 @@ import "src/engine/AccessModifiers.sol";
 import "src/engine/RulesEngineStorageStructure.sol";
 import "src/engine/facets/FacetUtils.sol";
 import "src/engine/RulesEngineEvents.sol";
+import "src/engine/RulesEngineErrors.sol";
 
 
 abstract contract FacetCommonImports is AccessModifiers {}

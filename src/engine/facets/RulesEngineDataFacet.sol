@@ -420,9 +420,9 @@ contract RulesEngineDataFacet is FacetCommonImports {
         PolicyType _policyType
     ) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) returns(uint256) {
         // signature length must match the signature id length
-        if (_signatures.length != _functionSignatureIds.length) revert("Signatures and signature id's are inconsistent"); 
+        if (_signatures.length != _functionSignatureIds.length) revert(SIGNATURES_INCONSISTENT); 
         // if policy ID is zero no policy has been created and cannot be updated. 
-        if (_policyId == 0) revert("Policy ID cannot be 0. Create policy before updating");
+        if (_policyId == 0) revert(POLICY_ID_0);
         emit PolicyUpdated(_policyId);
         // Update the policy type
         return _storePolicyData(_policyId, _signatures, _functionSignatureIds, _ruleIds, _policyType);
@@ -485,15 +485,15 @@ contract RulesEngineDataFacet is FacetCommonImports {
         // Check policy type for each policy being applied
         for(uint256 i = 0; i < _policyIds.length; i++) {
             PolicyStorageSet storage policySet = lib.getPolicyStorage().policyStorageSets[_policyIds[i]];
-            require(policySet.set, "Policy does not exist");
+            require(policySet.set, POLICY_DOES_NOT_EXIST);
             
             // If policy is cemented, no one can apply it
-            if(isCemented(_policyIds[i])) revert("Not allowed for cemented policy");
+            if(isCemented(_policyIds[i])) revert(POLICY_CEMENTED);
 
             // If policy is closed, only admin can apply it
             if(policySet.policy.policyType == PolicyType.CLOSED_POLICY) {
                 require(policySet.policy.closedPolicySubscribers[msg.sender],
-                    "Only verified policy subscriber can apply closed policies"
+                    VERIFIED_SUBSCRIBER_ONLY
                 );
             }
         }
@@ -575,7 +575,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
             // Loop through all the passed in signatures for the policy      
             for (uint256 i = 0; i < _signatures.length; i++) {
                 // make sure that all the function signatures exist
-                if(!getFunctionSignature(_policyId, _functionSignatureIds[i]).set) revert("Invalid Signature");
+                if(!getFunctionSignature(_policyId, _functionSignatureIds[i]).set) revert(INVALID_SIGNATURE);
                 // Load into the mapping
                 data.functionSignatureIdMap[_signatures[i]] = _functionSignatureIds[i];
                 // load the iterator array
@@ -583,13 +583,13 @@ contract RulesEngineDataFacet is FacetCommonImports {
                 // make sure that all the rules attached to each function signature exist
                 for (uint256 j = 0; j < _ruleIds[i].length; j++) {
                     RuleStorageSet memory ruleStore = getRule(_policyId, _ruleIds[i][j]);
-                    if(!ruleStore.set) revert("Invalid Rule");
+                    if(!ruleStore.set) revert(INVALID_RULE);
                     for (uint256 k = 0; k < ruleStore.rule.placeHolders.length; k++) {
                         if(ruleStore.rule.placeHolders[k].foreignCall) {
                             // get the foreign call using the type specific index which will be interpreted as a foreign call index since it has foreignCall bool set
-                            require(getForeignCall(_policyId, ruleStore.rule.placeHolders[k].typeSpecificIndex).set, "Foreign Call referenced in rule not set");
+                            require(getForeignCall(_policyId, ruleStore.rule.placeHolders[k].typeSpecificIndex).set, FOREIGN_CALL_NOT_SET);
                         } else if (ruleStore.rule.placeHolders[k].trackerValue) {
-                            require(getTracker(_policyId, ruleStore.rule.placeHolders[k].typeSpecificIndex).set, "Tracker referenced in rule not set");
+                            require(getTracker(_policyId, ruleStore.rule.placeHolders[k].typeSpecificIndex).set, TRACKER_NOT_SET);
                         }
 
                     }
@@ -601,7 +601,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
             // Solely loop through and add signatures to the policy
             for (uint256 i = 0; i < _signatures.length; i++) {
                 // make sure that all the function signatures exist
-                if(!getFunctionSignature(_policyId, _functionSignatureIds[i]).set) revert("Invalid Signature");
+                if(!getFunctionSignature(_policyId, _functionSignatureIds[i]).set) revert(INVALID_SIGNATURE);
                 // Load into the mapping
                 data.functionSignatureIdMap[_signatures[i]] = _functionSignatureIds[i];
                 // load the iterator array
@@ -705,7 +705,7 @@ contract RulesEngineDataFacet is FacetCommonImports {
      * @param _policyId policyId
      */
     modifier notCemented(uint256 _policyId) {
-        if(isCemented(_policyId)) revert ("Not allowed for cemented policy");
+        if(isCemented(_policyId)) revert (POLICY_CEMENTED);
         _;
     }
 

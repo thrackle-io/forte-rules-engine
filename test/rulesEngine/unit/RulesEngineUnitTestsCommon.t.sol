@@ -683,7 +683,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         vm.startPrank(newPolicyAdmin);
         bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
         assertFalse(hasAdminRole);
-        vm.expectRevert("NotPolicyAdmin");
+        vm.expectRevert("Not Policy Admin");
         RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID);
     }
 
@@ -716,7 +716,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID);
         vm.stopPrank();
         vm.startPrank(newPolicyAdmin);
-        vm.expectRevert("NotPolicyAdmin");
+        vm.expectRevert("Not Policy Admin");
         RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID);
     }
 
@@ -734,7 +734,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
                 )
             )
         );
-        vm.expectRevert("BelowMinAdminThreshold");
+        vm.expectRevert("Below Min Admin Threshold");
         RulesEngineAdminRolesFacet(address(red)).revokeRole(adminRole, policyAdmin, policyId);
         bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(1, policyAdmin);
         assertTrue(hasAdminRole);
@@ -754,7 +754,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
                 )
             )
         );
-        vm.expectRevert("BelowMinAdminThreshold");
+        vm.expectRevert("Below Min Admin Threshold");
         RulesEngineAdminRolesFacet(address(red)).renounceRole(adminRole, policyAdmin, 
             policyId);
         bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(1, policyAdmin);
@@ -1699,7 +1699,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertTrue(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(newUserContractAddress, callingContractAdmin));
         vm.stopPrank();
         vm.startPrank(user1);
-        vm.expectRevert("NotCallingContractAdmin");
+        vm.expectRevert("Not Calling Contract Admin");
         RulesEngineAdminRolesFacet(address(red)).proposeNewCallingContractAdmin(newUserContractAddress, user1);
     }
 
@@ -1721,7 +1721,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ExampleUserOwnableContract ownableUserContract = new ExampleUserOwnableContract(policyAdmin);
         address ownableUserContractAddress = address(ownableUserContract);
         ownableUserContract.setRulesEngineAddress(address(red));
-        vm.expectRevert("CallingContractAdminRoleNotGrantedFromCallingContract");
+        vm.expectRevert("Calling Contract Admin Role Not Granted From Calling Contract");
         RulesEngineAdminRolesFacet(address(red)).grantCallingContractRoleOwnable(ownableUserContractAddress, callingContractAdmin);
         assertFalse(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(ownableUserContractAddress, callingContractAdmin));
     }
@@ -1755,7 +1755,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ExampleUserAccessControl acUserContract = new ExampleUserAccessControl(policyAdmin);
         address acUserContractAddress = address(acUserContract);
         acUserContract.setRulesEngineAddress(address(red));
-        vm.expectRevert("CallingContractAdminRoleNotGrantedFromCallingContract");
+        vm.expectRevert("Calling Contract Admin Role Not Granted From Calling Contract");
         RulesEngineAdminRolesFacet(address(red)).grantCallingContractRoleAccessControl(acUserContractAddress, callingContractAdmin);
         assertFalse(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(acUserContractAddress, callingContractAdmin));
     }
