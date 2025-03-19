@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
 
-contract RulesEngineMainFacet is FacetCommonImports{
+contract RulesEngineProcessorFacet is FacetCommonImports{
     /**
      * @dev Initializer params
      * @param _owner initial owner of the diamond

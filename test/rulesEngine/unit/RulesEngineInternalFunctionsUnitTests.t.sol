@@ -27,7 +27,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         fc.typeSpecificIndices = new uint8[](1);
         fc.typeSpecificIndices[0] = 0;
         bytes memory vals = abi.encode(1);
-        RulesEngineMainFacet(address(red)).evaluateForeignCallForRule(fc, vals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals);
         assertEq(foreignCall.getDecodedIntOne(), 1);
     }
     function testRulesEngine_Unit_EncodingForeignCallTwoUint()
@@ -48,7 +48,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         fc.typeSpecificIndices[0] = 0;
         fc.typeSpecificIndices[1] = 1;
         bytes memory vals = abi.encode(1, 2);
-        RulesEngineMainFacet(address(red)).evaluateForeignCallForRule(fc, vals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals);
         assertEq(foreignCall.getDecodedIntOne(), 1);
         assertEq(foreignCall.getDecodedIntTwo(), 2);
     }
@@ -69,7 +69,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         fc.typeSpecificIndices = new uint8[](1);
         fc.typeSpecificIndices[0] = 0;
         bytes memory vals = abi.encode(address(0x1234567));
-        RulesEngineMainFacet(address(red)).evaluateForeignCallForRule(fc, vals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals);
         assertEq(foreignCall.getDecodedAddr(), address(0x1234567));
     }
 
@@ -91,7 +91,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         fc.typeSpecificIndices[0] = 0;
         fc.typeSpecificIndices[1] = 1;
         bytes memory vals = abi.encode(address(0x1234567), address(0x7654321));
-        RulesEngineMainFacet(address(red)).evaluateForeignCallForRule(fc, vals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals);
         assertEq(foreignCall.getDecodedAddr(), address(0x1234567));
         assertEq(foreignCall.getDecodedAddrTwo(), address(0x7654321));
     }   
@@ -112,7 +112,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         fc.typeSpecificIndices = new uint8[](1);
         fc.typeSpecificIndices[0] = 0;
         bytes memory vals = abi.encode("test");
-        RulesEngineMainFacet(address(red)).evaluateForeignCallForRule(fc, vals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals);
         assertEq(foreignCall.getDecodedStrOne(), "test");
     }
 
@@ -134,7 +134,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         fc.typeSpecificIndices[0] = 0;
         fc.typeSpecificIndices[1] = 1;
         bytes memory vals = abi.encode("test", "superduper");
-        RulesEngineMainFacet(address(red)).evaluateForeignCallForRule(fc, vals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals);
         assertEq(foreignCall.getDecodedStrOne(), "test");
         assertEq(foreignCall.getDecodedStrTwo(), "superduper");
     }
@@ -161,7 +161,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         array[3] = 4;
         array[4] = 5;
         bytes memory vals = abi.encode(array);
-        RulesEngineMainFacet(address(red)).evaluateForeignCallForRule(fc, vals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals);
         assertEq(foreignCall.getInternalArrayUint()[0], 1);
         assertEq(foreignCall.getInternalArrayUint()[1], 2);
         assertEq(foreignCall.getInternalArrayUint()[2], 3);
@@ -199,7 +199,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         arrayTwo[3] = 9;
         arrayTwo[4] = 10;
         bytes memory vals = abi.encode(array, arrayTwo);
-        RulesEngineMainFacet(address(red)).evaluateForeignCallForRule(fc, vals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals);
         assertEq(foreignCall.getInternalArrayUint()[0], 1);
         assertEq(foreignCall.getInternalArrayUint()[1], 2);
         assertEq(foreignCall.getInternalArrayUint()[2], 3);
@@ -242,7 +242,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         arrayTwo[3] = "muperduperduperduper";
         arrayTwo[4] = "muperduperduperduperduperduperduperduperduperduperduperduperlongstring";
         bytes memory vals = abi.encode(array, arrayTwo);
-        RulesEngineMainFacet(address(red)).evaluateForeignCallForRule(fc, vals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals);
         assertEq(foreignCall.getInternalArrayStr()[0], "test");
         assertEq(foreignCall.getInternalArrayStr()[1], "superduper");
         assertEq(foreignCall.getInternalArrayStr()[2], "superduperduper");
@@ -278,7 +278,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         array[3] = address(0x2222222);
         array[4] = address(0x3333333);
         bytes memory vals = abi.encode(array);
-        RulesEngineMainFacet(address(red))
+        RulesEngineProcessorFacet(address(red))
             .evaluateForeignCallForRule(fc, vals);
         assertEq(foreignCall.getInternalArrayAddr()[0], address(0x1234567));
         assertEq(foreignCall.getInternalArrayAddr()[1], address(0x7654321));
@@ -309,7 +309,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         array[3] = "superduperduperduper";
         array[4] = "superduperduperduperduperduperduperduperduperlongstring";
         bytes memory vals = abi.encode(array);
-        RulesEngineMainFacet(address(red))
+        RulesEngineProcessorFacet(address(red))
             .evaluateForeignCallForRule(fc, vals);
         assertEq(foreignCall.getInternalArrayStr()[0], "test");
         assertEq(foreignCall.getInternalArrayStr()[1], "superduper");
@@ -340,7 +340,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         array[3] = abi.encodeWithSelector(bytes4(keccak256(bytes("superduperduperduper(uint256)"))), 4);
         array[4] = abi.encodeWithSelector(bytes4(keccak256(bytes("test(uint256,string,address)"))), 5, "superduperduperduperduperduperduperduperduperduperduperduperlongstring", address(0x1234567));
         bytes memory vals = abi.encode(array);
-        RulesEngineMainFacet(address(red))
+        RulesEngineProcessorFacet(address(red))
             .evaluateForeignCallForRule(fc, vals);
         assertEq(foreignCall.getInternalArrayBytes()[0], abi.encodeWithSelector(bytes4(keccak256(bytes("test(uint256)"))), 1));
         assertEq(foreignCall.getInternalArrayBytes()[1], abi.encodeWithSelector(bytes4(keccak256(bytes("superduper(uint256)"))), 2));
@@ -398,7 +398,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         array4[4] = abi.encodeWithSelector(bytes4(keccak256(bytes("test(uint256,string,address)"))), 5, "superduperduperduperduperduperduperduperduperduperduperduperduperlongstring", address(0x1234567));
         bytes memory vals = abi.encode(array1, array2, array3, array4);
 
-        RulesEngineMainFacet(address(red))
+        RulesEngineProcessorFacet(address(red))
             .evaluateForeignCallForRule(fc, vals);
         assertEq(foreignCall.getInternalArrayUint()[0], 1);
         assertEq(foreignCall.getInternalArrayUint()[1], 2);
@@ -452,7 +452,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         array1[3] = 4;
         array1[4] = 5;
         bytes memory vals = abi.encode(array3, array1);
-        RulesEngineMainFacet(address(red))
+        RulesEngineProcessorFacet(address(red))
             .evaluateForeignCallForRule(fc, vals);
         assertEq(foreignCall.getInternalArrayStr()[0], "test");
         assertEq(foreignCall.getInternalArrayStr()[1], "superduper");
@@ -498,7 +498,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
 
         bytes memory vals = abi.encode(array1, array3);
 
-        RulesEngineMainFacet(address(red))
+        RulesEngineProcessorFacet(address(red))
             .evaluateForeignCallForRule(fc, vals);
         
         assertEq(foreignCall.getInternalArrayUint()[0], 1);
@@ -547,7 +547,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
             address(0x1234567)
         );
 
-        ForeignCallReturnValue memory retVal = RulesEngineMainFacet(address(red))
+        ForeignCallReturnValue memory retVal = RulesEngineProcessorFacet(address(red))
             .evaluateForeignCallForRule(
                 fc,
                 vals
@@ -598,7 +598,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         strArray[3] = "superduperduperduper";
         strArray[4] = "superduperduperduperduperduperduperduperduperduperduperduperlongstring";
         bytes memory vals = abi.encode(strArray, uintArray, str);
-        ForeignCallReturnValue memory retVal = RulesEngineMainFacet(address(red)).evaluateForeignCallForRule(fc, vals);
+        ForeignCallReturnValue memory retVal = RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals);
         retVal;
     }
 
@@ -644,7 +644,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
 
         // Build the mapping between calling function arguments and foreign call arguments
 
-        ForeignCallReturnValue memory retVal = RulesEngineMainFacet(
+        ForeignCallReturnValue memory retVal = RulesEngineProcessorFacet(
             address(red)
         ).evaluateForeignCallForRule(
                 fc,
@@ -654,7 +654,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
     }
 
 
-    /// Test utility functions within ExampleUserContract.sol and RulesEngineRunRulesEngineMainFacet(address(red)).sol
+    /// Test utility functions within ExampleUserContract.sol and RulesEngineRunRulesEngineProcessorFacet(address(red)).sol
     function testRulesEngine_Utils_UserContract_setRulesEngineAddress()
         public
         ifDeploymentTestsEnabled
@@ -669,7 +669,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        bool success = RulesEngineMainFacet(address(red)).ui2bool(1);
+        bool success = RulesEngineProcessorFacet(address(red)).ui2bool(1);
         assertTrue(success);
     }
 
@@ -678,7 +678,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        uint256 success = RulesEngineMainFacet(address(red)).bool2ui(false);
+        uint256 success = RulesEngineProcessorFacet(address(red)).bool2ui(false);
         assertTrue(success == 0);
     }
 
@@ -691,7 +691,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         setupRuleWithForeignCall(4, ET.REVERT, false);
 
         bytes memory arguments = abi.encode(address(0x7654321), 5);
-        RulesEngineMainFacet(address(red)).evaluateForeignCalls(0, rule.placeHolders, arguments, 0);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCalls(0, rule.placeHolders, arguments, 0);
     }
 
 }

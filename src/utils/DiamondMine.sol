@@ -4,8 +4,9 @@ pragma solidity ^0.8.24;
 import "src/engine/RulesEngineDiamond.sol";
 import "forge-std/Script.sol";
 import "src/engine/facets/NativeFacet.sol";
-import "src/engine/facets/RulesEngineMainFacet.sol";
-import "src/engine/facets/RulesEngineDataFacet.sol";
+import "src/engine/facets/RulesEngineProcessorFacet.sol";
+import "src/engine/facets/RulesEnginePolicyFacet.sol";
+import "src/engine/facets/RulesEngineComponentFacet.sol";
 import "src/engine/facets/RulesEngineAdminRolesFacet.sol";
 import {IDiamondInit} from "diamond-std/initializers/IDiamondInit.sol";
 import {DiamondInit} from "diamond-std/initializers/DiamondInit.sol";
@@ -53,18 +54,27 @@ contract DiamondMine is Script {
         // Main
         _ruleProcessorFacetCuts.push(
             FacetCut({
-                facetAddress: address(new RulesEngineMainFacet()),
+                facetAddress: address(new RulesEngineProcessorFacet()),
                 action: FacetCutAction.Add,
-                functionSelectors: _createSelectorArray("RulesEngineMainFacet")
+                functionSelectors: _createSelectorArray("RulesEngineProcessorFacet")
             })
         );
 
         // Data
         _ruleProcessorFacetCuts.push(
             FacetCut({
-                facetAddress: address(new RulesEngineDataFacet()),
+                facetAddress: address(new RulesEnginePolicyFacet()),
                 action: FacetCutAction.Add,
-                functionSelectors: _createSelectorArray("RulesEngineDataFacet")
+                functionSelectors: _createSelectorArray("RulesEnginePolicyFacet")
+            })
+        );
+
+        // Data
+        _ruleProcessorFacetCuts.push(
+            FacetCut({
+                facetAddress: address(new RulesEngineComponentFacet()),
+                action: FacetCutAction.Add,
+                functionSelectors: _createSelectorArray("RulesEngineComponentFacet")
             })
         );
 
@@ -83,7 +93,7 @@ contract DiamondMine is Script {
             _ruleProcessorFacetCuts,
             diamondArgs
         );
-        RulesEngineMainFacet(address(rulesEngineInternal)).initialize(owner);
+        RulesEngineProcessorFacet(address(rulesEngineInternal)).initialize(owner);
         return rulesEngineInternal;
     }
 
