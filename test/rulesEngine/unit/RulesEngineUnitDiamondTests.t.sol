@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import "src/utils/DiamondMine.sol";
 import "lib/forge-std/src/Test.sol";
 import "src/engine/facets/NativeFacet.sol";
-import "src/engine/facets/RulesEngineDataFacet.sol";
+import "src/engine/facets/RulesEnginePolicyFacet.sol";
 import "src/engine/RulesEngineStorageStructure.sol";
 import "src/example/ExampleUserContract.sol";
 
@@ -44,13 +44,13 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 0;
-        uint256 foreignCallId = RulesEngineDataFacet(address(red))
+        uint256 foreignCallId = RulesEngineComponentFacet(address(red))
             .createForeignCall(
                 policyId,
                 fc
             );
 
-        fc = RulesEngineDataFacet(address(red)).getForeignCall(
+        fc = RulesEngineComponentFacet(address(red)).getForeignCall(
             policyId,
             foreignCallId
         );
@@ -67,13 +67,13 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         tracker.pType = PT.UINT;
         tracker.trackerValue = abi.encode(trackerValue);
         // Add the tracker
-        uint256 trackerIndex = RulesEngineDataFacet(address(red)).createTracker(
+        uint256 trackerIndex = RulesEngineComponentFacet(address(red)).createTracker(
             policyId,
             tracker
         );
         assertEq(
             abi.encode(trackerValue),
-            RulesEngineDataFacet(address(red))
+            RulesEngineComponentFacet(address(red))
                 .getTracker(policyId, trackerIndex)
                 .trackerValue
         );
@@ -84,8 +84,8 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-        uint256 functionSignatureId = RulesEngineDataFacet(address(red)).createFunctionSignature(policyId, bytes4(keccak256(bytes(functionSignature))), pTypes);
-        FunctionSignatureStorageSet memory sig = RulesEngineDataFacet(address(red)).getFunctionSignature(policyId, functionSignatureId);
+        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(policyId, bytes4(keccak256(bytes(functionSignature))), pTypes);
+        FunctionSignatureStorageSet memory sig = RulesEngineComponentFacet(address(red)).getFunctionSignature(policyId, functionSignatureId);
         assertEq(sig.signature, bytes4(keccak256(bytes(functionSignature))));
     }
 
@@ -101,8 +101,8 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         rule.placeHolders[0].pType = PT.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyId, 0, rule);
-        RuleStorageSet memory rss = RulesEngineDataFacet(address(red)).getRule(policyId, ruleId);
+        uint256 ruleId = RulesEnginePolicyFacet(address(red)).updateRule(policyId, 0, rule);
+        RuleStorageSet memory rss = RulesEnginePolicyFacet(address(red)).getRule(policyId, ruleId);
         assertEq(rss.rule.placeHolders[0].typeSpecificIndex, 1);
     }
 
@@ -126,7 +126,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         rule.placeHolders[0].pType = PT.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).updateRule(policyIds[0], 0, rule);
+        uint256 ruleId = RulesEnginePolicyFacet(address(red)).updateRule(policyIds[0], 0, rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
@@ -134,9 +134,9 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         // Apply the policy 
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
-        RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
         // unable to add a getter for policy because it contains a nested mapping. If the components added without reversion, it passes.
-        uint256[] memory savedPolicies = RulesEngineDataFacet(address(red)).getAppliedPolicyIds(userContractAddress);
+        uint256[] memory savedPolicies = RulesEnginePolicyFacet(address(red)).getAppliedPolicyIds(userContractAddress);
         assertEq(savedPolicies.length, policyIds.length);
         assertEq(savedPolicies[0], policyIds[0]);        
     }
@@ -154,23 +154,23 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
      function _createBlankPolicy() internal returns (uint256) {
         FunctionSignatureStorageSet[] memory functionSignatures = new FunctionSignatureStorageSet[](0); 
         Rule[] memory rules = new Rule[](0); 
-        uint256 policyId = RulesEngineDataFacet(address(red)).createPolicy(functionSignatures, rules, PolicyType.CLOSED_POLICY);
-        RulesEngineDataFacet(address(red)).addClosedPolicySubscriber(policyId, callingContractAdmin); 
+        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(functionSignatures, rules, PolicyType.CLOSED_POLICY);
+        RulesEngineComponentFacet(address(red)).addClosedPolicySubscriber(policyId, callingContractAdmin); 
         return policyId;
     }
 
     function _addFunctionSignatureToPolicy(uint256 policyId, bytes4 _functionSignature, PT[] memory pTypes) internal returns (uint256) {
         // Save the function signature
-        uint256 functionSignatureId = RulesEngineDataFacet(address(red)).createFunctionSignature(policyId, bytes4(_functionSignature), pTypes);
+        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(policyId, bytes4(_functionSignature), pTypes);
         // Save the Policy
         signatures.push(_functionSignature);
         functionSignatureIds.push(functionSignatureId);
         uint256[][] memory blankRuleIds = new uint256[][](0);
-        RulesEngineDataFacet(address(red)).updatePolicy(policyId, signatures, functionSignatureIds, blankRuleIds, PolicyType.CLOSED_POLICY);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyId, signatures, functionSignatureIds, blankRuleIds, PolicyType.CLOSED_POLICY);
         return functionSignatureId;
     }
 
     function _addRuleIdsToPolicy(uint256 policyId, uint256[][] memory _ruleIds) internal {
-        RulesEngineDataFacet(address(red)).updatePolicy(policyId, signatures, functionSignatureIds, _ruleIds, PolicyType.CLOSED_POLICY);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyId, signatures, functionSignatureIds, _ruleIds, PolicyType.CLOSED_POLICY);
     }
 }

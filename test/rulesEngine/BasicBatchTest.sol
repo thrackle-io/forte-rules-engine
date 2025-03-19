@@ -1,6 +1,7 @@
 pragma solidity ^0.8.24;
 
 import "test/utils/RulesEngineCommon.t.sol";
+import "src/engine/facets/RulesEngineComponentFacet.sol";
 
 contract BasicBatchTest is RulesEngineCommon {
 
@@ -16,7 +17,7 @@ contract BasicBatchTest is RulesEngineCommon {
         uint256[] memory blankFunctionSignatureIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         Rule[] memory blankRules = new Rule[](0);
-        calls[0] = abi.encodeWithSelector(RulesEngineDataFacet.createPolicy.selector, blankSignatureSets, blankRules, PolicyType.CLOSED_POLICY);
+        calls[0] = abi.encodeWithSelector(RulesEnginePolicyFacet.createPolicy.selector, blankSignatureSets, blankRules, PolicyType.CLOSED_POLICY);
         address _address = address(22);
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
@@ -29,8 +30,8 @@ contract BasicBatchTest is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 1;
-        calls[1] = abi.encodeWithSelector(RulesEngineDataFacet.createForeignCall.selector, 1, fc);
-        calls[2] = abi.encodeWithSelector(RulesEngineDataFacet.updatePolicy.selector, 1, blankSignatures, blankFunctionSignatureIds, blankRuleIds, PolicyType.CLOSED_POLICY);
+        calls[1] = abi.encodeWithSelector(RulesEngineComponentFacet.createForeignCall.selector, 1, fc);
+        calls[2] = abi.encodeWithSelector(RulesEnginePolicyFacet.updatePolicy.selector, 1, blankSignatures, blankFunctionSignatureIds, blankRuleIds, PolicyType.CLOSED_POLICY);
         RulesEngineDiamond(red).batch(calls, true);
     }
 }

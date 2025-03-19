@@ -196,7 +196,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 1;
-        uint256 foreignCallId = RulesEngineDataFacet(address(red))
+        uint256 foreignCallId = RulesEngineComponentFacet(address(red))
             .createForeignCall(
                 policyIds[0],
                 fc
@@ -225,14 +225,14 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Swapping isPositive to make sure the revert doesn't trigger (for comparison with V1 numbers)
         rule = _setUpEffect(rule, _effectType, !isPositive);
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
-        RulesEngineDataFacet(address(red)).applyPolicy(
+        RulesEnginePolicyFacet(address(red)).applyPolicy(
             address(userContractFC),
             policyIds
         );
@@ -265,7 +265,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 1;
-        uint256 foreignCallId = RulesEngineDataFacet(address(red))
+        uint256 foreignCallId = RulesEngineComponentFacet(address(red))
             .createForeignCall(
                 policyIds[0],
                 fc
@@ -294,11 +294,11 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         rule1 = _setUpEffect(rule1, _effectType, isPositive);
         // Save the rule
-        uint256 ruleId1 = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule1);
+        uint256 ruleId1 = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule1);
         rule2 = _createGTRule(4);
         // Swapping from posEffect to negEffects to make sure the revert doesn't trigger (for comparison with V1 numbers)
         rule2.negEffects[0] = effectId_revert;
-        uint256 ruleId2 = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule2);
+        uint256 ruleId2 = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule2);
 
         ruleIds.push(new uint256[](2));
         ruleIds[0][0] = ruleId1;
@@ -306,7 +306,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
-        RulesEngineDataFacet(address(red)).applyPolicy(
+        RulesEnginePolicyFacet(address(red)).applyPolicy(
             address(userContractFCPlusMin),
             policyIds
         );
@@ -339,7 +339,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 1;
-        uint256 foreignCallId = RulesEngineDataFacet(address(red))
+        uint256 foreignCallId = RulesEngineComponentFacet(address(red))
             .createForeignCall(
                 policyIds[0],
                 fc
@@ -375,13 +375,13 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Swapping isPositive to make sure the revert doesn't trigger (for comparison with V1 numbers)
         rule1 = _setUpEffect(rule1, _effectType, isPositive);
         // Save the rule
-        uint256 ruleId1 = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule1);
+        uint256 ruleId1 = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule1);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId1;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
-        RulesEngineDataFacet(address(red)).applyPolicy(
+        RulesEnginePolicyFacet(address(red)).applyPolicy(
             address(userContractFCPlusMinPlusMaxOneRule),
             policyIds
         );
@@ -417,7 +417,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 1;
-        uint256 foreignCallId = RulesEngineDataFacet(address(red))
+        uint256 foreignCallId = RulesEngineComponentFacet(address(red))
             .createForeignCall(
                 policyIds[0],
                 fc
@@ -445,11 +445,11 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule1.instructionSet[6] = 1;
         rule1 = _setUpEffect(rule1, _effectType, isPositive);
         // Save the rule
-        uint256 ruleId1 = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule1);
+        uint256 ruleId1 = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule1);
         rule2 = _createGTRule(4);
         // Swapping from posEffects to negEffects to make sure the revert doesn't trigger (for comparison with V1 numbers)
         rule2.negEffects[0] = effectId_revert;
-        uint256 ruleId2 = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule2);
+        uint256 ruleId2 = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule2);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId1;
@@ -459,17 +459,17 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         uint256[] memory functionSignatureIdsNew = new uint256[](1);
         functionSignatureIdsNew[0] = 1;
         // ruleIds[0][1] = ruleId2;
-        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[0], signaturesNew, functionSignatureIdsNew, ruleIds, PolicyType.CLOSED_POLICY);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[0], signaturesNew, functionSignatureIdsNew, ruleIds, PolicyType.CLOSED_POLICY);
 
         // Add rules for the second policy
-        ruleId1 = RulesEngineDataFacet(address(red)).createRule(policyIds[1], rule1);
-        ruleId2 = RulesEngineDataFacet(address(red)).createRule(policyIds[1], rule2);
+        ruleId1 = RulesEnginePolicyFacet(address(red)).createRule(policyIds[1], rule1);
+        ruleId2 = RulesEnginePolicyFacet(address(red)).createRule(policyIds[1], rule2);
         ruleIds[0][0] = ruleId2;
 
-        RulesEngineDataFacet(address(red)).updatePolicy(policyIds[1], signaturesNew, functionSignatureIdsNew, ruleIds, PolicyType.CLOSED_POLICY);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[1], signaturesNew, functionSignatureIdsNew, ruleIds, PolicyType.CLOSED_POLICY);
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
-        RulesEngineDataFacet(address(red)).applyPolicy(
+        RulesEnginePolicyFacet(address(red)).applyPolicy(
             address(userContractFCPlusMinSeparatePolicy),
             policyIds
         );
@@ -504,7 +504,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fc.foreignCallIndex = 1;
         uint256 foreignCallId; 
         {
-            foreignCallId = RulesEngineDataFacet(address(red))
+            foreignCallId = RulesEngineComponentFacet(address(red))
                 .createForeignCall(
                     policyIds[0],
                     fc
@@ -535,14 +535,14 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             rule1.instructionSet[6] = 1;
             rule1 = _setUpEffect(rule1, _effectType, isPositive);
             // Save the rule
-            uint256 ruleId1 = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule1);
+            uint256 ruleId1 = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule1);
             rule2 = _createGTRule(4);
             rule3 = _createLTRule();
             rule2.posEffects[0] = effectId_revert;
             // Swapping from posEffect to negEffects to make sure the revert doesn't trigger (for comparison with V1 numbers)
             rule3.negEffects[0] = effectId_revert;
-            uint256 ruleId2 = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule2);
-            uint256 ruleId3 = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule3);
+            uint256 ruleId2 = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule2);
+            uint256 ruleId3 = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule3);
             ruleIds.push(new uint256[](3));
             ruleIds[0][0] = ruleId1;
             ruleIds[0][1] = ruleId2;
@@ -553,7 +553,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
-        RulesEngineDataFacet(address(red)).applyPolicy(
+        RulesEnginePolicyFacet(address(red)).applyPolicy(
             address(userContractFCPlusMinPlusMax),
             policyIds
         );
@@ -825,14 +825,14 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         rule.posEffects[0] = effectId_revert;
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
-        RulesEngineDataFacet(address(red)).applyPolicy(address(userContractManyChecksMin), policyIds);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(address(userContractManyChecksMin), policyIds);
     }
 
     function _setupRuleWithEventParamsMinTransfer(bytes memory param, PT pType) 
@@ -872,14 +872,14 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         rule.posEffects[0] = effectId_event;
         // Save the rule
-        uint256 ruleId = RulesEngineDataFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
-        RulesEngineDataFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
 /**********  Rule Setup Helpers **********/
