@@ -22,7 +22,6 @@ import "test/utils/ExampleERC20WithManyConditionMinTransfer.sol";
 contract GasReports is GasHelpers, RulesEngineCommon {
 
     uint256 gasUsed;
-    ForeignCallTestContractOFAC testContract2;
 
     // ERC20's for Tests with Rules Engine
     //-------------------------------------------------------------------------------------
@@ -236,7 +235,6 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             address(userContractFC),
             policyIds
         );
-        fc; //added to silence warnings during testing revamp
     }
 
     function setupRulesWithForeignCallAndMinTransfer(
@@ -310,7 +308,6 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             address(userContractFCPlusMin),
             policyIds
         );
-        fc; //added to silence warnings during testing revamp
     }
 
    function setupRulesWithForeignCallPlusMinTransferAndMaxTransferInOneRule(
@@ -385,7 +382,6 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             address(userContractFCPlusMinPlusMaxOneRule),
             policyIds
         );
-        fc; //added to silence warnings during testing revamp
     }
 
     function setupRulesWithForeignCallAndMinTransferSeparatePolicies(
@@ -473,7 +469,6 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             address(userContractFCPlusMinSeparatePolicy),
             policyIds
         );
-        fc; //added to silence warnings during testing revamp
     }
 
    function setupRulesWithForeignCallPlusMinTransferAndMaxTransfer(
