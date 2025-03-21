@@ -16,10 +16,12 @@ import "src/engine/facets/RulesEngineComponentFacet.sol";
 contract RulesEngineCommon is DiamondMine, Test { 
     // contract objects 
     ForeignCallTestContract testContract; 
+    ForeignCallTestContractOFAC testContract2;
 
     // strings 
     string functionSignature = "transfer(address,uint256)";
     string functionSignature2 = "updateInfo(address _to, string info)";
+    string functionSignature3 = "transferFrom(address,uint256)";
     string constant event_text = "Rules Engine Event";
     string constant revert_text = "Rules Engine Revert";
     string constant event_text2 = "Rules Engine Event 2";

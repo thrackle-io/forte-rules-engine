@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "test/utils/RulesEngineCommon.t.sol";
+import "test/utils/ExampleUserContractEncoding.sol";
 import "src/example/ExampleUserContract.sol";
 import "src/example/ExampleUserOwnableContract.sol";
 import "src/example/ExampleUserAccessControl.sol";
@@ -12,6 +13,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     ExampleUserContract userContract;
     ExampleUserContract newUserContract;
     ExampleUserContractExtraParams userContract2;
+    ExampleUserContractEncoding encodingContract; 
     
     /// TestRulesEngine: 
     // Test attempt to add a policy with no signatures saved.
@@ -1985,6 +1987,256 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         vm.expectEmit(true, false, false, false);
         emit RuleUpdated(policyId, ruleId);
         RulesEnginePolicyFacet(address(red)).updateRule(policyId, 0, rule);
+    }
+
+    /////////////////////////////// additional data encoding tests 
+    function testRulesEngine_Unit_TestContractEncoding_AdditionalParamsEncoded_UintRuleValue() public ifDeploymentTestsEnabled endWithStopPrank {
+        // encode additional datas with the calling contract call into rules engine 
+        //deploy ExampleUserContractEncoding  
+        encodingContract = new ExampleUserContractEncoding(); 
+        encodingContract.setRulesEngineAddress(address(red)); 
+        encodingContract.setCallingContractAdmin(callingContractAdmin); 
+        address encodingContractAddress = address(encodingContract); 
+        // write data to encode: 
+        encodingContract.writeNewUintData(74);
+        // create rule that will handle additional params 
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = _createBlankPolicy();
+        /// Build the function signature to include additional pTypes to match the data being passed in
+        PT[] memory pTypes = new PT[](3);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+        pTypes[2] = PT.UINT;
+        // Save the function signature
+        uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
+            .createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes(functionSignature)))), pTypes);
+        // Save the Policy
+        signatures.push(bytes4(keccak256(bytes(functionSignature))));
+        functionSignatureIds.push(functionSignatureId);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(
+            policyIds[0],
+            signatures,
+            functionSignatureIds,
+            blankRuleIds,
+            PolicyType.CLOSED_POLICY
+        );
+
+        // create Rule - cannot use existing helper functions since rule is unique to test scenario 
+        // Rule: amount > 100 -> OR -> transferDataValue > 75 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        // IF amount is greater than 100 or transfer value is greater than 75 -> checkPolicy returns false 
+        Rule memory rule;
+        // Set up some effects.
+        _setupEffectProcessor();
+
+        rule.instructionSet = new uint256[](14);
+        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[1] = 1; //0
+        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[3] = 100; // 1
+        rule.instructionSet[4] = uint(LC.GT);
+        rule.instructionSet[5] = 1;
+        rule.instructionSet[6] = 0; // 2   
+        rule.instructionSet[7] = uint(LC.PLH);
+        rule.instructionSet[8] = 2; // 3
+        rule.instructionSet[9] = uint(LC.NUM);
+        rule.instructionSet[10] = 75; // 4 
+        rule.instructionSet[11] = uint(LC.GT);
+        rule.instructionSet[12] = 4;
+        rule.instructionSet[13] = 3; // 5 
+
+    
+        rule.placeHolders = new Placeholder[](3);
+        rule.placeHolders[0].pType = PT.ADDR; 
+        rule.placeHolders[0].typeSpecificIndex = 0; // to address 
+        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].typeSpecificIndex = 1; // amount 
+        rule.placeHolders[2].pType = PT.UINT;
+        rule.placeHolders[2].typeSpecificIndex = 2; // Additional uint 
+
+
+        // Add a negative/positive effects
+        rule.negEffects = new Effect[](1);
+        rule.posEffects = new Effect[](1);
+
+        uint256 ruleID = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0] = ruleID;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(encodingContractAddress, policyIds);
+
+        // test rule processing 
+        bool response = encodingContract.transfer(address(0xacdc), 99);
+        assertTrue(response); 
+
+    }
+
+    function testRulesEngine_Unit_TestContractEncoding_AdditionalParamsEncoded_AddressRuleValue() public ifDeploymentTestsEnabled endWithStopPrank {
+        // encode additional datas with the calling contract call into rules engine 
+        //deploy ExampleUserContractEncoding  
+        encodingContract = new ExampleUserContractEncoding(); 
+        encodingContract.setRulesEngineAddress(address(red)); 
+        encodingContract.setCallingContractAdmin(callingContractAdmin); 
+        address encodingContractAddress = address(encodingContract); 
+
+        encodingContract.writeNewAddressData(address(0x1234567));
+
+        // create rule that will handle additional params 
+        Rule memory rule;
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = _createBlankPolicy();
+        // Set up some effects.
+        _setupEffectProcessor();
+        /// Build the function signature to include additional pTypes to match the data being passed in
+        PT[] memory pTypes = new PT[](4);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+        pTypes[2] = PT.ADDR;
+        pTypes[3] = PT.ADDR;
+
+        rule.instructionSet = new uint256[](7);
+        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[1] = 2;
+        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[3] = uint256(uint160(address(0x1234567)));
+        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[5] = 0;
+        rule.instructionSet[6] = 1;
+
+        rule.rawData.argumentTypes = new PT[](1);
+        rule.rawData.dataValues = new bytes[](1);
+        rule.rawData.instructionSetIndex = new uint256[](1);
+        rule.rawData.argumentTypes[0] = PT.ADDR;
+        rule.rawData.dataValues[0] = abi.encode(0x1234567);
+        rule.rawData.instructionSetIndex[0] = 3;
+
+        rule.placeHolders = new Placeholder[](3);
+        rule.placeHolders[0].pType = PT.ADDR; 
+        rule.placeHolders[0].typeSpecificIndex = 0; // to address 
+        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].typeSpecificIndex = 1; // amount 
+        rule.placeHolders[2].pType = PT.ADDR;
+        rule.placeHolders[2].typeSpecificIndex = 2; // additional address param 
+
+        // Add a negative/positive effects
+        rule.negEffects = new Effect[](1);
+        rule.posEffects = new Effect[](1);
+        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+        // Save the function signature
+        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes(functionSignature3)))), pTypes);
+
+
+        // Save the Policy
+        signatures.push(bytes4(keccak256(bytes(functionSignature3))));
+        functionSignatureIds.push(functionSignatureId);
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[0], signatures, functionSignatureIds, ruleIds, PolicyType.CLOSED_POLICY);    
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);    
+        RulesEnginePolicyFacet(address(red)).applyPolicy(encodingContractAddress, policyIds);
+        // // test rule processing 
+        // transferFrom in this contract is transferFrom(address,amount) != transferFrom(from,to,amount)
+        bool response3 = encodingContract.transferFrom(address(0x1234567), 99);
+        assertTrue(response3); 
+         
+        bool response4 = encodingContract.transferFrom(address(0x31337), 75);
+        assertTrue(response4);
+
+    }
+
+    function testRulesEngine_Unit_TestContractEncoding_AdditionalParamsEncoded_ForeignCallValue() public ifDeploymentTestsEnabled endWithStopPrank {
+        // encode additional datas with the calling contract call into rules engine 
+        //deploy ExampleUserContractEncoding  
+        encodingContract = new ExampleUserContractEncoding(); 
+        encodingContract.setRulesEngineAddress(address(red)); 
+        encodingContract.setCallingContractAdmin(callingContractAdmin); 
+        address encodingContractAddress = address(encodingContract); 
+
+        encodingContract.writeNewAddressData(address(0x1234567));
+        testContract2 = new ForeignCallTestContractOFAC();
+        testContract2.addToNaughtyList(address(0x1234567));
+
+        // create rule that will handle additional params 
+        Rule memory rule;
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = _createBlankPolicy();
+        // Set up some effects.
+        _setupEffectProcessor();
+        /// Build the function signature to include additional pTypes to match the data being passed in
+        PT[] memory pTypes = new PT[](4);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+        pTypes[2] = PT.ADDR;
+        pTypes[3] = PT.ADDR;
+
+        PT[] memory fcArgs = new PT[](1);
+        fcArgs[0] = PT.ADDR;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 2; // set the placeholder index to retrieve value 
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = address(testContract2);
+        fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 1;
+        uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc);
+
+        rule.instructionSet = new uint256[](7);
+        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[1] = 2;
+        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[3] = 1;
+        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[5] = 0;
+        rule.instructionSet[6] = 1;
+
+        rule.rawData.argumentTypes = new PT[](1);
+        rule.rawData.dataValues = new bytes[](1);
+        rule.rawData.instructionSetIndex = new uint256[](1);
+        rule.rawData.argumentTypes[0] = PT.ADDR;
+        rule.rawData.dataValues[0] = abi.encode(0x1234567);
+        rule.rawData.instructionSetIndex[0] = 3;
+
+        rule.placeHolders = new Placeholder[](3);
+        rule.placeHolders[0].pType = PT.ADDR; 
+        rule.placeHolders[0].typeSpecificIndex = 0; // to address 
+        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].typeSpecificIndex = 1; // amount 
+        rule.placeHolders[2].pType = PT.ADDR;
+        rule.placeHolders[2].typeSpecificIndex = 2; // additional address param 
+        rule.placeHolders[2].foreignCall = true;
+        rule.placeHolders[2].typeSpecificIndex = uint128(foreignCallId);
+
+        // Add a negative/positive effects
+        rule.negEffects = new Effect[](1);
+        rule.posEffects = new Effect[](1);
+
+        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+        // Save the function signature
+        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes(functionSignature3)))), pTypes);
+
+        // Save the Policy
+        signatures.push(bytes4(keccak256(bytes(functionSignature3))));
+        functionSignatureIds.push(functionSignatureId);
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[0], signatures, functionSignatureIds, ruleIds, PolicyType.CLOSED_POLICY);    
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);    
+        RulesEnginePolicyFacet(address(red)).applyPolicy(encodingContractAddress, policyIds);
+
+        // // test rule processing 
+        // transferFrom in this contract is transferFrom(address,amount) != transferFrom(from,to,amount)
+        bool response3 = encodingContract.transferFrom(address(0x1234567), 99);
+        assertTrue(response3); 
+         
+        bool response4 = encodingContract.transferFrom(address(0x31337), 75);
+        assertTrue(response4);
+        
     }
 
 }
