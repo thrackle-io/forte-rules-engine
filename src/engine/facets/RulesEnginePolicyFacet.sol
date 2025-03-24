@@ -13,7 +13,6 @@ import "src/engine/facets/RulesEngineComponentFacet.sol";
  */
 contract RulesEnginePolicyFacet is FacetCommonImports {
 
-
     /**
      * Create a rule in storage.
      * @param _policyId ID of the policy the rule will be added to
