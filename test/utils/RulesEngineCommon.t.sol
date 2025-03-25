@@ -22,6 +22,13 @@ contract RulesEngineCommon is DiamondMine, Test {
     string functionSignature = "transfer(address,uint256)";
     string functionSignature2 = "updateInfo(address _to, string info)";
     string functionSignature3 = "transferFrom(address,uint256)";
+    string functionSignatureBytes = "transferBytes(address,uint256)";
+    string functionSignatureWithBytes = "transferWithBytes(address,uint256,bytes)";
+    string functionSignatureString = "transferString(address,uint256)";
+    string functionSignatureWithString = "transferWithString(address,uint256,string)";
+    string functionSignatureBool = "transferBool(address,uint256)";
+    string functionSignatureArrayStatic = "transferArray(address,uint256)";
+    string functionSignatureArrayDynamic = "transferDynamicArray(address,uint256)";
     string constant event_text = "Rules Engine Event";
     string constant revert_text = "Rules Engine Revert";
     string constant event_text2 = "Rules Engine Event 2";

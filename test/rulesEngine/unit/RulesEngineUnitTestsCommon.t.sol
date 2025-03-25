@@ -2139,11 +2139,11 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         RulesEnginePolicyFacet(address(red)).applyPolicy(encodingContractAddress, policyIds);
         // // test rule processing 
         // transferFrom in this contract is transferFrom(address,amount) != transferFrom(from,to,amount)
-        bool response3 = encodingContract.transferFrom(address(0x1234567), 99);
-        assertTrue(response3); 
+        bool response1 = encodingContract.transferFrom(address(0x1234567), 99);
+        assertTrue(response1); 
          
-        bool response4 = encodingContract.transferFrom(address(0x31337), 75);
-        assertTrue(response4);
+        bool response2 = encodingContract.transferFrom(address(0x31337), 75);
+        assertTrue(response2);
 
     }
 

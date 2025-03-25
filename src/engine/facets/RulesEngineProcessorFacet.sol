@@ -4,6 +4,8 @@ pragma solidity ^0.8.24;
 import "src/engine/facets/FacetCommonImports.sol";
 
 contract RulesEngineProcessorFacet is FacetCommonImports{
+
+
     /**
      * @dev Initializer params
      * @param _owner initial owner of the diamond
@@ -20,7 +22,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
 
     /**
      * @dev evaluates the conditions associated with all applicable rules and returns the result
-     * @dev PEP for policy checks
+     * @dev Primary Entry Point for policy checks
      * @param contractAddress the address of the rules-enabled contract, used to pull the applicable rules
      * @param arguments function arguments. Should included the function signature and the arguments to be passed to the function
      * TODO: refine the parameters to this function. contractAddress is not necessary as it's the message caller
@@ -52,12 +54,10 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     }
 
     function _loadApplicableRules(mapping(uint256 ruleId => RuleStorageSet) storage ruleData, Policy storage policy, bytes4 functionSignature) internal view returns(uint256[] memory){
-        // Load the policy data from storage
+        // Load the applicable rule data from storage
         uint256[] memory applicableRules = new uint256[](policy.signatureToRuleIds[functionSignature].length);
-        uint256[] storage storagePointer = policy.signatureToRuleIds[functionSignature];
         // Load the function signature data from storage
-        // RuleS storage ruleData = lib.getRuleStorage();
-
+        uint256[] storage storagePointer = policy.signatureToRuleIds[functionSignature];
         for(uint256 i = 0; i < applicableRules.length; i++) {
             if(ruleData[storagePointer[i]].set) {
                 applicableRules[i] = storagePointer[i];
@@ -87,7 +87,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @param rule the rule structure containing the instruction set, with placeholders, to execute
      * @param functionSignatureArgs the values to replace the placeholders in the instruction set with.
      * @return response the result of the rule condition evaluation 
-     * TODO: Look into the relationship between policy and foreign calls
      */
     function _evaluateIndividualRule(Rule storage rule, uint256 _policyId, bytes calldata functionSignatureArgs) internal returns (bool response) {
         (bytes[] memory ruleArgs, Placeholder[] memory placeholders) = _buildArguments(rule, _policyId, functionSignatureArgs, false);
@@ -108,7 +107,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
             Placeholder memory placeholder = placeHolders[placeholderIndex];
             if(placeholder.foreignCall) {
-                    ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, placeHolders, functionSignatureArgs, placeholder.typeSpecificIndex);
+                    ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, functionSignatureArgs, placeholder.typeSpecificIndex);
                     // Set the placeholders value and type based on the value returned by the foreign call
                     retVals[placeholderIndex] = retVal.value;
             } else if (placeholder.trackerValue) {
@@ -119,8 +118,12 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
                 if(placeholder.pType == PT.STR || placeholder.pType == PT.BYTES) {
                     retVals[placeholderIndex] = getDynamicVariableFromCalldata(functionSignatureArgs, placeholder.typeSpecificIndex);
+                } else if (placeholder.pType == PT.STATIC_TYPE_ARRAY || placeholder.pType == PT.DYNAMIC_TYPE_ARRAY) {
+                    // if the placeholder represents an array, determine the length and set lenth as placeholder value in ruleArgs 
+                    bytes32 value = bytes32(functionSignatureArgs[placeholder.typeSpecificIndex * 32: (placeholder.typeSpecificIndex + 1) * 32]);
+                    retVals[placeholderIndex] = abi.encode(uint256(bytes32(functionSignatureArgs[uint(value):uint(value) + 32])));
                 } else {
-                    // since this is not a dynamic value, we can assume that it is only 1 word, therefore we multiply
+                    // since this is not a dynamic value, we can safely assume that it is only 1 word, therefore we multiply
                     // the typeSpecificIndex by 32 to get the correct position in the functionSignatureArgs array
                     // and then add 1 and multiply by 32 to get the correct 32 byte word to get the value
                     retVals[placeholderIndex] = functionSignatureArgs[
@@ -129,7 +132,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 }
             }
         }
-
         return (retVals, placeHolders);
     }
 
@@ -141,27 +143,36 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             uint256 v = 0;
             LC op = LC(prog[idx]);
             if(op == LC.PLH) {
-                // Placeholder format is: get the index of the argument in the array. For example, PLH 0 is get the first argument in the arguments array and get its type and value
+                // Placeholder format is: get the index of the argument in the array. For example, PLH 0 is the first argument in the arguments array and its type and value
                 uint256 pli = prog[idx+1];
                 PT typ = placeHolders[pli].pType;
-                if(typ == PT.ADDR) {
+                if(typ == PT.UINT) {
+                    v = abi.decode(arguments[pli], (uint256)); idx += 2;
+                } else if(typ == PT.ADDR) {
                     // Convert address to uint256 for direct comparison using == and != operations
                     v = uint256(uint160(address(abi.decode(arguments[pli], (address))))); idx += 2;
-                } else if(typ == PT.UINT) {
-                    v = abi.decode(arguments[pli], (uint256)); idx += 2;
                 } else if(typ == PT.STR) {
                     // Convert string to uint256 for direct comparison using == and != operations
                     v = uint256(keccak256(abi.encode(abi.decode(arguments[pli], (string))))); idx += 2;
+                } else if(typ == PT.BOOL) {
+                    // Convert bool to uint256 for direct comparison using == and != operations
+                    v = uint256(bool2ui((abi.decode(arguments[pli], (bool))))); idx += 2;
+                } else if(typ == PT.BYTES) {
+                    // Convert bytes to uint256 for direct comparison using == and != operations
+                    v = uint256(keccak256(abi.encode(abi.decode(arguments[pli], (bytes))))); idx += 2;
+                } else if(typ == PT.STATIC_TYPE_ARRAY || typ == PT.DYNAMIC_TYPE_ARRAY) {
+                    // length of array for direct comparison using == and != operations
+                    v = abi.decode(arguments[pli], (uint256)); idx += 2;
                 }
+
             } else if(op == LC.TRU) {
                 // Tracker Update format will be:
                 // TRU, tracker index, mem index
-                // TODO: Update to account for type
                 // Load the Tracker data from storage
-                Trackers storage set = lib.getTrackerStorage().trackers[_policyId][prog[idx + 1]];
-                if(set.pType == PT.UINT) {
-                    set.trackerValue = abi.encode(mem[prog[idx+2]]);
-                }
+                Trackers storage trk = lib.getTrackerStorage().trackers[_policyId][prog[idx + 1]];
+                if(trk.pType == PT.UINT) {
+                    trk.trackerValue = abi.encode(mem[prog[idx+2]]);
+                } // TODO add _updateTracker functionality
 
                 idx += 3;
 
@@ -186,7 +197,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
 
     function evaluateForeignCalls(
         uint256 _policyId, 
-        Placeholder[] memory placeHolders,
         bytes calldata functionSignatureArgs, 
         uint256 foreignCallIndex
     ) public returns(ForeignCallReturnValue memory returnValue) {
@@ -200,8 +210,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     /**
      * @dev encodes the arguments and places a foreign call, returning the calls return value as long as it is successful
      * @param fc the Foreign Call structure
-     * @param functionArguments the argument mappings for the foreign call (function arguments and tracker values)
-     * @param functionArguments the arguments of the rules calling funciton (to be passed to the foreign call as needed)
+     * @param functionArguments the arguments of the rules calling function (to be passed to the foreign call as needed)
      * @return retVal the foreign calls return value
      */
     function evaluateForeignCallForRule(ForeignCall memory fc, bytes calldata functionArguments) public returns (ForeignCallReturnValue memory retVal) {
@@ -231,7 +240,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 );
                 lengthToAppend += words;  // 32 for length + 32 for padded data
             } else if (argType == PT.STATIC_TYPE_ARRAY) {
-                // encode the dynamic offset
+                // encode the static offset
                 encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
                 uint256 arrayLength = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
                 // Get the static type array
@@ -294,6 +303,12 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
 
     /**
      * @dev Define event to be fired 
+     * @param rule the rule struct event is associated to 
+     * @param isDynamicParam static or dynamic event parameters 
+     * @param _policyId policy Id 
+     * @param _message Event Message String 
+     * @param effectStruct effect struct 
+     * @param functionSignatureArgs calling function signature arguments 
      */
     function _buildEvent(Rule storage rule,
         bool isDynamicParam, 
@@ -311,6 +326,13 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         }
     }
 
+    /**
+     * @dev Fire dynamic Event  
+     * @param rule the rule struct event is associated to 
+     * @param _policyId policy Id 
+     * @param _message Event Message String 
+     * @param functionSignatureArgs calling function signature arguments 
+     */
     function _fireDynamicEvent(Rule storage rule, uint256 _policyId, bytes32 _message, bytes calldata functionSignatureArgs) internal {
         // Build the effect arguments struct for event parameters:  
         (bytes[] memory effectArguments, Placeholder[] memory placeholders) = _buildArguments(rule, _policyId, functionSignatureArgs, true);
@@ -335,6 +357,12 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         }
     }
 
+    /**
+     * @dev Fire static Event  
+     * @param _policyId policy Id 
+     * @param _message Event Message String 
+     * @param effectStruct effect struct  
+     */
     function _fireEvent(uint256 _policyId, bytes32 _message, Effect memory effectStruct) internal { 
         if (effectStruct.pType == PT.UINT) {
             uint256 uintParam = abi.decode(effectStruct.param, (uint));
@@ -377,7 +405,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     }
 
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
-
     // Utility Functions
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
     /**
@@ -396,22 +423,18 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         return x ? 1 : 0;
     }
 
-
-    function _stringToBytes32(string memory source) internal pure returns (bytes32 result) {
-        assembly {
-            result := mload(add(source, 32))
-        }
-    }
-
+    /**
+     * @dev Retrieve dynamic data from call data 
+     * @param data calldata to parse 
+     * @param index index for the data to parse 
+     */
     function getDynamicVariableFromCalldata(bytes calldata data, uint256 index) public pure returns (bytes memory retVal) {
         // Get offset from parameter position, using index * 32 to get the correct position in the calldata
         uint256 offset = uint256(bytes32(data[index * 32:(index + 1) * 32]));
         // Get length from the offset position, using offset + 32 to get the correct position in the calldata
         uint256 length = uint256(bytes32(data[offset:offset + 32]));
-        
         // Allocate memory for result: 32 (offset) + 32 (length) + data length
         bytes memory result = new bytes(64 + length);
-    
         assembly {
             // Store offset to length (0x20)
             mstore(add(result, 32), 0x20)
@@ -426,7 +449,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 length                     // length of data
             )
         }
-        
         return result;
     }
 
@@ -477,6 +499,14 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         }
     }
 
+    /**
+     * @dev Retrieve dynamic value from an array for foriegn call 
+     * @param data array calldata to parse 
+     * @param dynamicData concatenated string of data from calling function and length of array (TODO clarify this is needed)
+     * @param length the length of the dynamic array 
+     * @param lengthToAppend length of the data to append 
+     * @param offset the offset of the data 
+     */
     function getDynamicValueArrayData(bytes calldata data, bytes memory dynamicData, uint length, uint lengthToAppend, uint256 offset) public pure returns (bytes memory, uint256) {
         bytes memory arrayData;
         
@@ -497,7 +527,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             
             // Get the string data (including length and value)
             bytes memory dynamicValue = data[offset+dynamicValueOffset:offset+dynamicValueOffset+paddedLength];
-            
+
             // Next offset should point after current string's data
             baseDynamicOffset += paddedLength;
             

@@ -6,10 +6,10 @@ import "src/example/ExampleUserContract.sol";
 
 abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
 
-    ExampleUserContract userContract;
-    ExampleUserContractExtraParams userContract2;
+    ExampleUserContract userContractInternal;
+    ExampleUserContractExtraParams userContractInternal2;
 
- ////////Encoding tests 
+        ////////Encoding tests 
 
     function testRulesEngine_Unit_EncodingForeignCallUint()
         public
@@ -349,6 +349,28 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         assertEq(foreignCall.getInternalArrayBytes()[4], abi.encodeWithSelector(bytes4(keccak256(bytes("test(uint256,string,address)"))), 5, "superduperduperduperduperduperduperduperduperduperduperduperlongstring", address(0x1234567)));
     }
 
+    function testRulesEngine_Unit_EncodingForeignCallBytes()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        string memory functionSig = "testSigWithBytes(bytes)";
+        ForeignCallTestContract foreignCall = new ForeignCallTestContract();
+        //ForeignCall Builder not used here to test the data structures 
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(foreignCall);
+        fc.signature = bytes4(keccak256(bytes(functionSig)));
+        fc.parameterTypes = new PT[](1);
+        fc.parameterTypes[0] = PT.BYTES;
+        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices[0] = 0;
+        
+        bytes memory vals = abi.encode(bytes("test"));
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals);
+        assertEq(foreignCall.getDecodedBytes(), bytes("test"));
+    
+    }
+
     function testRulesEngine_Unit_EncodingForeignCallArrayMixedTypes_Complex()
         public
         ifDeploymentTestsEnabled
@@ -660,8 +682,8 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        userContract.setRulesEngineAddress(address(red));
-        assertTrue(userContract.rulesEngineAddress() == address(red));
+        userContractInternal.setRulesEngineAddress(address(red));
+        assertTrue(userContractInternal.rulesEngineAddress() == address(red));
     }
 
     function testRulesEngine_Utils_uintToBool()
@@ -687,11 +709,10 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        Rule memory rule;
         setupRuleWithForeignCall(4, ET.REVERT, false);
 
         bytes memory arguments = abi.encode(address(0x7654321), 5);
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCalls(0, rule.placeHolders, arguments, 0);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCalls(0, arguments, 0);
     }
 
 }
