@@ -1,0 +1,47 @@
+name: test
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  check:
+    strategy:
+      fail-fast: true
+
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        run: |
+          curl -sSL https://raw.githubusercontent.com/thrackle-io/foundry/refs/heads/master/foundryup/foundryup -o $HOME/foundryup
+          FOUNDRY_DIR=$HOME/foundry bash $HOME/foundryup --version $(awk '$1~/^[^#]/' script/foundryScripts/foundry.lock)
+          echo "$HOME/foundry/bin" >> $GITHUB_PATH
+      - name: Install dependencies
+        run: |
+          git config user.email "cloudops@thrackle.io"
+          git config user.name "CloudOps Thrackle"
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+          pip3 install -r requirements.txt
+      - name: Run Forge build --sizes
+        run: |
+          forge --version
+          forge build --sizes
+        id: build
+
+      - name: Run Forge tests
+        run: |
+          forge test --ffi -vvv 
+        id: test
