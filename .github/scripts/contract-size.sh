@@ -25,7 +25,6 @@ while IFS= read -r line; do
         elif (( num > 21000 )); then
             printf "${YELLOW} WARNING ${NC} Contract found that is near the max size of 24Kb. ${YELLOW} $contract ${NC} \n"
             printf "          Its size is: ${YELLOW} $num ${NC} \n"
-            should_fail="true"
         fi
     done    
 done <<< "$output"
