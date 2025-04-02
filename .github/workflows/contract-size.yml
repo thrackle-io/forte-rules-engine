@@ -1,4 +1,4 @@
-name: test
+name: size
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: true
 
-    name: Build and Test
+    name: Contract Size
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,7 +41,6 @@ jobs:
           forge build --sizes
         id: build
 
-      - name: Run Forge tests
+      - name: Check Contract Size
         run: |
-          forge test --ffi -vvv 
-        id: test
+          bash .github/scripts/contract-size.sh
