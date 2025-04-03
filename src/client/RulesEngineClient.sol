@@ -22,7 +22,7 @@ abstract contract RulesEngineClient {
     }
 
     /**
-     * @dev This function makes the call to the Rules Engine
+     * @dev This function makes the call to the Rules Engine. This requires the parameters to be properly encoded. The preferred encoding strategy is: bytes memory encoded = abi.encodeWithSelector(msg.sig, to, value, msg.sender);
      * @param encoded encoded data to be passed to the rules engine
      * @return retval return value from the rules engine
      */
