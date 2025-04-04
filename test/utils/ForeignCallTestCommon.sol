@@ -13,6 +13,7 @@ contract ForeignCallTestContract {
     uint256 decondedIntTwo;
     string decodedStrOne;
     string decodedStrTwo;
+    bytes decodedBytes;
     address decodedAddr;
     address decodedAddrTwo;
     uint256 internalValue;
@@ -116,6 +117,11 @@ contract ForeignCallTestContract {
         return true;
     }
 
+    function testSigWithBytes(bytes memory encodedBytes) public returns (bool) {
+        decodedBytes = encodedBytes;
+        return true;
+    }
+
     function testSigWithMultiArrays(string memory str, uint256[] memory uintArray, string[] memory strArray) public returns (bool) {
         decodedStrOne = str;
         for(uint256 i = 0; i < uintArray.length; i++) {
@@ -186,6 +192,10 @@ contract ForeignCallTestContract {
 
     function getDecodedStrTwo() public view returns (string memory) {
         return decodedStrTwo;
+    }
+
+    function getDecodedBytes() public view returns (bytes memory) {
+        return decodedBytes;
     }
 
     function getDecodedAddr() public view returns (address) {
