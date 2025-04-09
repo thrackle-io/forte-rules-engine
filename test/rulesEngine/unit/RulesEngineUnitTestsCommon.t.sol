@@ -357,12 +357,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         tracker.trackerValue = bytes("initial");
         setupRuleWithTracker2(policyId, tracker);
 
-        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature2))), address(0x7654321), "post", 5 );
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), 5, bytes("post"));
         // The tracker will be updated during the effect for the single rule in this policy.
         // It will have the result of the third parameter
         RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
         tracker = RulesEngineComponentFacet(address(red)).getTracker(policyId, 1);
-        assertEq(tracker.trackerValue, bytes("post"));
+        bytes memory compairison = bytes("post");
+        assertEq(tracker.trackerValue, compairison);
     }
 
     function testRulesEngine_Unit_CheckRules_Explicit_WithForeignCallNegative()

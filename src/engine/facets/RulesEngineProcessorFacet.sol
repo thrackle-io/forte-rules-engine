@@ -225,6 +225,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
 
     function _updateTrackerValue(uint256 _policyId, uint256 _trackerId, bytes memory _trackerValue) internal{
         // retrieve the tracker
+        console2.log("DID THIS");
         Trackers storage trk = lib.getTrackerStorage().trackers[_policyId][_trackerId];
         trk.trackerValue = _trackerValue;
     }

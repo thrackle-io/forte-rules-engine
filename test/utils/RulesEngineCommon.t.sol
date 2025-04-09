@@ -936,8 +936,8 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         PT[] memory pTypes = new PT[](3);
         pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.STR;
-        pTypes[2] = PT.UINT;
+        pTypes[1] = PT.UINT;
+        pTypes[2] = PT.BYTES;
 
         _addFunctionSignatureToPolicyWithString(policyIds[0]);
 
@@ -957,20 +957,20 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders = new Placeholder[](3);
         rule.placeHolders[0].pType = PT.ADDR;
         rule.placeHolders[0].typeSpecificIndex = 0;
-        rule.placeHolders[1].pType = PT.STR;
+        rule.placeHolders[1].pType = PT.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1;
-        rule.placeHolders[2].pType = PT.UINT;
+        rule.placeHolders[2].pType = PT.BYTES;
         rule.placeHolders[2].typeSpecificIndex = 2;
 
         rule.effectPlaceHolders = new Placeholder[](1);
-        rule.effectPlaceHolders[0].pType = PT.STR;
+        rule.effectPlaceHolders[0].pType = PT.BYTES;
         rule.effectPlaceHolders[0].typeSpecificIndex = 2;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
-        // rule.posEffects[0] = _createEffectExpressionTrackerUpdateParameter();
-        rule.posEffects[0] = effectId_event;
+        rule.posEffects[0] = _createEffectExpressionTrackerUpdateParameter();
+        // rule.posEffects[0] = effectId_event;
 
         // Add the tracker
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker);
@@ -1142,13 +1142,13 @@ contract RulesEngineCommon is DiamondMine, Test {
     function _addFunctionSignatureToPolicyWithString(uint256 policyId) internal returns (uint256) {
         PT[] memory pTypes = new PT[](3);
         pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.STR;
-        pTypes[2] = PT.UINT;
+        pTypes[1] = PT.UINT;
+        pTypes[2] = PT.BYTES;
         // Save the function signature
         uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
-            .createFunctionSignature(policyId, bytes4(bytes4(keccak256(bytes(functionSignature2)))), pTypes);
+            .createFunctionSignature(policyId, bytes4(bytes4(keccak256(bytes(functionSignature)))), pTypes);
         // Save the Policy
-        signatures.push(bytes4(keccak256(bytes(functionSignature2))));
+        signatures.push(bytes4(keccak256(bytes(functionSignature))));
         functionSignatureIds.push(functionSignatureId);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         RulesEnginePolicyFacet(address(red)).updatePolicy(
