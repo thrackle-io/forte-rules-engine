@@ -20,7 +20,7 @@ struct InitializedS {
  * OR - perform a logical OR with the values at the memory addresses denoted by the next two slots in the instruction set
  * NOT - perform a logical NOT with the value at the memory address denoted by the next slot in the instruction set
  * PLH - insert a placeholder value into the next memory slot
- * TRU - perform a tracker update, the next two slots in the instruction set will denote the tracker index to update and the memory address of the value to use.
+ * TRU - perform a tracker update, the next three slots in the instruction set will denote the tracker index and address to update and the memory address of the value to use.
  */
 enum LC {
     NUM,
@@ -70,6 +70,14 @@ struct Placeholder {
     bool trackerValue;
     // Used to determine whether this Placeholder represents the value returned from a foreign call
     bool foreignCall;
+}
+
+/**
+ * Supported Tracker Instruction Set Retrieval Types. This is used to tell the engine where to pull the tracker data from.
+ */
+enum TT {
+    MEMORY,
+    PLACE_HOLDER
 }
 
 // Effect Structure
