@@ -23,6 +23,7 @@ event TrackerDeleted(uint256 indexed policyId, uint256 indexed trackerId);
 /// Rule Events 
 event RuleCreated(uint256 indexed policyId, uint256 indexed ruleId);
 event RuleUpdated(uint256 indexed policyId, uint256 indexed ruleId);
+event RuleDeleted(uint256 indexed policyId, uint256 indexed ruleId);
 
 /// Policy Events 
 event PolicyCreated(uint256 indexed policyId);

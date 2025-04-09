@@ -988,6 +988,50 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
     }
 
+    function testRulesEngine_Unit_deleteRule_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+        Rule memory rule;
+        // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = _createInstructionSet(4);
+        // Build the calling function argument placeholder 
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        // Save the rule
+        uint256 ruleId = RulesEnginePolicyFacet(address(red)).updateRule(policyId, 0, rule);
+
+        RulesEnginePolicyFacet(address(red)).deleteRule(policyId, ruleId); 
+        RuleStorageSet memory sig = RulesEnginePolicyFacet(address(red)).getRule(policyId, ruleId);
+        assertEq(sig.set, false);
+    }
+
+    function testRulesEngine_Unit_deleteRule_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+        Rule memory rule;
+        // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = _createInstructionSet(4);
+        // Build the calling function argument placeholder 
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        // Save the rule
+        uint256 ruleId = RulesEnginePolicyFacet(address(red)).updateRule(policyId, 0, rule);
+
+        vm.startPrank(newPolicyAdmin);
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEnginePolicyFacet(address(red)).deleteRule(policyId, ruleId); 
+    }
+
     function testRulesEngine_Unit_updateFunctionSignature_Negative_NewParameterTypesNotSameLength()
         public
         ifDeploymentTestsEnabled
@@ -1883,6 +1927,23 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
     }
 
+    function testRulesEngine_Unit_deleteRule_Event() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        Rule memory rule;
+        // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = _createInstructionSet(4);
+        // Build the calling function argument placeholder 
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        // Save the rule
+        uint256 ruleId = RulesEnginePolicyFacet(address(red)).updateRule(policyId, 0, rule);
+        vm.expectEmit(true, false, false, false);
+        emit RuleDeleted(policyId, ruleId);
+        RulesEnginePolicyFacet(address(red)).deleteRule(policyId, ruleId); 
+
+    }
 
     function testRulesEngine_unit_CreateTracker_Event() public ifDeploymentTestsEnabled endWithStopPrank {
         vm.startPrank(policyAdmin);
