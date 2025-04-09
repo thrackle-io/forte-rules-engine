@@ -76,6 +76,16 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     }
 
     /**
+     * Delete a Rule from Storage
+     * @param _policyId the id of the policy the rule belongs to
+     * @param _ruleId the id of the rule to delete
+     */
+    function deleteRule(uint256 _policyId, uint256 _ruleId) public policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
+        delete lib.getRuleStorage().ruleStorageSets[_policyId][_ruleId];
+        emit RuleDeleted(_policyId, _ruleId); 
+    }
+
+    /**
      * Get all rules from storage.
      * @param _policyId the policyId the rules are associated with
      * @return rules rules
@@ -168,7 +178,6 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         }
         emit PolicyDeleted(_policyId);
     }
-
 
     /**
      * Apply the policies to the contracts.
