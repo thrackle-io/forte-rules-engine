@@ -2,11 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
-import "forge-std/console2.sol";
 contract RulesEngineProcessorFacet is FacetCommonImports{
-
-    
-
 
     /**
      * @dev Initializer params
@@ -97,7 +93,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
 
     function _buildArguments(Rule storage rule, uint256 _policyId, bytes calldata functionSignatureArgs, bool effect) internal returns (bytes[] memory, Placeholder[] memory) {
         Placeholder[] memory placeHolders;
-        console2.log("IN BUILD");
         if(effect) {
             placeHolders = rule.effectPlaceHolders;
         } else {
@@ -119,9 +114,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             } else {
                 // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
                 if(placeholder.pType == PT.STR || placeholder.pType == PT.BYTES) {
-                    console2.log("Before getDynamicVariableFromCalldata");
                     retVals[placeholderIndex] = getDynamicVariableFromCalldata(functionSignatureArgs, placeholder.typeSpecificIndex);
-                    console2.log("After getDynamicVariableFromCalldata");
                 } else if (placeholder.pType == PT.STATIC_TYPE_ARRAY || placeholder.pType == PT.DYNAMIC_TYPE_ARRAY) {
                     // if the placeholder represents an array, determine the length and set lenth as placeholder value in ruleArgs 
                     bytes32 value = bytes32(functionSignatureArgs[placeholder.typeSpecificIndex * 32: (placeholder.typeSpecificIndex + 1) * 32]);
@@ -162,7 +155,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                     // Convert bool to uint256 for direct comparison using == and != operations
                     v = uint256(bool2ui((abi.decode(arguments[pli], (bool))))); idx += 2;
                 } else if(typ == PT.BYTES) {
-                    console2.log("PT.BYTES");
                     // Convert bytes to uint256 for direct comparison using == and != operations
                     v = uint256(keccak256(abi.encode(abi.decode(arguments[pli], (bytes))))); idx += 2;
                 } else if(typ == PT.STATIC_TYPE_ARRAY || typ == PT.DYNAMIC_TYPE_ARRAY) {
@@ -174,14 +166,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 // update the tracker value
                 // If the Tracker Type == Place Holder, pull the data from the place holder, otherwise, pull it from Memory
                 TT tt = TT(prog[idx+3]);
-                console2.log(uint(tt));
                 if (tt == TT.MEMORY){
                     _updateTrackerValue(_policyId, prog[idx + 1], mem[prog[idx+2]]);
                 } {
-                    console2.log("xxxxxxxxx");
-                    console2.log(prog[idx+2]);
-                    console2.log("arguments.length");
-                    console2.log(arguments.length);
                     _updateTrackerValue(_policyId, prog[idx + 1], arguments[prog[idx+2]]);
                 }
                 idx += 4;
@@ -225,7 +212,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
 
     function _updateTrackerValue(uint256 _policyId, uint256 _trackerId, bytes memory _trackerValue) internal{
         // retrieve the tracker
-        console2.log("DID THIS");
         Trackers storage trk = lib.getTrackerStorage().trackers[_policyId][_trackerId];
         trk.trackerValue = _trackerValue;
     }
@@ -435,7 +421,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      */
     function _evaluateExpression(Rule storage rule, uint256 _policyId, bytes calldata functionSignatureArgs, uint256[] memory instructionSet) internal {
         (bytes[] memory effectArguments, Placeholder[] memory placeholders) = _buildArguments(rule, _policyId, functionSignatureArgs, true);
-        console2.log("Before RUN");
         if(instructionSet.length > 1) {
             _run(instructionSet, placeholders, _policyId, effectArguments);
         }
@@ -473,7 +458,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @param x the uint256 to convert
      */
     function ui2bytes(uint256 x) public pure returns (bytes memory ans) {
-        console2.log(x);
         return abi.encode(x);
     }
 
@@ -484,17 +468,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      */
     function getDynamicVariableFromCalldata(bytes calldata data, uint256 index) public pure returns (bytes memory retVal) {
         // Get offset from parameter position, using index * 32 to get the correct position in the calldata
-        console2.log("before uint256(bytes32(data[index * 32:(index + 1) * 32]))");
         uint256 offset = uint256(bytes32(data[index * 32:(index + 1) * 32]));
-        console2.log("offset");
-        console2.log(uint256(bytes32(data[index * 32:(index + 1) * 32])));
         // Get length from the offset position, using offset + 32 to get the correct position in the calldata
-        console2.log("before uint256(bytes32(data[offset:offset + 32]));");
         uint256 length = uint256(bytes32(data[offset:offset + 32]));
         // Allocate memory for result: 32 (offset) + 32 (length) + data length
-        console2.log("before new bytes(64 + length);");
-        bytes memory result = new bytes(64 + length);
-        console2.log("before assembly");
+        bytes memory result = new bytes(64 + ((length + 31) / 32) * 32);
         assembly {
             // Store offset to length (0x20)
             mstore(add(result, 32), 0x20)
@@ -506,7 +484,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             calldatacopy(
                 add(result, 96),           // destination (after offset+length)
                 add(add(data.offset, offset), 32),  // source (after length in calldata)
-                length                     // length of data
+                mul(div(add(length, 31),32), 32)                      // length of data
             )
         }
         return result;

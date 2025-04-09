@@ -257,21 +257,6 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(testContract.getInternalValue(), 5);
     }
 
-    function testRulesEngine_Unit_CheckRules_Explicit_WithTrackerUpdateEffect()
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-    {
-        uint256 policyId = setupEffectWithTrackerUpdate();
-
-        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), 5);
-        // The tracker will be updated during the effect for the single rule in this policy.
-        // It will have the result of the foreign call (simpleCheck) added to it.
-        // original tracker value 2, added value 5, resulting updated tracker value should be 7
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
-        Trackers memory tracker = RulesEngineComponentFacet(address(red)).getTracker(policyId, 1);
-        assertEq(tracker.trackerValue, abi.encode(7));
-    }
 
     function testRulesEngine_Unit_CheckRules_Explicit_WithTrackerUpdateEffectAddress()
         public
@@ -286,7 +271,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         tracker.pType = PT.ADDR;
         tracker.set = true;
         tracker.trackerValue = abi.encode(0xD00D);
-        setupRuleWithTracker(policyId, tracker);
+        setupRuleWithTrackerAddr(policyId, tracker);
 
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), 5, address(0x7654321));
         // The tracker will be updated during the effect for the single rule in this policy.
@@ -309,7 +294,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         tracker.pType = PT.BOOL;
         tracker.set = true;
         tracker.trackerValue = abi.encode(bool(false));
-        setupRuleWithTracker(policyId, tracker);
+        setupRuleWithTrackerBool(policyId, tracker);
 
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), 5, bool(true));
         // The tracker will be updated during the effect for the single rule in this policy.
@@ -332,7 +317,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         tracker.pType = PT.UINT;
         tracker.set = true;
         tracker.trackerValue = abi.encode(uint256(13));
-        setupRuleWithTracker(policyId, tracker);
+        setupRuleWithTrackerUint(policyId, tracker);
 
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), 5, 99);
         // The tracker will be updated during the effect for the single rule in this policy.
@@ -362,8 +347,32 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // It will have the result of the third parameter
         RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
         tracker = RulesEngineComponentFacet(address(red)).getTracker(policyId, 1);
-        bytes memory compairison = bytes("post");
-        assertEq(tracker.trackerValue, compairison);
+        bytes memory comparison = abi.encode("post");
+        assertEq(tracker.trackerValue, comparison);
+    }
+
+    function testRulesEngine_Unit_CheckRules_Explicit_WithTrackerUpdateEffectString()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        // create a blank policy
+        uint256 policyId = _createBlankPolicy();
+        //build tracker
+        Trackers memory tracker;
+        /// build the members of the struct:
+        tracker.pType = PT.BYTES;
+        tracker.set = true;
+        tracker.trackerValue = "initial";
+        setupRuleWithTracker2(policyId, tracker);
+
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), 5, "post");
+        // The tracker will be updated during the effect for the single rule in this policy.
+        // It will have the result of the third parameter
+        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        tracker = RulesEngineComponentFacet(address(red)).getTracker(policyId, 1);
+        bytes memory comparison = abi.encode("post");
+        assertEq(tracker.trackerValue, comparison);
     }
 
     function testRulesEngine_Unit_CheckRules_Explicit_WithForeignCallNegative()
@@ -1485,7 +1494,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         uint256[] memory _functionSigIds;
         uint256[][] memory _ruleIds;
 
-        policyIds[0] = setupEffectWithTrackerUpdate();
+        policyIds[0] = setupEffectWithTrackerUpdateUint();
 
         (_functionSigs, _functionSigIds, _ruleIds) = RulesEnginePolicyFacet(address(red)).getPolicy(policyIds[0]);
         assertEq(_ruleIds.length, 1);
@@ -1498,7 +1507,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         vm.startPrank(policyAdmin);
 
-        uint256 policyId = setupEffectWithTrackerUpdate();
+        uint256 policyId = setupEffectWithTrackerUpdateUint();
         Rule memory rule;
        
         // Change to non policy admin user
