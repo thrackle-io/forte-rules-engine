@@ -13,8 +13,6 @@ import "src/client/RulesEngineClientERC20.sol";
  */
 contract ExampleERC20 is ERC20, ERC20Burnable, ReentrancyGuard, RulesEngineClientERC20 {
 
-    bool accumulateTransferTotals; 
-
     /**
      * @dev Constructor sets params
      * @param _name Name of the token
