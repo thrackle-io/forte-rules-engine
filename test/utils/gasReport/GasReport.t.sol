@@ -35,6 +35,11 @@ contract GasReports is GasHelpers, RulesEngineCommon {
     ExampleERC20 userContractManyChecksMin;
     ExampleERC20 userContractMTplusEvent;
     ExampleERC20 userContractMTplusEventDynamic;
+
+    ExampleERC20 userContractPause;
+    ExampleERC20 userContractOracleFlex;
+    ExampleERC20 userContractMinMaxBalance;
+
     //-------------------------------------------------------------------------------------
 
     function setUp() public {
@@ -99,6 +104,28 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         userContractFCPlusMinPlusMax.setCallingContractAdmin(callingContractAdmin);
         setupRulesWithForeignCallPlusMinTransferAndMaxTransfer(address(testContract2), ET.REVERT, true);
 
+        // Pause Rule  
+        userContractPause = new ExampleERC20("Token Name", "SYMB");
+        userContractPause.mint(USER_ADDRESS, 1_000_000 * ATTO);
+        userContractPause.setRulesEngineAddress(address(red));
+        userContractPause.setCallingContractAdmin(callingContractAdmin);
+        setUpRuleWithPauseTrackers();
+
+        // Oracle Flex
+        userContractOracleFlex = new ExampleERC20("Token Name", "SYMB");
+        userContractOracleFlex.mint(USER_ADDRESS, 1_000_000 * ATTO);
+        userContractOracleFlex.setRulesEngineAddress(address(red));
+        userContractOracleFlex.setCallingContractAdmin(callingContractAdmin);
+        testContract2.addToNaughtyList(address(0xD00d));
+        setupRuleWithOracleFlexForeignCall(address(testContract2), ET.REVERT, true);
+
+        // Min Max Balance 
+        userContractMinMaxBalance = new ExampleERC20("Token Name", "SYMB");
+        userContractMinMaxBalance.mint(USER_ADDRESS, 1_000_000 * ATTO);
+        userContractMinMaxBalance.setRulesEngineAddress(address(red));
+        userContractMinMaxBalance.setCallingContractAdmin(callingContractAdmin);
+        setUpRuleWithMinMaxBalanceLimits();
+
         //-------------------------------------------------------------------------------------
 
         testContract = new ForeignCallTestContract();
@@ -147,27 +174,40 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         _exampleContractGasReport(5, address(userContractManyChecksMin), "Using REv2 min transfer 20 iterations"); 
     }
 
-    function _testGasExampleMinTransferWithSetEventParams() public {
+    function _testGasExampleMinTransferWithSetEventParams() public endWithStopPrank() {
         vm.startPrank(USER_ADDRESS);
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, 5);
         _exampleContractGasReport(5, address(userContractMTplusEvent), "Using REv2 Event Effect with min transfer gas report"); 
     }
 
-    function _testGasExampleMinTransferWithDynamicEventParams() public {
+    function _testGasExampleMinTransferWithDynamicEventParams() public endWithStopPrank(){
         vm.startPrank(USER_ADDRESS);
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, 5);
         _exampleContractGasReport(5, address(userContractMTplusEventDynamic), "Using REv2 Event Effect with min transfer gas report"); 
     }
 
-
-
-/**********  Prep functions to ensure warm storage comparisons **********/
-
-    function _testExampleContractPrep(uint256 _amount, address contractAddress) public {
-        ExampleERC20(contractAddress).transfer(address(0x7654321), _amount);
+    function testGasExamplePause() public endWithStopPrank() {
+        vm.warp(1000000001); // set block time greater than the tracker to allow txn to pass 
+        vm.startPrank(USER_ADDRESS);
+        //used the transferModified function to pipe in additional encoded data 
+        _exampleContractGasReportModified(5, address(userContractPause), "Using REv2 Pause Rule gas report"); 
     }
+
+    function testGasExampleOracleFlex() public endWithStopPrank() {
+        vm.startPrank(USER_ADDRESS);
+        _exampleContractGasReport(5, address(userContractOracleFlex), "Using REv2 Oracle Flex gas report"); 
+    }
+
+
+    function testGasExampleMinMax() public {
+        vm.startPrank(USER_ADDRESS);
+        _exampleContractGasReportModified(5, address(userContractMinMaxBalance), "Using REv2 Event Effect with min transfer gas report"); 
+    }
+
+
+
 
     function setupRuleWithOFACForeignCall(
         address _contractAddress,
@@ -877,6 +917,243 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
+    function setupRuleWithOracleFlexForeignCall(
+        address _contractAddress,
+        ET _effectType,
+        bool isPositive
+    ) public ifDeploymentTestsEnabled resetsGlobalVariables {
+        uint256[] memory policyIds = new uint256[](1);
+
+        policyIds[0] = _createBlankPolicy();
+
+        PT[] memory pTypes = new PT[](3);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+        pTypes[2] = PT.ADDR;
+
+        _addFunctionSignatureToPolicy(policyIds[0]);
+        // There is no reason to incorporate a toggle like the oracle flex rule in V1 
+        PT[] memory fcArgs = new PT[](1);
+        fcArgs[0] = PT.ADDR;
+        uint8[] memory typeSpecificIndices = new uint8[](1);
+        typeSpecificIndices[0] = 0;
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = _contractAddress;
+        fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 1;
+        uint256 foreignCallId = RulesEngineComponentFacet(address(red))
+            .createForeignCall(
+                policyIds[0],
+                fc
+            );
+
+        // Add additional check for second address 
+        uint8[] memory typeSpecificIndices2 = new uint8[](1);
+        typeSpecificIndices2[0] = 2;
+        ForeignCall memory newfc;
+        newfc.typeSpecificIndices = typeSpecificIndices2;
+        newfc.parameterTypes = fcArgs;
+        newfc.foreignCallAddress = _contractAddress;
+        newfc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
+        newfc.returnType = PT.UINT;
+        newfc.foreignCallIndex = 1;
+        uint256 foreignCallId2 = RulesEngineComponentFacet(address(red))
+            .createForeignCall(
+                policyIds[0],
+                newfc
+            );
+
+        // Rule: FC:OFAClist(address) > bool -> revert -> transfer(address _to, uint256 amount) returns (bool)
+        Rule memory rule;
+
+        // Build the foreign call placeholder
+        rule.placeHolders = new Placeholder[](4);
+        rule.placeHolders[0].foreignCall = true;
+        rule.placeHolders[0].typeSpecificIndex = uint128(foreignCallId);
+        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].typeSpecificIndex = 1;
+        rule.placeHolders[2].foreignCall = true;
+        rule.placeHolders[2].typeSpecificIndex = uint128(foreignCallId2);
+        rule.placeHolders[3].pType = PT.UINT;
+        rule.placeHolders[3].typeSpecificIndex = 1;
+
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = new uint256[](14);
+        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[1] = 0;
+        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[3] = 1;
+        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[5] = 0;
+        rule.instructionSet[6] = 1;
+        rule.instructionSet[7] = uint(LC.PLH);
+        rule.instructionSet[8] = 3; //plh 3
+        rule.instructionSet[9] = uint(LC.NUM);
+        rule.instructionSet[10] = 3; // register 3 
+        rule.instructionSet[11] = uint(LC.EQ);
+        rule.instructionSet[12] = 3;
+        rule.instructionSet[13] = 3;
+
+
+        // Swapping isPositive to make sure the revert doesn't trigger (for comparison with V1 numbers)
+        rule = _setUpEffect(rule, _effectType, !isPositive);
+        // Save the rule
+        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0] = ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(
+            address(userContractOracleFlex),
+            policyIds
+        );
+    }
+
+    function setUpRuleWithPauseTrackers() public ifDeploymentTestsEnabled resetsGlobalVariables {
+        uint256[] memory policyIds = new uint256[](1);
+
+        policyIds[0] = _createBlankPolicy();
+
+        PT[] memory pTypes = new PT[](6);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+        pTypes[2] = PT.ADDR;
+        pTypes[3] = PT.UINT;
+        pTypes[4] = PT.UINT;
+        pTypes[5] = PT.UINT;
+
+        uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
+            .createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes("transferModified(address,uint256)")))), pTypes);
+        // Save the Policy
+        signatures.push(bytes4(keccak256(bytes("transferModified(address,uint256)"))));
+        functionSignatureIds.push(functionSignatureId);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(
+            policyIds[0],
+            signatures,
+            functionSignatureIds,
+            blankRuleIds,
+            PolicyType.CLOSED_POLICY
+        );
+
+        // Rule:uintTracker BlockTime > currentBlockTime -> revert -> transfer(address _to, uint256 amount) returns (bool)
+        Rule memory rule;
+        rule.negEffects = new Effect[](1);
+        rule.negEffects[0] = effectId_revert;
+        rule.instructionSet = new uint256[](7);
+        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[1] = 0;
+        rule.instructionSet[2] = uint(LC.PLH);
+        rule.instructionSet[3] = 1;
+        rule.instructionSet[4] = uint(LC.LT);
+        rule.instructionSet[5] = 0;
+        rule.instructionSet[6] = 1;
+
+        rule.placeHolders = new Placeholder[](2);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].trackerValue = true;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].typeSpecificIndex = 5;
+
+        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+
+        //build tracker
+        Trackers memory tracker;
+        /// build the members of the struct:
+        tracker.pType = PT.UINT;
+        tracker.trackerValue = abi.encode(1000000000);
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker);
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0] = ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+    
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(address(userContractPause), policyIds);
+    }
+
+    function setUpRuleWithMinMaxBalanceLimits() public ifDeploymentTestsEnabled resetsGlobalVariables {
+        uint256[] memory policyIds = new uint256[](1);
+
+        policyIds[0] = _createBlankPolicy();
+
+        PT[] memory pTypes = new PT[](6);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+        pTypes[2] = PT.ADDR;
+        pTypes[3] = PT.UINT;
+        pTypes[4] = PT.UINT;
+        pTypes[5] = PT.UINT;
+
+        uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
+            .createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes("transferModified(address,uint256)")))), pTypes);
+        // Save the Policy
+        signatures.push(bytes4(keccak256(bytes("transferModified(address,uint256)"))));
+        functionSignatureIds.push(functionSignatureId);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(
+            policyIds[0],
+            signatures,
+            functionSignatureIds,
+            blankRuleIds,
+            PolicyType.CLOSED_POLICY
+        );
+
+        // Rule:uintTracker BlockTime > currentBlockTime -> revert -> transfer(address _to, uint256 amount) returns (bool)
+        Rule memory rule;
+        rule.negEffects = new Effect[](1);
+        rule.negEffects[0] = effectId_revert;
+        rule.instructionSet = new uint256[](22);
+        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[1] = 0; //register 0
+        rule.instructionSet[2] = uint(LC.PLH);
+        rule.instructionSet[3] = 1; //register 1
+        rule.instructionSet[4] = uint(LC.SUB);
+        rule.instructionSet[5] = 1; 
+        rule.instructionSet[6] = 0; //register 2 (balance to - amount)
+        rule.instructionSet[7] = uint(LC.NUM);
+        rule.instructionSet[8] = 1; // register 3 (rule min balance)
+        rule.instructionSet[9] = uint(LC.LT);
+        rule.instructionSet[10] = 3;
+        rule.instructionSet[11] = 2; // check that amount + balanceOf to > 10 
+        rule.instructionSet[12] = uint(LC.PLH);
+        rule.instructionSet[13] = 1; //register 5
+        rule.instructionSet[14] = uint(LC.ADD);
+        rule.instructionSet[15] = 5; 
+        rule.instructionSet[16] = 0; //register 6 (amount + balance to)
+        rule.instructionSet[17] = uint(LC.NUM);
+        rule.instructionSet[18] = 10; // register 7 (rule max balance)
+        rule.instructionSet[19] = uint(LC.GT);
+        rule.instructionSet[20] = 6;
+        rule.instructionSet[21] = 7; // check that amount + balanceOf to > 10 
+
+        rule.placeHolders = new Placeholder[](3);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1; // amount
+        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].typeSpecificIndex = 3; // balance from 
+        rule.placeHolders[2].pType = PT.UINT;
+        rule.placeHolders[2].typeSpecificIndex = 4; // balance to
+
+        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0] = ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+    
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(address(userContractMinMaxBalance), policyIds);
+
+    }
+
 /**********  Rule Setup Helpers **********/
     function _exampleContractGasReport(uint256 _amount, address contractAddress, string memory _label) public {
         startMeasuringGas(_label);
@@ -885,6 +1162,12 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         console.log(_label, gasUsed);  
     }
 
-
+    function _exampleContractGasReportModified(uint256 _amount, address contractAddress, string memory _label) public {
+        startMeasuringGas(_label);
+        ExampleERC20(contractAddress).transferModified(address(0x7654321), _amount);
+        gasUsed = stopMeasuringGas();
+        console.log("Gas Test with transferModified", _label, gasUsed);
+    }
+ 
 
 }

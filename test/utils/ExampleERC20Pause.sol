@@ -11,9 +11,8 @@ import "src/client/RulesEngineClientERC20.sol";
  * @author @ShaneDuncan602
  * @notice This is an example implementation for ERC20
  */
-contract ExampleERC20 is ERC20, ERC20Burnable, ReentrancyGuard, RulesEngineClientERC20 {
-
-    bool accumulateTransferTotals; 
+contract ExampleERC20Pause is ERC20, ERC20Burnable, ReentrancyGuard, RulesEngineClientERC20 {
+    uint256 pauseTimestamp; 
 
     /**
      * @dev Constructor sets params
@@ -27,7 +26,7 @@ contract ExampleERC20 is ERC20, ERC20Burnable, ReentrancyGuard, RulesEngineClien
      * @param to recipient address
      * @param amount number of tokens to mint
      */
-    function mint(address to, uint256 amount) public virtual checksPoliciesERC20MintBefore(to, amount) {
+    function mint(address to, uint256 amount) public virtual  {
         _mint(to, amount);
     }
 
@@ -45,7 +44,7 @@ contract ExampleERC20 is ERC20, ERC20Burnable, ReentrancyGuard, RulesEngineClien
     function transfer(
         address to,
         uint256 amount
-    ) public virtual override nonReentrant checksPoliciesERC20TransferBefore(to, amount) returns (bool) {
+    ) public virtual override nonReentrant returns (bool) {
         address owner = _msgSender();
         _transfer(owner, to, amount);
         return true;
@@ -67,35 +66,15 @@ contract ExampleERC20 is ERC20, ERC20Burnable, ReentrancyGuard, RulesEngineClien
      * - the caller must have allowance for ``from``'s tokens of at least
      * `amount`.
      */
-    function transferFrom(address from, address to, uint256 amount) public virtual override nonReentrant checksPoliciesERC20TransferFromBefore(from, to, amount) returns (bool) {
+    function transferFrom(address from, address to, uint256 amount) public virtual override nonReentrant returns (bool) {
+        require(block.timestamp > pauseTimestamp, "Transfers paused"); 
         address spender = _msgSender();
         _spendAllowance(from, spender, amount);       
         _transfer(from, to, amount);
         return true;
     }
 
-    /**
-     * @dev This is overridden from {IERC20-transfer}. It handles all interactions with the rules engine
-     * Requirements:
-     *
-     * - `to` cannot be the zero address.
-     * - the caller must have a balance of at least `amount`.
-     */
-    // Disabling this finding, it is a false positive. A reentrancy lock modifier has been
-    // applied to this function
-    // slither-disable-start reentrancy-events
-    // slither-disable-start reentrancy-no-eth
-    function transferModified(
-        address to,
-        uint256 amount
-    ) public nonReentrant returns (bool) {
-        address owner = _msgSender();
-        // encode additonal datas for rule checks within gas report 
-        // data: bytes4 signature, address to, uint256 amount, address sender (from), uint256 balance of sender, uint256 balance of to, uint256 blocktime 
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, to, amount, msg.sender, balanceOf(msg.sender), balanceOf(to), uint256(block.timestamp));
-        _invokeRulesEngine(encoded);
-        _transfer(owner, to, amount);
-        return true;
+    function setPauseTime(uint256 _pauseTimestamp) public {
+        pauseTimestamp = _pauseTimestamp; 
     }
-
 }

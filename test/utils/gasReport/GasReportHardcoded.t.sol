@@ -10,6 +10,8 @@ import "test/utils/ExampleERC20WithDenyList.sol";
 import "test/utils/ExampleERC20WithDenyListAndMinTransfer.sol";
 import "test/utils/ExampleERC20WithDenyListMinAndMax.sol";
 import "test/utils/ExampleERC20WithManyConditionMinTransfer.sol";
+import "test/utils/ExampleERC20MinMaxBalance.sol";
+import "test/utils/ExampleERC20Pause.sol";
 
 contract GasReportHardcoded is GasHelpers, Test {
 
@@ -26,6 +28,8 @@ contract GasReportHardcoded is GasHelpers, Test {
     ExampleERC20WithDenyList exampleERC20WithDenyList;
     ExampleERC20WithDenyListAndMinTransfer exampleERC20WithDenyListAndMinTransfer;
     ExampleERC20WithDenyListMinAndMax exampleERC20WithDenyListMinAndMax;
+    ExampleERC20Pause exampleERC20Pause;
+    ExampleERC20MinMaxBalance exampleERC20MinMax;
 
     //-------------------------------------------------------------------------------------
 
@@ -55,6 +59,14 @@ contract GasReportHardcoded is GasHelpers, Test {
         exampleERC20WithDenyListMinAndMax = new ExampleERC20WithDenyListMinAndMax("Token Name", "SYMB");
         exampleERC20WithDenyListMinAndMax.mint(USER_ADDRESS, 1_000_000 * ATTO);
         exampleERC20WithDenyListMinAndMax.addToDenyList(address(0x7654321));
+
+        exampleERC20Pause = new ExampleERC20Pause("Token Name", "SYMB");
+        exampleERC20Pause.mint(USER_ADDRESS, 1_000_000 * ATTO);
+        exampleERC20Pause.setPauseTime(1000000000);
+
+        exampleERC20MinMax = new ExampleERC20MinMaxBalance("Token Name", "SYMB");
+        exampleERC20MinMax.mint(USER_ADDRESS, 1_000_000 * ATTO);
+
 
         //-------------------------------------------------------------------------------------
 
@@ -98,6 +110,17 @@ contract GasReportHardcoded is GasHelpers, Test {
     function testGasExampleHardcodedOFACWithMinTransferAndMaxTransfer() public {
         vm.startPrank(USER_ADDRESS);
         _exampleContractGasReport(5, address(exampleERC20WithDenyListMinAndMax), "Hardcoding OFAC deny list with min transfer"); 
+    }
+
+    function testGasExampleHardcodedMinMaxBalanceTransfer() public {
+        vm.startPrank(USER_ADDRESS);
+        _exampleContractGasReport(5, address(exampleERC20MinMax), "Hardcoding OFAC deny list with min transfer"); 
+    }
+
+    function testGasExampleHardcodedPauseTransfer() public {
+        vm.warp(1000000001);
+        vm.startPrank(USER_ADDRESS);
+        _exampleContractGasReport(5, address(exampleERC20Pause), "Hardcoding OFAC deny list with min transfer"); 
     }
 
 

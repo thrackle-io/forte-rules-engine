@@ -226,11 +226,20 @@ contract ForeignCallTestContract {
 
 contract ForeignCallTestContractOFAC {
     mapping(address => bool) public onTheNaughtyList;
+    mapping(address => bool) public approvedList; 
     function addToNaughtyList(address addr) public {
         onTheNaughtyList[addr] = true;
     }
 
     function getNaughty(address addr) public view returns(bool) {
         return onTheNaughtyList[addr];
+    }
+
+    function addToApprovedList(address addr) public {
+        approvedList[addr] = true;
+    }
+
+    function getApproved(address addr) public view returns(bool) {
+        return approvedList[addr];
     }
 }
