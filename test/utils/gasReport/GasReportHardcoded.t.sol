@@ -7,6 +7,7 @@ import "test/utils/ExampleERC20Hardcoded.sol";
 import "src/example/ExampleERC20.sol";
 import "test/utils/ExampleERC20WithMinTransfer.sol"; 
 import "test/utils/ExampleERC20WithDenyList.sol"; 
+import "test/utils/ExampleERC20WithDenyListFlex.sol";
 import "test/utils/ExampleERC20WithDenyListAndMinTransfer.sol";
 import "test/utils/ExampleERC20WithDenyListMinAndMax.sol";
 import "test/utils/ExampleERC20WithManyConditionMinTransfer.sol";
@@ -26,6 +27,7 @@ contract GasReportHardcoded is GasHelpers, Test {
     ExampleERC20WithMinTransfer exampleERC20WithMinTransfer;
     ExampleERC20WithManyConditionMinTransfer exampleERC20WithManyConditionMinTransfer;
     ExampleERC20WithDenyList exampleERC20WithDenyList;
+    ExampleERC20WithDenyListFlex exampleERC20WithDenyListFlex;
     ExampleERC20WithDenyListAndMinTransfer exampleERC20WithDenyListAndMinTransfer;
     ExampleERC20WithDenyListMinAndMax exampleERC20WithDenyListMinAndMax;
     ExampleERC20Pause exampleERC20Pause;
@@ -66,6 +68,10 @@ contract GasReportHardcoded is GasHelpers, Test {
 
         exampleERC20MinMax = new ExampleERC20MinMaxBalance("Token Name", "SYMB");
         exampleERC20MinMax.mint(USER_ADDRESS, 1_000_000 * ATTO);
+
+        exampleERC20WithDenyListFlex = new ExampleERC20WithDenyListFlex("Token Name", "SYMB");
+        exampleERC20WithDenyListFlex.mint(USER_ADDRESS, 1_000_000 * ATTO);
+        exampleERC20WithDenyListFlex.addToDenyList(address(msg.sender));
 
 
         //-------------------------------------------------------------------------------------
@@ -121,6 +127,11 @@ contract GasReportHardcoded is GasHelpers, Test {
         vm.warp(1000000001);
         vm.startPrank(USER_ADDRESS);
         _exampleContractGasReport(5, address(exampleERC20Pause), "Hardcoding OFAC deny list with min transfer"); 
+    }
+
+    function testGasExampleHardcodedOracleFlex() public {
+        vm.startPrank(USER_ADDRESS);
+        _exampleContractGasReport(3, address(exampleERC20WithDenyListFlex), "Hardcoding OFAC deny list"); 
     }
 
 
