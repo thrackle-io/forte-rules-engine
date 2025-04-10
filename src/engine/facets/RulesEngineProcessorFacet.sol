@@ -168,7 +168,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 TT tt = TT(prog[idx+3]);
                 if (tt == TT.MEMORY){
                     _updateTrackerValue(_policyId, prog[idx + 1], mem[prog[idx+2]]);
-                } {
+                } else {
                     _updateTrackerValue(_policyId, prog[idx + 1], arguments[prog[idx+2]]);
                 }
                 idx += 4;

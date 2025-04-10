@@ -971,7 +971,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
-        rule.posEffects[0] = _createEffectExpressionTrackerUpdateParameter();
+        rule.posEffects[0] = _createEffectExpressionTrackerUpdateParameterPlaceHolder();
         // rule.posEffects[0] = effectId_event;
 
         // Add the tracker
@@ -1573,24 +1573,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         return effect;
     }
 
-    function _createEffectExpressionTrackerUpdateParameter() public pure returns(Effect memory) {
-        // Effect: TRU:someTracker = parameter 3
-        Effect memory effect;
-        effect.valid = true;
-        effect.effectType = ET.EXPRESSION;
-        effect.text = "";
-        effect.instructionSet = new uint256[](6);
-        // Foreign Call Placeholder
-        effect.instructionSet[0] = uint(LC.PLH);
-        effect.instructionSet[1] = 0;
-        // Tracker Placeholder
-        effect.instructionSet[2] = uint(LC.TRU);
-        effect.instructionSet[3] = 1;
-        effect.instructionSet[4] = 0;
-        effect.instructionSet[5] = uint(TT.PLACE_HOLDER);
-
-        return effect;
-    }
     function _createEffectExpressionTrackerUpdateParameterPlaceHolder() public pure returns(Effect memory) {
         // Effect: TRU:someTracker = parameter 3
         Effect memory effect;
