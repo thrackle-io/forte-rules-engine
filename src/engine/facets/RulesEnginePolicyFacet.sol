@@ -172,6 +172,32 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         PolicyStorageSet storage data = lib.getPolicyStorage().policyStorageSets[_policyId];
         delete data.set;
 
+        Policy storage policy = data.policy;
+        bytes4[] memory signatures = policy.signatures;
+        for (uint256 i = 0; i < signatures.length; i++) {
+            uint256[] memory ruleIds = policy.signatureToRuleIds[signatures[i]];
+            for (uint256 j = 0; j < ruleIds.length; j++) {
+                deleteRule(_policyId, ruleIds[j]);
+            }
+        }
+
+        uint256 foreignCallCount = lib.getForeignCallStorage().foreignCallIdxCounter[_policyId];
+        for (uint256 i = 0; i <= foreignCallCount; i++) {
+            if (lib.getForeignCallStorage().foreignCalls[_policyId][i].set) {
+                delete lib.getForeignCallStorage().foreignCalls[_policyId][i];
+                emit ForeignCallDeleted(_policyId, i);
+            }
+        }
+
+        TrackerS storage trackerData = lib.getTrackerStorage();
+        uint256 trackerCount = trackerData.trackerIndexCounter[_policyId];
+        for (uint256 i = 1; i <= trackerCount; i++) {
+            if (trackerData.trackers[_policyId][i].set) {
+                delete lib.getTrackerStorage().trackers[_policyId][i];
+                emit TrackerDeleted(_policyId, i); 
+            }
+        }
+
         for (uint256 i = 0; i < data.policy.signatures.length; i++) {
             delete data.policy.functionSignatureIdMap[data.policy.signatures[i]];
             delete data.policy.signatureToRuleIds[data.policy.signatures[i]];
