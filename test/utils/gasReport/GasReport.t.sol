@@ -1027,9 +1027,9 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[5] = PT.UINT;
 
         uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
-            .createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes("transferModified(address,uint256)")))), pTypes);
+            .createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes("transfer(address,uint256)")))), pTypes);
         // Save the Policy
-        signatures.push(bytes4(keccak256(bytes("transferModified(address,uint256)"))));
+        signatures.push(bytes4(keccak256(bytes("transfer(address,uint256)"))));
         functionSignatureIds.push(functionSignatureId);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         RulesEnginePolicyFacet(address(red)).updatePolicy(
@@ -1092,9 +1092,9 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[5] = PT.UINT;
 
         uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
-            .createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes("transferModified(address,uint256)")))), pTypes);
+            .createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes("transfer(address,uint256)")))), pTypes);
         // Save the Policy
-        signatures.push(bytes4(keccak256(bytes("transferModified(address,uint256)"))));
+        signatures.push(bytes4(keccak256(bytes("transfer(address,uint256)"))));
         functionSignatureIds.push(functionSignatureId);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         RulesEnginePolicyFacet(address(red)).updatePolicy(

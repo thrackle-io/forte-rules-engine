@@ -7,6 +7,7 @@ import "src/example/ExampleUserContract.sol";
 import "src/example/ExampleUserOwnableContract.sol";
 import "src/example/ExampleUserAccessControl.sol";
 import "src/engine/facets/RulesEngineComponentFacet.sol";
+import "src/example/ExampleERC20.sol";
 
 abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
@@ -14,6 +15,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     ExampleUserContract newUserContract;
     ExampleUserContractExtraParams userContract2;
     ExampleUserContractEncoding encodingContract; 
+    ExampleERC20 exampleERC20; 
     
     /// TestRulesEngine: 
     // Test attempt to add a policy with no signatures saved.
@@ -2960,6 +2962,106 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
         appliedPolicyIds = RulesEnginePolicyFacet(address(red)).getAppliedPolicyIds(userContractAddress);
         assertEq(appliedPolicyIds.length, policyIds.length);
+    }
+
+    function testRulesEngine_Unit_PauseRuleRecreation() public ifDeploymentTestsEnabled resetsGlobalVariables {
+        exampleERC20 = new ExampleERC20("Token Name", "SYMB");
+        exampleERC20.mint(callingContractAdmin, 1_000_000 * ATTO);
+        exampleERC20.setRulesEngineAddress(address(red));
+        exampleERC20.setCallingContractAdmin(callingContractAdmin);
+        
+        uint256[] memory policyIds = new uint256[](1);
+
+        policyIds[0] = _createBlankPolicy();
+
+        PT[] memory pTypes = new PT[](6);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+        pTypes[2] = PT.ADDR;
+        pTypes[3] = PT.UINT;
+        pTypes[4] = PT.UINT;
+        pTypes[5] = PT.UINT;
+
+        uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
+            .createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes("transfer(address,uint256)")))), pTypes);
+        // Save the Policy
+        signatures.push(bytes4(keccak256(bytes("transfer(address,uint256)"))));
+        functionSignatureIds.push(functionSignatureId);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(
+            policyIds[0],
+            signatures,
+            functionSignatureIds,
+            blankRuleIds,
+            PolicyType.CLOSED_POLICY
+        );
+
+        // Rule:uintTracker BlockTime > currentBlockTime -> revert -> transfer(address _to, uint256 amount) returns (bool)
+        Rule memory rule;
+        rule.negEffects = new Effect[](1);
+        rule.negEffects[0] = effectId_revert;
+        rule.instructionSet = new uint256[](15);
+        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[1] = 0; //r0 tracker 1
+        rule.instructionSet[2] = uint(LC.PLH);
+        rule.instructionSet[3] = 2; //r1 blocktime 
+        rule.instructionSet[4] = uint(LC.LT);
+        rule.instructionSet[5] = 1; 
+        rule.instructionSet[6] = 0; //r2 check that blocktime is less than tracker 1  
+        rule.instructionSet[7] = uint(LC.PLH);
+        rule.instructionSet[8] = 1; //r3 second tracker 
+        rule.instructionSet[9] = uint(LC.GT);
+        rule.instructionSet[10] = 1; // use register 1
+        rule.instructionSet[11] = 3; //r4 check that blocktime is greater than second tracker 
+        rule.instructionSet[12] = uint(LC.OR);
+        rule.instructionSet[13] = 2;
+        rule.instructionSet[14] = 4;
+
+        rule.placeHolders = new Placeholder[](3);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].trackerValue = true;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].trackerValue = true;
+        rule.placeHolders[1].typeSpecificIndex = 2;
+        rule.placeHolders[2].pType = PT.UINT;
+        rule.placeHolders[2].typeSpecificIndex = 5;
+
+        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+
+        //build tracker
+        Trackers memory tracker;
+        /// build the members of the struct:
+        tracker.pType = PT.UINT;
+        tracker.trackerValue = abi.encode(1000000000);
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker);
+
+        //build second tracker
+        Trackers memory tracker2;
+        /// build the members of the struct:
+        tracker2.pType = PT.UINT;
+        tracker2.trackerValue = abi.encode(2000000000);
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker2);
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0] = ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+    
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(address(exampleERC20), policyIds);
+
+
+        vm.warp(1000000001);
+        vm.expectRevert(); 
+        exampleERC20.transfer(address(0x7654321), 3);
+
+        //warp out of pause window 
+        vm.warp(2000000001);
+
+        bool response = exampleERC20.transfer(address(0x7654321), 7);
+        assertTrue(response);
+
     }
 
 
