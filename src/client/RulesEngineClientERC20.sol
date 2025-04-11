@@ -19,8 +19,8 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
      * @param to receiving address
      * @param value amount transferred
      */
-    modifier checksPoliciesERC20TransferBefore(address to, uint256 value) {
-        _checksPoliciesERC20Transfer(to, value);
+    modifier checksPoliciesERC20TransferBefore(address to, uint256 value, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) {
+        _checksPoliciesERC20Transfer(to, value, balanceFrom, balanceTo, blockTime);
         _;
     }
 
@@ -29,9 +29,9 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
      * @param to receiving address
      * @param value amount transferred
      */
-    modifier checksPoliciesERC20TransferAfter(address to, uint256 value) {
+    modifier checksPoliciesERC20TransferAfter(address to, uint256 value, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) {
         _;
-        _checksPoliciesERC20Transfer(to, value);
+        _checksPoliciesERC20Transfer(to, value, balanceFrom, balanceTo, blockTime);
     }
 
     /**
@@ -40,8 +40,8 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
      * @param to receiving address
      * @param value amount transferred
      */
-    modifier checksPoliciesERC20TransferFromBefore(address from, address to, uint256 value) {
-        _checksPoliciesERC20TransferFrom(from, to, value);
+    modifier checksPoliciesERC20TransferFromBefore(address from, address to, uint256 value, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) {
+        _checksPoliciesERC20TransferFrom(from, to, value, balanceFrom, balanceTo, blockTime);
         _;
     }
 
@@ -51,9 +51,9 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
      * @param to receiving address
      * @param value amount transferred
      */
-    modifier checksPoliciesERC20TransferFromAfter(address from, address to, uint256 value) {
+    modifier checksPoliciesERC20TransferFromAfter(address from, address to, uint256 value, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) {
         _;
-        _checksPoliciesERC20TransferFrom(from, to, value);
+        _checksPoliciesERC20TransferFrom(from, to, value, balanceFrom, balanceTo, blockTime);
     }
 
     /**
@@ -61,8 +61,8 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
      * @param to receiving address
      * @param amount amount transferred
      */
-    modifier checksPoliciesERC20MintBefore(address to, uint256 amount) {
-        _checksPoliciesERC20Mint(to, amount);
+    modifier checksPoliciesERC20MintBefore(address to, uint256 amount, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) {
+        _checksPoliciesERC20Mint(to, amount, balanceFrom, balanceTo, blockTime);
         _;
     }
 
@@ -71,9 +71,9 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
      * @param to receiving address
      * @param amount amount transferred
      */
-    modifier checksPoliciesERC20MintAfter(address to, uint256 amount) {
+    modifier checksPoliciesERC20MintAfter(address to, uint256 amount, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) {
         _;
-        _checksPoliciesERC20Mint(to, amount);
+        _checksPoliciesERC20Mint(to, amount, balanceFrom, balanceTo, blockTime);
     }
     
     /**
@@ -81,8 +81,8 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
      * @param to receiving address
      * @param value amount transferred
      */
-    function _checksPoliciesERC20Transfer(address to, uint256 value) internal {
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, to, value, msg.sender);
+    function _checksPoliciesERC20Transfer(address to, uint256 value, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) internal {
+        bytes memory encoded = abi.encodeWithSelector(msg.sig, to, value, msg.sender, balanceFrom, balanceTo, blockTime);
         _invokeRulesEngine(encoded);
     }
 
@@ -92,8 +92,8 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
      * @param to receiving address
      * @param value amount transferred
      */
-    function _checksPoliciesERC20TransferFrom(address from, address to, uint256 value) internal {
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, from, to, value, msg.sender);
+    function _checksPoliciesERC20TransferFrom(address from, address to, uint256 value, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) internal {
+        bytes memory encoded = abi.encodeWithSelector(msg.sig, from, to, value, msg.sender, balanceFrom, balanceTo, blockTime);
         _invokeRulesEngine(encoded);
     }
 
@@ -102,8 +102,8 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
      * @param to receiving address
      * @param amount amount transferred
      */
-    function _checksPoliciesERC20Mint(address to, uint256 amount) internal {
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, to, amount, msg.sender);
+    function _checksPoliciesERC20Mint(address to, uint256 amount, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) internal {
+        bytes memory encoded = abi.encodeWithSelector(msg.sig, to, amount, msg.sender, balanceFrom, balanceTo, blockTime);
         _invokeRulesEngine(encoded);
     }
 }

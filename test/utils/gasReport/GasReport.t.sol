@@ -191,8 +191,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
     function testGasExamplePause() public endWithStopPrank() {
         vm.warp(1000000001); // set block time greater than the tracker to allow txn to pass 
         vm.startPrank(USER_ADDRESS);
-        //used the transferModified function to pipe in additional encoded data 
-        _exampleContractGasReportModified(5, address(userContractPause), "Using REv2 Pause Rule gas report"); 
+        _exampleContractGasReport(5, address(userContractPause), "Using REv2 Pause Rule gas report"); 
     }
 
     function testGasExampleOracleFlex() public endWithStopPrank() {
@@ -203,7 +202,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
     function testGasExampleMinMax() public {
         vm.startPrank(USER_ADDRESS);
-        _exampleContractGasReportModified(5, address(userContractMinMaxBalance), "Using REv2 Event Effect with min transfer gas report"); 
+        _exampleContractGasReport(5, address(userContractMinMaxBalance), "Using REv2 Event Effect with min transfer gas report"); 
     }
 
 
@@ -942,7 +941,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = _contractAddress;
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
-        fc.returnType = PT.UINT;
+        fc.returnType = PT.BOOL;
         fc.foreignCallIndex = 1;
         uint256 foreignCallId = RulesEngineComponentFacet(address(red))
             .createForeignCall(
@@ -958,7 +957,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         newfc.parameterTypes = fcArgs;
         newfc.foreignCallAddress = _contractAddress;
         newfc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
-        newfc.returnType = PT.UINT;
+        newfc.returnType = PT.BOOL;
         newfc.foreignCallIndex = 1;
         uint256 foreignCallId2 = RulesEngineComponentFacet(address(red))
             .createForeignCall(
@@ -1106,7 +1105,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             PolicyType.CLOSED_POLICY
         );
 
-        // Rule:uintTracker BlockTime > currentBlockTime -> revert -> transfer(address _to, uint256 amount) returns (bool)
+        // Rule:balanceOf(to) - amount < ruleMin -> balanceOf(from) + amount > ruleMax -> revert -> transfer(address _to, uint256 amount) returns (bool)
         Rule memory rule;
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
@@ -1160,13 +1159,6 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         ExampleERC20(contractAddress).transfer(address(0x7654321), _amount);
         gasUsed = stopMeasuringGas();
         console.log(_label, gasUsed);  
-    }
-
-    function _exampleContractGasReportModified(uint256 _amount, address contractAddress, string memory _label) public {
-        startMeasuringGas(_label);
-        ExampleERC20(contractAddress).transferModified(address(0x7654321), _amount);
-        gasUsed = stopMeasuringGas();
-        console.log("Gas Test with transferModified", _label, gasUsed);
     }
  
 
