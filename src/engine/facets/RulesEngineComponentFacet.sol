@@ -11,6 +11,7 @@ import "src/engine/facets/RulesEngineAdminRolesFacet.sol";
  * @notice Data facet for the Rules Engine
  */
 contract RulesEngineComponentFacet is FacetCommonImports {
+
     
     /**
      * @dev Builds a foreign call structure and adds it to the contracts storage, mapped to the contract address it is associated with
@@ -39,6 +40,8 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      */
     function _storeForeignCall(uint256 _policyId, ForeignCall memory _foreignCall) internal {
         assert(_foreignCall.parameterTypes.length == _foreignCall.typeSpecificIndices.length);
+        require(_foreignCall.foreignCallIndex < MAX_LOOP, "Max foreign calls reached.");
+        require(_foreignCall.parameterTypes.length < MAX_LOOP, "Max foreign parameter types reached.");
         _foreignCall.set = true;
         lib.getForeignCallStorage().foreignCalls[_policyId][_foreignCall.foreignCallIndex] = _foreignCall;
     }
@@ -146,6 +149,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param _tracker the tracker to store
      */
     function _storeTracker(TrackerS storage _data, uint256 _policyId, uint256 _trackerIndex, Trackers memory _tracker) internal {
+        require(_trackerIndex < MAX_LOOP, "Max trackers reached.");
         _tracker.set = true;
         _data.trackers[_policyId][_trackerIndex] = _tracker;
     }
@@ -178,6 +182,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         uint256 trackerCount = data.trackerIndexCounter[_policyId];
         Trackers[] memory trackers = new Trackers[](trackerCount);
         uint256 j = 0;
+        // Loop through all the tracker and load for return. Data entry validation will never let trackerCount be > MAX_LOOP
         for (uint256 i = 1; i <= trackerCount; i++) {
             if (data.trackers[_policyId][i].set) {
                 trackers[j] = data.trackers[_policyId][i];
@@ -206,6 +211,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     ) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) returns (uint256) {
         FunctionSignatureS storage data = lib.getFunctionSignatureStorage();
         uint256 functionId = ++data.functionIdCounter[_policyId];
+        require(functionId < MAX_LOOP, "Max function signatures reached.");
         data.functionSignatureStorageSets[_policyId][functionId].set = true;
         data.functionSignatureStorageSets[_policyId][functionId].signature = _functionSignature;
         data.functionSignatureStorageSets[_policyId][functionId].parameterTypes = _pTypes;      
@@ -234,9 +240,11 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         FunctionSignatureStorageSet storage functionSignature = data.functionSignatureStorageSets[_policyId][_functionSignatureId];
         require(functionSignature.signature == _functionSignature, "Delete function signature before updating to a new one");
         require(functionSignature.parameterTypes.length <= _pTypes.length, "New parameter types must be of greater or equal length to the original");
+        // Data entry validation will never let functionSignature.parameterTypes.length be > MAX_LOOP
         for (uint256 i = 0; i < functionSignature.parameterTypes.length; i++) {
             require(_pTypes[i] == functionSignature.parameterTypes[i], "New parameter types must be of the same type as the original");
         }
+        require(_pTypes.length < MAX_LOOP, "Max function signatures reached.");
         if (functionSignature.parameterTypes.length < _pTypes.length) {
             for (uint256 i = functionSignature.parameterTypes.length; i < _pTypes.length; i++) {
                 functionSignature.parameterTypes.push(_pTypes[i]);
@@ -272,7 +280,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         delete data.policy.signatureToRuleIds[signature];
         // retrieve remaining function signature structs from storage that were not removed   
         FunctionSignatureStorageSet[] memory functionSignatureStructs = getAllFunctionSignatures(_policyId);
-        // reset signature array for policy
+        // reset signature array for policy. FunctionSignatureStructs length will always be 0 or less than MAX_LOOP 
         for(uint256 j; j < functionSignatureStructs.length; j++) {
             if(functionSignatureStructs[j].set) {
                 data.policy.signatures.push(functionSignatureStructs[j].signature);
@@ -308,6 +316,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         uint256 functionIdCount = data.functionIdCounter[_policyId];
         FunctionSignatureStorageSet[] memory functionSignatureStorageSets = new FunctionSignatureStorageSet[](functionIdCount);
         uint256 j = 0;
+        // Data validation will alway ensure functionIdCount will be less than MAX_LOOP
         for (uint256 i = 1; i <= functionIdCount; i++) {
             if (data.functionSignatureStorageSets[_policyId][i].set) {
                 functionSignatureStorageSets[j] = data.functionSignatureStorageSets[_policyId][i];

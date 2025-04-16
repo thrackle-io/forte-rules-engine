@@ -31,6 +31,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         PolicyAssociationS storage data = lib.getPolicyAssociationStorage();
         uint256[] memory policyIds = data.contractPolicyIdMap[contractAddress];
         // loop through all the active policies
+        // Data validation will alway ensure policyIds.length will be less than MAX_LOOP 
         for(uint256 policyIdx = 0; policyIdx < policyIds.length; policyIdx++) {
             if(!_checkPolicy(policyIds[policyIdx], contractAddress, arguments)) {
                 retVal = 0;
@@ -56,6 +57,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         uint256[] memory applicableRules = new uint256[](policy.signatureToRuleIds[functionSignature].length);
         // Load the function signature data from storage
         uint256[] storage storagePointer = policy.signatureToRuleIds[functionSignature];
+        // Data validation will alway ensure applicableRules.length will be less than MAX_LOOP 
         for(uint256 i = 0; i < applicableRules.length; i++) {
             if(ruleData[storagePointer[i]].set) {
                 applicableRules[i] = storagePointer[i];
@@ -68,6 +70,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     function evaluateRulesAndExecuteEffects(mapping(uint256 ruleId => RuleStorageSet) storage ruleData, uint256 _policyId, uint256[] memory applicableRules, bytes calldata functionSignatureArgs) internal returns (bool retVal) {
         retVal = true;
         uint256 ruleCount = applicableRules.length;
+        // Data validation will alway ensure ruleCount will be less than MAX_LOOP 
         for(uint256 i = 0; i < ruleCount; i++) { 
             Rule storage rule = ruleData[applicableRules[i]].rule;
             if(!_evaluateIndividualRule(rule, _policyId, functionSignatureArgs)) {
@@ -100,6 +103,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         }       
 
         bytes[] memory retVals = new bytes[](placeHolders.length);
+        // Data validation will alway ensure placeHolders.length will be less than MAX_LOOP 
         for(uint256 placeholderIndex = 0; placeholderIndex < placeHolders.length; placeholderIndex++) {
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
             Placeholder memory placeholder = placeHolders[placeholderIndex];
@@ -136,6 +140,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         uint256[90] memory mem;
         uint256 idx = 0;
         uint256 opi = 0;
+        require(prog.length < MAX_LOOP, "Max instruction set data reached.");
         while (idx < prog.length) {
             uint256 v = 0;
             LC op = LC(prog[idx]);
@@ -242,6 +247,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
 
         uint256 lengthToAppend = 0;
         // First pass: calculate sizes
+        // Data validation will alway ensure fc.parameterTypes.length will be less than MAX_LOOP
         for(uint256 i = 0; i < fc.parameterTypes.length; i++) {
             PT argType = fc.parameterTypes[i];
             uint256 typeSpecificIndex = fc.typeSpecificIndices[i];
@@ -309,6 +315,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     function _doEffects(Rule storage rule, uint256 _policyId, Effect[] memory _effects, bytes calldata functionSignatureArgs) internal {
 
         // Load the Effect data from storage
+        // Data validation will alway ensure _effects.length will be less than MAX_LOOP
         for(uint256 i = 0; i < _effects.length; i++) {
             Effect memory effect = _effects[i];
             if(effect.valid) {
@@ -358,6 +365,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     function _fireDynamicEvent(Rule storage rule, uint256 _policyId, bytes32 _message, bytes calldata functionSignatureArgs) internal {
         // Build the effect arguments struct for event parameters:  
         (bytes[] memory effectArguments, Placeholder[] memory placeholders) = _buildArguments(rule, _policyId, functionSignatureArgs, true);
+        // Data validation will alway ensure effectArguments.length will be less than MAX_LOOP
         for(uint256 i = 0; i < effectArguments.length; i++) { 
             // loop through PT types and set eventParam 
             if (placeholders[i].pType == PT.UINT) {
@@ -525,6 +533,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         if(!_ruleStorage.set) {
             revert("Unknown Rule");
         }
+        // Data validation will alway ensure _ruleStorage.rule.rawData.instructionSetIndex.length will be less than MAX_LOOP
         for(uint256 i = 0; i < _ruleStorage.rule.rawData.instructionSetIndex.length; i++) {
             if(_ruleStorage.rule.rawData.instructionSetIndex[i] == instructionSetId) {
                 if(_ruleStorage.rule.rawData.argumentTypes[i] != pType) {
@@ -550,6 +559,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         
         lengthToAppend += (length * 0x20);
         uint256 baseDynamicOffset = 32 + ((length - 1) * 32);
+        // Data validation will alway ensure length will be less than MAX_LOOP
         for (uint256 j = 1; j <= length; j++) {
             // Add current offset to dynamic data
             dynamicData = bytes.concat(dynamicData, bytes32(baseDynamicOffset));

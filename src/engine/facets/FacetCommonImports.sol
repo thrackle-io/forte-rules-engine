@@ -9,4 +9,6 @@ import "src/engine/RulesEngineEvents.sol";
 import "src/engine/RulesEngineErrors.sol";
 
 
-abstract contract FacetCommonImports is AccessModifiers {}
+abstract contract FacetCommonImports is AccessModifiers {
+    uint constant MAX_LOOP = 10_000;
+}

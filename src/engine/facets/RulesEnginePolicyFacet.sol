@@ -36,7 +36,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      */
     function _storeRule(RuleS storage _data, uint256 _policyId, uint256 _ruleId, Rule calldata _rule) internal returns (uint256) {
         // TODO: Add validations for rule
-        
+        require(_ruleId < MAX_LOOP, "Max rules count reached.");
         // Validate that the policy exists
         if(!lib.getPolicyStorage().policyStorageSets[_policyId].set) revert ("Invalid PolicyId");
 
@@ -95,9 +95,11 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
         bytes4[] memory signatures = data.signatures;
         Rule[][] memory rules = new Rule[][](signatures.length);
+        // Data validation will alway ensure signatures.length will be less than MAX_LOOP 
         for (uint256 i = 0; i < signatures.length; i++) {
             uint256[] memory ruleIds = data.signatureToRuleIds[signatures[i]];
             rules[i] = new Rule[](ruleIds.length);
+            // Data validation will alway ensure ruleIds.length will be less than MAX_LOOP 
             for (uint256 j = 0; j < ruleIds.length; j++) {
                 if (lib.getRuleStorage().ruleStorageSets[_policyId][ruleIds[j]].set) {
                     rules[i][j] = lib.getRuleStorage().ruleStorageSets[_policyId][ruleIds[j]].rule;
@@ -188,7 +190,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         // Load the function signature data from storage
         PolicyAssociationS storage data = lib.getPolicyAssociationStorage();
         
-        // Check policy type for each policy being applied
+        require(_policyIds.length < MAX_LOOP, "Max policies per contract address reached.");
         for(uint256 i = 0; i < _policyIds.length; i++) {
             PolicyStorageSet storage policySet = lib.getPolicyStorage().policyStorageSets[_policyIds[i]];
             require(policySet.set, POLICY_DOES_NOT_EXIST);
@@ -206,6 +208,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
 
         // Apply the policies
         data.contractPolicyIdMap[_contractAddress] = new uint256[](_policyIds.length);
+        // Data validation will alway ensure _policyIds.length will be less than MAX_LOOP
         for(uint256 i = 0; i < _policyIds.length; i++) {
            data.contractPolicyIdMap[_contractAddress][i] = _policyIds[i];
            data.policyIdContractMap[_policyIds[i]].push(_contractAddress);
@@ -277,8 +280,10 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         _processPolicyTypeChange(_policyId, _policyType);
         // clear the iterator array
         delete data.signatures;
+        require(_ruleIds.length < MAX_LOOP, "Max rules count reached.");
         if (_ruleIds.length > 0) {
-            // Loop through all the passed in signatures for the policy      
+            // Loop through all the passed in signatures for the policy  
+            require(_signatures.length < MAX_LOOP, "Max function signatures reached.");    
             for (uint256 i = 0; i < _signatures.length; i++) {
                 // make sure that all the function signatures exist
                 if(!_isFunctionSignatureSet(_policyId, _functionSignatureIds[i])) revert(INVALID_SIGNATURE);
@@ -290,6 +295,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
                 for (uint256 j = 0; j < _ruleIds[i].length; j++) {
                     RuleStorageSet memory ruleStore = getRule(_policyId, _ruleIds[i][j]);
                     if(!ruleStore.set) revert(INVALID_RULE);
+                    require(ruleStore.rule.placeHolders.length < MAX_LOOP, "Max place holders reached.");
                     for (uint256 k = 0; k < ruleStore.rule.placeHolders.length; k++) {
                         if(ruleStore.rule.placeHolders[k].foreignCall) {
                             // get the foreign call using the type specific index which will be interpreted as a foreign call index since it has foreignCall bool set
@@ -305,6 +311,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
             }
         } else {
             // Solely loop through and add signatures to the policy
+            require(_signatures.length < MAX_LOOP, "Max function signatures reached.");
             for (uint256 i = 0; i < _signatures.length; i++) {
                 // make sure that all the function signatures exist
                 if(!_isFunctionSignatureSet(_policyId, _functionSignatureIds[i])) revert(INVALID_SIGNATURE);
@@ -330,6 +337,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         if (_policyType == PolicyType.CLOSED_POLICY){
             // Load the function signature data from storage
             PolicyAssociationS storage assocData = lib.getPolicyAssociationStorage();
+            // Data validation will alway ensure assocData.policyIdContractMap[_policyId].length will be less than MAX_LOOP 
             for (uint256 i = 0; i < assocData.policyIdContractMap[_policyId].length; i++) { 
                 delete assocData.contractPolicyIdMap[assocData.policyIdContractMap[_policyId][i]];
             }
@@ -356,10 +364,12 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         }
         ruleIds = new uint256[][](policy.signatures.length);
         // Loop through the function signatures and load the return arrays
+        // Data validation will alway ensure policy.signatures.length will be less than MAX_LOOP 
         for (uint256 i = 0; i < policy.signatures.length; i++) {
             functionSigs[i] = policy.signatures[i];
             functionSigIds[i] = policy.functionSignatureIdMap[policy.signatures[i]];
             // Initialize the ruleId return array if necessary
+            // Data validation will alway ensure policy.signatureToRuleIds[policy.signatures[i]].length will be less than MAX_LOOP 
             for (uint256 ruleIndex = 0; ruleIndex < policy.signatureToRuleIds[policy.signatures[i]].length; ruleIndex++) {
                 // have to allocate the memory array here
                 ruleIds[i] = new uint256[](policy.signatureToRuleIds[policy.signatures[i]].length);
