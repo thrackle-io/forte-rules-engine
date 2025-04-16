@@ -11,7 +11,8 @@ import "src/client/RulesEngineClientERC20.sol";
  * @author @ShaneDuncan602
  * @notice This is an example implementation for ERC20
  */
-contract ExampleERC20 is ERC20, ERC20Burnable, ReentrancyGuard, RulesEngineClientERC20 {
+contract ExampleERC20Pause is ERC20, ERC20Burnable, ReentrancyGuard, RulesEngineClientERC20 {
+    uint256 pauseTimestamp; 
 
     /**
      * @dev Constructor sets params
@@ -25,7 +26,7 @@ contract ExampleERC20 is ERC20, ERC20Burnable, ReentrancyGuard, RulesEngineClien
      * @param to recipient address
      * @param amount number of tokens to mint
      */
-    function mint(address to, uint256 amount) public virtual checksPoliciesERC20MintBefore(to, amount, balanceOf(msg.sender), balanceOf(to), block.timestamp) {
+    function mint(address to, uint256 amount) public virtual  {
         _mint(to, amount);
     }
 
@@ -43,7 +44,7 @@ contract ExampleERC20 is ERC20, ERC20Burnable, ReentrancyGuard, RulesEngineClien
     function transfer(
         address to,
         uint256 amount
-    ) public virtual override nonReentrant checksPoliciesERC20TransferBefore(to, amount, balanceOf(msg.sender), balanceOf(to), block.timestamp) returns (bool) {
+    ) public virtual override nonReentrant returns (bool) {
         address owner = _msgSender();
         _transfer(owner, to, amount);
         return true;
@@ -65,11 +66,15 @@ contract ExampleERC20 is ERC20, ERC20Burnable, ReentrancyGuard, RulesEngineClien
      * - the caller must have allowance for ``from``'s tokens of at least
      * `amount`.
      */
-    function transferFrom(address from, address to, uint256 amount) public virtual override nonReentrant checksPoliciesERC20TransferFromBefore(from, to, amount, balanceOf(msg.sender), balanceOf(to), block.timestamp) returns (bool) {
+    function transferFrom(address from, address to, uint256 amount) public virtual override nonReentrant returns (bool) {
+        require(block.timestamp > pauseTimestamp, "Transfers paused"); 
         address spender = _msgSender();
         _spendAllowance(from, spender, amount);       
         _transfer(from, to, amount);
         return true;
     }
 
+    function setPauseTime(uint256 _pauseTimestamp) public {
+        pauseTimestamp = _pauseTimestamp; 
+    }
 }
