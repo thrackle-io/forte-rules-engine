@@ -16,20 +16,20 @@ contract AccessModifiers is FacetUtils {
      * @param _address user address
      */
     modifier policyAdminOnly(uint256 _policyId, address _address) {   
-        // 0x901cee11 = isPolicyAdmin(uint256,address)   
-        (bool success, bytes memory res) = callAnotherFacet(0x901cee11, abi.encodeWithSignature("isPolicyAdmin(uint256,address)", _policyId, _address));   
-        bool returnBool;
-        if (success) {
-            if (res.length >= 4) {
-                assembly {
-                    returnBool := mload(add(res, 32))
-                }
-            } else {
-                returnBool = false;
-            }
-            // returned false so revert with error
-            if (!returnBool) revert("Not Authorized To Policy");                        
-        }
+        // // 0x901cee11 = isPolicyAdmin(uint256,address)   
+        // (bool success, bytes memory res) = callAnotherFacet(0x901cee11, abi.encodeWithSignature("isPolicyAdmin(uint256,address)", _policyId, _address));   
+        // bool returnBool;
+        // if (success) {
+        //     if (res.length >= 4) {
+        //         assembly {
+        //             returnBool := mload(add(res, 32))
+        //         }
+        //     } else {
+        //         returnBool = false;
+        //     }
+        //     // returned false so revert with error
+        //     if (!returnBool) revert("Not Authorized To Policy");                        
+        // }
         _;                 
     }
 
@@ -39,20 +39,22 @@ contract AccessModifiers is FacetUtils {
      * @param _address user address
      */
     modifier callingContractAdminOnly(address _callingContract, address _address) {   
-        // 0x70aca092 = isCallingContractAdmin(address,address) 
-        (bool success, bytes memory res) = callAnotherFacet(0x70aca092, abi.encodeWithSignature("isCallingContractAdmin(address,address)", _callingContract, _address));   
-        bool returnBool;
-        if (success) {
-            if (res.length >= 4) {
-                assembly {
-                    returnBool := mload(add(res, 32))
-                }
-            } else {
-                returnBool = false;
-            }
-            // returned false so revert with error
-            if (!returnBool) revert("Not Authorized Admin");                        
-        }
-        _;                 
+    //     // 0x70aca092 = isCallingContractAdmin(address,address) 
+    //     (bool success, bytes memory res) = callAnotherFacet(0x70aca092, abi.encodeWithSignature("isCallingContractAdmin(address,address)", _callingContract, _address));   
+    //     bool returnBool;
+    //     if (success) {
+    //         if (res.length >= 4) {
+    //             assembly {
+    //                 returnBool := mload(add(res, 32))
+    //             }
+    //         } else {
+    //             returnBool = false;
+    //         }
+    //         // returned false so revert with error
+    //         if (!returnBool) revert("Not Authorized Admin");                        
+    //     }
+    //     _;                 
+    // }
+        _;
     }
 }
