@@ -2,11 +2,24 @@
 pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
+/**
+ * @title Rules Engine Processor Facet
+ * @dev This contract serves as the core processor for evaluating rules and executing effects in the Rules Engine.
+ *      It provides functionality for evaluating policies, rules, and conditions, as well as executing effects based on rule outcomes.
+ *      The contract also supports foreign calls, dynamic argument handling, and tracker updates.
+ * @notice This contract is a critical component of the Rules Engine, enabling secure and flexible rule evaluation and effect execution.
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
+ */
 contract RulesEngineProcessorFacet is FacetCommonImports{
 
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+    // Initialization
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+
     /**
-     * @dev Initializer params
-     * @param _owner initial owner of the diamond
+     * @notice Initializes the Rules Engine with the specified owner.
+     * @dev This function sets the initial owner of the diamond and ensures the contract is only initialized once.
+     * @param _owner The initial owner of the diamond.
      */
     function initialize(address _owner) external {
         InitializedS storage init = lib.initializedStorage();
@@ -19,10 +32,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
 
     /**
-     * @dev evaluates the conditions associated with all applicable rules and returns the result
-     * @dev Primary Entry Point for policy checks
-     * @param contractAddress the address of the rules-enabled contract, used to pull the applicable rules
-     * @param arguments function arguments. Should included the function signature and the arguments to be passed to the function
+     * @notice Evaluates the conditions associated with all applicable rules and returns the result.
+     * @dev Primary entry point for policy checks.
+     * @param contractAddress The address of the rules-enabled contract, used to pull the applicable rules.
+     * @param arguments Function arguments, including the function signature and the arguments to be passed to the function.
+     * @return retVal 1 if all rules pass, 0 if any rule fails.
      * TODO: refine the parameters to this function. contractAddress is not necessary as it's the message caller
      */
     function checkPolicies(address contractAddress, bytes calldata arguments) public returns (uint256 retVal) {  
@@ -38,6 +52,13 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         }
     }
 
+    /**
+     * @notice Checks a specific policy for compliance.
+     * @param _policyId The ID of the policy to check.
+     * @param _contractAddress The address of the contract being evaluated.
+     * @param arguments Function arguments for the policy evaluation.
+     * @return retVal True if the policy passes, false otherwise.
+     */
     function _checkPolicy(uint256 _policyId, address _contractAddress, bytes calldata arguments) internal returns (bool retVal) {
         _contractAddress; // added to remove wanring. TODO remove this once msg.sender testing is complete 
         // Load the policy data from storage   
@@ -51,6 +72,13 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         retVal = evaluateRulesAndExecuteEffects(ruleData ,_policyId, _loadApplicableRules(ruleData, policyStorageSet.policy, bytes4(arguments[:4])), arguments[4:]);
     }
 
+    /**
+     * @notice Loads applicable rules for a given function signature.
+     * @param ruleData The mapping of rule IDs to rule storage sets.
+     * @param policy The policy structure containing the rules.
+     * @param functionSignature The function signature to match rules against.
+     * @return An array of applicable rule IDs.
+     */
     function _loadApplicableRules(mapping(uint256 ruleId => RuleStorageSet) storage ruleData, Policy storage policy, bytes4 functionSignature) internal view returns(uint256[] memory){
         // Load the applicable rule data from storage
         uint256[] memory applicableRules = new uint256[](policy.signatureToRuleIds[functionSignature].length);
@@ -64,7 +92,14 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         return applicableRules;
     }
     
-    
+    /**
+     * @notice Evaluates rules and executes their effects based on the evaluation results.
+     * @param ruleData The mapping of rule IDs to rule storage sets.
+     * @param _policyId The ID of the policy being evaluated.
+     * @param applicableRules An array of applicable rule IDs.
+     * @param functionSignatureArgs The arguments for the function signature.
+     * @return retVal True if all rules pass, false otherwise.
+     */
     function evaluateRulesAndExecuteEffects(mapping(uint256 ruleId => RuleStorageSet) storage ruleData, uint256 _policyId, uint256[] memory applicableRules, bytes calldata functionSignatureArgs) internal returns (bool retVal) {
         retVal = true;
         uint256 ruleCount = applicableRules.length;
@@ -91,6 +126,16 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         response = _run(rule.instructionSet, placeholders, _policyId, ruleArgs);
     }
 
+    /**
+     * @dev Constructs the arguments required for building the rule's place holders.
+     * @param rule The storage reference to the Rule struct containing the rule's details.
+     * @param _policyId The unique identifier of the policy associated with the rule.
+     * @param functionSignatureArgs The calldata containing the arguments for the function signature.
+     * @param effect A boolean indicating whether the rule has an effect or not.
+     * @return A tuple containing:
+     *         - An array of bytes representing the constructed arguments.
+     *         - An array of Placeholder structs used for argument substitution.
+     */
     function _buildArguments(Rule storage rule, uint256 _policyId, bytes calldata functionSignatureArgs, bool effect) internal returns (bytes[] memory, Placeholder[] memory) {
         Placeholder[] memory placeHolders;
         if(effect) {
@@ -132,6 +177,14 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         return (retVals, placeHolders);
     }
 
+    /**
+     * @dev Internal function to decode the arguments and do the comparisons.
+     * @param prog An array of uint256 representing the program to be executed.
+     * @param placeHolders An array of Placeholder structs used within the program.
+     * @param _policyId The ID of the policy associated with the program execution.
+     * @param arguments An array of bytes containing additional arguments for the program.
+     * @return ans A boolean indicating the result of the program execution.
+     */
     function _run(uint256[] memory prog, Placeholder[] memory placeHolders, uint256 _policyId, bytes[] memory arguments) internal returns (bool ans) {
         uint256[90] memory mem;
         uint256 idx = 0;
@@ -210,6 +263,12 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         } 
     }
 
+    /**
+     * @dev Internal function to update the value of a tracker associated with a specific policy.
+     * @param _policyId The ID of the policy to which the tracker belongs.
+     * @param _trackerId The ID of the tracker whose value is being updated.
+     * @param _trackerValue The new value to be assigned to the tracker, encoded as bytes.
+     */
     function _updateTrackerValue(uint256 _policyId, uint256 _trackerId, bytes memory _trackerValue) internal{
         // retrieve the tracker
         Trackers storage trk = lib.getTrackerStorage().trackers[_policyId][_trackerId];
@@ -217,6 +276,17 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     }
 
 
+    
+    /**
+     * @notice Evaluates foreign calls within the rules engine processor.
+     * @dev This function processes and evaluates calls to external contracts or systems
+     *      as part of the rules engine's logic. Ensure that the necessary validations
+     *      and security checks are in place when interacting with foreign calls.
+     * @param _policyId Id of the policy.
+     * @param functionSignatureArgs representation of the function signature arguments
+     * @param foreignCallIndex Index of the foreign call.
+     * @return returnValue The output of the foreign call.
+     */
     function evaluateForeignCalls(
         uint256 _policyId, 
         bytes calldata functionSignatureArgs, 
@@ -303,8 +373,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
 
     /**
-     * @dev Loop through effects for a given rule and execute them
-     * @param _effects list of effects
+     * @dev Internal function to process the effects of a rule.
+     * @param rule The rule being processed, stored in the contract's storage.
+     * @param _policyId The ID of the policy associated with the rule.
+     * @param _effects An array of effects to be applied as part of the rule execution.
+     * @param functionSignatureArgs Encoded calldata containing arguments for the function signature.
      */
     function _doEffects(Rule storage rule, uint256 _policyId, Effect[] memory _effects, bytes calldata functionSignatureArgs) internal {
 
@@ -380,10 +453,10 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     }
 
     /**
-     * @dev Fire static Event  
-     * @param _policyId policy Id 
-     * @param _message Event Message String 
-     * @param effectStruct effect struct  
+     * @dev Internal function to trigger an event based on the provided policy ID, message, and effect structure.
+     * @param _policyId The unique identifier of the policy associated with the event.
+     * @param _message A bytes32 message that provides context or details about the event.
+     * @param effectStruct A struct containing the effect data to be processed during the event.
      */
     function _fireEvent(uint256 _policyId, bytes32 _message, Effect memory effectStruct) internal { 
         if (effectStruct.pType == PT.UINT) {
@@ -405,8 +478,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     }
 
     /**
-     * @dev Reverts the transaction
-     * @param _message the reversion message
+     * @dev Internal pure function to revert the transaction with a custom error message.
+     * @param _message The custom error message to include in the revert.
      */
     function _doRevert(string memory _message) internal pure{
         revert(_message);
@@ -462,9 +535,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     }
 
     /**
-     * @dev Retrieve dynamic data from call data 
-     * @param data calldata to parse 
-     * @param index index for the data to parse 
+     * @notice Extracts a dynamic variable from the provided calldata at the specified index.
+     * @dev This function is a pure function and does not modify state.
+     * @param data The calldata containing the dynamic variables.
+     * @param index The index of the dynamic variable to extract.
+     * @return retVal The extracted dynamic variable as a bytes array.
      */
     function getDynamicVariableFromCalldata(bytes calldata data, uint256 index) public pure returns (bytes memory retVal) {
         // Get offset from parameter position, using index * 32 to get the correct position in the calldata
@@ -491,9 +566,12 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     }
 
     /**
-     * @dev Retrieves the instruction set and raw string representations of a value 
-     * @param _ruleId the id of the rule the values belong to
-     * @param instructionSetId the index into the instruction set where the converted value lives
+     * @notice Retrieves the raw string associated with a specific instruction set within a rule and policy.
+     * @dev This function is used to fetch a `StringVerificationStruct` containing the raw string data.
+     * @param _policyId The ID of the policy containing the rule.
+     * @param _ruleId The ID of the rule containing the instruction set.
+     * @param instructionSetId The ID of the instruction set to retrieve the raw string from.
+     * @return retVal A `StringVerificationStruct` containing the raw string data for the specified instruction set.
      */
     function retrieveRawStringFromInstructionSet(uint256 _policyId, uint256 _ruleId, uint256 instructionSetId) public view returns (StringVerificationStruct memory retVal) {
         (uint256 instructionSetValue, bytes memory encoded) = _retreiveRawEncodedFromInstructionSet(_policyId, _ruleId, instructionSetId, PT.STR);
@@ -501,12 +579,14 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         retVal.instructionSetValue = instructionSetValue;
     }
 
-
     /**
-     * @dev Retrieves the instruction set and raw address representations of a value 
-     * @param _policyId the id of the policy the values belong to
-     * @param _ruleId the id of the rule the values belong to
-     * @param instructionSetId the index into the instruction set where the converted value lives
+     * @notice Retrieves the raw address from a specific instruction set.
+     * @dev This function is used to fetch the raw address associated with a given
+     *      policy ID, rule ID, and instruction set ID.
+     * @param _policyId The ID of the policy to which the rule belongs.
+     * @param _ruleId The ID of the rule within the policy.
+     * @param instructionSetId The ID of the instruction set to retrieve the address verification structure from.
+     * @return retVal The AddressVerificationStruct containing the raw address data.
      */
     function retrieveRawAddressFromInstructionSet(uint256 _policyId, uint256 _ruleId, uint256 instructionSetId) public view returns (AddressVerificationStruct memory retVal) {
         (uint256 instructionSetValue, bytes memory encoded) = _retreiveRawEncodedFromInstructionSet(_policyId, _ruleId, instructionSetId, PT.ADDR);
@@ -515,10 +595,13 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     }
 
     /**
-     * @dev Retrieves the instruction set and raw representations of a value (raw data abi encoded)
-     * @param _ruleId the id of the rule the values belong to
-     * @param instructionSetId the index into the instruction set where the converted value lives
-     * @param pType the parameter type of the value
+     * @dev Retrieves the raw encoded data and instruction set value from a given instruction set ID.
+     * @param _policyId The ID of the policy associated with the instruction set.
+     * @param _ruleId The ID of the rule associated with the instruction set.
+     * @param instructionSetId The ID of the instruction set to retrieve data from.
+     * @param pType The parameter type (PT) associated with the instruction set.
+     * @return instructionSetValue The value of the instruction set.
+     * @return encoded The raw encoded data associated with the instruction set.
      */
     function _retreiveRawEncodedFromInstructionSet(uint256 _policyId, uint256 _ruleId, uint256 instructionSetId, PT pType) internal view returns (uint256 instructionSetValue, bytes memory encoded) {
         RuleStorageSet memory _ruleStorage = lib.getRuleStorage().ruleStorageSets[_policyId][_ruleId];
@@ -538,12 +621,16 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     }
 
     /**
-     * @dev Retrieve dynamic value from an array for foriegn call 
-     * @param data array calldata to parse 
-     * @param dynamicData concatenated string of data from calling function and length of array (TODO clarify this is needed)
-     * @param length the length of the dynamic array 
-     * @param lengthToAppend length of the data to append 
-     * @param offset the offset of the data 
+     * @notice Retrieves a portion of dynamic value array data from the provided inputs.
+     * @dev This function extracts a segment of dynamic data based on the specified length and offset.
+     * @param data The calldata input containing the original data.
+     * @param dynamicData The memory input containing the dynamic data to process.
+     * @param length The total length of the dynamic data array.
+     * @param lengthToAppend The length of data to append to the result.
+     * @param offset The starting position in the dynamic data array to begin extraction.
+     * @return A tuple containing:
+     *         - A bytes memory object representing the extracted data.
+     *         - A uint256 value indicating the updated offset after extraction.
      */
     function getDynamicValueArrayData(bytes calldata data, bytes memory dynamicData, uint length, uint lengthToAppend, uint256 offset) public pure returns (bytes memory, uint256) {
         bytes memory arrayData;
@@ -577,5 +664,4 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         
         return (dynamicData, lengthToAppend);
     }
-    
 }

@@ -1,6 +1,19 @@
 #!/bin/bash
+
+# This script checks if Foundry, Anvil, and Cast are installed and up to date.
+# It compares the installed versions with the pinned version specified in `foundry.lock`.
+# If Foundry is not installed or out of date, it installs or updates Foundry unless the `--skip-install` flag is used.
+#
+# Steps:
+# 1. Determine the pinned Foundry version from `foundry.lock`.
+# 2. Check if Foundry, Anvil, and Cast are installed and match the pinned version.
+# 3. If up to date, exit with a success message.
+# 4. If out of date or not installed, install or update Foundry unless `--skip-install` is specified.
+# 5. Use the `foundryup` script to manage installation and updates.
+
 set -euo pipefail
 cd "$(dirname "$0")/../.."
+
 
 FOUNDRY_DIR="${FOUNDRY_DIR-"$HOME/.foundry"}"
 FOUNDRY_BIN_DIR="$FOUNDRY_DIR/bin"

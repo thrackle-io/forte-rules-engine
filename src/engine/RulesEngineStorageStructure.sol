@@ -1,6 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.24;
 
+/**
+ * @title Rules Engine Storage Structures
+ * @dev This contract defines the storage structures used throughout the Rules Engine. These structures are used to 
+ *      manage policies, rules, trackers, function signatures, foreign calls, and other components of the Rules Engine. 
+ *      The storage structures are designed to support modular and efficient data management within the diamond proxy pattern.
+ * @notice This contract is a critical component of the Rules Engine, enabling consistent and conflict-free storage management.
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
+ */
+
 struct InitializedS {
     bool initialized;
 }
