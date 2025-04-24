@@ -1,0 +1,31 @@
+{
+    "ignorePatterns": [
+      {
+        "pattern": "^https://www.infura.io"
+      },
+      {
+        "pattern": "^http://localhost"
+      },
+      {
+        "pattern": "^https://docs.forterulesengine.io*"
+      }
+    ],
+    "replacementPatterns": [
+      {
+        "pattern": "https://github.com/thrackle-io/forte-rules-engine",
+        "replacement": ""
+      },
+      {
+        "pattern": "\/blob\/(.*)\/",
+        "replacement": "/"
+      }
+    ],
+    "httpHeaders": [
+      {
+        "urls": ["https://github.com/", "https://guides.github.com/", "https://help.github.com/", "https://docs.github.com/"],
+        "headers": {
+          "Accept-Encoding": "zstd, br, gzip, deflate"
+        }
+      }
+    ]
+  }
