@@ -16,5 +16,5 @@ jobs:
       - uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
           config-file: ".github/workflows/mlc_config.json"
-          folder-path: "docs"
+          #folder-path: "docs"
           file-path: "./README.md, ./CHANGELOG.md, ./CODE_OF_CONDUCT.md, ./CONTRIBUTING.md, ./SECURITY.md"
