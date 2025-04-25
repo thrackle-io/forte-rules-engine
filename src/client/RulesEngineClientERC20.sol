@@ -4,20 +4,22 @@ pragma solidity ^0.8.24;
 import "./RulesEngineClient.sol";
 
 /**
- * @title Rules Engine Client
- * @author @ShaneDuncan602
- * @dev The abstract contract containing modifiers used by Rules Engine ERC20 clients. It is intended to be inherited and implemented by client contracts. It is self-contained and requires no additional imports.
- * It contains modifiers for the following functions: 
- *          mint(address,uint256)
- *          transfer(address,uint256)
- *          transferFrom(address,address,uint256)
+ * @title Rules Engine Client ERC20
+ * @dev Abstract contract containing modifiers and functions for integrating ERC20 token operations with the Rules Engine.
+ *      This contract provides policy checks for `mint`, `transfer`, and `transferFrom` operations, both before and after execution.
+ * @notice This contract is intended to be inherited and implemented by ERC20 token contracts requiring Rules Engine integration.
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 abstract contract RulesEngineClientERC20 is RulesEngineClient {
 
     /**
-     * @dev This is the modifier used by Rules Engine transfer function. It checks policies before executing the calling function's logic.
-     * @param to receiving address
-     * @param value amount transferred
+     * @notice Modifier for checking policies before executing the `transfer` function.
+     * @dev Calls the `_checksPoliciesERC20Transfer` function to evaluate policies.
+     * @param to The receiving address.
+     * @param value The amount to transfer.
+     * @param balanceFrom The sender's balance before the transfer.
+     * @param balanceTo The receiver's balance before the transfer.
+     * @param blockTime The current block timestamp.
      */
     modifier checksPoliciesERC20TransferBefore(address to, uint256 value, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) {
         _checksPoliciesERC20Transfer(to, value, balanceFrom, balanceTo, blockTime);
@@ -25,9 +27,13 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
     }
 
     /**
-     * @dev This is the modifier used by Rules Engine transfer function. It checks policies after executing the calling function's logic.
-     * @param to receiving address
-     * @param value amount transferred
+     * @notice Modifier for checking policies after executing the `transfer` function.
+     * @dev Calls the `_checksPoliciesERC20Transfer` function to evaluate policies.
+     * @param to The receiving address.
+     * @param value The amount to transfer.
+     * @param balanceFrom The sender's balance after the transfer.
+     * @param balanceTo The receiver's balance after the transfer.
+     * @param blockTime The current block timestamp.
      */
     modifier checksPoliciesERC20TransferAfter(address to, uint256 value, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) {
         _;
@@ -35,10 +41,14 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
     }
 
     /**
-     * @dev This is the modifier used by Rules Engine client transferFrom function. It checks policies before executing the calling function's logic.
-     * @param from sending address
-     * @param to receiving address
-     * @param value amount transferred
+     * @notice Modifier for checking policies before executing the `transferFrom` function.
+     * @dev Calls the `_checksPoliciesERC20TransferFrom` function to evaluate policies.
+     * @param from The sending address.
+     * @param to The receiving address.
+     * @param value The amount to transfer.
+     * @param balanceFrom The sender's balance before the transfer.
+     * @param balanceTo The receiver's balance before the transfer.
+     * @param blockTime The current block timestamp.
      */
     modifier checksPoliciesERC20TransferFromBefore(address from, address to, uint256 value, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) {
         _checksPoliciesERC20TransferFrom(from, to, value, balanceFrom, balanceTo, blockTime);
@@ -46,10 +56,14 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
     }
 
     /**
-     * @dev This is the modifier used by Rules Engine client transferFrom function. It checks policies before executing the calling function's logic.
-     * @param from sending address
-     * @param to receiving address
-     * @param value amount transferred
+     * @notice Modifier for checking policies after executing the `transferFrom` function.
+     * @dev Calls the `_checksPoliciesERC20TransferFrom` function to evaluate policies.
+     * @param from The sending address.
+     * @param to The receiving address.
+     * @param value The amount to transfer.
+     * @param balanceFrom The sender's balance after the transfer.
+     * @param balanceTo The receiver's balance after the transfer.
+     * @param blockTime The current block timestamp.
      */
     modifier checksPoliciesERC20TransferFromAfter(address from, address to, uint256 value, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) {
         _;
@@ -57,9 +71,13 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
     }
 
     /**
-     * @dev This is the modifier used by Rules Engine mint function. It checks policies before executing the calling function's logic.
-     * @param to receiving address
-     * @param amount amount transferred
+     * @notice Modifier for checking policies before executing the `mint` function.
+     * @dev Calls the `_checksPoliciesERC20Mint` function to evaluate policies.
+     * @param to The receiving address.
+     * @param amount The amount to mint.
+     * @param balanceFrom The sender's balance before the mint.
+     * @param balanceTo The receiver's balance before the mint.
+     * @param blockTime The current block timestamp.
      */
     modifier checksPoliciesERC20MintBefore(address to, uint256 amount, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) {
         _checksPoliciesERC20Mint(to, amount, balanceFrom, balanceTo, blockTime);
@@ -67,19 +85,27 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
     }
 
     /**
-     * @dev This is the modifier used by Rules Engine mint function. It checks policies after executing the calling function's logic.
-     * @param to receiving address
-     * @param amount amount transferred
+     * @notice Modifier for checking policies after executing the `mint` function.
+     * @dev Calls the `_checksPoliciesERC20Mint` function to evaluate policies.
+     * @param to The receiving address.
+     * @param amount The amount to mint.
+     * @param balanceFrom The sender's balance after the mint.
+     * @param balanceTo The receiver's balance after the mint.
+     * @param blockTime The current block timestamp.
      */
     modifier checksPoliciesERC20MintAfter(address to, uint256 amount, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) {
         _;
         _checksPoliciesERC20Mint(to, amount, balanceFrom, balanceTo, blockTime);
     }
-    
+
     /**
-     * @dev This function makes the call to the Rules Engine with standard variables for ERC20 Transfer
-     * @param to receiving address
-     * @param value amount transferred
+     * @notice Calls the Rules Engine to evaluate policies for an ERC20 `transfer` operation.
+     * @dev Encodes the parameters and invokes the `_invokeRulesEngine` function.
+     * @param to The receiving address.
+     * @param value The amount to transfer.
+     * @param balanceFrom The sender's balance.
+     * @param balanceTo The receiver's balance.
+     * @param blockTime The current block timestamp.
      */
     function _checksPoliciesERC20Transfer(address to, uint256 value, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) internal {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, to, value, msg.sender, balanceFrom, balanceTo, blockTime);
@@ -87,10 +113,14 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
     }
 
     /**
-     * @dev This function makes the call to the Rules Engine with standard variables for ERC20 transferFrom
-     * @param from sending address
-     * @param to receiving address
-     * @param value amount transferred
+     * @notice Calls the Rules Engine to evaluate policies for an ERC20 `transferFrom` operation.
+     * @dev Encodes the parameters and invokes the `_invokeRulesEngine` function.
+     * @param from The sending address.
+     * @param to The receiving address.
+     * @param value The amount to transfer.
+     * @param balanceFrom The sender's balance.
+     * @param balanceTo The receiver's balance.
+     * @param blockTime The current block timestamp.
      */
     function _checksPoliciesERC20TransferFrom(address from, address to, uint256 value, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) internal {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, from, to, value, msg.sender, balanceFrom, balanceTo, blockTime);
@@ -98,9 +128,13 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
     }
 
     /**
-     * @dev This function makes the call to the Rules Engine with standard variables for ERC20 mint
-     * @param to receiving address
-     * @param amount amount transferred
+     * @notice Calls the Rules Engine to evaluate policies for an ERC20 `mint` operation.
+     * @dev Encodes the parameters and invokes the `_invokeRulesEngine` function.
+     * @param to The receiving address.
+     * @param amount The amount to mint.
+     * @param balanceFrom The sender's balance.
+     * @param balanceTo The receiver's balance.
+     * @param blockTime The current block timestamp.
      */
     function _checksPoliciesERC20Mint(address to, uint256 amount, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) internal {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, to, amount, msg.sender, balanceFrom, balanceTo, blockTime);

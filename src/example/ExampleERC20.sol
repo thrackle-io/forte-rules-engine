@@ -8,33 +8,40 @@ import "src/client/RulesEngineClientERC20.sol";
 
 /**
  * @title Example ERC20
- * @author @ShaneDuncan602
- * @notice This is an example implementation for ERC20
+ * @dev This contract is an example implementation of an ERC20 token integrated with the Rules Engine. It extends the 
+ *      OpenZeppelin ERC20 and ERC20Burnable contracts and includes additional functionality for interacting with the 
+ *      Rules Engine. The contract ensures compliance with policies defined in the Rules Engine for minting, transferring, 
+ *      and transferring tokens on behalf of others.
+ * @notice This contract demonstrates how to integrate the Rules Engine with an ERC20 token for policy enforcement.
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 contract ExampleERC20 is ERC20, ERC20Burnable, ReentrancyGuard, RulesEngineClientERC20 {
 
     /**
-     * @dev Constructor sets params
-     * @param _name Name of the token
-     * @param _symbol Symbol of the token
+     * @notice Constructor for the Example ERC20 token.
+     * @dev Initializes the token with a name and symbol.
+     * @param _name The name of the token.
+     * @param _symbol The symbol of the token.
      */
     constructor(string memory _name, string memory _symbol) ERC20(_name, _symbol) {}
 
     /**
-     * @dev Function mints new tokens.
-     * @param to recipient address
-     * @param amount number of tokens to mint
+     * @notice Mints new tokens to a specified address.
+     * @dev This function interacts with the Rules Engine to ensure compliance with minting policies.
+     * @param to The recipient address.
+     * @param amount The number of tokens to mint.
      */
     function mint(address to, uint256 amount) public virtual checksPoliciesERC20MintBefore(to, amount, balanceOf(msg.sender), balanceOf(to), block.timestamp) {
         _mint(to, amount);
     }
 
     /**
-     * @dev This is overridden from {IERC20-transfer}. It handles all interactions with the rules engine
-     * Requirements:
-     *
-     * - `to` cannot be the zero address.
-     * - the caller must have a balance of at least `amount`.
+     * @notice Transfers tokens to a specified address.
+     * @dev This function overrides the {IERC20-transfer} function and interacts with the Rules Engine to ensure compliance 
+     *      with transfer policies. It includes a reentrancy guard to prevent reentrancy attacks.
+     * @param to The recipient address.
+     * @param amount The number of tokens to transfer.
+     * @return bool True if the transfer is successful, false otherwise.
      */
     // Disabling this finding, it is a false positive. A reentrancy lock modifier has been
     // applied to this function
@@ -50,20 +57,13 @@ contract ExampleERC20 is ERC20, ERC20Burnable, ReentrancyGuard, RulesEngineClien
     }
 
     /**
-     * @dev This is overridden from {IERC20-transferFrom}. It handles all interactions with the rules engine.
-     *
-     * Emits an {Approval} event indicating the updated allowance. This is not
-     * required by the EIP. See the note at the beginning of {ERC20}.
-     *
-     * NOTE: Does not update the allowance if the current allowance
-     * is the maximum `uint256`.
-     *
-     * Requirements:
-     *
-     * - `from` and `to` cannot be the zero address.
-     * - `from` must have a balance of at least `amount`.
-     * - the caller must have allowance for ``from``'s tokens of at least
-     * `amount`.
+     * @notice Transfers tokens on behalf of another address.
+     * @dev This function overrides the {IERC20-transferFrom} function and interacts with the Rules Engine to ensure compliance 
+     *      with transfer policies. It includes a reentrancy guard to prevent reentrancy attacks.
+     * @param from The address to transfer tokens from.
+     * @param to The recipient address.
+     * @param amount The number of tokens to transfer.
+     * @return bool True if the transfer is successful, false otherwise.
      */
     function transferFrom(address from, address to, uint256 amount) public virtual override nonReentrant checksPoliciesERC20TransferFromBefore(from, to, amount, balanceOf(msg.sender), balanceOf(to), block.timestamp) returns (bool) {
         address spender = _msgSender();

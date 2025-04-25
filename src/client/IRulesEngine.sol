@@ -2,34 +2,39 @@
 pragma solidity ^0.8.13;
 
 /**
- * @title Interface for the Rules Engine Run Logic
- * @author @mpetersoCode55 
+ * @title IRulesEngine
+ * @dev Interface for the Rules Engine Run Logic. This interface defines the core functions and data types 
+ *      required for evaluating rules and managing roles in a rules-enabled contract.
+ * @notice This interface is intended to be implemented by contracts that require rules evaluation and role management.
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 interface IRulesEngine {
 
     // Supported Parameter Types
     enum PT {
-        ADDR,
-        STR,
-        UINT,
-        BOOL,
-        VOID,
-        BYTES
+        ADDR,  // Address type
+        STR,   // String type
+        UINT,  // Unsigned integer type
+        BOOL,  // Boolean type
+        VOID,  // Void type (no value)
+        BYTES  // Bytes type
     }
     
     /**
-     * @dev evaluates the conditions associated with all applicable rules and returns the result
-     * @param contractAddress the address of the rules-enabled contract, used to pull the applicable rules
-     * @param arguments Think of this as msg.data and whatever other context and global variables you would like to pass in to check.
+     * @notice Evaluates the conditions associated with all applicable rules and returns the result.
+     * @dev This function checks the rules associated with the provided contract address and arguments.
+     * @param contractAddress The address of the rules-enabled contract, used to pull the applicable rules.
+     * @param arguments Additional context and global variables to pass in for evaluation, similar to `msg.data`.
+     * @return uint256 The result of the rules evaluation.
      */
     function checkPolicies(address contractAddress, bytes calldata arguments) external returns (uint256);
 
-     /**
-     * @dev Function to grant calling contract admin role 
-     * @dev Call this function from your contract to set calling contract admin 
-     * @param _callingContract policy Id 
-     * @param _account address to assign admin role Id 
-     * @return bytes32 adminRoleId 
+    /**
+     * @notice Grants the calling contract admin role to a specified account.
+     * @dev Call this function from your contract to assign the admin role for a specific calling contract.
+     * @param _callingContract The address of the calling contract for which the admin role is being assigned.
+     * @param _account The address of the account to assign the admin role.
+     * @return bytes32 The ID of the assigned admin role.
      */
     function grantCallingContractRole(address _callingContract, address _account) external returns (bytes32);
 }

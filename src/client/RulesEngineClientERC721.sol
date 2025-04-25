@@ -5,18 +5,17 @@ import "./RulesEngineClient.sol";
 
 /**
  * @title Rules Engine Client ERC721
- * @author @ShaneDuncan602
- * @dev The abstract contract containing modifiers used by Rules Engine clients. It is intended to be inherited and implemented by client contracts. It is self-contained and requires no additional imports.
- * It contains before and after modifiers for the following functions: 
- *          transferFrom(address,address,uint256)
- *          safeTransferFrom(address,address,uint256,bytes)
- *          safeMint(address)
+ * @dev Abstract contract containing modifiers and functions for integrating ERC721 token operations with the Rules Engine.
+ *      This contract provides policy checks for `safeMint`, `transferFrom`, and `safeTransferFrom` operations, both before and after execution.
+ * @notice This contract is intended to be inherited and implemented by ERC721 token contracts requiring Rules Engine integration.
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 abstract contract RulesEngineClientERC721 is RulesEngineClient {
     
     /**
-     * @dev This is the modifier used by Rules Engine safeMint function. It checks policies before executing the calling function's logic.
-     * @param to receiving address
+     * @notice Modifier for checking policies before executing the `safeMint` function.
+     * @dev Calls the `_checkPoliciesERC721SafeMint` function to evaluate policies.
+     * @param to The receiving address.
      */
     modifier checksPoliciesERC721SafeMintBefore(address to) {
         _checkPoliciesERC721SafeMint(to);
@@ -24,8 +23,9 @@ abstract contract RulesEngineClientERC721 is RulesEngineClient {
     }
 
     /**
-     * @dev This is the modifier used by Rules Engine safeMint function. It checks policies after executing the calling function's logic.
-     * @param to receiving address
+     * @notice Modifier for checking policies after executing the `safeMint` function.
+     * @dev Calls the `_checkPoliciesERC721SafeMint` function to evaluate policies.
+     * @param to The receiving address.
      */
     modifier checksPoliciesERC721SafeMintAfter(address to) {
         _;
@@ -33,11 +33,12 @@ abstract contract RulesEngineClientERC721 is RulesEngineClient {
     }
 
     /**
-     * @dev This is the modifier used by Rules Engine safeTransferFrom function. It checks policies before executing the calling function's logic.
-     * @param from sending address
-     * @param to receiving address
-     * @param tokenId token identifier
-     * @param data generic data
+     * @notice Modifier for checking policies before executing the `safeTransferFrom` function.
+     * @dev Calls the `_checkPoliciesERC721SafeTransferFrom` function to evaluate policies.
+     * @param from The sending address.
+     * @param to The receiving address.
+     * @param tokenId The token identifier.
+     * @param data Generic data to pass along with the transfer.
      */
     modifier checksPoliciesERC721SafeTransferFromBefore(address from, address to, uint256 tokenId, bytes memory data) {
        _checkPoliciesERC721SafeTransferFrom(from, to, tokenId, data);
@@ -45,11 +46,12 @@ abstract contract RulesEngineClientERC721 is RulesEngineClient {
     }
 
     /**
-     * @dev This is the modifier used by Rules Engine safeTransferFrom function. It checks policies after executing the calling function's logic.
-     * @param from sending address
-     * @param to receiving address
-     * @param tokenId token identifier
-     * @param data generic data
+     * @notice Modifier for checking policies after executing the `safeTransferFrom` function.
+     * @dev Calls the `_checkPoliciesERC721SafeTransferFrom` function to evaluate policies.
+     * @param from The sending address.
+     * @param to The receiving address.
+     * @param tokenId The token identifier.
+     * @param data Generic data to pass along with the transfer.
      */
     modifier checksPoliciesERC721SafeTransferFromAfter(address from, address to, uint256 tokenId, bytes memory data) {
         _;
@@ -57,10 +59,11 @@ abstract contract RulesEngineClientERC721 is RulesEngineClient {
     }
 
     /**
-     * @dev This is the modifier used by Rules Engine transferFrom function. It checks policies before executing the calling function's logic.
-     * @param from sending address
-     * @param to receiving address
-     * @param tokenId token identifier
+     * @notice Modifier for checking policies before executing the `transferFrom` function.
+     * @dev Calls the `_checkPoliciesERC721TransferFrom` function to evaluate policies.
+     * @param from The sending address.
+     * @param to The receiving address.
+     * @param tokenId The token identifier.
      */
     modifier checksPoliciesERC721TransferFromBefore(address from, address to, uint256 tokenId) {
        _checkPoliciesERC721TransferFrom(from, to, tokenId);
@@ -68,10 +71,11 @@ abstract contract RulesEngineClientERC721 is RulesEngineClient {
     }
 
     /**
-     * @dev This is the modifier used by Rules Engine transferFrom function. It checks policies after executing the calling function's logic.
-     * @param from sending address
-     * @param to receiving address
-     * @param tokenId token identifier
+     * @notice Modifier for checking policies after executing the `transferFrom` function.
+     * @dev Calls the `_checkPoliciesERC721TransferFrom` function to evaluate policies.
+     * @param from The sending address.
+     * @param to The receiving address.
+     * @param tokenId The token identifier.
      */
     modifier checksPoliciesERC721TransferFromAfter(address from, address to, uint256 tokenId) {
         _;
@@ -79,8 +83,9 @@ abstract contract RulesEngineClientERC721 is RulesEngineClient {
     }
     
     /**
-     * @dev This function makes the call to the Rules Engine with standard variables for safeMint
-     * @param to receiving address
+     * @notice Calls the Rules Engine to evaluate policies for an ERC721 `safeMint` operation.
+     * @dev Encodes the parameters and invokes the `_invokeRulesEngine` function.
+     * @param to The receiving address.
      */
     function _checkPoliciesERC721SafeMint(address to) internal {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, to, msg.sender);
@@ -88,11 +93,12 @@ abstract contract RulesEngineClientERC721 is RulesEngineClient {
     }
 
     /**
-     * @dev This function makes the call to the Rules Engine with standard variables for safeTransferFrom
-     * @param from sending address
-     * @param to receiving address
-     * @param tokenId token identifier
-     * @param data generic data
+     * @notice Calls the Rules Engine to evaluate policies for an ERC721 `safeTransferFrom` operation.
+     * @dev Encodes the parameters and invokes the `_invokeRulesEngine` function.
+     * @param from The sending address.
+     * @param to The receiving address.
+     * @param tokenId The token identifier.
+     * @param data Generic data to pass along with the transfer.
      */
     function _checkPoliciesERC721SafeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) internal {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, from, to, tokenId, data, msg.sender);
@@ -100,10 +106,11 @@ abstract contract RulesEngineClientERC721 is RulesEngineClient {
     }
 
     /**
-     * @dev This function makes the call to the Rules Engine with standard variables for safeTransferFrom
-     * @param from sending address
-     * @param to receiving address
-     * @param tokenId token identifier
+     * @notice Calls the Rules Engine to evaluate policies for an ERC721 `transferFrom` operation.
+     * @dev Encodes the parameters and invokes the `_invokeRulesEngine` function.
+     * @param from The sending address.
+     * @param to The receiving address.
+     * @param tokenId The token identifier.
      */
     function _checkPoliciesERC721TransferFrom(address from, address to, uint256 tokenId) internal {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, from, to, tokenId, msg.sender);

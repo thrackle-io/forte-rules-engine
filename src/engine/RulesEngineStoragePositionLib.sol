@@ -3,10 +3,13 @@ pragma solidity ^0.8.24;
 import "src/engine/RulesEngineStorageStructure.sol";
 
 /**
- * @title Rules Engine Storage Library
- * @author @ShaneDuncan602
- * @dev This contract serves as the storage library for the rules engine. It serves up the storage position for all storage data
- * @notice Library for Rules Engine
+ * @title Rules Engine Storage Position Library
+ * @dev This library provides functions to access and manage storage positions for various components of the Rules Engine.
+ *      It defines fixed storage slots for initialized flags, foreign calls, trackers, function signatures, rules, policies, 
+ *      and policy associations. These storage slots are used to ensure consistent and conflict-free storage management 
+ *      across the diamond proxy pattern.
+ * @notice This library is a critical component of the Rules Engine, enabling modular and efficient storage management.
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 library RulesEngineStoragePositionLib {
     bytes32 constant DIAMOND_CUT_STORAGE_ENGINE_POS = bytes32(uint256(keccak256("diamond-cut.storage-engine")) - 1);
@@ -19,8 +22,9 @@ library RulesEngineStoragePositionLib {
     bytes32 constant POLICY_ASSOCIATION_POSITION = bytes32(uint256(keccak256("policy-association-position")) - 1);
 
     /**
-     * @dev Function to store the Initialized flag
-     * @return ds Data Storage of the Initialized flag
+     * @notice Retrieves the storage for the initialized flag.
+     * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
+     * @return ds The storage structure for the initialized flag.
      */
     function initializedStorage() internal pure returns (InitializedS storage ds) {
         bytes32 position = INITIALIZED_POSITION;
@@ -30,8 +34,9 @@ library RulesEngineStoragePositionLib {
     }
 
     /**
-     * @dev Function to retrieve Foreign Call Storage from its diamond storage slot
-     * @return ds Data Storage of the Foreign Call Map
+     * @notice Retrieves the storage for foreign calls.
+     * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
+     * @return ds The storage structure for the foreign call map.
      */
     function getForeignCallStorage() internal pure returns (ForeignCallS storage ds) {
         bytes32 position = FOREIGN_CALL_POSITION;
@@ -41,8 +46,9 @@ library RulesEngineStoragePositionLib {
     }
 
     /**
-     * @dev Function to retrieve Tracker Storage from its diamond storage slot
-     * @return ds Data Storage of the Tracker Map
+     * @notice Retrieves the storage for trackers.
+     * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
+     * @return ds The storage structure for the tracker map.
      */
     function getTrackerStorage() internal pure returns (TrackerS storage ds) {
         bytes32 position = TRACKER_POSITION;
@@ -52,8 +58,9 @@ library RulesEngineStoragePositionLib {
     }
 
     /**
-     * @dev Function to retrieve Function Signature Storage from its diamond storage slot
-     * @return ds Data Storage of the Function Signature Map
+     * @notice Retrieves the storage for function signatures.
+     * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
+     * @return ds The storage structure for the function signature map.
      */
     function getFunctionSignatureStorage() internal pure returns (FunctionSignatureS storage ds) {
         bytes32 position = FUNCTION_SIGNATURE_POSITION;
@@ -63,8 +70,9 @@ library RulesEngineStoragePositionLib {
     }
 
     /**
-     * @dev Function to retrieve Rule Storage from its diamond storage slot
-     * @return ds Data Storage of the Rule Map
+     * @notice Retrieves the storage for rules.
+     * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
+     * @return ds The storage structure for the rule map.
      */
     function getRuleStorage() internal pure returns (RuleS storage ds) {
         bytes32 position = RULE_POSITION;
@@ -74,8 +82,9 @@ library RulesEngineStoragePositionLib {
     }
 
     /**
-     * @dev Function to retrieve Policy Storage from its diamond storage slot
-     * @return ds Data Storage of the Policy Map
+     * @notice Retrieves the storage for policies.
+     * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
+     * @return ds The storage structure for the policy map.
      */
     function getPolicyStorage() internal pure returns (PolicyS storage ds) {
         bytes32 position = POLICY_POSITION;
@@ -85,8 +94,9 @@ library RulesEngineStoragePositionLib {
     }
 
     /**
-     * @dev Function to retrieve Policy Association Storage from its diamond storage slot
-     * @return ds Data Storage of the Policy Association Map
+     * @notice Retrieves the storage for policy associations.
+     * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
+     * @return ds The storage structure for the policy association map.
      */
     function getPolicyAssociationStorage() internal pure returns (PolicyAssociationS storage ds) {
         bytes32 position = POLICY_ASSOCIATION_POSITION;

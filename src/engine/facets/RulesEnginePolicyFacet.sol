@@ -6,18 +6,25 @@ import "src/engine/facets/RulesEngineAdminRolesFacet.sol";
 import "src/engine/facets/RulesEngineComponentFacet.sol";
 
 /**
- * @title Rules Engine Data Facet
- * @author @ShaneDuncan602 
- * @dev This contract serves as the primary data facet for the rules engine. It is responsible for mutating and serving all the policy data.
- * @notice Data facet for the Rules Engine
+ * @title Rules Engine Policy Facet
+ * @dev This contract serves as the primary data facet for the Rules Engine. It is responsible for creating, updating, 
+ *      retrieving, and managing policies and rules. It enforces role-based access control and ensures that only authorized 
+ *      users can modify or retrieve data. The contract also supports policy cementing to prevent further modifications.
+ * @notice This contract is a critical component of the Rules Engine, enabling secure and flexible policy management.
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 contract RulesEnginePolicyFacet is FacetCommonImports {
 
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+    // Rule Management
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+
     /**
-     * Create a rule in storage.
-     * @param _policyId ID of the policy the rule will be added to
-     * @param _rule the rule to create
-     * @return ruleId the generated ruleId
+     * @notice Creates a rule in storage.
+     * @dev Adds a new rule to the specified policy. Only accessible by policy admins.
+     * @param _policyId ID of the policy the rule will be added to.
+     * @param _rule The rule to create.
+     * @return ruleId The generated rule ID.
      */
     function createRule(uint256 _policyId, Rule calldata _rule) public policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) returns (uint256) {
         RuleS storage data = lib.getRuleStorage();
@@ -29,10 +36,13 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     }
 
     /**
-     * Add a rule to storage.
-     * @param _ruleId the ruleId to add
-     * @param _rule the rule to add
-     * @return ruleId the generated ruleId
+     * @notice Stores a rule in storage.
+     * @dev Validates the policy existence before storing the rule.
+     * @param _data The rule storage structure.
+     * @param _policyId The ID of the policy the rule belongs to.
+     * @param _ruleId The ID of the rule to store.
+     * @param _rule The rule to store.
+     * @return ruleId The stored rule ID.
      */
     function _storeRule(RuleS storage _data, uint256 _policyId, uint256 _ruleId, Rule calldata _rule) internal returns (uint256) {
         // TODO: Add validations for rule
@@ -45,13 +55,13 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         return _ruleId;
     }
 
-    /// Rule Storage
     /**
-     * Update a rule in storage.
-     * @param _policyId ID of the policy the rule belongs to
-     * @param _ruleId the id of the rule
-     * @param _rule the rule to update
-     * @return ruleId the generated ruleId
+     * @notice Updates a rule in storage.
+     * @dev Modifies an existing rule in the specified policy. Only accessible by policy admins.
+     * @param _policyId ID of the policy the rule belongs to.
+     * @param _ruleId The ID of the rule to update.
+     * @param _rule The updated rule data.
+     * @return ruleId The updated rule ID.
      */
     function updateRule(
         uint256 _policyId,
@@ -66,9 +76,10 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     }
 
     /**
-     * Get a rule from storage.
-     * @param _ruleId ruleId
-     * @return ruleStorageSets rule
+     * @notice Retrieves a rule from storage.
+     * @param _policyId The ID of the policy the rule belongs to.
+     * @param _ruleId The ID of the rule to retrieve.
+     * @return ruleStorageSets The rule data.
      */
     function getRule(uint256 _policyId, uint256 _ruleId) public view returns (RuleStorageSet memory) {
         // Load the function signature data from storage
@@ -76,9 +87,9 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     }
 
     /**
-     * Delete a Rule from Storage
-     * @param _policyId the id of the policy the rule belongs to
-     * @param _ruleId the id of the rule to delete
+     * @notice Deletes a rule from storage.
+     * @param _policyId The ID of the policy the rule belongs to.
+     * @param _ruleId The ID of the rule to delete.
      */
     function deleteRule(uint256 _policyId, uint256 _ruleId) public policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         delete lib.getRuleStorage().ruleStorageSets[_policyId][_ruleId];
@@ -86,9 +97,9 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     }
 
     /**
-     * Get all rules from storage.
-     * @param _policyId the policyId the rules are associated with
-     * @return rules rules
+     * @notice Retrieves all rules associated with a specific policy.
+     * @param _policyId The ID of the policy.
+     * @return rules A two-dimensional array of rules grouped by function signatures.
      */
     function getAllRules(uint256 _policyId) external view returns (Rule[][] memory) {
         // Load the function signature data from storage
@@ -107,17 +118,19 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         return rules;
     }
 
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+    // Policy Management
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    /// Policy Storage
     /**
-     * Update a Policy in Storage
-     * @param _policyId id of of the policy 
-     * @param _signatures all signatures in the policy
-     * @param _functionSignatureIds corresponding signature ids in the policy. The elements in this array are one to one matches of the elements in _signatures array. They store the functionSignatureId for each of the signatures in _signatures array.
-     * @param _ruleIds two dimensional array of the rules. This array contains a simple count at first level and the second level is the array of ruleId's within the policy.
-     * @param _policyType type of policy (CLOSED_POLICY or OPEN_POLICY)
-     * @return policyId generated policyId
-     * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
+     * @notice Updates a policy in storage.
+     * @dev Updates the policy type, function signatures, and associated rules.
+     * @param _policyId The ID of the policy to update.
+     * @param _signatures The function signatures in the policy.
+     * @param _functionSignatureIds The IDs of the function signatures.
+     * @param _ruleIds A two-dimensional array of rule IDs associated with the policy.
+     * @param _policyType The type of the policy (CLOSED_POLICY or OPEN_POLICY).
+     * @return policyId The updated policy ID.
      */
     function updatePolicy(
         uint256 _policyId, 
@@ -136,9 +149,9 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     }
 
     /**
-     * Close the Policy 
-     * @param _policyId id of of the policy 
-     * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
+     * @notice Closes a policy by changing its type to CLOSED_POLICY.
+     * @dev This function ensures that only policy admins can close a policy and that the policy is not cemented.
+     * @param _policyId The ID of the policy to close.
      */
     function closePolicy(uint256 _policyId) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) {
         _processPolicyTypeChange(_policyId, PolicyType.CLOSED_POLICY);        
@@ -146,9 +159,9 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     }
 
     /**
-     * Open the policy
-     * @param _policyId id of of the policy 
-     * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
+     * @notice Opens a policy by changing its type to OPEN_POLICY.
+     * @dev This function ensures that only policy admins can open a policy and that the policy is not cemented.
+     * @param _policyId The ID of the policy to open.
      */
     function openPolicy(uint256 _policyId) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) {
         _processPolicyTypeChange(_policyId, PolicyType.OPEN_POLICY);        
@@ -156,17 +169,18 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     }
 
     /**
-     * Function to check if a policy is closed
-     * @param _policyId policyId
-     * @return true/false
+     * @notice Checks if a policy is closed.
+     * @param _policyId The ID of the policy to check.
+     * @return bool True if the policy is closed, false otherwise.
      */
     function isClosedPolicy(uint256 _policyId) external view returns (bool) {
         return (lib.getPolicyStorage().policyStorageSets[_policyId].policy.policyType == PolicyType.CLOSED_POLICY);
     }
 
     /**
-     * Delete a Policy from Storage
-     * @param _policyId the id of the policy to delete
+     * @notice Deletes a policy from storage.
+     * @dev Removes the policy and all associated rules, trackers, and foreign calls. Ensures the policy is not cemented.
+     * @param _policyId The ID of the policy to delete.
      */
     function deletePolicy(uint256 _policyId) public policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         PolicyStorageSet storage data = lib.getPolicyStorage().policyStorageSets[_policyId];
@@ -206,9 +220,10 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     }
 
     /**
-     * Apply the policies to the contracts.
-     * @param _contractAddress address of the contract to have policies applied
-     * @param _policyIds the rule to add 
+     * @notice Applies policies to a specified contract.
+     * @dev Ensures that only calling contract admins can apply policies and validates policy types.
+     * @param _contractAddress The address of the contract to apply policies to.
+     * @param _policyIds The IDs of the policies to apply.
      */
     function applyPolicy(address _contractAddress, uint256[] calldata _policyIds) callingContractAdminOnly(_contractAddress, msg.sender) external { 
         // Load the function signature data from storage
@@ -242,9 +257,9 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     // TODO add removePolicy fn
 
     /**
-     * Get an applied policyId from storage. 
-     * @param _contractAddress contract address
-     * @return policyId policyId
+     * @notice Retrieves the IDs of policies applied to a specific contract.
+     * @param _contractAddress The address of the contract.
+     * @return uint256[] An array of applied policy IDs.
      */
     function getAppliedPolicyIds(address _contractAddress) external view returns (uint256[] memory) {
         // Load the policy association data from storage
@@ -252,12 +267,12 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     }
 
     /**
-     * Add a Policy to Storage and create the policy admin for the policy 
-     * @param _functionSignatures corresponding signature ids in the policy. The elements in this array are one to one matches of the elements in _signatures array. They store the functionSignatureId for each of the signatures in _signatures array.
-     * @param _rules two dimensional array of the rules. This array contains a simple count at first level and the second level is the array of ruleId's within the policy.
-     * @param _policyType type of policy (CLOSED_POLICY or OPEN_POLICY)
-     * @return policyId generated policyId
-     * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
+     * @notice Creates a new policy and assigns a policy admin.
+     * @dev Generates a policy ID and initializes the policy with the specified type.
+     * @param _functionSignatures The function signatures associated with the policy.
+     * @param _rules The rules associated with the policy.
+     * @param _policyType The type of the policy (CLOSED_POLICY or OPEN_POLICY).
+     * @return uint256 The generated policy ID.
      */
     function createPolicy(
         FunctionSignatureStorageSet[] calldata _functionSignatures, 
@@ -287,14 +302,15 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     }
 
     /**
-     * @dev internal helper function for create and update policy functions  
-     * @param _policyId id of of the policy 
-     * @param _signatures all signatures in the policy
-     * @param _functionSignatureIds corresponding signature ids in the policy. The elements in this array are one to one matches of the elements in _signatures array. They store the functionSignatureId for each of the signatures in _signatures array.
-     * @param _ruleIds two dimensional array of the rules. This array contains a simple count at first level and the second level is the array of ruleId's within the policy.
-     * @param _policyType type of the policy(OPEN/CLOSED)
-     * @return policyId updated policyId 
-     * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
+     * @notice Internal helper function for creating and updating policy data.
+     * @dev This function processes and stores policy data, including function signatures, rules, and policy type.
+     * @param _policyId The ID of the policy.
+     * @param _signatures All function signatures in the policy.
+     * @param _functionSignatureIds Corresponding signature IDs in the policy. Each element matches one-to-one with the elements in `_signatures`.
+     * @param _ruleIds A two-dimensional array of rule IDs. The first level represents function signatures, and the second level contains rule IDs for each signature.
+     * @param _policyType The type of the policy (OPEN or CLOSED).
+     * @return policyId The updated policy ID.
+     * @dev The parameters are complex because nested structs are not allowed for externally facing functions.
      */
     function _storePolicyData(uint256 _policyId, bytes4[] calldata _signatures, uint256[] calldata _functionSignatureIds, uint256[][] calldata _ruleIds, PolicyType _policyType) internal returns(uint256){   
         // Load the policy data from storage
@@ -345,10 +361,10 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     }
 
     /**
-     * @dev internal helper function to clean up data during policy type changes.
-     * @param _policyId id of of the policy 
-     * @param _policyType type of the policy(OPEN/CLOSED)
-     * @dev The parameters had to be complex because nested structs are not allowed for externally facing functions
+     * @notice Internal helper function to handle data cleanup during policy type changes.
+     * @dev This function removes applied contract associations when transitioning to a CLOSED policy.
+     * @param _policyId The ID of the policy.
+     * @param _policyType The new type of the policy (OPEN or CLOSED).
      */
     function _processPolicyTypeChange(uint256 _policyId, PolicyType _policyType) internal {
         // If closing, remove all applied contract associations
@@ -365,11 +381,12 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     }
 
     /**
-     * Get a policy from storage. Since Policy contains nested mappings, they must be broken into arrays to return the data externally. 
-     * @param _policyId policyId
-     * @return functionSigs function signatures within the policy(from Policy.functionSignatureIdMap)
-     * @return functionSigIds function signature ids corresponding to each function sig in functionSigs(from Policy.functionSignatureIdMap)
-     * @return ruleIds rule ids corresponding to each function signature in functionSigs(from Policy.signatureToRuleIds)
+     * @notice Retrieves a policy from storage.
+     * @dev Since `Policy` contains nested mappings, the data is broken into arrays for external return.
+     * @param _policyId The ID of the policy.
+     * @return functionSigs The function signatures within the policy.
+     * @return functionSigIds The function signature IDs corresponding to each function signature.
+     * @return ruleIds The rule IDs corresponding to each function signature.
      */
     function getPolicy(uint256 _policyId) external view returns(bytes4[] memory functionSigs, uint256[] memory functionSigIds, uint256[][] memory ruleIds) {
         // Load the policy data from storage
@@ -395,17 +412,17 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     }
 
     /**
-     * Function to check Policy's cemented status
-     * @param _policyId policyId
-     * @return _cemented cemented (true/false)
+     * @notice Checks if a policy is cemented.
+     * @param _policyId The ID of the policy.
+     * @return _cemented True if the policy is cemented, false otherwise.
      */
      function _isCemented(uint256 _policyId) internal view returns(bool _cemented){
         return lib.getPolicyStorage().policyStorageSets[_policyId].policy.cemented;
      }
 
-     /**
-     * @dev This is the modifier used to ensure that cemented policies can't be changed.
-     * @param _policyId policyId
+    /**
+     * @dev Modifier to ensure that cemented policies cannot be modified.
+     * @param _policyId The ID of the policy.
      */
     modifier notCemented(uint256 _policyId) {
         if(_isCemented(_policyId)) revert (POLICY_CEMENTED);
@@ -413,20 +430,26 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     }
 
     /**
-     * Function to cement a specified policy
-     * @param _policyId policyId
+     * @notice Marks a policy as cemented, preventing further modifications.
+     * @param _policyId The ID of the policy to cement.
      */
     function cementPolicy(uint256 _policyId) external policyAdminOnly(_policyId, msg.sender) {
         lib.getPolicyStorage().policyStorageSets[_policyId].policy.cemented = true;
         emit PolicyCemented(_policyId);
     }
 
-    /// This section is for internal functions used for validation of components. They are here to optimize gas consumption
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+    // Internal Validation Functions
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    /// This section is for internal functions used for validation of components. They are here to optimize gas consumption.
+
     /**
-     * Check to see if a function signature is set for the policy.
-     * @param _policyId the policyId the function signature is associated with
-     * @param _functionSignatureId functionSignatureId
-     * @return set true/false
+     * @notice Checks if a function signature is set for the specified policy.
+     * @dev Validates whether the function signature exists in the policy's storage.
+     * @param _policyId The ID of the policy the function signature is associated with.
+     * @param _functionSignatureId The ID of the function signature to check.
+     * @return set True if the function signature is set, false otherwise.
      */
     function _isFunctionSignatureSet(
         uint256 _policyId,
@@ -438,10 +461,11 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     }
 
     /**
-     * @dev Check to see if the foreign call is set for this policy
-     * @param _policyId the policy Id of the foreign call to retrieve
-     * @param _foreignCallId the Id of the foreign call to retrieve
-     * @return set true/false
+     * @notice Checks if a foreign call is set for the specified policy.
+     * @dev Validates whether the foreign call exists in the policy's storage.
+     * @param _policyId The ID of the policy the foreign call is associated with.
+     * @param _foreignCallId The ID of the foreign call to check.
+     * @return set True if the foreign call is set, false otherwise.
      */
     function _isForeignCallSet(
         uint256 _policyId,
@@ -452,10 +476,11 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     }
 
     /**
-     * Check to see if a tracker is set for this policy
-     * @param _policyId the policyId the trackerStorage is associated with
-     * @param _index postion of the tracker to return
-     * @return set true/false
+     * @notice Checks if a tracker is set for the specified policy.
+     * @dev Validates whether the tracker exists in the policy's storage.
+     * @param _policyId The ID of the policy the tracker is associated with.
+     * @param _index The index of the tracker to check.
+     * @return set True if the tracker is set, false otherwise.
      */
     function _isTrackerSet(
         uint256 _policyId,

@@ -14,8 +14,11 @@ import {FacetCut, FacetCutAction} from "diamond-std/core/DiamondCut/DiamondCutLi
 
 /**
  * @title DiamondMine
- * @author @ShaneDuncan602 
- * @dev This contract is an abstract template to be reused contracts that need to create the Diamond. 
+ * @dev This contract is an abstract template for deploying and configuring a Rules Engine Diamond. It provides functionality 
+ *      to deploy the diamond, initialize it with facets, and set up the Rules Engine. The contract uses the diamond proxy 
+ *      pattern to enable modular and dynamic functionality.
+ * @notice This contract is intended to be reused in scenarios where a Rules Engine Diamond needs to be deployed and configured.
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 contract DiamondMine is Script {
     FacetCut[] _ruleProcessorFacetCuts;
@@ -23,8 +26,10 @@ contract DiamondMine is Script {
     address constant OWNER = address(0xB0b);
 
     /**
-     * @dev Deploy and set up the Rules Engine Diamond
-     * @return diamond fully configured rules engine diamond
+     * @notice Deploy and set up the Rules Engine Diamond.
+     * @dev This function deploys the diamond, initializes it with the required facets, and sets the owner.
+     * @param owner The address to be set as the owner of the diamond.
+     * @return diamond The fully configured Rules Engine Diamond.
      */
     function _createRulesEngineDiamond(
         address owner
@@ -98,8 +103,10 @@ contract DiamondMine is Script {
     }
 
     /**
-     * @dev Create the selector array for the facet
-     * @return _selectors loaded selector array
+     * @notice Create the selector array for a given facet.
+     * @dev This function uses a Python script to generate the function selectors for the specified facet.
+     * @param _facet The name of the facet for which to generate selectors.
+     * @return _selectors The array of function selectors for the facet.
      */
     function _createSelectorArray(
         string memory _facet

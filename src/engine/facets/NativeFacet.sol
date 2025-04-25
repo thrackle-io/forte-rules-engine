@@ -7,9 +7,10 @@ import {ERC173Facet} from "diamond-std/implementations/ERC173/ERC173Facet.sol";
 
 /**
  * @title NativeFacet
- * @author @ShaneDuncan602 
- * @dev The code for this comes from Nick Mudge's sample contracts. This contains all the implementations to be applied to each diamond.
+ * @dev This contract integrates core functionalities for managing and interacting with a diamond contract.
+ *      It includes implementations for diamond cutting, diamond loupe, and ownership management.
+ *      The code is based on Nick Mudge's sample contracts and is tailored for use in the Rules Engine.
+ * @notice This contract is intended to be used as a foundational facet for diamond contracts.
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
-contract NativeFacet is DiamondCutFacet, DiamondLoupeFacet, ERC173Facet {
-
-}
+contract NativeFacet is DiamondCutFacet, DiamondLoupeFacet, ERC173Facet {}

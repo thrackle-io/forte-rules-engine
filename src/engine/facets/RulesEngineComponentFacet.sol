@@ -6,17 +6,26 @@ import "src/engine/facets/RulesEngineAdminRolesFacet.sol";
 
 /**
  * @title Rules Engine Component Facet
- * @author @ShaneDuncan602 
- * @dev This contract serves as the data facet for the rules engine subcomponents. 
- * @notice Data facet for the Rules Engine
+ * @dev This contract serves as the data facet for the Rules Engine subcomponents. It provides functionality for managing
+ *      foreign calls, trackers, function signatures, and policy subscriptions. It enforces role-based access control
+ *      and ensures that only authorized users can modify or retrieve data. The contract also supports policy cementing
+ *      to prevent further modifications.
+ * @notice This contract is a critical component of the Rules Engine, enabling secure and flexible data management.
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 contract RulesEngineComponentFacet is FacetCommonImports {
     
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+    // Foreign Call Management
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+
     /**
-     * @dev Builds a foreign call structure and adds it to the contracts storage, mapped to the contract address it is associated with
-     * @param _policyId the policy Id of the policy the foreign call will be mapped to
-     * @param _foreignCall The definition of the foreign call to create
-     **/
+     * @notice Creates a foreign call and stores it in the contract's storage.
+     * @dev Builds a foreign call structure and maps it to the associated policy ID.
+     * @param _policyId The policy ID the foreign call will be mapped to.
+     * @param _foreignCall The definition of the foreign call to create.
+     * @return The index of the created foreign call.
+     */
     function createForeignCall(
         uint256 _policyId, 
         ForeignCall calldata _foreignCall
@@ -33,9 +42,10 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     }
 
     /**
-     * @dev Stores a foreign call in storage
-     * @param _policyId the policyId the foreign call is associated with
-     * @param _foreignCall the foreign call to store
+     * @notice Stores a foreign call in the contract's storage.
+     * @dev Ensures the foreign call is properly set before storing it.
+     * @param _policyId The policy ID the foreign call is associated with.
+     * @param _foreignCall The foreign call to store.
      */
     function _storeForeignCall(uint256 _policyId, ForeignCall memory _foreignCall) internal {
         assert(_foreignCall.parameterTypes.length == _foreignCall.typeSpecificIndices.length);
@@ -44,9 +54,9 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     }
 
     /**
-     * @dev Deletes a foreign call from storage
-     * @param _policyId the policyId the foreign call is associated with
-     * @param _foreignCallId the foreign call to delete
+     * @notice Deletes a foreign call from the contract's storage.
+     * @param _policyId The policy ID the foreign call is associated with.
+     * @param _foreignCallId The ID of the foreign call to delete.
      */
     function deleteForeignCall(uint256 _policyId, uint256 _foreignCallId) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         delete lib.getForeignCallStorage().foreignCalls[_policyId][_foreignCallId];
@@ -54,11 +64,11 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     }
 
     /**
-     * @dev Updates a foreign call in storage
-     * @param _policyId the policyId the foreign call is associated with
-     * @param _foreignCallId the foreign call to update
-     * @param _foreignCall the foreign call to update
-     * @return fc the foreign call structure
+     * @notice Updates a foreign call in the contract's storage.
+     * @param _policyId The policy ID the foreign call is associated with.
+     * @param _foreignCallId The ID of the foreign call to update.
+     * @param _foreignCall The updated foreign call structure.
+     * @return fc The updated foreign call structure.
      */
     function updateForeignCall(uint256 _policyId, uint256 _foreignCallId, ForeignCall calldata _foreignCall) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) returns (ForeignCall memory fc) {
         fc = _foreignCall;
@@ -69,10 +79,10 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     }
 
     /**
-     * @dev Retrieve Foreign Call from storage 
-     * @param _policyId the policy Id of the foreign call to retrieve
-     * @param _foreignCallId the Id of the foreign call to retrieve
-     * @return fc the foreign call structure
+     * @notice Retrieves a foreign call from the contract's storage.
+     * @param _policyId The policy ID of the foreign call to retrieve.
+     * @param _foreignCallId The ID of the foreign call to retrieve.
+     * @return fc The foreign call structure.
      */
     function getForeignCall(
         uint256 _policyId,
@@ -101,12 +111,16 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         return foreignCalls;
     }
 
-    /// Tracker Storage
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+    // Tracker Management
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+
     /**
-     * Add a tracker to the trackerStorage mapping.
-     * @param _policyId the policyId the trackerStorage is associated with
-     * @param _tracker the tracker to add
-     * @return trackerIndex the index of the tracker
+     * @notice Adds a tracker to the tracker storage mapping.
+     * @dev Creates a new tracker and associates it with the specified policy ID.
+     * @param _policyId The policy ID the tracker is associated with.
+     * @param _tracker The tracker to add.
+     * @return trackerIndex The index of the created tracker.
      */
     function createTracker(
         uint256 _policyId,
@@ -122,10 +136,11 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     }
 
     /**
-     * Function to update tracker in trackerStorage mapping.
-     * @param _policyId the policyId the trackerStorage is associated with
-     * @param _trackerIndex the index of the tracker to update
-     * @param _tracker the tracker to update
+     * @notice Updates an existing tracker in the tracker storage mapping.
+     * @dev Modifies the tracker associated with the specified policy ID and tracker index.
+     * @param _policyId The policy ID the tracker is associated with.
+     * @param _trackerIndex The index of the tracker to update.
+     * @param _tracker The updated tracker data.
      */
     function updateTracker(
         uint256 _policyId,
@@ -139,11 +154,12 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     }
 
     /**
-     * Store a tracker in the trackerStorage.
-     * @param _data the trackerStorage
-     * @param _policyId the policyId the tracker is associated with
-     * @param _trackerIndex the index of the tracker to store
-     * @param _tracker the tracker to store
+     * @notice Stores a tracker in the tracker storage mapping.
+     * @dev Sets the tracker data and marks it as active.
+     * @param _data The tracker storage structure.
+     * @param _policyId The policy ID the tracker is associated with.
+     * @param _trackerIndex The index of the tracker to store.
+     * @param _tracker The tracker data to store.
      */
     function _storeTracker(TrackerS storage _data, uint256 _policyId, uint256 _trackerIndex, Trackers memory _tracker) internal {
         _tracker.set = true;
@@ -151,10 +167,10 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     }
 
     /**
-     * Return a tracker from the trackerStorage.
-     * @param _policyId the policyId the trackerStorage is associated with
-     * @param _index postion of the tracker to return
-     * @return tracker
+     * @notice Retrieves a tracker from the tracker storage mapping.
+     * @param _policyId The policy ID the tracker is associated with.
+     * @param _index The index of the tracker to retrieve.
+     * @return tracker The tracker data.
      */
     function getTracker(
         uint256 _policyId,
@@ -166,10 +182,10 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         return data.trackers[_policyId][_index];
     }
 
-    /**
-     * Get all trackers from storage.
-     * @param _policyId the policyId the trackers are associated with
-     * @return trackers the trackers in the policy
+   /**
+     * @notice Retrieves all trackers associated with a specific policy ID.
+     * @param _policyId The policy ID the trackers are associated with.
+     * @return trackers An array of tracker data.
      */
     function getAllTrackers(uint256 _policyId) external view returns (Trackers[] memory) {
         // Load the Tracker data from storage
@@ -187,18 +203,28 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         return trackers;
     }
 
-    /**
-     * Delete a tracker from the trackerStorage.
-     * @param _policyId the policyId the trackerStorage is associated with
-     * @param _trackerIndex the index of the tracker to delete
+   /**
+     * @notice Deletes a tracker from the tracker storage mapping.
+     * @param _policyId The policy ID the tracker is associated with.
+     * @param _trackerIndex The index of the tracker to delete.
      */
     function deleteTracker(uint256 _policyId, uint256 _trackerIndex) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         delete lib.getTrackerStorage().trackers[_policyId][_trackerIndex];
         emit TrackerDeleted(_policyId, _trackerIndex); 
     }
 
-    /// Function Signature Storage
-    
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+    // Function Signature Management
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * @notice Creates a new function signature and stores it in the function signature storage mapping.
+     * @dev Associates the function signature with the specified policy ID and parameter types.
+     * @param _policyId The policy ID the function signature is associated with.
+     * @param _functionSignature The function signature to create.
+     * @param _pTypes The parameter types for the function signature.
+     * @return functionId The index of the created function signature.
+     */    
     function createFunctionSignature(
         uint256 _policyId,
         bytes4 _functionSignature,
@@ -215,12 +241,13 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     }
     
     /**
-     * Appends PTypes to an already existing function signature
-     * @param _policyId the policyId the function signature is associated with
-     * @param _functionSignatureId functionSignatureId
-     * @param _functionSignature the string representation of the function signature
-     * @param _pTypes the types of the parameters for the function in order
-     * @return functionId generated function Id
+     * @notice Updates an existing function signature by appending new parameter types.
+     * @dev Ensures that the new parameter types are compatible with the existing ones.
+     * @param _policyId The policy ID the function signature is associated with.
+     * @param _functionSignatureId The ID of the function signature to update.
+     * @param _functionSignature The function signature to update.
+     * @param _pTypes The new parameter types to append.
+     * @return functionId The updated function signature ID.
      */
     function updateFunctionSignature(
         uint256 _policyId,
@@ -247,9 +274,10 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     }
 
     /**
-     * Delete a function signature from storage.
-     * @param _policyId the policyId the functionSignatureId belongs to
-     * @param _functionSignatureId the index of the functionSignature to delete
+     * @notice Deletes a function signature from storage.
+     * @dev Removes the function signature and its associated rules and mappings.
+     * @param _policyId The policy ID the function signature is associated with.
+     * @param _functionSignatureId The ID of the function signature to delete.
      */
     function deleteFunctionSignature(uint256 _policyId, uint256 _functionSignatureId) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         // retrieve policy from storage 
@@ -282,10 +310,10 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     }
 
     /**
-     * Get a function signature from storage.
-     * @param _policyId the policyId the function signature is associated with
-     * @param _functionSignatureId functionSignatureId
-     * @return functionSignatureSet function signature
+     * @notice Retrieves a function signature from storage.
+     * @param _policyId The policy ID the function signature is associated with.
+     * @param _functionSignatureId The ID of the function signature to retrieve.
+     * @return functionSignatureSet The function signature data.
      */
     function getFunctionSignature(
         uint256 _policyId,
@@ -298,9 +326,9 @@ contract RulesEngineComponentFacet is FacetCommonImports {
 
 
     /**
-     * Get all function signatures from storage.
-     * @param _policyId the policyId the function signatures are associated with
-     * @return functionSignatureStorageSets function signatures
+     * @notice Retrieves all function signatures associated with a specific policy ID.
+     * @param _policyId The policy ID the function signatures are associated with.
+     * @return functionSignatureStorageSets An array of function signature data.
      */
     function getAllFunctionSignatures(uint256 _policyId) public view returns (FunctionSignatureStorageSet[] memory) {
         // Load the function signature data from storage
@@ -317,43 +345,58 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         return functionSignatureStorageSets;
     }
 
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+    // Policy Subscription Management
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+
     /**
-     * Function to add an address to subscriber list to specified policy
-     * @param _policyId policyId
-     * @param _subscriber address to add to policy subscription 
+     * @notice Adds an address to the subscriber list of a specified policy.
+     * @dev Only callable by a policy admin. The policy must not be cemented.
+     * @param _policyId The ID of the policy.
+     * @param _subscriber The address to add to the policy subscription.
      */
     function addClosedPolicySubscriber(uint256 _policyId, address _subscriber) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         lib.getPolicyStorage().policyStorageSets[_policyId].policy.closedPolicySubscribers[_subscriber] = true;
         emit PolicySubsciberAdded(_policyId, _subscriber);
     }
 
-    /**
-     * Function to check if an address is a subscriber of the specified policy
-     * @param _policyId policyId
-     * @param _subscriber address to check policy subscription 
+   /**
+     * @notice Checks if an address is a subscriber of the specified policy.
+     * @param _policyId The ID of the policy.
+     * @param _subscriber The address to check for policy subscription.
+     * @return bool True if the address is a subscriber, false otherwise.
      */
     function isClosedPolicySubscriber(uint256 _policyId, address _subscriber) external view returns (bool) {
         return lib.getPolicyStorage().policyStorageSets[_policyId].policy.closedPolicySubscribers[_subscriber];
     }
 
     /**
-     * Function to remove an address from subscriber list of specified policy
-     * @param _policyId policyId
-     * @param _subscriber address to remove from policy subscription 
+     * @notice Removes an address from the subscriber list of a specified policy.
+     * @dev Only callable by a policy admin. The policy must not be cemented.
+     * @param _policyId The ID of the policy.
+     * @param _subscriber The address to remove from the policy subscription.
      */
     function removeClosedPolicySubscriber(uint256 _policyId, address _subscriber) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
         delete lib.getPolicyStorage().policyStorageSets[_policyId].policy.closedPolicySubscribers[_subscriber];
         emit PolicySubsciberRemoved(_policyId, _subscriber);
     }
 
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+    // Policy Cementing
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
 
+    /**
+     * @notice Checks if a policy is cemented.
+     * @param _policyId The ID of the policy.
+     * @return _cemented True if the policy is cemented, false otherwise.
+     */
     function isCemented(uint256 _policyId) public view returns(bool _cemented){
         return lib.getPolicyStorage().policyStorageSets[_policyId].policy.cemented;
      }
 
      /**
-     * @dev This is the modifier used to ensure that cemented policies can't be changed.
-     * @param _policyId policyId
+     * @dev Modifier to ensure that cemented policies cannot be modified.
+     * @param _policyId The ID of the policy.
      */
     modifier notCemented(uint256 _policyId) {
         if(isCemented(_policyId)) revert ("Not allowed for cemented policy");
