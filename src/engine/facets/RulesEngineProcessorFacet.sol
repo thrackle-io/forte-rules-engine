@@ -152,6 +152,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                     ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, functionSignatureArgs, placeholder.typeSpecificIndex);
                     // Set the placeholders value and type based on the value returned by the foreign call
                     retVals[placeholderIndex] = retVal.value;
+                    placeHolders[placeholderIndex].pType = retVal.pType;
             } else if (placeholder.trackerValue) {
                 // Load the Tracker data from storage
                 Trackers memory tracker = lib.getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex];
@@ -664,4 +665,5 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         
         return (dynamicData, lengthToAppend);
     }
+
 }
