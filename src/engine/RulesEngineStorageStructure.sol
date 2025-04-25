@@ -44,7 +44,8 @@ enum LC {
     OR,
     NOT,
     PLH,
-    TRU
+    TRU,
+    ASSIGN
 }
 
 // Supported Parameter Types
