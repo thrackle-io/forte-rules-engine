@@ -1,0 +1,5 @@
+ignored_functions = []
+ignored_macros = []
+ignored_methods = []
+ignored_tests = []
+walkable_functions = ["*"]
