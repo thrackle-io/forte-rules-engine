@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "################################################################"
-echo Build and deploy Aquifi Rules Diamond
+echo Build and deploy Rules Diamond
 echo "################################################################"
 echo
 
