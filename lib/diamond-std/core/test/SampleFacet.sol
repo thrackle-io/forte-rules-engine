@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+//// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.24;
 /// This contract only exists for testing purposes. It is here to test diamond upgrades. It is named "Sample" instead
 /// of "Test" because naming it "Test" causes problems with Foundry testing.
