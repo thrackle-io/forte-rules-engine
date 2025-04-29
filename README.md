@@ -1,7 +1,7 @@
-## Forte Rules Engine
+## Forte Rules Engine - UNDER DEVELOPMENT 
 [![Project Version][version-image]][version-url]
 
-Check out [our docs](https://docs.forterulesengine.io) for in-depth guides and reference information.
+This is our next iteration of rules engine.
 
 This repository contains an EVM-based protocol designed to meet the unique needs of tokenized assets and on-chain economies. The protocol enables the creation and management of economic and compliance controls for your on-chain economy at the token level, allowing for maximum flexibility while maintaining the transparency and trustlessness of Web3.
 
