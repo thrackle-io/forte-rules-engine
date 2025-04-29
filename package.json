@@ -4,8 +4,7 @@
   "description": "Forte Rules Engine",
   
   "dependencies": {
-    "@openzeppelin/contracts": "4.9.6",
-    "@openzeppelin/contracts-upgradeable": "4.9.6"
+    "@openzeppelin/contracts": "4.9.6"
   },
   "files": [
     "LICENSE",
@@ -14,9 +13,14 @@
     "src/client",
     "src/example"
   ],
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords":  ["evm", "solidity", "ethereum", "smart contracts", "forte","rules engine", "thrackle"],
+  "author": "Thrakcle",
+  "homepage": "https://github.com/thrackle-io/forte-rules-engine#readme",
+  "license": "BSL-1.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thrackle-io/forte-rules-engine.git"
+  },
   "devDependencies": {
     "@nomicfoundation/hardhat-foundry": "^1.1.3",
     "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
