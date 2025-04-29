@@ -16,7 +16,7 @@
   "keywords":  ["evm", "solidity", "ethereum", "smart contracts", "forte","rules engine", "thrackle"],
   "author": "Thrakcle",
   "homepage": "https://github.com/thrackle-io/forte-rules-engine#readme",
-  "license": "BSL-1.1",
+  "license": "BUSL-1.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/thrackle-io/forte-rules-engine.git"
