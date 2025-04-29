@@ -14,7 +14,7 @@
     "src/example"
   ],
   "keywords":  ["evm", "solidity", "ethereum", "smart contracts", "forte","rules engine", "thrackle"],
-  "author": "Thrakcle",
+  "author": "Thrackle",
   "homepage": "https://github.com/thrackle-io/forte-rules-engine#readme",
   "license": "BUSL-1.1",
   "repository": {
