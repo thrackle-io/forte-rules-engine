@@ -226,6 +226,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      * @param _policyIds The IDs of the policies to apply.
      */
     function applyPolicy(address _contractAddress, uint256[] calldata _policyIds) callingContractAdminOnly(_contractAddress, msg.sender) external { 
+        if (_contractAddress == address(0)) revert(ZERO_ADDRESS);
         // Load the function signature data from storage
         PolicyAssociationS storage data = lib.getPolicyAssociationStorage();
         
