@@ -106,11 +106,47 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         bool response = userContract.transfer(address(0x7654321), 47);
         assertTrue(response);
     }
+
+    function testRulesEngine_Unit_checkRule_simpleGTEQL_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        setUpRuleSimpleGTEQL();
+        // test that rule ( amount >= 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly
+        bool response = userContract.transfer(address(0x7654321), 4);
+        assertTrue(response);
+    }
+
+    function testRulesEngine_Unit_checkRule_simpleLTEQL_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        setUpRuleSimpleLTEQL();
+        // test that rule ( ruleValue <= amount -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly
+        bool response = userContract.transfer(address(0x7654321), 3);
+        assertTrue(response);
+    }
     
     function testRulesEngine_Unit_checkRule_simple_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
         setUpRuleSimple();
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly
         bool response = userContract.transfer(address(0x7654321), 3);
+        assertFalse(response);
+    }
+
+    function testRulesEngine_Unit_checkRule_simpleGTEQL_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        setUpRuleSimpleGTEQL();
+        // test that rule ( ruleValue >= amount -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly
+        bool response = userContract.transfer(address(0x7654321), 3);
+        assertFalse(response);
+    }
+
+    function testRulesEngine_Unit_checkRule_simpleLTEQL_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        setUpRuleSimpleLTEQL();
+        // test that rule ( ruleValue <= amount -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly
+        bool response = userContract.transfer(address(0x7654321), 5);
         assertFalse(response);
     }
 

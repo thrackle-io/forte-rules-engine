@@ -30,6 +30,8 @@ struct InitializedS {
  * NOT - perform a logical NOT with the value at the memory address denoted by the next slot in the instruction set
  * PLH - insert a placeholder value into the next memory slot
  * TRU - perform a tracker update, the next three slots in the instruction set will denote the tracker index and address to update and the memory address of the value to use.
+ * GTEQL - perform a greater than or equal to comparison with the values at the memory addresses denoted by the next two slots in the instruction set
+ * LTEQL - perform a less than or equal to comparison with the values at the memory addresses denoted by the next two slots in the instruction set
  */
 enum LC {
     NUM,
@@ -45,7 +47,9 @@ enum LC {
     NOT,
     PLH,
     TRU,
-    ASSIGN
+    ASSIGN,
+    GTEQL,
+    LTEQL
 }
 
 // Supported Parameter Types

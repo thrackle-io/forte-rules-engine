@@ -181,6 +181,84 @@ contract RulesEngineCommon is DiamondMine, Test {
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        return (policyIds[0], ruleId);
+    }
+
+    function setUpRuleSimpleGTEQL()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+        returns (uint256 policyId, uint256 ruleId)
+    {
+        // Initial setup for what we'll need later
+        uint256[] memory policyIds = new uint256[](1);
+        // blank slate policy
+        policyIds[0] = _createBlankPolicy();
+        // Add the function signature to the policy
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+        _addFunctionSignatureToPolicy(policyIds[0]);
+        // Rule: amount >= 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        Rule memory rule;
+        // Instruction set: LC.PLH, 0, LC.GTEQL, 4, LC.GT, 0, 1
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = _createInstructionSet("GTEQL", 4, LC.GTEQL);
+        
+        // Build the calling function argument placeholder
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        // Save the rule
+        ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0] = ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        
+        // Apply the policy 
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        return (policyIds[0], ruleId);
+    }
+
+    function setUpRuleSimpleLTEQL()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+        returns (uint256 policyId, uint256 ruleId)
+    {
+        // Initial setup for what we'll need later
+        uint256[] memory policyIds = new uint256[](1);
+        // blank slate policy
+        policyIds[0] = _createBlankPolicy();
+        // Add the function signature to the policy
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+        _addFunctionSignatureToPolicy(policyIds[0]);
+        // Rule: amount <= 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        Rule memory rule;
+        // Instruction set: LC.PLH, 0, LC.LTEQL, 4, LC.GT, 0, 1
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = _createInstructionSet("LTEQL", 4, LC.LTEQL);
+        
+        // Build the calling function argument placeholder
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        // Save the rule
+        ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0] = ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+        
+        // Apply the policy 
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
 
         
 
@@ -1635,6 +1713,22 @@ contract RulesEngineCommon is DiamondMine, Test {
         instructionSet[4] = uint(LC.GT);
         instructionSet[5] = 0;
         instructionSet[6] = 1;
+    }
+
+    function _createInstructionSet(
+        string memory testString, // string added to identify this overloaded function vs the two uint256 param version 
+        uint256 plh1,
+        LC plcType
+    ) public pure returns (uint256[] memory instructionSet) {
+        instructionSet = new uint256[](7);
+        instructionSet[0] = uint(LC.PLH);
+        instructionSet[1] = 0;
+        instructionSet[2] = uint(LC.NUM);
+        instructionSet[3] = plh1;
+        instructionSet[4] = uint(plcType);
+        instructionSet[5] = 0;
+        instructionSet[6] = 1;
+        console.log("testString: %s", testString);
     }
 
     function _createInstructionSet(
