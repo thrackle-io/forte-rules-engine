@@ -30,6 +30,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         uint256 _policyId, 
         ForeignCall calldata _foreignCall
     ) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) returns (uint256) {
+        if (_foreignCall.foreignCallAddress == address(0)) revert(ZERO_ADDRESS);
         // Load the Foreign Call data from storage
         ForeignCallS storage data = lib.getForeignCallStorage();
         uint256 foreignCallIndex = ++data.foreignCallIdxCounter[_policyId];
@@ -72,6 +73,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      */
     function updateForeignCall(uint256 _policyId, uint256 _foreignCallId, ForeignCall calldata _foreignCall) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) returns (ForeignCall memory fc) {
         fc = _foreignCall;
+        if (fc.foreignCallAddress == address(0)) revert(ZERO_ADDRESS);
         fc.foreignCallIndex = _foreignCallId;
         _storeForeignCall(_policyId, fc);
         emit ForeignCallUpdated(_policyId, _foreignCallId);
@@ -356,6 +358,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param _subscriber The address to add to the policy subscription.
      */
     function addClosedPolicySubscriber(uint256 _policyId, address _subscriber) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
+        if (_subscriber == address(0)) revert(ZERO_ADDRESS); 
         lib.getPolicyStorage().policyStorageSets[_policyId].policy.closedPolicySubscribers[_subscriber] = true;
         emit PolicySubsciberAdded(_policyId, _subscriber);
     }
@@ -377,6 +380,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param _subscriber The address to remove from the policy subscription.
      */
     function removeClosedPolicySubscriber(uint256 _policyId, address _subscriber) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId){
+        if (_subscriber == address(0)) revert(ZERO_ADDRESS);
         delete lib.getPolicyStorage().policyStorageSets[_policyId].policy.closedPolicySubscribers[_subscriber];
         emit PolicySubsciberRemoved(_policyId, _subscriber);
     }
