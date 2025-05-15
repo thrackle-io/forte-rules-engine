@@ -12,7 +12,7 @@ library RulesEngineProcessorLib {
      *         - An array of bytes representing the constructed arguments.
      *         - An array of Placeholder structs used for argument substitution.
      */
-    function _buildArguments(Rule storage rule, uint256 _policyId, bytes calldata functionSignatureArgs, bool effect) internal returns (bytes[] memory, Placeholder[] memory) {
+    function _buildArguments(Rule memory rule, uint256 _policyId, bytes calldata functionSignatureArgs, bool effect) internal returns (bytes[] memory, Placeholder[] memory) {
         Placeholder[] memory placeHolders;
         if(effect) {
             placeHolders = rule.effectPlaceHolders;

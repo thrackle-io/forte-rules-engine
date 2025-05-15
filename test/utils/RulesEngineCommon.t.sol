@@ -7,6 +7,7 @@ import "test/utils/ForeignCallTestCommon.sol";
 import "src/utils/DiamondMine.sol";
 import "src/utils/FCEncodingLib.sol";
 import "src/engine/facets/RulesEngineComponentFacet.sol";
+import "src/engine/facets/RulesEngineEventFacet.sol";
 
 /**
  * Shared testing logic, set ups, helper functions and global test variables for Rules Engine Testing Framework
