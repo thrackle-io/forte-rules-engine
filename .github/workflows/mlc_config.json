@@ -12,8 +12,8 @@
     ],
     "replacementPatterns": [
       {
-        "pattern": "https://github.com/thrackle-io/forte-rules-engine",
-        "replacement": ""
+        "pattern": "https://github.com/thrackle-io/forte-rules-engine/",
+        "replacement": "/"
       },
       {
         "pattern": "\/blob\/(.*)\/",
