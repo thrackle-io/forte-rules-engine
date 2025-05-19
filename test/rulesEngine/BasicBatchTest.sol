@@ -30,7 +30,7 @@ contract BasicBatchTest is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 1;
-        calls[1] = abi.encodeWithSelector(RulesEngineComponentFacet.createForeignCall.selector, 1, fc);
+        calls[1] = abi.encodeWithSelector(RulesEngineComponentFacet.createForeignCall.selector, 1, fc, "simpleCheck(uint256)");
         calls[2] = abi.encodeWithSelector(RulesEnginePolicyFacet.updatePolicy.selector, 1, blankSignatures, blankFunctionSignatureIds, blankRuleIds, PolicyType.CLOSED_POLICY);
         RulesEngineDiamond(red).batch(calls, true);
     }

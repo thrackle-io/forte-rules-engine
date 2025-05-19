@@ -28,7 +28,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      */
     function createForeignCall(
         uint256 _policyId, 
-        ForeignCall calldata _foreignCall
+        ForeignCall calldata _foreignCall, string calldata foreignCallName
     ) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) returns (uint256) {
         if (_foreignCall.foreignCallAddress == address(0)) revert(ZERO_ADDRESS);
         // Load the Foreign Call data from storage
@@ -38,6 +38,9 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         fc.foreignCallIndex = foreignCallIndex;
         _storeForeignCall(_policyId, fc);
         data.foreignCallIdxCounter[_policyId] = foreignCallIndex;
+
+        lib.getForeignCallMetadataStorage().foreignCallMetadata[_policyId][foreignCallIndex] = foreignCallName;
+
         emit ForeignCallCreated(_policyId, foreignCallIndex);
         return foreignCallIndex;
     }
@@ -95,6 +98,19 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     }
 
     /**
+     * @notice retrieves the foreign call metadata
+     * @param _policyId The policy ID the foreign call is associated with.
+     * @param _foreignCallId The identifier for the foreign call
+     * @return fcMeta the metadata for the foreign call
+     */
+    function getForeignCallMetadata(
+        uint256 _policyId,
+        uint256 _foreignCallId
+    ) public view returns (string memory fcMeta) {
+        return lib.getForeignCallMetadataStorage().foreignCallMetadata[_policyId][_foreignCallId];
+    }
+
+    /**
      * @dev Retrieve Foreign Call Set from storage 
      * @param _policyId the policy Id of the foreign call to retrieve
      * @return fc the foreign call set structure
@@ -126,15 +142,31 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      */
     function createTracker(
         uint256 _policyId,
-        Trackers calldata _tracker
+        Trackers calldata _tracker,
+        string calldata trackerName
     ) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) returns (uint256) {
         // Load the Tracker data from storage
         TrackerS storage data = lib.getTrackerStorage();
         uint256 trackerIndex = ++data.trackerIndexCounter[_policyId];
         _storeTracker(data, _policyId, trackerIndex, _tracker);
         data.trackerIndexCounter[_policyId] = trackerIndex;
+        lib.getTrackerMetadataStorage().trackerMetadata[_policyId][trackerIndex] = trackerName;
+
         emit TrackerCreated(_policyId, trackerIndex); 
         return trackerIndex;
+    }
+
+    /**
+     * @notice retrieves the tracker metadata
+     * @param _policyId The policy ID the tracker is associated with.
+     * @param _trackerId The identifier for the tracker
+     * @return trMeta the metadata for the tracker
+     */
+    function getTrackerMetadata(
+        uint256 _policyId,
+        uint256 _trackerId
+    ) public view returns (string memory trMeta) {
+        return lib.getTrackerMetadataStorage().trackerMetadata[_policyId][_trackerId];
     }
 
     /**
@@ -165,6 +197,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      */
     function _storeTracker(TrackerS storage _data, uint256 _policyId, uint256 _trackerIndex, Trackers memory _tracker) internal {
         _tracker.set = true;
+        _tracker.trackerIndex = _trackerIndex;
         _data.trackers[_policyId][_trackerIndex] = _tracker;
     }
 
@@ -230,7 +263,9 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     function createFunctionSignature(
         uint256 _policyId,
         bytes4 _functionSignature,
-        PT[] memory _pTypes
+        PT[] memory _pTypes,
+        string memory _functionSignatureName,
+        string memory _encodedValues
     ) external policyAdminOnly(_policyId, msg.sender) notCemented(_policyId) returns (uint256) {
         FunctionSignatureS storage data = lib.getFunctionSignatureStorage();
         uint256 functionId = ++data.functionIdCounter[_policyId];
@@ -238,6 +273,10 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         data.functionSignatureStorageSets[_policyId][functionId].signature = _functionSignature;
         data.functionSignatureStorageSets[_policyId][functionId].parameterTypes = _pTypes;      
         data.functionIdCounter[_policyId] = functionId;
+        FunctionSignatureMetadataStruct storage metaData = lib.getFunctionSignatureMetadataStorage();
+        metaData.functionSignatureMetadata[_policyId][functionId].functionSignature = _functionSignatureName;
+        metaData.functionSignatureMetadata[_policyId][functionId].signature = _functionSignature;
+        metaData.functionSignatureMetadata[_policyId][functionId].encodedValues = _encodedValues;
         emit FunctionSignatureCreated(_policyId, functionId);
         return functionId;
     }
@@ -326,6 +365,18 @@ contract RulesEngineComponentFacet is FacetCommonImports {
             lib.getFunctionSignatureStorage().functionSignatureStorageSets[_policyId][_functionSignatureId];
     }
 
+    /**
+     * @notice retrieves the function signature metadata
+     * @param _policyId The policy ID the function signature is associated with.
+     * @param _functionSignatureId The identifier for the function signature
+     * @return the metadata for the function signature
+     */
+    function getFunctionSignatureMetadata(
+                uint256 _policyId,
+        uint256 _functionSignatureId
+    ) public view returns (FunctionSignatureHashMapping memory) {
+        return lib.getFunctionSignatureMetadataStorage().functionSignatureMetadata[_policyId][_functionSignatureId];
+    }
 
     /**
      * @notice Retrieves all function signatures associated with a specific policy ID.

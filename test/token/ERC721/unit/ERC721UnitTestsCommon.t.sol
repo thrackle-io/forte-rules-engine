@@ -94,7 +94,12 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         
         policyIds[0] = _createBlankPolicyOpen();
 
-        _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
+        _addFunctionSignatureToPolicy(
+            policyIds[0], 
+            bytes4(keccak256(bytes(_functionSignature))), 
+            pTypes,
+            _functionSignature  
+        );
 
         Rule memory rule =  _createEQRuleSafeMint(USER_ADDRESS);
         rule.negEffects[0] = effectId_revert;
@@ -116,7 +121,11 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         
         policyIds[0] = _createBlankPolicyOpen();
 
-        _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
+        _addFunctionSignatureToPolicy(
+            policyIds[0], 
+            bytes4(keccak256(bytes(_functionSignature))), 
+            pTypes,
+            _functionSignature);
 
         Rule memory rule =  _createEQRuleSafeTransferFrom(USER_ADDRESS);
         rule.negEffects[0] = effectId_revert;
@@ -138,7 +147,12 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         
         policyIds[0] = _createBlankPolicyOpen();
 
-        _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
+        _addFunctionSignatureToPolicy(
+            policyIds[0], 
+            bytes4(keccak256(bytes(_functionSignature))),
+             pTypes,
+             _functionSignature
+        );
 
         Rule memory rule =  _createEQRuleTransferFrom(USER_ADDRESS);
         rule.negEffects[0] = effectId_revert;

@@ -237,7 +237,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         uint256 foreignCallId = RulesEngineComponentFacet(address(red))
             .createForeignCall(
                 policyIds[0],
-                fc
+                fc,
+                "getNaughty(address)"
             );
 
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
@@ -305,7 +306,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         uint256 foreignCallId = RulesEngineComponentFacet(address(red))
             .createForeignCall(
                 policyIds[0],
-                fc
+                fc,
+                "getNaughty(address)"
             );
 
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
@@ -378,7 +380,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         uint256 foreignCallId = RulesEngineComponentFacet(address(red))
             .createForeignCall(
                 policyIds[0],
-                fc
+                fc,
+                "getNaughty(address)"
             );
 
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
@@ -455,7 +458,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         uint256 foreignCallId = RulesEngineComponentFacet(address(red))
             .createForeignCall(
                 policyIds[0],
-                fc
+                fc,
+                "getNaughty(address)"
             );
 
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
@@ -541,7 +545,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             foreignCallId = RulesEngineComponentFacet(address(red))
                 .createForeignCall(
                     policyIds[0],
-                    fc
+                    fc,
+                    "getNaughty(address)"
                 );
         }
 
@@ -946,7 +951,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         uint256 foreignCallId = RulesEngineComponentFacet(address(red))
             .createForeignCall(
                 policyIds[0],
-                fc
+                fc,
+                "getNaughty(address)"
             );
 
         // Add additional check for second address 
@@ -962,7 +968,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         uint256 foreignCallId2 = RulesEngineComponentFacet(address(red))
             .createForeignCall(
                 policyIds[0],
-                newfc
+                newfc, 
+                "getNaughty(address)"
             );
 
         // Rule: FC:OFAClist(address) > bool -> revert -> transfer(address _to, uint256 amount) returns (bool)
@@ -1027,7 +1034,13 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[5] = PT.UINT;
 
         uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
-            .createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes("transfer(address,uint256)")))), pTypes);
+            .createFunctionSignature(
+                policyIds[0],
+                bytes4(bytes4(keccak256(bytes("transfer(address,uint256)")))), 
+                pTypes, 
+                "transfer(address,uint256)",
+                "address,uint256"    
+            );
         // Save the Policy
         signatures.push(bytes4(keccak256(bytes("transfer(address,uint256)"))));
         functionSignatureIds.push(functionSignatureId);
@@ -1067,7 +1080,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         /// build the members of the struct:
         tracker.pType = PT.UINT;
         tracker.trackerValue = abi.encode(1000000000);
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker);
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -1092,7 +1105,13 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[5] = PT.UINT;
 
         uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
-            .createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes("transfer(address,uint256)")))), pTypes);
+            .createFunctionSignature(
+                policyIds[0], 
+                bytes4(bytes4(keccak256(bytes("transfer(address,uint256)")))), 
+                pTypes, 
+                "transfer(address,uint256)",
+                "address,uint256"    
+            );
         // Save the Policy
         signatures.push(bytes4(keccak256(bytes("transfer(address,uint256)"))));
         functionSignatureIds.push(functionSignatureId);

@@ -47,7 +47,8 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         uint256 foreignCallId = RulesEngineComponentFacet(address(red))
             .createForeignCall(
                 policyId,
-                fc
+                fc,
+                "simpleCheck(uint256)"
             );
 
         fc = RulesEngineComponentFacet(address(red)).getForeignCall(
@@ -69,7 +70,8 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         // Add the tracker
         uint256 trackerIndex = RulesEngineComponentFacet(address(red)).createTracker(
             policyId,
-            tracker
+            tracker,
+            "trName"
         );
         assertEq(
             abi.encode(trackerValue),
@@ -84,7 +86,13 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(policyId, bytes4(keccak256(bytes(functionSignature))), pTypes);
+        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
+            policyId,
+            bytes4(keccak256(bytes(functionSignature))),
+            pTypes,
+            "transfer(address,uint256) returns (bool)",
+            "address,uint256"
+        );
         FunctionSignatureStorageSet memory sig = RulesEngineComponentFacet(address(red)).getFunctionSignature(policyId, functionSignatureId);
         assertEq(sig.signature, bytes4(keccak256(bytes(functionSignature))));
     }
@@ -115,7 +123,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-        _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(functionSignature))), pTypes);
+        _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(functionSignature))), pTypes, "transfer(address,uint256) returns (bool)");
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
@@ -159,9 +167,14 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         return policyId;
     }
 
-    function _addFunctionSignatureToPolicy(uint256 policyId, bytes4 _functionSignature, PT[] memory pTypes) internal returns (uint256) {
+    function _addFunctionSignatureToPolicy(uint256 policyId, bytes4 _functionSignature, PT[] memory pTypes, string memory functionSignatureName) internal returns (uint256) {
         // Save the function signature
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(policyId, bytes4(_functionSignature), pTypes);
+        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
+            policyId, 
+            bytes4(_functionSignature), 
+            pTypes, 
+            functionSignatureName,
+            "");
         // Save the Policy
         signatures.push(_functionSignature);
         functionSignatureIds.push(functionSignatureId);

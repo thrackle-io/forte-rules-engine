@@ -114,6 +114,24 @@ struct ForeignCallS {
     mapping(uint256 policyId => mapping(uint256 foreignCallIndex => ForeignCall)) foreignCalls;
 }
 
+struct ForeignCallMetadataStruct {
+    mapping(uint256 policyId => mapping(uint256 foreignCallIndex => string)) foreignCallMetadata;
+}
+
+struct TrackerMetadataStruct {
+    mapping(uint256 policyId => mapping(uint256 trackerIndex => string)) trackerMetadata;
+}
+
+struct FunctionSignatureHashMapping {
+    string functionSignature;
+    bytes4 signature;
+    string encodedValues;
+}
+
+struct FunctionSignatureMetadataStruct {
+    mapping(uint256 policyId => mapping(uint256 functionId => FunctionSignatureHashMapping)) functionSignatureMetadata;
+}
+
 /**
  * Structure used to represent the return value of a Foreign Call
  */
@@ -176,6 +194,7 @@ struct Trackers {
     // tracker types arrays
     bytes trackerValue;
     // to be added: uint lastUpdatedTimestamp;
+    uint256 trackerIndex;
 }
 
 /// Function Signature Structures

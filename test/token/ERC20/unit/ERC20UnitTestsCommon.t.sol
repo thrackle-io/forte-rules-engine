@@ -119,7 +119,11 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         
         policyIds[0] = _createBlankPolicyOpen();
 
-        _addFunctionSignatureToPolicyOpen(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
+        _addFunctionSignatureToPolicyOpen(
+            policyIds[0], 
+            bytes4(keccak256(bytes(_functionSignature))), 
+            pTypes,
+            _functionSignature);
 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule =  _createGTRuleTransferFrom(4);
@@ -141,7 +145,12 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         
         policyIds[0] = _createBlankPolicyOpen();
 
-        _addFunctionSignatureToPolicyOpen(policyIds[0], bytes4(keccak256(bytes(_functionSignature))), pTypes);
+        _addFunctionSignatureToPolicyOpen(
+            policyIds[0], 
+            bytes4(keccak256(bytes(_functionSignature))), 
+            pTypes,
+            _functionSignature
+        );
 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule =  _createGTRuleMint(4);

@@ -309,7 +309,9 @@ contract RulesEngineCommon is DiamondMine, Test {
             .createFunctionSignature(
                 policyIds[0],
                 bytes4(keccak256(bytes(functionSignature2))),
-                pTypes
+                pTypes,
+                functionSignature2,
+                ""
             );
         // Save the Policy
         signatures.push(bytes4(keccak256(bytes(functionSignature2))));
@@ -369,7 +371,9 @@ contract RulesEngineCommon is DiamondMine, Test {
             .createFunctionSignature(
                 policyIds[0],
                 bytes4(keccak256(bytes(functionSignature2))),
-                pTypes
+                pTypes,
+                functionSignature2,
+                ""
             );
         // Save the Policy
         signatures.push(bytes4(keccak256(bytes(functionSignature2))));
@@ -434,7 +438,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
 
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker);      
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");      
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
         uint8[] memory typeSpecificIndices = new uint8[](1);
@@ -447,7 +451,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 0;
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc);
+        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
 
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
@@ -502,7 +506,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
 
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker);      
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");      
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
         uint8[] memory typeSpecificIndices = new uint8[](1);
@@ -515,7 +519,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 0;
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc);
+        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
 
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
@@ -563,7 +567,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 0;
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc);
+        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
         // Save the rule
         uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
 
@@ -923,7 +927,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         tracker.pType = PT.UINT;
         tracker.trackerValue = abi.encode(trackerValue);
         // Add the tracker
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker);
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -987,7 +991,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.posEffects[0] = effectId_event;
 
         // Add the tracker
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker);
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
         // Save the rule
         uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
 
@@ -1053,7 +1057,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // rule.posEffects[0] = effectId_event;
 
         // Add the tracker
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker);
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
         // Save the rule
         uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
 
@@ -1118,7 +1122,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.posEffects[0] = _createEffectExpressionTrackerUpdateParameterPlaceHolder();
 
         // Add the tracker
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker);
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
         // Save the rule
         uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
 
@@ -1183,7 +1187,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.posEffects[0] = _createEffectExpressionTrackerUpdateParameterPlaceHolder();
 
         // Add the tracker
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker);
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
         // Save the rule
         uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
 
@@ -1248,7 +1252,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.posEffects[0] = _createEffectExpressionTrackerUpdateParameterPlaceHolder();
 
         // Add the tracker
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker);
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
         // Save the rule
         uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
 
@@ -1400,7 +1404,13 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[1] = PT.UINT;
         // Save the function signature
         uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
-            .createFunctionSignature(policyId, bytes4(bytes4(keccak256(bytes(functionSignature)))), pTypes);
+            .createFunctionSignature(
+                policyId, 
+                bytes4(bytes4(keccak256(bytes(functionSignature)))), 
+                pTypes,
+                functionSignature,
+                ""    
+            );
         // Save the Policy
         signatures.push(bytes4(keccak256(bytes(functionSignature))));
         functionSignatureIds.push(functionSignatureId);
@@ -1422,7 +1432,13 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[2] = PT.BYTES;
         // Save the function signature
         uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
-            .createFunctionSignature(policyId, bytes4(bytes4(keccak256(bytes(functionSignature)))), pTypes);
+            .createFunctionSignature(
+                policyId, 
+                bytes4(bytes4(keccak256(bytes(functionSignature)))), 
+                pTypes,
+                functionSignature,
+                ""    
+            );
         // Save the Policy
         signatures.push(bytes4(keccak256(bytes(functionSignature))));
         functionSignatureIds.push(functionSignatureId);
@@ -1440,11 +1456,17 @@ contract RulesEngineCommon is DiamondMine, Test {
     function _addFunctionSignatureToPolicy(
         uint256 policyId,
         bytes4 _functionSignature,
-        PT[] memory pTypes
+        PT[] memory pTypes,
+        string memory functionName
     ) internal returns (uint256) {
         // Save the function signature
         uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
-            .createFunctionSignature(policyId, bytes4(_functionSignature), pTypes);
+            .createFunctionSignature(
+                policyId, 
+                bytes4(_functionSignature), 
+                pTypes, 
+                functionName,
+                "");
         // Save the Policy
         signatures.push(_functionSignature);
         functionSignatureIds.push(functionSignatureId);
@@ -1462,11 +1484,17 @@ contract RulesEngineCommon is DiamondMine, Test {
     function _addFunctionSignatureToPolicyOpen(
         uint256 policyId,
         bytes4 _functionSignature,
-        PT[] memory pTypes
+        PT[] memory pTypes, 
+        string memory functionName
     ) internal returns (uint256) {
         // Save the function signature
         uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
-            .createFunctionSignature(policyId, bytes4(_functionSignature), pTypes);
+            .createFunctionSignature(
+                policyId, 
+                bytes4(_functionSignature), 
+                pTypes, 
+                functionName,
+                "");
         // Save the Policy
         signatures.push(_functionSignature);
         functionSignatureIds.push(functionSignatureId);
@@ -1777,7 +1805,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 0;
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc);
+        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
         _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
@@ -1820,7 +1848,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 0;
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc);
+        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
         _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);   
@@ -1858,7 +1886,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.returnType = PT.UINT;
 
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc);
+        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
         _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);    
@@ -1877,7 +1905,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.typeSpecificIndices[0] = 1;
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 0;
-        RulesEngineComponentFacet(address(red)).createForeignCall(_policyId, fc);
+        RulesEngineComponentFacet(address(red)).createForeignCall(_policyId, fc, "simpleCheck(uint256)");
         return fc; 
     }
 
@@ -1891,7 +1919,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.typeSpecificIndices[0] = 1;
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 0;
-        uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(_policyId, fc);
+        uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(_policyId, fc, "simpleCheck(uint256)");
         return (fc, foreignCallId); 
     }
 

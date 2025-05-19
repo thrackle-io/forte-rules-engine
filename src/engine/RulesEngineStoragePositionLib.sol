@@ -20,6 +20,9 @@ library RulesEngineStoragePositionLib {
     bytes32 constant RULE_POSITION = bytes32(uint256(keccak256("rule-position")) - 1);
     bytes32 constant POLICY_POSITION = bytes32(uint256(keccak256("policy-position")) - 1);
     bytes32 constant POLICY_ASSOCIATION_POSITION = bytes32(uint256(keccak256("policy-association-position")) - 1);
+    bytes32 constant FOREIGN_CALL_METADATA_POSITION = bytes32(uint256(keccak256("foreign-call-metadata-position")) - 1);
+    bytes32 constant FUNCTION_SIGNATURE_METADATA_POSITION = bytes32(uint256(keccak256("function-signature-metadata-position")) - 1);
+    bytes32 constant TRACKER_METADATA_POSITION = bytes32(uint256(keccak256("tracker-metadata-position")) - 1);
 
     /**
      * @notice Retrieves the storage for the initialized flag.
@@ -46,6 +49,18 @@ library RulesEngineStoragePositionLib {
     }
 
     /**
+     * @notice Retrieves the storage for foreign call metadata.
+     * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
+     * @return ds The storage structure for the foreign call metadata map.
+     */
+    function getForeignCallMetadataStorage() internal pure returns (ForeignCallMetadataStruct storage ds) {
+        bytes32 position = FOREIGN_CALL_METADATA_POSITION;
+        assembly {
+            ds.slot := position
+        }
+    }
+
+    /**
      * @notice Retrieves the storage for trackers.
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
      * @return ds The storage structure for the tracker map.
@@ -58,12 +73,36 @@ library RulesEngineStoragePositionLib {
     }
 
     /**
+     * @notice Retrieves the storage for tracker metadata.
+     * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
+     * @return ds The storage structure for the tracker metadata map.
+     */
+    function getTrackerMetadataStorage() internal pure returns (TrackerMetadataStruct storage ds) {
+        bytes32 position = TRACKER_METADATA_POSITION;
+        assembly {
+            ds.slot := position
+        }
+    }
+
+    /**
      * @notice Retrieves the storage for function signatures.
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
      * @return ds The storage structure for the function signature map.
      */
     function getFunctionSignatureStorage() internal pure returns (FunctionSignatureS storage ds) {
         bytes32 position = FUNCTION_SIGNATURE_POSITION;
+        assembly {
+            ds.slot := position
+        }
+    }
+
+    /**
+     * @notice Retrieves the storage for function signature metadata.
+     * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
+     * @return ds The storage structure for the function signature metadata map.
+     */
+    function getFunctionSignatureMetadataStorage() internal pure returns (FunctionSignatureMetadataStruct storage ds) {
+        bytes32 position = FUNCTION_SIGNATURE_METADATA_POSITION;
         assembly {
             ds.slot := position
         }
