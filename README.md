@@ -3,7 +3,7 @@
 
 This is the next iteration of the Forte Rules Engine! If you're looking for the original version, go [here](https://github.com/thrackle-io/forte-rules-engine-v1). 
 
-This enhanced architecture prioritizes ease of integration and increased rule configurability. Check out our quickstart guide [here](https://github.com/thrackle-io/rules-engine-v2-docs/blob/main/quickstart.mdx)!
+This enhanced architecture prioritizes ease of integration and increased rule configurability. Check out our quickstart guide [here](https://docs.forterulesengine.io/v2/quickstart)!
 
 This project is under development and __not yet audited__. 
 
