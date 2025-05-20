@@ -917,7 +917,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         tracker.trackerValue = abi.encode(address(testContract));
         tracker.pType = PT.ADDR;
 
-        RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker);
+        RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
     }
 
     function testRulesEngine_unit_adminRoles_CreateTracker_Negative()
@@ -953,7 +953,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         tracker.trackerValue = abi.encode(address(testContract));
         tracker.pType = PT.ADDR;
 
-        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker);
+        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
 
         tracker.trackerValue = abi.encode(address(userContractAddress));
         RulesEngineComponentFacet(address(red)).updateTracker(policyID, trackerId, tracker);
@@ -1066,9 +1066,21 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(policyId, bytes4(keccak256(bytes(functionSignature))), pTypes);
+        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
+            policyId, 
+            bytes4(keccak256(bytes(functionSignature))), 
+            pTypes,
+            functionSignature,
+            ""
+        );
         assertEq(functionSignatureId, 1);
-        uint256 functionSignatureId2 = RulesEngineComponentFacet(address(red)).createFunctionSignature(policyId, bytes4(keccak256(bytes(functionSignature2))), pTypes);
+        uint256 functionSignatureId2 = RulesEngineComponentFacet(address(red)).createFunctionSignature(
+            policyId, 
+            bytes4(keccak256(bytes(functionSignature2))), 
+            pTypes,
+            functionSignature2,
+            ""
+        );
         assertEq(functionSignatureId2, 2);
         FunctionSignatureStorageSet memory matchingSignature = RulesEngineComponentFacet(address(red)).getFunctionSignature(policyId, functionSignatureId);
         assertEq(matchingSignature.signature, bytes4(keccak256(bytes(functionSignature))));
@@ -1296,7 +1308,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         Trackers memory tracker;
         tracker.trackerValue = abi.encode(address(testContract));
         tracker.pType = PT.ADDR;
-        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker);
+        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
         bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, policyAdmin);
         assertTrue(hasAdminRole);
         RulesEngineComponentFacet(address(red)).deleteTracker(policyID, trackerId);
@@ -1368,7 +1380,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ForeignCall memory fc;
         fc = _setUpForeignCallSimple(policyID);
 
-        uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyID, fc);
+        uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyID, fc, "simpleCheck(uint256)");
         fc.foreignCallAddress = address(userContractAddress);
         RulesEngineComponentFacet(address(red)).updateForeignCall(policyID, foreignCallId, fc);
     }
@@ -1475,7 +1487,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
             Trackers memory tracker;
             tracker.trackerValue = abi.encode(uint256(i));
             tracker.pType = PT.UINT;
-            RulesEngineComponentFacet(address(red)).createTracker(policyId, tracker);
+            RulesEngineComponentFacet(address(red)).createTracker(policyId, tracker, "trName");
         }
 
         Trackers[] memory trackers = RulesEngineComponentFacet(address(red)).getAllTrackers(policyId);
@@ -1700,7 +1712,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         ForeignCall memory fc;
         vm.expectRevert("Not allowed for cemented policy");
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyId, fc);
+        RulesEngineComponentFacet(address(red)).createForeignCall(policyId, fc, "simpleCheck(uint256)");
     }
 
 
@@ -1723,7 +1735,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ForeignCall memory fc;
         fc = _setUpForeignCallSimple(policyID);
 
-        uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyID, fc);
+        uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyID, fc, "simpleCheck(uint256)");
         fc.foreignCallAddress = address(userContractAddress);
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyID);
         vm.expectRevert("Not allowed for cemented policy");
@@ -1744,7 +1756,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         tracker.pType = PT.ADDR;
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyID);
         vm.expectRevert("Not allowed for cemented policy");
-        RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker);
+        RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
     }
 
     function testRulesEngine_unit_DeleteTracker_Negative_CementedPolicy()
@@ -1759,7 +1771,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         Trackers memory tracker;
         tracker.trackerValue = abi.encode(address(testContract));
         tracker.pType = PT.ADDR;
-        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker);
+        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyID);
         vm.expectRevert("Not allowed for cemented policy");
         RulesEngineComponentFacet(address(red)).deleteTracker(policyID, trackerId);
@@ -1776,7 +1788,12 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[1] = PT.UINT;
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyID);
         vm.expectRevert("Not allowed for cemented policy");
-        RulesEngineComponentFacet(address(red)).createFunctionSignature(policyID, bytes4(keccak256(bytes(functionSignature))), pTypes);
+        RulesEngineComponentFacet(address(red)).createFunctionSignature(
+            policyID, 
+            bytes4(keccak256(bytes(functionSignature))), 
+            pTypes,
+            functionSignature,
+            "");
     }
 
     function testRulesEngine_Unit_updateFunctionSignature_Negative_CementedPolicy()
@@ -2050,7 +2067,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[1] = PT.UINT;
         vm.expectEmit(true, false, false, false);
         emit FunctionSignatureCreated(policyId, functionSignatureId);
-        RulesEngineComponentFacet(address(red)).createFunctionSignature(policyId, bytes4(bytes4(keccak256(bytes(functionSignature)))), pTypes);
+        RulesEngineComponentFacet(address(red)).createFunctionSignature(
+            policyId, 
+            bytes4(bytes4(keccak256(bytes(functionSignature)))), 
+            pTypes,
+            functionSignature,
+            ""
+        );
     }
 
     function testRulesEngine_Unit_updateFunctionSignature_Event() public ifDeploymentTestsEnabled endWithStopPrank {
@@ -2107,7 +2130,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         tracker.pType = PT.ADDR;
         vm.expectEmit(true, false, false, false);
         emit TrackerCreated(policyID, trackerId);
-        RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker);
+        RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
     }
 
     function testRulesEngine_unit_UpdateTracker_Event() public ifDeploymentTestsEnabled endWithStopPrank {
@@ -2118,7 +2141,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         Trackers memory tracker;
         tracker.trackerValue = abi.encode(address(testContract));
         tracker.pType = PT.ADDR;
-        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker);
+        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
         tracker.trackerValue = abi.encode(address(userContractAddress));
         vm.expectEmit(true, false, false, false);
         emit TrackerUpdated(policyID, trackerId);
@@ -2131,7 +2154,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         Trackers memory tracker;
         tracker.trackerValue = abi.encode(address(testContract));
         tracker.pType = PT.ADDR;
-        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker);
+        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
 
         vm.expectEmit(true, false, false, false);
         emit TrackerDeleted(policyID, trackerId);
@@ -2153,7 +2176,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         fc.foreignCallIndex = 0;
         vm.expectEmit(true, false, false, false);
         emit ForeignCallCreated(policyID, foreignCallId);
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyID, fc);
+        RulesEngineComponentFacet(address(red)).createForeignCall(policyID, fc, "simpleCheck(uint256)");
     }
 
 
@@ -2162,7 +2185,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         uint256 policyID = _createBlankPolicy();
         ForeignCall memory fc;
         fc = _setUpForeignCallSimple(policyID);
-        uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyID, fc);
+        uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyID, fc, "simpleCheck(uint256)");
         fc.foreignCallAddress = address(userContractAddress);
         vm.expectEmit(true, false, false, false);
         emit ForeignCallUpdated(policyID, foreignCallId);
@@ -2221,7 +2244,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[2] = PT.UINT;
         // Save the function signature
         uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
-            .createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes(functionSignature)))), pTypes);
+            .createFunctionSignature(
+                policyIds[0], 
+                bytes4(bytes4(keccak256(bytes(functionSignature)))), 
+                pTypes,
+                functionSignature,
+                ""
+            );
         // Save the Policy
         signatures.push(bytes4(keccak256(bytes(functionSignature))));
         functionSignatureIds.push(functionSignatureId);
@@ -2337,7 +2366,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.posEffects = new Effect[](1);
         uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
         // Save the function signature
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes(functionSignature3)))), pTypes);
+        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
+            policyIds[0], 
+            bytes4(bytes4(keccak256(bytes(functionSignature3)))), 
+            pTypes,
+            functionSignature3,
+            ""    
+        );
 
 
         // Save the Policy
@@ -2395,7 +2430,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 1;
-        uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc);
+        uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "getNaughty(address)");
 
         rule.instructionSet = new uint256[](7);
         rule.instructionSet[0] = uint(LC.PLH);
@@ -2429,7 +2464,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
         // Save the function signature
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes(functionSignature3)))), pTypes);
+        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
+            policyIds[0], 
+            bytes4(bytes4(keccak256(bytes(functionSignature3)))), 
+            pTypes,
+            functionSignature3,
+            ""
+        );
 
         // Save the Policy
         signatures.push(bytes4(keccak256(bytes(functionSignature3))));
@@ -2498,7 +2539,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.posEffects = new Effect[](1);
         uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
         // Save the function signature
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes(functionSignatureBool)))), pTypes);
+        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
+            policyIds[0], 
+            bytes4(bytes4(keccak256(bytes(functionSignatureBool)))), 
+            pTypes,
+            functionSignatureBool,
+            ""
+        );
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -2569,7 +2616,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.posEffects = new Effect[](1);
         uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
         // Save the function signature
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes(functionSignatureWithBytes)))), pTypes);
+        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
+            policyIds[0], 
+            bytes4(bytes4(keccak256(bytes(functionSignatureWithBytes)))), 
+            pTypes,
+            functionSignatureWithBytes,
+            ""
+        );
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -2646,7 +2699,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.posEffects = new Effect[](1);
         uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
         // Save the function signature
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes(functionSignatureBytes)))), pTypes);
+        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
+            policyIds[0], 
+            bytes4(bytes4(keccak256(bytes(functionSignatureBytes)))), 
+            pTypes,
+            functionSignatureBytes,
+            ""
+        );
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -2720,7 +2779,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.posEffects = new Effect[](1);
         uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
         // Save the function signature
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes(functionSignatureWithString)))), pTypes);
+        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
+            policyIds[0], 
+            bytes4(bytes4(keccak256(bytes(functionSignatureWithString)))), 
+            pTypes,
+            functionSignatureWithString,
+            ""
+        );
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -2794,7 +2859,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.posEffects = new Effect[](1);
         uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
         // Save the function signature
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes(functionSignatureArrayStatic)))), pTypes);
+        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
+            policyIds[0], 
+            bytes4(bytes4(keccak256(bytes(functionSignatureArrayStatic)))), 
+            pTypes,
+            functionSignatureArrayStatic,
+            ""  
+        );
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -2869,7 +2940,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.posEffects = new Effect[](1);
         uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
         // Save the function signature
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes(functionSignatureArrayDynamic)))), pTypes);
+        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
+            policyIds[0], 
+            bytes4(bytes4(keccak256(bytes(functionSignatureArrayDynamic)))), 
+            pTypes,
+            functionSignatureArrayDynamic,
+            ""    
+        );
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -2944,7 +3021,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.posEffects = new Effect[](1);
         uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
         // Save the function signature
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes(functionSignatureArrayDynamic)))), pTypes);
+        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
+            policyIds[0], 
+            bytes4(bytes4(keccak256(bytes(functionSignatureArrayDynamic)))), 
+            pTypes,
+            functionSignatureArrayDynamic,
+            ""    
+        );
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -3030,7 +3113,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[5] = PT.UINT;
 
         uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
-            .createFunctionSignature(policyIds[0], bytes4(bytes4(keccak256(bytes("transfer(address,uint256)")))), pTypes);
+            .createFunctionSignature(
+                policyIds[0],
+                bytes4(bytes4(keccak256(bytes("transfer(address,uint256)")))), 
+                pTypes,
+                "transfer(address,uint256)",
+                "address,uint256"   
+            );
         // Save the Policy
         signatures.push(bytes4(keccak256(bytes("transfer(address,uint256)"))));
         functionSignatureIds.push(functionSignatureId);
@@ -3081,14 +3170,14 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         /// build the members of the struct:
         tracker.pType = PT.UINT;
         tracker.trackerValue = abi.encode(1000000000);
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker);
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
 
         //build second tracker
         Trackers memory tracker2;
         /// build the members of the struct:
         tracker2.pType = PT.UINT;
         tracker2.trackerValue = abi.encode(2000000000);
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker2);
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker2, "trName");
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
