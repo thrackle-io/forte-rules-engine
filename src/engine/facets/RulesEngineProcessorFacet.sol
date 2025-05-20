@@ -238,6 +238,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             else if (op == LC.LT) { v = bool2ui(mem[prog[idx+1]] < mem[prog[idx+2]]); idx += 3; }
             else if (op == LC.GT) { v = bool2ui(mem[prog[idx+1]] > mem[prog[idx+2]]); idx += 3; }
             else if (op == LC.EQ) { v = bool2ui(mem[prog[idx+1]] == mem[prog[idx+2]]); idx += 3; }
+            else if (op == LC.NOTEQ) { v = bool2ui(mem[prog[idx+1]] != mem[prog[idx+2]]); idx += 3; }
             else if (op == LC.GTEQL) { v = bool2ui(mem[prog[idx+1]] >= mem[prog[idx+2]]); idx += 3; }
             else if (op == LC.LTEQL) { v = bool2ui(mem[prog[idx+1]] <= mem[prog[idx+2]]); idx += 3; }
             else if (op == LC.AND) { v = bool2ui(ui2bool(mem[prog[idx+1]]) && ui2bool(mem[prog[idx+2]])); idx += 3; }

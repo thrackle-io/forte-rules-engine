@@ -49,7 +49,8 @@ enum LC {
     TRU,
     ASSIGN,
     GTEQL,
-    LTEQL
+    LTEQL,
+    NOTEQ
 }
 
 // Supported Parameter Types
