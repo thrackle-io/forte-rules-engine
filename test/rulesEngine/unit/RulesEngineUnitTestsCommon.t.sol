@@ -24,6 +24,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         (uint256 policyId, uint256 ruleId) = setUpRuleSimple();
         ruleId; 
         // Save the function signature
@@ -32,6 +34,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = 1;
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         vm.expectRevert("Invalid Rule");
         RulesEnginePolicyFacet(address(red)).updatePolicy(
             policyId,
@@ -72,6 +76,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         (uint256 policyId, uint256 ruleId) = setUpRuleSimple();
         ruleId;
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         assertGt(
             RulesEnginePolicyFacet(address(red)).updatePolicy(
                 policyId,
@@ -599,6 +605,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         //                  calling contract,  updated uint, empty address, empty string, bool, empty bytes
         Trackers memory tracker;
         tracker.trackerValue = abi.encode(7);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         RulesEngineComponentFacet(address(red)).updateTracker(policyId, 1, tracker);
 
         vm.expectRevert(abi.encodePacked(revert_text));
@@ -925,19 +933,19 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        // TODO return test after admin roles are returned
-        // vm.startPrank(policyAdmin);
-        // uint256 policyID = _createBlankPolicy();
-        // vm.stopPrank();
-        // vm.startPrank(newPolicyAdmin);
-        // bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
-        // assertFalse(hasAdminRole);
-        // Trackers memory tracker;
-        // tracker.trackerValue = abi.encode(address(testContract));
-        // tracker.pType = PT.ADDR;
 
-        // vm.expectRevert("Not Authorized To Policy");
-        // RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker);
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
+        assertFalse(hasAdminRole);
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = PT.ADDR;
+
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
     }
 
     function testRulesEngine_unit_adminRoles_UpdateTracker_Positive()
@@ -964,22 +972,21 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        // TODO return test after admin roles are returned
-        // vm.startPrank(policyAdmin);
-        // uint256 policyID = _createBlankPolicy();
-        // Trackers memory tracker;
-        // tracker.trackerValue = abi.encode(address(testContract));
-        // tracker.pType = PT.ADDR;
-        // uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker);
-        // vm.stopPrank();
-        // vm.startPrank(newPolicyAdmin);
-        // bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
-        // assertFalse(hasAdminRole);
-        // tracker.trackerValue = abi.encode(address(userContractAddress));
-        // tracker.pType = PT.ADDR;
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = PT.ADDR;
+        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
+        assertFalse(hasAdminRole);
+        tracker.trackerValue = abi.encode(address(userContractAddress));
+        tracker.pType = PT.ADDR;
 
-        // vm.expectRevert("Not Authorized To Policy");
-        // RulesEngineComponentFacet(address(red)).updateTracker(policyID, trackerId, tracker);
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).updateTracker(policyID, trackerId, tracker);
     }
 
     function testRulesEngine_Unit_createFunctionSignature_Positive()
@@ -1002,14 +1009,17 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        // TODO return test after admin roles are returned
-        // uint256 policyId = _createBlankPolicy();
-        // PT[] memory pTypes = new PT[](2);
-        // pTypes[0] = PT.ADDR;
-        // pTypes[1] = PT.UINT;
-        // vm.startPrank(newPolicyAdmin);
-        // vm.expectRevert("Not Authorized To Policy");
-        // RulesEngineComponentFacet(address(red)).createFunctionSignature(policyId, bytes4(keccak256(bytes(functionSignature))), pTypes);
+        uint256 policyId = _createBlankPolicy();
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+        vm.startPrank(newPolicyAdmin);
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).createFunctionSignature(policyId, 
+            bytes4(keccak256(bytes(functionSignature))), 
+            pTypes,
+            functionSignature,
+            "");
     }
 
     function testRulesEngine_Unit_updateFunctionSignature_Positive()
@@ -1108,17 +1118,16 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        // TODO return test after admin roles are returned 
-        // uint256 policyId = _createBlankPolicy();
-        // PT[] memory pTypes = new PT[](2);
-        // pTypes[0] = PT.ADDR;
-        // pTypes[1] = PT.UINT;
-        // uint256 functionSignatureId = _addFunctionSignatureToPolicy(policyId);
-        // assertEq(functionSignatureId, 1);
+        uint256 policyId = _createBlankPolicy();
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+        uint256 functionSignatureId = _addFunctionSignatureToPolicy(policyId);
+        assertEq(functionSignatureId, 1);
 
-        // vm.startPrank(newPolicyAdmin);
-        // vm.expectRevert("Not Authorized To Policy");
-        // RulesEngineComponentFacet(address(red)).deleteFunctionSignature(policyId, functionSignatureId); 
+        vm.startPrank(newPolicyAdmin);
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).deleteFunctionSignature(policyId, functionSignatureId); 
     }
 
     function testRulesEngine_Unit_deleteFunctionSignatureWithRuleCheck_Positive()
@@ -1137,6 +1146,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[1] = PT.UINT;
         pTypes[2] = PT.ADDR;
         RulesEngineComponentFacet(address(red)).getFunctionSignature(1, 0);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         RulesEngineComponentFacet(address(red)).deleteFunctionSignature(1, 1); 
         // test that rule no longer checks 
         bool ruleCheck = userContract.transfer(address(0x7654321), 3);
@@ -1171,22 +1182,21 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        // TODO return test after admin roles are returned
-        // uint256 policyId = _createBlankPolicy();
-        // Rule memory rule;
-        // // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
-        // // Build the instruction set for the rule (including placeholders)
-        // rule.instructionSet = _createInstructionSet(4);
-        // // Build the calling function argument placeholder 
-        // rule.placeHolders = new Placeholder[](1);
-        // rule.placeHolders[0].pType = PT.UINT;
-        // rule.placeHolders[0].typeSpecificIndex = 1;
-        // // Save the rule
-        // uint256 ruleId = RulesEnginePolicyFacet(address(red)).updateRule(policyId, 0, rule);
+        uint256 policyId = _createBlankPolicy();
+        Rule memory rule;
+        // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = _createInstructionSet(4);
+        // Build the calling function argument placeholder 
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        // Save the rule
+        uint256 ruleId = RulesEnginePolicyFacet(address(red)).updateRule(policyId, 0, rule);
 
-        // vm.startPrank(newPolicyAdmin);
-        // vm.expectRevert("Not Authorized To Policy");
-        // RulesEnginePolicyFacet(address(red)).deleteRule(policyId, ruleId); 
+        vm.startPrank(newPolicyAdmin);
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEnginePolicyFacet(address(red)).deleteRule(policyId, ruleId); 
     }
 
     function testRulesEngine_Unit_updateFunctionSignature_Negative_NewParameterTypesNotSameLength()
@@ -1235,15 +1245,14 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        // TODO return test after admin roles are returned
-        // uint256 policyId = _createBlankPolicy();
-        // PT[] memory pTypes = new PT[](2);
-        // pTypes[0] = PT.ADDR;
-        // pTypes[1] = PT.UINT;
-        // uint256 functionSignatureId = _addFunctionSignatureToPolicy(policyId);
-        // vm.startPrank(newPolicyAdmin);
-        // vm.expectRevert("Not Authorized To Policy");
-        // RulesEngineComponentFacet(address(red)).updateFunctionSignature(policyId, functionSignatureId, bytes4(keccak256(bytes(functionSignature2))), pTypes);
+        uint256 policyId = _createBlankPolicy();
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+        uint256 functionSignatureId = _addFunctionSignatureToPolicy(policyId);
+        vm.startPrank(newPolicyAdmin);
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).updateFunctionSignature(policyId, functionSignatureId, bytes4(keccak256(bytes(functionSignature2))), pTypes);
     }
 
     function testRulesEngine_Unit_updateFunctionSignatureWithRuleCheck_Positive()
@@ -1262,6 +1271,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[1] = PT.UINT;
         pTypes[2] = PT.ADDR;
         FunctionSignatureStorageSet memory sig = RulesEngineComponentFacet(address(red)).getFunctionSignature(1, 1);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         RulesEngineComponentFacet(address(red)).updateFunctionSignature(1, 1, bytes4(keccak256(bytes(functionSignature))), pTypes);
         assertEq(sig.set, true);
         // ensure orignal contract rule check works 
@@ -1288,6 +1299,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[1] = PT.UINT;
         pTypes[2] = PT.ADDR;
         FunctionSignatureStorageSet memory sig = RulesEngineComponentFacet(address(red)).getFunctionSignature(1, 1);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         RulesEngineComponentFacet(address(red)).updateFunctionSignature(1, 1, bytes4(keccak256(bytes(functionSignature))), pTypes);
         assertEq(sig.set, true);
         // ensure orignal contract rule check works 
@@ -1324,19 +1337,18 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        // TODO return test after admin roles are returned
-        // vm.startPrank(policyAdmin);
-        // uint256 policyID = _createBlankPolicy();
-        // Trackers memory tracker;
-        // tracker.trackerValue = abi.encode(address(testContract));
-        // tracker.pType = PT.ADDR;
-        // uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker);
-        // vm.stopPrank();
-        // vm.startPrank(newPolicyAdmin);
-        // bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
-        // assertFalse(hasAdminRole);
-        // vm.expectRevert("Not Authorized To Policy");
-        // RulesEngineComponentFacet(address(red)).deleteTracker(policyID, trackerId);
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = PT.ADDR;
+        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trkName");
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
+        assertFalse(hasAdminRole);
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).deleteTracker(policyID, trackerId);
     }
 
     function testRulesEngine_unit_adminRoles_CreateForeignCall_Positive()
@@ -1356,16 +1368,15 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        // TODO return test after admin roles are returned
-        // vm.startPrank(policyAdmin);
-        // uint256 policyID = _createBlankPolicy();
-        // vm.stopPrank();
-        // vm.startPrank(newPolicyAdmin);
-        // bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
-        // assertFalse(hasAdminRole);
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
+        assertFalse(hasAdminRole);
 
-        // vm.expectRevert("Not Authorized To Policy");
-        // _setUpForeignCallSimple(policyID);
+        vm.expectRevert("Not Authorized To Policy");
+        _setUpForeignCallSimple(policyID);
     }
 
     function testRulesEngine_unit_adminRoles_UpdateForeignCall_Positive()
@@ -1390,20 +1401,19 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        // TODO return test after admin roles are returned
-        // vm.startPrank(policyAdmin);
-        // uint256 policyID = _createBlankPolicy();
-        // uint256 foreignCallId;
-        // ForeignCall memory fc;
-        // (fc, foreignCallId) = _setUpForeignCallSimpleReturnID(policyID);
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        uint256 foreignCallId;
+        ForeignCall memory fc;
+        (fc, foreignCallId) = _setUpForeignCallSimpleReturnID(policyID);
 
-        // vm.stopPrank();
-        // vm.startPrank(newPolicyAdmin);
-        // bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
-        // assertFalse(hasAdminRole);
-        // fc.foreignCallAddress = address(userContractAddress);
-        // vm.expectRevert("Not Authorized To Policy");
-        // RulesEngineComponentFacet(address(red)).updateForeignCall(policyID, foreignCallId, fc);
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
+        assertFalse(hasAdminRole);
+        fc.foreignCallAddress = address(userContractAddress);
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).updateForeignCall(policyID, foreignCallId, fc);
     }
     
     function testRulesEngine_unit_adminRoles_DeleteForeignCall_Positive()
@@ -1436,18 +1446,17 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        // TODO return test after admin roles are returned
-        // vm.startPrank(policyAdmin);
-        // uint256 policyID = _createBlankPolicy();
-        // uint256 foreignCallId;
-        // ForeignCall memory fc;
-        // (fc, foreignCallId) = _setUpForeignCallSimpleReturnID(policyID);
-        // vm.stopPrank();
-        // vm.startPrank(newPolicyAdmin);
-        // bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
-        // assertFalse(hasAdminRole);
-        // vm.expectRevert("Not Authorized To Policy");
-        // RulesEngineComponentFacet(address(red)).deleteForeignCall(policyID, foreignCallId);
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        uint256 foreignCallId;
+        ForeignCall memory fc;
+        (fc, foreignCallId) = _setUpForeignCallSimpleReturnID(policyID);
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
+        assertFalse(hasAdminRole);
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).deleteForeignCall(policyID, foreignCallId);
     }
 
     function testRulesEngine_Unit_GetAllForeignCallsTest()
@@ -1720,6 +1729,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         // set up the ERC20
         uint256 policyId = _setup_checkRule_ForeignCall_Positive(ruleValue);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
         vm.expectRevert("Not allowed for cemented policy");
         RulesEngineComponentFacet(address(red)).deleteForeignCall(policyId,0);
@@ -1805,6 +1816,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         (uint256 policyID, uint256 ruleID) = setUpRuleSimple();
         ruleID;
         RulesEngineComponentFacet(address(red)).getFunctionSignature(1, 1);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyID);
         vm.expectRevert("Not allowed for cemented policy");
         RulesEngineComponentFacet(address(red)).updateFunctionSignature(1, 1, bytes4(keccak256(bytes(functionSignature))), new PT[](3));
@@ -1989,6 +2002,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     function testRulesEngine_Unit_UpdatePolicy_Event() public ifDeploymentTestsEnabled endWithStopPrank {
         (uint256 policyId, uint256 ruleId) = setUpRuleSimple();
         ruleId;
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         vm.expectEmit(true, false, false, false);
         emit PolicyUpdated(policyId); 
         RulesEnginePolicyFacet(address(red)).updatePolicy(

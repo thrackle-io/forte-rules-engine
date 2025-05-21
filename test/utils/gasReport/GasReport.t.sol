@@ -43,6 +43,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
     //-------------------------------------------------------------------------------------
 
     function setUp() public {
+        vm.startPrank(policyAdmin);
         red = _createRulesEngineDiamond(address(0xB0b));
 
         //R2V2 Setup
@@ -66,6 +67,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         userContractFC.setRulesEngineAddress(address(red));
         userContractFC.setCallingContractAdmin(callingContractAdmin);
         testContract2 = new ForeignCallTestContractOFAC();
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         setupRuleWithOFACForeignCall(address(testContract2), ET.REVERT, true);
         testContract2.addToNaughtyList(address(0x7654321));
 
@@ -74,6 +77,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         userContractFCPlusMin.mint(USER_ADDRESS, 1_000_000 * ATTO);
         userContractFCPlusMin.setRulesEngineAddress(address(red));
         userContractFCPlusMin.setCallingContractAdmin(callingContractAdmin);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         setupRulesWithForeignCallAndMinTransfer(address(testContract2), ET.REVERT, true);
 
         // OFAC Plus Min In One Rule        
@@ -81,6 +86,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         userContractFCPlusMinPlusMaxOneRule.mint(USER_ADDRESS, 1_000_000 * ATTO);
         userContractFCPlusMinPlusMaxOneRule.setRulesEngineAddress(address(red));
         userContractFCPlusMinPlusMaxOneRule.setCallingContractAdmin(callingContractAdmin);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         setupRulesWithForeignCallPlusMinTransferAndMaxTransferInOneRule(address(testContract2), ET.REVERT, true);
 
         // OFAC Plus Min In Separate Policies
@@ -88,6 +95,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         userContractFCPlusMinSeparatePolicy.mint(USER_ADDRESS, 1_000_000 * ATTO);
         userContractFCPlusMinSeparatePolicy.setRulesEngineAddress(address(red));
         userContractFCPlusMinSeparatePolicy.setCallingContractAdmin(callingContractAdmin);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         setupRulesWithForeignCallAndMinTransferSeparatePolicies(address(testContract2), ET.REVERT, true);
 
         // Min Transfer 20 iterations 
@@ -95,6 +104,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         userContractManyChecksMin.mint(USER_ADDRESS, 1_000_000 * ATTO);
         userContractManyChecksMin.setRulesEngineAddress(address(red));
         userContractManyChecksMin.setCallingContractAdmin(callingContractAdmin);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         _setupRuleWithRevertManyCondition();
 
         // OFAC Plus Min Plus Max Transfer 
@@ -102,6 +113,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         userContractFCPlusMinPlusMax.mint(USER_ADDRESS, 1_000_000 * ATTO);
         userContractFCPlusMinPlusMax.setRulesEngineAddress(address(red));
         userContractFCPlusMinPlusMax.setCallingContractAdmin(callingContractAdmin);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         setupRulesWithForeignCallPlusMinTransferAndMaxTransfer(address(testContract2), ET.REVERT, true);
 
         // Pause Rule  
@@ -109,6 +122,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         userContractPause.mint(USER_ADDRESS, 1_000_000 * ATTO);
         userContractPause.setRulesEngineAddress(address(red));
         userContractPause.setCallingContractAdmin(callingContractAdmin);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         setUpRuleWithPauseTrackers();
 
         // Oracle Flex
@@ -117,6 +132,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         userContractOracleFlex.setRulesEngineAddress(address(red));
         userContractOracleFlex.setCallingContractAdmin(callingContractAdmin);
         testContract2.addToNaughtyList(address(0xD00d));
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         setupRuleWithOracleFlexForeignCall(address(testContract2), ET.REVERT, true);
 
         // Min Max Balance 
@@ -124,6 +141,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         userContractMinMaxBalance.mint(USER_ADDRESS, 1_000_000 * ATTO);
         userContractMinMaxBalance.setRulesEngineAddress(address(red));
         userContractMinMaxBalance.setCallingContractAdmin(callingContractAdmin);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         setUpRuleWithMinMaxBalanceLimits();
 
         //-------------------------------------------------------------------------------------

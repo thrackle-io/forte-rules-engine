@@ -14,7 +14,8 @@ contract ERC20UnitTests is ERC20UnitTestsCommon {
         userContract.setRulesEngineAddress(address(red));
         testContract = new ForeignCallTestContract();
         userContract.setCallingContractAdmin(callingContractAdmin);
-        _setupEffectProcessor();        
+        _setupEffectProcessor(); 
+        vm.startPrank(policyAdmin);       
     }
 
 }

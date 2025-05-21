@@ -14,7 +14,8 @@ contract ERC721UnitTests is ERC721UnitTestsCommon {
         userContract.setRulesEngineAddress(address(red));
         testContract = new ForeignCallTestContract();
         userContract.setCallingContractAdmin(callingContractAdmin);
-        _setupEffectProcessor();        
+        _setupEffectProcessor();    
+        vm.startPrank(policyAdmin);    
     }
 
 }
