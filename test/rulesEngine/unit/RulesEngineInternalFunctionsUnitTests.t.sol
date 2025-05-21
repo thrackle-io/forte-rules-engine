@@ -24,7 +24,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes(functionSig)));
         fc.parameterTypes = new PT[](1);
         fc.parameterTypes[0] = PT.UINT;
-        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices = new int8[](1);
         fc.typeSpecificIndices[0] = 0;
         bytes memory vals = abi.encode(1);
         RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals);
@@ -44,7 +44,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         fc.parameterTypes = new PT[](2);
         fc.parameterTypes[0] = PT.UINT;
         fc.parameterTypes[1] = PT.UINT;
-        fc.typeSpecificIndices = new uint8[](2);
+        fc.typeSpecificIndices = new int8[](2);
         fc.typeSpecificIndices[0] = 0;
         fc.typeSpecificIndices[1] = 1;
         bytes memory vals = abi.encode(1, 2);
@@ -66,7 +66,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes(functionSig)));
         fc.parameterTypes = new PT[](1);
         fc.parameterTypes[0] = PT.ADDR;
-        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices = new int8[](1);
         fc.typeSpecificIndices[0] = 0;
         bytes memory vals = abi.encode(address(0x1234567));
         RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals);
@@ -554,7 +554,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         fc.parameterTypes[3] = PT.STR;
         fc.parameterTypes[4] = PT.ADDR;
 
-        fc.typeSpecificIndices = new uint8[](5);
+        fc.typeSpecificIndices = new int8[](5);
         fc.typeSpecificIndices[0] = 0;
         fc.typeSpecificIndices[1] = 1;
         fc.typeSpecificIndices[2] = 2;
@@ -569,10 +569,12 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
             address(0x1234567)
         );
 
+        bytes[] memory retVals = new bytes[](0);
         ForeignCallReturnValue memory retVal = RulesEngineProcessorFacet(address(red))
             .evaluateForeignCallForRule(
                 fc,
-                vals
+                vals,
+                retVals
             );
 
         assertEq(foreignCall.getDecodedIntOne(), 1);
@@ -601,7 +603,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         fc.parameterTypes[0] = PT.STR;
         fc.parameterTypes[1] = PT.STATIC_TYPE_ARRAY;
         fc.parameterTypes[2] = PT.DYNAMIC_TYPE_ARRAY;
-        fc.typeSpecificIndices = new uint8[](3);
+        fc.typeSpecificIndices = new int8[](3);
         fc.typeSpecificIndices[0] = 2;
         fc.typeSpecificIndices[1] = 1;
         fc.typeSpecificIndices[2] = 0;
@@ -620,7 +622,8 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         strArray[3] = "superduperduperduper";
         strArray[4] = "superduperduperduperduperduperduperduperduperduperduperduperlongstring";
         bytes memory vals = abi.encode(strArray, uintArray, str);
-        ForeignCallReturnValue memory retVal = RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals);
+        bytes[] memory retVals = new bytes[](0);
+        ForeignCallReturnValue memory retVal = RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
         retVal;
     }
 
@@ -646,7 +649,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         fc.parameterTypes[3] = PT.STR;
         fc.parameterTypes[4] = PT.ADDR;
 
-        fc.typeSpecificIndices = new uint8[](5);
+        fc.typeSpecificIndices = new int8[](5);
         fc.typeSpecificIndices[0] = 1;
         fc.typeSpecificIndices[1] = 0;
         fc.typeSpecificIndices[2] = 2;
@@ -663,14 +666,15 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         // Build the rule signature function arguments structure
 
         bytes memory arguments = abi.encode("one", 2, 3, "four", 5, address(0x12345678));
-
+        bytes[] memory retVals = new bytes[](0);
         // Build the mapping between calling function arguments and foreign call arguments
 
         ForeignCallReturnValue memory retVal = RulesEngineProcessorFacet(
             address(red)
         ).evaluateForeignCallForRule(
                 fc,
-                arguments
+                arguments,
+                retVals
             );
         console2.logBytes(retVal.value);
     }

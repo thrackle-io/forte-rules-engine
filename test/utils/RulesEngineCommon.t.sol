@@ -442,7 +442,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");      
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
-        uint8[] memory typeSpecificIndices = new uint8[](1);
+        int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 1;
 
         ForeignCall memory fc;
@@ -510,7 +510,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");      
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
-        uint8[] memory typeSpecificIndices = new uint8[](1);
+        int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 1;
 
         ForeignCall memory fc;
@@ -559,7 +559,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
-        uint8[] memory typeSpecificIndices = new uint8[](1);
+        int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 1;
         ForeignCall memory fc;
         fc.typeSpecificIndices = typeSpecificIndices;
@@ -1914,7 +1914,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.parameterTypes = new PT[](1);
         fc.parameterTypes[0] = PT.UINT;
-        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices = new int8[](1);
         fc.typeSpecificIndices[0] = 1;
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 0;
@@ -1928,7 +1928,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.parameterTypes = new PT[](1);
         fc.parameterTypes[0] = PT.UINT;
-        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices = new int8[](1);
         fc.typeSpecificIndices[0] = 1;
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 0;
