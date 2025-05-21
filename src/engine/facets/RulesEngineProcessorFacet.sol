@@ -136,7 +136,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
             Placeholder memory placeholder = placeHolders[placeholderIndex];
             if(placeholder.foreignCall) {
-                    ForeignCallReturnValue memory retVal = _evaluateForeignCalls(_policyId, callingFunctionArgs, placeholder.typeSpecificIndex);
+                    ForeignCallReturnValue memory retVal = _evaluateForeignCalls(_policyId, callingFunctionArgs, placeholder.typeSpecificIndex, retVals);
                     // Set the placeholders value and type based on the value returned by the foreign call
                     retVals[placeholderIndex] = retVal.value;
                     placeHolders[placeholderIndex].pType = retVal.pType;
@@ -280,17 +280,19 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @param _policyId Id of the policy.
      * @param callingFunctionArgs representation of the calling function arguments
      * @param foreignCallIndex Index of the foreign call.
+     * @param retVals array of return values from previous foreign calls, trackers, etc.
      * @return returnValue The output of the foreign call.
      */
     function _evaluateForeignCalls(
         uint256 _policyId, 
         bytes calldata callingFunctionArgs, 
-        uint256 foreignCallIndex
-    ) internal returns(ForeignCallReturnValue memory returnValue) {
+        uint256 foreignCallIndex,
+        bytes[] memory retVals
+    ) public returns(ForeignCallReturnValue memory returnValue) {
         // Load the Foreign Call data from storage
         ForeignCall memory foreignCall = lib.getForeignCallStorage().foreignCalls[_policyId][foreignCallIndex];
         if (foreignCall.set) {
-            return evaluateForeignCallForRule(foreignCall, callingFunctionArgs);
+            return _evaluateForeignCallForRule(foreignCall, callingFunctionArgs, retVals);
         }
     }
 
@@ -300,7 +302,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @param functionArguments the arguments of the rules calling function (to be passed to the foreign call as needed)
      * @return retVal the foreign calls return value
      */
-    function evaluateForeignCallForRule(ForeignCall memory fc, bytes calldata functionArguments) public returns (ForeignCallReturnValue memory retVal) {
+    function _evaluateForeignCallForRule(ForeignCall memory fc, bytes calldata functionArguments, bytes[] memory retVals) public returns (ForeignCallReturnValue memory retVal) {
         // First, calculate total size needed and positions of dynamic data
         bytes memory encodedCall = bytes.concat(bytes4(fc.signature));
         bytes memory dynamicData;
@@ -309,8 +311,18 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         // First pass: calculate sizes
         for(uint256 i = 0; i < fc.parameterTypes.length; i++) {
             PT argType = fc.parameterTypes[i];
-            uint256 typeSpecificIndex = fc.typeSpecificIndices[i];
-            bytes32 value = bytes32(functionArguments[typeSpecificIndex * 32: (typeSpecificIndex + 1) * 32]);
+            uint256 typeSpecificIndex;
+            bool isRetVal = false;
+            bytes32 value;
+            if (fc.typeSpecificIndices[i] < 0) {
+                typeSpecificIndex = getAbsoluteAssembly(fc.typeSpecificIndices[i]) - 1; // -1 because retVals is 0 indexed
+                isRetVal = true;
+                value = bytes32(retVals[typeSpecificIndex]);
+                continue;
+            } else {
+                typeSpecificIndex = getAbsoluteAssembly(fc.typeSpecificIndices[i]);
+                value = bytes32(functionArguments[typeSpecificIndex * 32: (typeSpecificIndex + 1) * 32]);
+            }
             
             if (argType == PT.STR || argType == PT.BYTES) {
                 // Add offset to head
@@ -494,6 +506,17 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         }
     }
 
+    function getAbsoluteAssembly(int256 _number) public pure returns (uint256) {
+        uint256 result;
+        assembly {
+            // If number is negative, negate it
+            switch slt(_number, 0)
+            case 1 { result := sub(0, _number) }
+            default { result := _number }
+        }
+        return result;
+    }
+    
     /**
      * @notice Extracts a dynamic variable from the provided calldata at the specified index.
      * @dev This function is a pure function and does not modify state.
