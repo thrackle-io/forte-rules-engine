@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "test/utils/RulesEngineCommon.t.sol";
 import "src/example/ExampleUserContract.sol";
-
+import {RulesEngineProcessorLib as ProcessorLib} from "src/engine/facets/RulesEngineProcessorLib.sol";
 abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
 
     ExampleUserContract userContractInternal;
@@ -691,7 +691,7 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        bool success = RulesEngineProcessorFacet(address(red)).ui2bool(1);
+        bool success = ProcessorLib._ui2bool(1);
         assertTrue(success);
     }
 
@@ -700,19 +700,24 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        uint256 success = RulesEngineProcessorFacet(address(red)).bool2ui(false);
+        uint256 success = ProcessorLib._bool2ui(false);
         assertTrue(success == 0);
     }
 
-    function testRulesEngine_Utils_evaluateForeignCalls()
+    function testRulesEngine_Utils_UintToAddr()
         public
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        setupRuleWithForeignCall(4, ET.REVERT, false);
-
-        bytes memory arguments = abi.encode(address(0x7654321), 5);
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCalls(0, arguments, 0);
+        assertEq(ProcessorLib._ui2addr(uint256(uint160(address(0xD00d)))),address(0xD00d));
     }
 
+    function testRulesEngine_Utils_UintToBytes()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        bytes memory b = "BYTES STRING OF SUFFICIENT LNGTH";
+        assertEq(ProcessorLib._ui2bytes(uint256(abi.decode(b, (uint256)))),b);
+    }
 }

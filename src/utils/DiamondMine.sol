@@ -8,6 +8,7 @@ import "src/engine/facets/RulesEngineProcessorFacet.sol";
 import "src/engine/facets/RulesEnginePolicyFacet.sol";
 import "src/engine/facets/RulesEngineComponentFacet.sol";
 import "src/engine/facets/RulesEngineAdminRolesFacet.sol";
+import "src/engine/facets/RulesEngineInitialFacet.sol";
 import {IDiamondInit} from "diamond-std/initializers/IDiamondInit.sol";
 import {DiamondInit} from "diamond-std/initializers/DiamondInit.sol";
 import {FacetCut, FacetCutAction} from "diamond-std/core/DiamondCut/DiamondCutLib.sol";
@@ -92,13 +93,22 @@ contract DiamondMine is Script {
             })
         );
 
+        // Data
+        _ruleProcessorFacetCuts.push(
+            FacetCut({
+                facetAddress: address(new RulesEngineInitialFacet()),
+                action: FacetCutAction.Add,
+                functionSelectors: _createSelectorArray("RulesEngineInitialFacet")
+            })
+        );
+
         /// Build the diamond
         // Deploy the diamond.
         RulesEngineDiamond rulesEngineInternal = new RulesEngineDiamond(
             _ruleProcessorFacetCuts,
             diamondArgs
         );
-        RulesEngineProcessorFacet(address(rulesEngineInternal)).initialize(owner);
+        RulesEngineInitialFacet(address(rulesEngineInternal)).initialize(owner);
         return rulesEngineInternal;
     }
 

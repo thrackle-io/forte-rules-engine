@@ -2,6 +2,8 @@
 pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
+import {RulesEngineProcessorLib as ProcessorLib} from "src/engine/facets/RulesEngineProcessorLib.sol";
+
 /**
  * @title Rules Engine Processor Facet
  * @dev This contract serves as the core processor for evaluating rules and executing effects in the Rules Engine.
@@ -11,21 +13,6 @@ import "src/engine/facets/FacetCommonImports.sol";
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 contract RulesEngineProcessorFacet is FacetCommonImports{
-
-    //-------------------------------------------------------------------------------------------------------------------------------------------------------
-    // Initialization
-    //-------------------------------------------------------------------------------------------------------------------------------------------------------
-
-    /**
-     * @notice Initializes the Rules Engine with the specified owner.
-     * @dev This function sets the initial owner of the diamond and ensures the contract is only initialized once.
-     * @param _owner The initial owner of the diamond.
-     */
-    function initialize(address _owner) external {
-        InitializedS storage init = lib.initializedStorage();
-        if(init.initialized) revert ("AlreadyInitialized");
-        callAnotherFacet(0xf2fde38b, abi.encodeWithSignature("transferOwnership(address)", _owner));
-    }
 
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
     // Rule Evaluation Functions
@@ -69,7 +56,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         // to rule specific argument array
         // note that arguments is being sliced, first 4 bytes are the function signature being passed (:4) and the rest (4:) 
         // are all the arguments associated for the rule to be invoked. This saves on further calculations so that we don't need to factor in the signature.
-        retVal = evaluateRulesAndExecuteEffects(ruleData ,_policyId, _loadApplicableRules(ruleData, policyStorageSet.policy, bytes4(arguments[:4])), arguments[4:]);
+        retVal = _evaluateRulesAndExecuteEffects(ruleData ,_policyId, _loadApplicableRules(ruleData, policyStorageSet.policy, bytes4(arguments[:4])), arguments[4:]);
     }
 
     /**
@@ -100,7 +87,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @param functionSignatureArgs The arguments for the function signature.
      * @return retVal True if all rules pass, false otherwise.
      */
-    function evaluateRulesAndExecuteEffects(mapping(uint256 ruleId => RuleStorageSet) storage ruleData, uint256 _policyId, uint256[] memory applicableRules, bytes calldata functionSignatureArgs) internal returns (bool retVal) {
+    function _evaluateRulesAndExecuteEffects(mapping(uint256 ruleId => RuleStorageSet) storage ruleData, uint256 _policyId, uint256[] memory applicableRules, bytes calldata functionSignatureArgs) internal returns (bool retVal) {
         retVal = true;
         uint256 ruleCount = applicableRules.length;
         for(uint256 i = 0; i < ruleCount; i++) { 
@@ -149,7 +136,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
             Placeholder memory placeholder = placeHolders[placeholderIndex];
             if(placeholder.foreignCall) {
-                    ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, functionSignatureArgs, placeholder.typeSpecificIndex);
+                    ForeignCallReturnValue memory retVal = _evaluateForeignCalls(_policyId, functionSignatureArgs, placeholder.typeSpecificIndex);
                     // Set the placeholders value and type based on the value returned by the foreign call
                     retVals[placeholderIndex] = retVal.value;
                     placeHolders[placeholderIndex].pType = retVal.pType;
@@ -160,7 +147,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             } else {
                 // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
                 if(placeholder.pType == PT.STR || placeholder.pType == PT.BYTES) {
-                    retVals[placeholderIndex] = getDynamicVariableFromCalldata(functionSignatureArgs, placeholder.typeSpecificIndex);
+                    retVals[placeholderIndex] = _getDynamicVariableFromCalldata(functionSignatureArgs, placeholder.typeSpecificIndex);
                 } else if (placeholder.pType == PT.STATIC_TYPE_ARRAY || placeholder.pType == PT.DYNAMIC_TYPE_ARRAY) {
                     // if the placeholder represents an array, determine the length and set lenth as placeholder value in ruleArgs 
                     bytes32 value = bytes32(functionSignatureArgs[placeholder.typeSpecificIndex * 32: (placeholder.typeSpecificIndex + 1) * 32]);
@@ -207,7 +194,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                     v = uint256(keccak256(abi.encode(abi.decode(arguments[pli], (string))))); idx += 2;
                 } else if(typ == PT.BOOL) {
                     // Convert bool to uint256 for direct comparison using == and != operations
-                    v = uint256(bool2ui((abi.decode(arguments[pli], (bool))))); idx += 2;
+                    v = uint256(ProcessorLib._bool2ui((abi.decode(arguments[pli], (bool))))); idx += 2;
                 } else if(typ == PT.BYTES) {
                     // Convert bytes to uint256 for direct comparison using == and != operations
                     v = uint256(keccak256(abi.encode(abi.decode(arguments[pli], (bytes))))); idx += 2;
@@ -235,20 +222,20 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             else if (op == LC.MUL) { v = mem[prog[idx+1]] * mem[prog[idx+2]]; idx += 3; }
             else if (op == LC.DIV) { v = mem[prog[idx+1]] / mem[prog[idx+2]]; idx += 3; }
             else if (op == LC.ASSIGN) { v = mem[prog[idx+2]]; idx += 3; }
-            else if (op == LC.LT) { v = bool2ui(mem[prog[idx+1]] < mem[prog[idx+2]]); idx += 3; }
-            else if (op == LC.GT) { v = bool2ui(mem[prog[idx+1]] > mem[prog[idx+2]]); idx += 3; }
-            else if (op == LC.EQ) { v = bool2ui(mem[prog[idx+1]] == mem[prog[idx+2]]); idx += 3; }
-            else if (op == LC.NOTEQ) { v = bool2ui(mem[prog[idx+1]] != mem[prog[idx+2]]); idx += 3; }
-            else if (op == LC.GTEQL) { v = bool2ui(mem[prog[idx+1]] >= mem[prog[idx+2]]); idx += 3; }
-            else if (op == LC.LTEQL) { v = bool2ui(mem[prog[idx+1]] <= mem[prog[idx+2]]); idx += 3; }
-            else if (op == LC.AND) { v = bool2ui(ui2bool(mem[prog[idx+1]]) && ui2bool(mem[prog[idx+2]])); idx += 3; }
-            else if (op == LC.OR ) { v = bool2ui(ui2bool(mem[prog[idx+1]]) || ui2bool(mem[prog[idx+2]])); idx += 3; }
-            else if (op == LC.NOT) { v = bool2ui(! ui2bool(mem[prog[idx+1]])); idx += 2; }
+            else if (op == LC.LT) { v = ProcessorLib._bool2ui(mem[prog[idx+1]] < mem[prog[idx+2]]); idx += 3; }
+            else if (op == LC.GT) { v = ProcessorLib._bool2ui(mem[prog[idx+1]] > mem[prog[idx+2]]); idx += 3; }
+            else if (op == LC.EQ) { v = ProcessorLib._bool2ui(mem[prog[idx+1]] == mem[prog[idx+2]]); idx += 3; }
+            else if (op == LC.NOTEQ) { v = ProcessorLib._bool2ui(mem[prog[idx+1]] != mem[prog[idx+2]]); idx += 3; }
+            else if (op == LC.GTEQL) { v = ProcessorLib._bool2ui(mem[prog[idx+1]] >= mem[prog[idx+2]]); idx += 3; }
+            else if (op == LC.LTEQL) { v = ProcessorLib._bool2ui(mem[prog[idx+1]] <= mem[prog[idx+2]]); idx += 3; }
+            else if (op == LC.AND) { v = ProcessorLib._bool2ui(ProcessorLib._ui2bool(mem[prog[idx+1]]) && ProcessorLib._ui2bool(mem[prog[idx+2]])); idx += 3; }
+            else if (op == LC.OR ) { v = ProcessorLib._bool2ui(ProcessorLib._ui2bool(mem[prog[idx+1]]) || ProcessorLib._ui2bool(mem[prog[idx+2]])); idx += 3; }
+            else if (op == LC.NOT) { v = ProcessorLib._bool2ui(! ProcessorLib._ui2bool(mem[prog[idx+1]])); idx += 2; }
             else { revert("Illegal instruction"); }
             mem[opi] = v;
             opi += 1;
         }
-        return ui2bool(mem[opi - 1]);
+        return ProcessorLib._ui2bool(mem[opi - 1]);
     }
 
     /**
@@ -263,11 +250,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         if(trk.pType == PT.UINT) {
             trk.trackerValue = abi.encode(_trackerValue);
         } else if(trk.pType == PT.ADDR) {
-            trk.trackerValue = abi.encode(ui2addr(_trackerValue));
+            trk.trackerValue = abi.encode(ProcessorLib._ui2addr(_trackerValue));
         } else if(trk.pType == PT.BOOL) {
-            trk.trackerValue = abi.encode(ui2bool(_trackerValue));
+            trk.trackerValue = abi.encode(ProcessorLib._ui2bool(_trackerValue));
         } else if(trk.pType == PT.BYTES) {
-            trk.trackerValue = ui2bytes(_trackerValue);
+            trk.trackerValue = ProcessorLib._ui2bytes(_trackerValue);
         } 
     }
 
@@ -295,11 +282,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @param foreignCallIndex Index of the foreign call.
      * @return returnValue The output of the foreign call.
      */
-    function evaluateForeignCalls(
+    function _evaluateForeignCalls(
         uint256 _policyId, 
         bytes calldata functionSignatureArgs, 
         uint256 foreignCallIndex
-    ) public returns(ForeignCallReturnValue memory returnValue) {
+    ) internal returns(ForeignCallReturnValue memory returnValue) {
         // Load the Foreign Call data from storage
         ForeignCall memory foreignCall = lib.getForeignCallStorage().foreignCalls[_policyId][foreignCallIndex];
         if (foreignCall.set) {
@@ -356,7 +343,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 uint256 length = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
                 lengthToAppend += 32;
                 dynamicData = bytes.concat(dynamicData, abi.encode(length));
-                (dynamicData, lengthToAppend) = getDynamicValueArrayData(functionArguments, dynamicData, length, lengthToAppend, uint(value));
+                (dynamicData, lengthToAppend) = _getDynamicValueArrayData(functionArguments, dynamicData, length, lengthToAppend, uint(value));
             }
             else {
                 encodedCall = bytes.concat(encodedCall, value);
@@ -507,41 +494,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         }
     }
 
-    //-------------------------------------------------------------------------------------------------------------------------------------------------------
-    // Utility Functions
-    //-------------------------------------------------------------------------------------------------------------------------------------------------------
-    /**
-     * @dev converts a uint256 to a bool
-     * @param x the uint256 to convert
-     */
-    function ui2bool(uint256 x) public pure returns (bool ans) {
-        return x == 1;
-    }
-
-    /**
-     * @dev converts a bool to an uint256
-     * @param x the bool to convert
-     */
-    function bool2ui(bool x) public pure returns (uint256 ans) {
-        return x ? 1 : 0;
-    }
-
-    /**
-     * @dev converts a uint256 to an address
-     * @param x the uint256 to convert
-     */
-    function ui2addr(uint256 x) public pure returns (address ans) {
-        return address(uint160(x));
-    }
-
-    /**
-     * @dev converts a uint256 to a bytes
-     * @param x the uint256 to convert
-     */
-    function ui2bytes(uint256 x) public pure returns (bytes memory ans) {
-        return abi.encode(x);
-    }
-
     /**
      * @notice Extracts a dynamic variable from the provided calldata at the specified index.
      * @dev This function is a pure function and does not modify state.
@@ -549,7 +501,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @param index The index of the dynamic variable to extract.
      * @return retVal The extracted dynamic variable as a bytes array.
      */
-    function getDynamicVariableFromCalldata(bytes calldata data, uint256 index) public pure returns (bytes memory retVal) {
+    function _getDynamicVariableFromCalldata(bytes calldata data, uint256 index) internal pure returns (bytes memory retVal) {
         // Get offset from parameter position, using index * 32 to get the correct position in the calldata
         uint256 offset = uint256(bytes32(data[index * 32:(index + 1) * 32]));
         // Get length from the offset position, using offset + 32 to get the correct position in the calldata
@@ -573,60 +525,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         return result;
     }
 
-    /**
-     * @notice Retrieves the raw string associated with a specific instruction set within a rule and policy.
-     * @dev This function is used to fetch a `StringVerificationStruct` containing the raw string data.
-     * @param _policyId The ID of the policy containing the rule.
-     * @param _ruleId The ID of the rule containing the instruction set.
-     * @param instructionSetId The ID of the instruction set to retrieve the raw string from.
-     * @return retVal A `StringVerificationStruct` containing the raw string data for the specified instruction set.
-     */
-    function retrieveRawStringFromInstructionSet(uint256 _policyId, uint256 _ruleId, uint256 instructionSetId) public view returns (StringVerificationStruct memory retVal) {
-        (uint256 instructionSetValue, bytes memory encoded) = _retreiveRawEncodedFromInstructionSet(_policyId, _ruleId, instructionSetId, PT.STR);
-        retVal.rawData = abi.decode(encoded, (string));
-        retVal.instructionSetValue = instructionSetValue;
-    }
-
-    /**
-     * @notice Retrieves the raw address from a specific instruction set.
-     * @dev This function is used to fetch the raw address associated with a given
-     *      policy ID, rule ID, and instruction set ID.
-     * @param _policyId The ID of the policy to which the rule belongs.
-     * @param _ruleId The ID of the rule within the policy.
-     * @param instructionSetId The ID of the instruction set to retrieve the address verification structure from.
-     * @return retVal The AddressVerificationStruct containing the raw address data.
-     */
-    function retrieveRawAddressFromInstructionSet(uint256 _policyId, uint256 _ruleId, uint256 instructionSetId) public view returns (AddressVerificationStruct memory retVal) {
-        (uint256 instructionSetValue, bytes memory encoded) = _retreiveRawEncodedFromInstructionSet(_policyId, _ruleId, instructionSetId, PT.ADDR);
-        retVal.rawData = abi.decode(encoded, (address));
-        retVal.instructionSetValue = instructionSetValue;
-    }
-
-    /**
-     * @dev Retrieves the raw encoded data and instruction set value from a given instruction set ID.
-     * @param _policyId The ID of the policy associated with the instruction set.
-     * @param _ruleId The ID of the rule associated with the instruction set.
-     * @param instructionSetId The ID of the instruction set to retrieve data from.
-     * @param pType The parameter type (PT) associated with the instruction set.
-     * @return instructionSetValue The value of the instruction set.
-     * @return encoded The raw encoded data associated with the instruction set.
-     */
-    function _retreiveRawEncodedFromInstructionSet(uint256 _policyId, uint256 _ruleId, uint256 instructionSetId, PT pType) internal view returns (uint256 instructionSetValue, bytes memory encoded) {
-        RuleStorageSet memory _ruleStorage = lib.getRuleStorage().ruleStorageSets[_policyId][_ruleId];
-        if(!_ruleStorage.set) {
-            revert("Unknown Rule");
-        }
-        for(uint256 i = 0; i < _ruleStorage.rule.rawData.instructionSetIndex.length; i++) {
-            if(_ruleStorage.rule.rawData.instructionSetIndex[i] == instructionSetId) {
-                if(_ruleStorage.rule.rawData.argumentTypes[i] != pType) {
-                    revert("Incorrect type");
-                }
-                encoded = _ruleStorage.rule.rawData.dataValues[i];
-                instructionSetValue = _ruleStorage.rule.instructionSet[instructionSetId];
-                break;
-            }
-        }
-    }
 
     /**
      * @notice Retrieves a portion of dynamic value array data from the provided inputs.
@@ -640,7 +538,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      *         - A bytes memory object representing the extracted data.
      *         - A uint256 value indicating the updated offset after extraction.
      */
-    function getDynamicValueArrayData(bytes calldata data, bytes memory dynamicData, uint length, uint lengthToAppend, uint256 offset) public pure returns (bytes memory, uint256) {
+    function _getDynamicValueArrayData(bytes calldata data, bytes memory dynamicData, uint length, uint lengthToAppend, uint256 offset) internal pure returns (bytes memory, uint256) {
         bytes memory arrayData;
         
         lengthToAppend += (length * 0x20);
