@@ -27,7 +27,7 @@ jobs:
         run: |
           curl -L https://foundry.paradigm.xyz |
           export PATH="$HOME/.foundry/bin:$PATH" |
-          bash ~/.foundry/bin/foundryup --version $(awk '$1~/^[^#]/' script/foundryScripts/foundry.lock)
+          FOUNDRY_DIR=$HOME/foundry bash $HOME/foundryup --version $(awk '$1~/^[^#]/' script/foundryScripts/foundry.lock)
           echo "$HOME/foundry/bin" >> $GITHUB_PATH
       - name: Install dependencies
         run: |
