@@ -231,7 +231,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         uint256 ruleId = setupRuleWithStringComparison();
-        StringVerificationStruct memory retVal = RulesEngineProcessorFacet(address(red)).retrieveRawStringFromInstructionSet(1, ruleId, 3);
+        StringVerificationStruct memory retVal = RulesEngineInitialFacet(address(red)).retrieveRawStringFromInstructionSet(1, ruleId, 3);
         console2.log(retVal.instructionSetValue);
         console2.log(retVal.rawData);
         assertEq(
@@ -268,7 +268,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         uint256 ruleId = setupRuleWithAddressComparison();
-        AddressVerificationStruct memory retVal = RulesEngineProcessorFacet(address(red)).retrieveRawAddressFromInstructionSet(1, ruleId, 3);
+        AddressVerificationStruct memory retVal = RulesEngineInitialFacet(address(red)).retrieveRawAddressFromInstructionSet(1, ruleId, 3);
         console2.log(retVal.instructionSetValue);
         console2.log(retVal.rawData);
         assertEq(

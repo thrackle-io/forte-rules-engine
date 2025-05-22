@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "lib/forge-std/src/Test.sol";
-
+import "lib/forge-std/src/console2.sol";
 import "test/utils/ForeignCallTestCommon.sol";
 import "src/utils/DiamondMine.sol";
 import "src/utils/FCEncodingLib.sol";
