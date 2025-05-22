@@ -3,11 +3,9 @@ pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
 /**
- * @title Rules Engine Processor Facet
- * @dev This contract serves as the core processor for evaluating rules and executing effects in the Rules Engine.
- *      It provides functionality for evaluating policies, rules, and conditions, as well as executing effects based on rule outcomes.
- *      The contract also supports foreign calls, dynamic argument handling, and tracker updates.
- * @notice This contract is a critical component of the Rules Engine, enabling secure and flexible rule evaluation and effect execution.
+ * @title Rules Engine Initial Facet
+ * @dev This contract contains worker functions and initialization functions.
+ * @notice This contract is a critical component of the Rules Engine
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 contract RulesEngineInitialFacet is FacetCommonImports{
