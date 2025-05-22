@@ -15,9 +15,9 @@ import "test/rulesEngine/unit/RulesEngineUnitTestsCommon.t.sol";
  * URQTBC AMM
 */
 
-contract RulesEngineDeploymentTests is RulesEngineUnitTestsCommon {
+contract RulesEngineForkTests is RulesEngineUnitTestsCommon {
     // Set your Fork Test addresses 
-    address deploymentOwner = address(0x0000); 
+    address deploymentOwner = address(0x000); 
     address marketPlace = address(0x0000);
     address ammALTBC = address(0x0000);
     address ammURQTBC = address(0x0000);
@@ -25,10 +25,18 @@ contract RulesEngineDeploymentTests is RulesEngineUnitTestsCommon {
 
     function setUp() public{
         if (deploymentOwner != address(0x0)) {
-            red = _createRulesEngineDiamond(deploymentOwner);        
+            vm.startPrank(deploymentOwner);
+            callingContractAdmin = address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8);
+            policyAdmin = address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
+            red = RulesEngineDiamond(payable(vm.envAddress("DIAMOND_ADDRESS")));        
             userContract = new ExampleUserContract();
             userContract.setRulesEngineAddress(address(red));
+            userContract.setCallingContractAdmin(callingContractAdmin);
+            userContractAddress = address(userContract);
             testContract = new ForeignCallTestContract();
+            newUserContract = new ExampleUserContract();
+            newUserContractAddress = address(newUserContract);
+            newUserContract.setRulesEngineAddress(address(red));
             _setupEffectProcessor();
             testDeployments = true;
         } else {

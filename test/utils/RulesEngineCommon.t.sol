@@ -380,6 +380,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         functionSignatureIds.push(functionSignatureId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[0], signatures, functionSignatureIds, ruleIds, PolicyType.CLOSED_POLICY);    
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);    
@@ -1399,6 +1401,8 @@ contract RulesEngineCommon is DiamondMine, Test {
 
 
     function _addFunctionSignatureToPolicy(uint256 policyId) internal returns (uint256) {
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
@@ -1443,6 +1447,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         signatures.push(bytes4(keccak256(bytes(functionSignature))));
         functionSignatureIds.push(functionSignatureId);
         uint256[][] memory blankRuleIds = new uint256[][](0);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         RulesEnginePolicyFacet(address(red)).updatePolicy(
             policyId,
             signatures,
@@ -1471,6 +1477,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         signatures.push(_functionSignature);
         functionSignatureIds.push(functionSignatureId);
         uint256[][] memory blankRuleIds = new uint256[][](0);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         RulesEnginePolicyFacet(address(red)).updatePolicy(
             policyId,
             signatures,
@@ -1499,6 +1507,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         signatures.push(_functionSignature);
         functionSignatureIds.push(functionSignatureId);
         uint256[][] memory blankRuleIds = new uint256[][](0);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         RulesEnginePolicyFacet(address(red)).updatePolicy(
             policyId,
             signatures,
@@ -1514,6 +1524,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256 policyId,
         uint256[][] memory _ruleIds
     ) internal {
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         RulesEnginePolicyFacet(address(red)).updatePolicy(
             policyId,
             signatures,
@@ -1527,6 +1539,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256 policyId,
         uint256[][] memory _ruleIds
     ) internal {
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
         RulesEnginePolicyFacet(address(red)).updatePolicy(
             policyId,
             signatures,

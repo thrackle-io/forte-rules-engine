@@ -7,6 +7,7 @@ import "test/rulesEngine/unit/RulesEngineInternalFunctionsUnitTests.t.sol";
 contract RulesEngineUnitTests is RulesEngineUnitTestsCommon, RulesEngineInternalFunctionsUnitTests {
 
   function setUp() public{
+        vm.startPrank(policyAdmin);
         red = _createRulesEngineDiamond(address(0xB0b)); 
         userContract = new ExampleUserContract();
         userContractInternal = new ExampleUserContract();
