@@ -26,9 +26,9 @@ jobs:
       - name: Install Foundry
         run: |
           curl -L https://foundry.paradigm.xyz | bash
-          source /home/runner/.bashrc | bash
-          FOUNDRY_DIR=$HOME/foundry bash $HOME/foundryup --version $(awk '$1~/^[^#]/' script/foundryScripts/foundry.lock)
-          echo "$HOME/foundry/bin" >> $GITHUB_PATH
+          ~/.foundry/bin/foundryup
+          # FOUNDRY_DIR=$HOME/foundry bash $HOME/foundryup --version $(awk '$1~/^[^#]/' script/foundryScripts/foundry.lock)
+          # echo "$HOME/foundry/bin" >> $GITHUB_PATH
       - name: Install dependencies
         run: |
           git config user.email "cloudops@thrackle.io"
