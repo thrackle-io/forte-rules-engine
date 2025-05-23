@@ -1,0 +1,68 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.24;
+
+import "src/engine/facets/FacetCommonImports.sol";
+
+library RulesEngineStorageLib {
+ 
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+    // Internal Validation Functions
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    /// This section is for internal functions used for validation of components. They are here to optimize gas consumption.
+
+    /**
+     * @notice Checks if a function signature is set for the specified policy.
+     * @dev Validates whether the function signature exists in the policy's storage.
+     * @param _policyId The ID of the policy the function signature is associated with.
+     * @param _functionSignatureId The ID of the function signature to check.
+     * @return set True if the function signature is set, false otherwise.
+     */
+    function _isFunctionSignatureSet(
+        uint256 _policyId,
+        uint256 _functionSignatureId
+    ) internal view returns (bool) {
+        // Load the function signature data from storage
+        return
+            lib.getFunctionSignatureStorage().functionSignatureStorageSets[_policyId][_functionSignatureId].set;
+    }
+
+    /**
+     * @notice Checks if a foreign call is set for the specified policy.
+     * @dev Validates whether the foreign call exists in the policy's storage.
+     * @param _policyId The ID of the policy the foreign call is associated with.
+     * @param _foreignCallId The ID of the foreign call to check.
+     * @return set True if the foreign call is set, false otherwise.
+     */
+    function _isForeignCallSet(
+        uint256 _policyId,
+        uint256 _foreignCallId
+    ) internal view returns (bool) {
+        // Load the Foreign Call data from storage
+        return lib.getForeignCallStorage().foreignCalls[_policyId][_foreignCallId].set;
+    }
+
+    /**
+     * @notice Checks if a tracker is set for the specified policy.
+     * @dev Validates whether the tracker exists in the policy's storage.
+     * @param _policyId The ID of the policy the tracker is associated with.
+     * @param _index The index of the tracker to check.
+     * @return set True if the tracker is set, false otherwise.
+     */
+    function _isTrackerSet(
+        uint256 _policyId,
+        uint256 _index
+    ) internal view returns (bool) {
+        // return trackers for contract address at speficic index
+        return lib.getTrackerStorage().trackers[_policyId][_index].set;
+    }
+
+    /**
+     * @notice Checks that a policy is not cemented.
+     * @param _policyId The ID of the policy.
+     */
+    function notCemented(uint256 _policyId) internal view {
+        if(lib.getPolicyStorage().policyStorageSets[_policyId].policy.cemented) revert ("Not allowed for cemented policy");
+    }
+
+}
