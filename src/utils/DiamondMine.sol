@@ -6,6 +6,7 @@ import "forge-std/Script.sol";
 import "src/engine/facets/NativeFacet.sol";
 import "src/engine/facets/RulesEngineProcessorFacet.sol";
 import "src/engine/facets/RulesEnginePolicyFacet.sol";
+import "src/engine/facets/RulesEngineRuleFacet.sol";
 import "src/engine/facets/RulesEngineComponentFacet.sol";
 import "src/engine/facets/RulesEngineAdminRolesFacet.sol";
 import "src/engine/facets/RulesEngineInitialFacet.sol";
@@ -99,6 +100,15 @@ contract DiamondMine is Script {
                 facetAddress: address(new RulesEngineInitialFacet()),
                 action: FacetCutAction.Add,
                 functionSelectors: _createSelectorArray("RulesEngineInitialFacet")
+            })
+        );
+
+        // Data
+        _ruleProcessorFacetCuts.push(
+            FacetCut({
+                facetAddress: address(new RulesEngineRuleFacet()),
+                action: FacetCutAction.Add,
+                functionSelectors: _createSelectorArray("RulesEngineRuleFacet")
             })
         );
 
