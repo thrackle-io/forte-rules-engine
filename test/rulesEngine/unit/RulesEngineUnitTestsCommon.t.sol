@@ -676,7 +676,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders[1].foreignCall = true;
         rule.placeHolders[1].typeSpecificIndex = 1;
 
-        uint256 ruleId = RulesEnginePolicyFacet(address(red)).updateRule(policyIds[0], 0, rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyIds[0], 0, rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -706,7 +706,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders[1].trackerValue = true;
         rule.placeHolders[1].typeSpecificIndex = 1;
 
-        uint256 ruleId = RulesEnginePolicyFacet(address(red)).updateRule(policyIds[0], 0, rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyIds[0], 0, rule);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -1170,10 +1170,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders[0].pType = PT.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Save the rule
-        uint256 ruleId = RulesEnginePolicyFacet(address(red)).updateRule(policyId, 0, rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyId, 0, rule);
 
-        RulesEnginePolicyFacet(address(red)).deleteRule(policyId, ruleId); 
-        RuleStorageSet memory sig = RulesEnginePolicyFacet(address(red)).getRule(policyId, ruleId);
+        RulesEngineRuleFacet(address(red)).deleteRule(policyId, ruleId); 
+        RuleStorageSet memory sig = RulesEngineRuleFacet(address(red)).getRule(policyId, ruleId);
         assertEq(sig.set, false);
     }
 
@@ -1192,11 +1192,11 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders[0].pType = PT.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Save the rule
-        uint256 ruleId = RulesEnginePolicyFacet(address(red)).updateRule(policyId, 0, rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyId, 0, rule);
 
         vm.startPrank(newPolicyAdmin);
         vm.expectRevert("Not Authorized To Policy");
-        RulesEnginePolicyFacet(address(red)).deleteRule(policyId, ruleId); 
+        RulesEngineRuleFacet(address(red)).deleteRule(policyId, ruleId); 
     }
 
     function testRulesEngine_Unit_updateFunctionSignature_Negative_NewParameterTypesNotSameLength()
@@ -1583,7 +1583,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // vm.startPrank(user1);
         // vm.expectRevert("Not Authorized To Policy");
         // // Attempt to Save the rule
-        // RulesEnginePolicyFacet(address(red)).updateRule(policyId, 0, rule);
+        // RulesEngineRuleFacet(address(red)).updateRule(policyId, 0, rule);
     }
 
     function testRulesEngine_Unit_ApplyPolicy_ClosedPolicy_NotSubscriber() public ifDeploymentTestsEnabled endWithStopPrank {
@@ -1865,10 +1865,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.negEffects[0] = effectId_revert;
         rule.posEffects[0] = effectId_event;
 
-        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyId, rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyId, rule);
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
         vm.expectRevert("Not allowed for cemented policy");
-        RulesEnginePolicyFacet(address(red)).updateRule(policyId, ruleId, rule);
+        RulesEngineRuleFacet(address(red)).updateRule(policyId, ruleId, rule);
     }
 
     function testRulesEngine_Unit_createRule_Negative_CementedPolicy()
@@ -1881,7 +1881,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
         vm.expectRevert("Not allowed for cemented policy");
-        RulesEnginePolicyFacet(address(red)).createRule(policyId, rule);
+        RulesEngineRuleFacet(address(red)).createRule(policyId, rule);
     }
 
     function testRulesEngine_Unit_RemoveClosedPolicy_Subscriber_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
@@ -2127,10 +2127,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders[0].pType = PT.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Save the rule
-        uint256 ruleId = RulesEnginePolicyFacet(address(red)).updateRule(policyId, 0, rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyId, 0, rule);
         vm.expectEmit(true, false, false, false);
         emit RuleDeleted(policyId, ruleId);
-        RulesEnginePolicyFacet(address(red)).deleteRule(policyId, ruleId); 
+        RulesEngineRuleFacet(address(red)).deleteRule(policyId, ruleId); 
 
     }
 
@@ -2226,17 +2226,17 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         Rule memory rule;
         vm.expectEmit(true, false, false, false);
         emit RuleCreated(policyId, ruleId);
-        RulesEnginePolicyFacet(address(red)).createRule(policyId, rule);
+        RulesEngineRuleFacet(address(red)).createRule(policyId, rule);
     }
 
     function testRulesEngine_Unit_UpdateRule_Event() public ifDeploymentTestsEnabled endWithStopPrank {
         vm.startPrank(policyAdmin);
         uint256 policyId = _createBlankPolicy();
         Rule memory rule;
-        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyId, rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyId, rule);
         vm.expectEmit(true, false, false, false);
         emit RuleUpdated(policyId, ruleId);
-        RulesEnginePolicyFacet(address(red)).updateRule(policyId, 0, rule);
+        RulesEngineRuleFacet(address(red)).updateRule(policyId, 0, rule);
     }
 
     /////////////////////////////// additional data encoding tests 
@@ -2315,7 +2315,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
 
-        uint256 ruleID = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleID = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleID;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
@@ -2379,7 +2379,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
-        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
         // Save the function signature
         uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
             policyIds[0], 
@@ -2477,7 +2477,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
 
-        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
         // Save the function signature
         uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
             policyIds[0], 
@@ -2552,7 +2552,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
-        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
         // Save the function signature
         uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
             policyIds[0], 
@@ -2629,7 +2629,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
-        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
         // Save the function signature
         uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
             policyIds[0], 
@@ -2712,7 +2712,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
-        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
         // Save the function signature
         uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
             policyIds[0], 
@@ -2792,7 +2792,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
-        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
         // Save the function signature
         uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
             policyIds[0], 
@@ -2872,7 +2872,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
-        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
         // Save the function signature
         uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
             policyIds[0], 
@@ -2953,7 +2953,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
-        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
         // Save the function signature
         uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
             policyIds[0], 
@@ -3034,7 +3034,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
-        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
         // Save the function signature
         uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
             policyIds[0], 
@@ -3178,7 +3178,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders[2].pType = PT.UINT;
         rule.placeHolders[2].typeSpecificIndex = 5;
 
-        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
         //build tracker
         Trackers memory tracker;

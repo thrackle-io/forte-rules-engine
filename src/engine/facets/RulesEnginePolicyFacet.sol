@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import "src/engine/facets/FacetCommonImports.sol";
 import "src/engine/facets/RulesEngineAdminRolesFacet.sol";
 import "src/engine/facets/RulesEngineComponentFacet.sol";
+import {RulesEngineStorageLib as StorageLib} from "src/engine/facets/RulesEngineStorageLib.sol";
 
 /**
  * @title Rules Engine Policy Facet
@@ -15,111 +16,6 @@ import "src/engine/facets/RulesEngineComponentFacet.sol";
  */
 contract RulesEnginePolicyFacet is FacetCommonImports {
 
-    //-------------------------------------------------------------------------------------------------------------------------------------------------------
-    // Rule Management
-    //-------------------------------------------------------------------------------------------------------------------------------------------------------
-
-    /**
-     * @notice Creates a rule in storage.
-     * @dev Adds a new rule to the specified policy. Only accessible by policy admins.
-     * @param _policyId ID of the policy the rule will be added to.
-     * @param _rule The rule to create.
-     * @return ruleId The generated rule ID.
-     */
-    function createRule(uint256 _policyId, Rule calldata _rule) public policyAdminOnly(_policyId, msg.sender) returns (uint256) {
-        notCemented(_policyId);
-        RuleS storage data = lib.getRuleStorage();
-        uint256 ruleId = ++data.ruleIdCounter[_policyId];
-        _storeRule(data, _policyId, ruleId, _rule);
-        data.ruleIdCounter[_policyId] = ruleId;
-        emit RuleCreated(_policyId, ruleId);
-        return ruleId;
-    }
-
-    /**
-     * @notice Stores a rule in storage.
-     * @dev Validates the policy existence before storing the rule.
-     * @param _data The rule storage structure.
-     * @param _policyId The ID of the policy the rule belongs to.
-     * @param _ruleId The ID of the rule to store.
-     * @param _rule The rule to store.
-     * @return ruleId The stored rule ID.
-     */
-    function _storeRule(RuleS storage _data, uint256 _policyId, uint256 _ruleId, Rule calldata _rule) internal returns (uint256) {
-        // TODO: Add validations for rule
-        
-        // Validate that the policy exists
-        if(!lib.getPolicyStorage().policyStorageSets[_policyId].set) revert ("Invalid PolicyId");
-
-        _data.ruleStorageSets[_policyId][_ruleId].set = true;
-        _data.ruleStorageSets[_policyId][_ruleId].rule = _rule;
-        return _ruleId;
-    }
-
-    /**
-     * @notice Updates a rule in storage.
-     * @dev Modifies an existing rule in the specified policy. Only accessible by policy admins.
-     * @param _policyId ID of the policy the rule belongs to.
-     * @param _ruleId The ID of the rule to update.
-     * @param _rule The updated rule data.
-     * @return ruleId The updated rule ID.
-     */
-    function updateRule(
-        uint256 _policyId,
-        uint256 _ruleId,
-        Rule calldata _rule
-    ) external policyAdminOnly(_policyId, msg.sender) returns (uint256) {
-        notCemented(_policyId);
-        // Load the function signature data from storage
-        RuleS storage data = lib.getRuleStorage();
-        _storeRule(data, _policyId, _ruleId, _rule);
-        emit RuleUpdated(_policyId, _ruleId);
-        return _ruleId;
-    }
-
-    /**
-     * @notice Retrieves a rule from storage.
-     * @param _policyId The ID of the policy the rule belongs to.
-     * @param _ruleId The ID of the rule to retrieve.
-     * @return ruleStorageSets The rule data.
-     */
-    function getRule(uint256 _policyId, uint256 _ruleId) public view returns (RuleStorageSet memory) {
-        // Load the function signature data from storage
-        return lib.getRuleStorage().ruleStorageSets[_policyId][_ruleId];
-    }
-
-    /**
-     * @notice Deletes a rule from storage.
-     * @param _policyId The ID of the policy the rule belongs to.
-     * @param _ruleId The ID of the rule to delete.
-     */
-    function deleteRule(uint256 _policyId, uint256 _ruleId) public policyAdminOnly(_policyId, msg.sender) {
-        notCemented(_policyId);
-        delete lib.getRuleStorage().ruleStorageSets[_policyId][_ruleId];
-        emit RuleDeleted(_policyId, _ruleId); 
-    }
-
-    /**
-     * @notice Retrieves all rules associated with a specific policy.
-     * @param _policyId The ID of the policy.
-     * @return rules A two-dimensional array of rules grouped by function signatures.
-     */
-    function getAllRules(uint256 _policyId) external view returns (Rule[][] memory) {
-        // Load the function signature data from storage
-        Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
-        bytes4[] memory signatures = data.signatures;
-        Rule[][] memory rules = new Rule[][](signatures.length);
-        for (uint256 i = 0; i < signatures.length; i++) {
-            uint256[] memory ruleIds = data.signatureToRuleIds[signatures[i]];
-            rules[i] = new Rule[](ruleIds.length);
-            for (uint256 j = 0; j < ruleIds.length; j++) {
-                if (lib.getRuleStorage().ruleStorageSets[_policyId][ruleIds[j]].set) {
-                    rules[i][j] = lib.getRuleStorage().ruleStorageSets[_policyId][ruleIds[j]].rule;
-                }
-            }
-        }
-        return rules;
-    }
 
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
     // Policy Management
@@ -142,7 +38,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         uint256[][] calldata _ruleIds,
         PolicyType _policyType
     ) external policyAdminOnly(_policyId, msg.sender) returns(uint256) {
-        notCemented(_policyId);
+        StorageLib.notCemented(_policyId);
         // signature length must match the signature id length
         if (_signatures.length != _functionSignatureIds.length) revert(SIGNATURES_INCONSISTENT); 
         // if policy ID is zero no policy has been created and cannot be updated. 
@@ -158,7 +54,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      * @param _policyId The ID of the policy to close.
      */
     function closePolicy(uint256 _policyId) external policyAdminOnly(_policyId, msg.sender) {
-        notCemented(_policyId);
+        StorageLib.notCemented(_policyId);
         _processPolicyTypeChange(_policyId, PolicyType.CLOSED_POLICY);        
         emit PolicyClosed(_policyId);
     }
@@ -169,7 +65,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      * @param _policyId The ID of the policy to open.
      */
     function openPolicy(uint256 _policyId) external policyAdminOnly(_policyId, msg.sender) {
-        notCemented(_policyId);
+        StorageLib.notCemented(_policyId);
         _processPolicyTypeChange(_policyId, PolicyType.OPEN_POLICY);        
         emit PolicyOpened(_policyId);
     }
@@ -188,8 +84,8 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      * @dev Removes the policy and all associated rules, trackers, and foreign calls. Ensures the policy is not cemented.
      * @param _policyId The ID of the policy to delete.
      */
-    function deletePolicy(uint256 _policyId) public policyAdminOnly(_policyId, msg.sender) {
-        notCemented(_policyId);
+    function deletePolicy(uint256 _policyId) external policyAdminOnly(_policyId, msg.sender) {
+        StorageLib.notCemented(_policyId);
         PolicyStorageSet storage data = lib.getPolicyStorage().policyStorageSets[_policyId];
         delete data.set;
 
@@ -198,7 +94,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         for (uint256 i = 0; i < signatures.length; i++) {
             uint256[] memory ruleIds = policy.signatureToRuleIds[signatures[i]];
             for (uint256 j = 0; j < ruleIds.length; j++) {
-                deleteRule(_policyId, ruleIds[j]);
+                callAnotherFacet(0xa31c8ebb, abi.encodeWithSignature("deleteRule(uint256,uint256)", _policyId, ruleIds[j]));
             }
         }
 
@@ -243,7 +139,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
             require(policySet.set, POLICY_DOES_NOT_EXIST);
             
             // If policy is cemented, no one can apply it
-            notCemented(_policyIds[i]);
+            StorageLib.notCemented(_policyIds[i]);
 
             // If policy is closed, only admin can apply it
             if(policySet.policy.policyType == PolicyType.CLOSED_POLICY) {
@@ -331,21 +227,21 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
             // Loop through all the passed in signatures for the policy      
             for (uint256 i = 0; i < _signatures.length; i++) {
                 // make sure that all the function signatures exist
-                if(!_isFunctionSignatureSet(_policyId, _functionSignatureIds[i])) revert(INVALID_SIGNATURE);
+                if(!StorageLib._isFunctionSignatureSet(_policyId, _functionSignatureIds[i])) revert(INVALID_SIGNATURE);
                 // Load into the mapping
                 data.functionSignatureIdMap[_signatures[i]] = _functionSignatureIds[i];
                 // load the iterator array
                 data.signatures.push(_signatures[i]);
                 // make sure that all the rules attached to each function signature exist
                 for (uint256 j = 0; j < _ruleIds[i].length; j++) {
-                    RuleStorageSet memory ruleStore = getRule(_policyId, _ruleIds[i][j]);
+                    RuleStorageSet memory ruleStore = lib.getRuleStorage().ruleStorageSets[_policyId][_ruleIds[i][j]];
                     if(!ruleStore.set) revert(INVALID_RULE);
                     for (uint256 k = 0; k < ruleStore.rule.placeHolders.length; k++) {
                         if(ruleStore.rule.placeHolders[k].foreignCall) {
                             // get the foreign call using the type specific index which will be interpreted as a foreign call index since it has foreignCall bool set
-                            require(_isForeignCallSet(_policyId, ruleStore.rule.placeHolders[k].typeSpecificIndex), FOREIGN_CALL_NOT_SET);
+                            require(StorageLib._isForeignCallSet(_policyId, ruleStore.rule.placeHolders[k].typeSpecificIndex), FOREIGN_CALL_NOT_SET);
                         } else if (ruleStore.rule.placeHolders[k].trackerValue) {
-                            require(_isTrackerSet(_policyId, ruleStore.rule.placeHolders[k].typeSpecificIndex), TRACKER_NOT_SET);
+                            require(StorageLib._isTrackerSet(_policyId, ruleStore.rule.placeHolders[k].typeSpecificIndex), TRACKER_NOT_SET);
                         }
 
                     }
@@ -357,7 +253,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
             // Solely loop through and add signatures to the policy
             for (uint256 i = 0; i < _signatures.length; i++) {
                 // make sure that all the function signatures exist
-                if(!_isFunctionSignatureSet(_policyId, _functionSignatureIds[i])) revert(INVALID_SIGNATURE);
+                if(!StorageLib._isFunctionSignatureSet(_policyId, _functionSignatureIds[i])) revert(INVALID_SIGNATURE);
                 // Load into the mapping
                 data.functionSignatureIdMap[_signatures[i]] = _functionSignatureIds[i];
                 // load the iterator array
@@ -420,71 +316,11 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     }
 
     /**
-     * @notice Checks that a policy is not cemented.
-     * @param _policyId The ID of the policy.
-     */
-    function notCemented(uint256 _policyId) internal view {
-        if(lib.getPolicyStorage().policyStorageSets[_policyId].policy.cemented) revert ("Not allowed for cemented policy");
-    }
-
-    /**
      * @notice Marks a policy as cemented, preventing further modifications.
      * @param _policyId The ID of the policy to cement.
      */
     function cementPolicy(uint256 _policyId) external policyAdminOnly(_policyId, msg.sender) {
         lib.getPolicyStorage().policyStorageSets[_policyId].policy.cemented = true;
         emit PolicyCemented(_policyId);
-    }
-
-    //-------------------------------------------------------------------------------------------------------------------------------------------------------
-    // Internal Validation Functions
-    //-------------------------------------------------------------------------------------------------------------------------------------------------------
-
-    /// This section is for internal functions used for validation of components. They are here to optimize gas consumption.
-
-    /**
-     * @notice Checks if a function signature is set for the specified policy.
-     * @dev Validates whether the function signature exists in the policy's storage.
-     * @param _policyId The ID of the policy the function signature is associated with.
-     * @param _functionSignatureId The ID of the function signature to check.
-     * @return set True if the function signature is set, false otherwise.
-     */
-    function _isFunctionSignatureSet(
-        uint256 _policyId,
-        uint256 _functionSignatureId
-    ) internal view returns (bool) {
-        // Load the function signature data from storage
-        return
-            lib.getFunctionSignatureStorage().functionSignatureStorageSets[_policyId][_functionSignatureId].set;
-    }
-
-    /**
-     * @notice Checks if a foreign call is set for the specified policy.
-     * @dev Validates whether the foreign call exists in the policy's storage.
-     * @param _policyId The ID of the policy the foreign call is associated with.
-     * @param _foreignCallId The ID of the foreign call to check.
-     * @return set True if the foreign call is set, false otherwise.
-     */
-    function _isForeignCallSet(
-        uint256 _policyId,
-        uint256 _foreignCallId
-    ) internal view returns (bool) {
-        // Load the Foreign Call data from storage
-        return lib.getForeignCallStorage().foreignCalls[_policyId][_foreignCallId].set;
-    }
-
-    /**
-     * @notice Checks if a tracker is set for the specified policy.
-     * @dev Validates whether the tracker exists in the policy's storage.
-     * @param _policyId The ID of the policy the tracker is associated with.
-     * @param _index The index of the tracker to check.
-     * @return set True if the tracker is set, false otherwise.
-     */
-    function _isTrackerSet(
-        uint256 _policyId,
-        uint256 _index
-    ) public view returns (bool) {
-        // return trackers for contract address at speficic index
-        return lib.getTrackerStorage().trackers[_policyId][_index].set;
     }
 }
