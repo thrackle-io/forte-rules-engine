@@ -174,6 +174,10 @@ contract ForeignCallTestContract {
         return value;
     }
 
+    function square(uint256 value) public pure returns (uint256) {
+        return value * value;
+    }
+
     function getInternalValue() public view returns (uint256) {
         return internalValue;
     }
