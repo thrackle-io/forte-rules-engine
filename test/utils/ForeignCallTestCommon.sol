@@ -64,6 +64,12 @@ contract ForeignCallTestContract {
         return true;
     }
 
+    function testSig(address encodedAddr, uint256 encodedInt) public returns (bool) {
+        decodedAddr = encodedAddr;
+        decodedIntOne = encodedInt;
+        return true;
+    }
+
     function testSig(string memory encodedStr) public returns (bool) {
         decodedStrOne = encodedStr;
         return true;
