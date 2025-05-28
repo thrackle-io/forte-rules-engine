@@ -598,48 +598,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     }
 
     /**
-    * @notice Extracts a static array (length + values) from ABI-encoded data
-    * @param encodedArray The ABI-encoded array data
-    * @return result The extracted array data (length + values)
-    */
-    function _extractStaticArrayData(bytes memory encodedArray) internal pure returns (bytes memory) {
-        // We need at least the offset (32 bytes) and length (32 bytes)
-        require(encodedArray.length >= 64, "Invalid encoded array");
-        
-        // Get the array length from the data
-        uint256 arrayLength;
-        assembly {
-            arrayLength := mload(add(encodedArray, 64))
-        }
-        
-        // Calculate total size needed: 32 bytes for length + (arrayLength * 32 bytes for each element)
-        uint256 totalSize = 32 + (arrayLength * 32);
-        
-        // Create result with the calculated size
-        bytes memory result = new bytes(totalSize);
-        
-        // Copy the length and array elements
-        assembly {
-            // Point to the result data area (after length field of bytes array)
-            let resultPtr := add(result, 32)
-            
-            // Point to source data (skip offset)
-            let sourcePtr := add(encodedArray, 64)
-            
-            let len := add(arrayLength, 1)
-            // Copy array elements word by word
-            for { let i := 0 } lt(i, len) { i := add(i, 1) } {
-                mstore(
-                    add(resultPtr, mul(i, 32)),  // Start after length
-                    mload(add(sourcePtr, mul(i, 32)))
-                )
-            }
-        }
-        
-        return result;
-    }
-
-    /**
     * @notice Extracts a dynamic array (length + values with their lengths) from ABI-encoded data
     * @param encodedArray The ABI-encoded array data
     * @return result The extracted array data
