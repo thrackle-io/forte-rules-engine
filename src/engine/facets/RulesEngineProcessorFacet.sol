@@ -292,7 +292,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         // Load the Foreign Call data from storage
         ForeignCall memory foreignCall = lib.getForeignCallStorage().foreignCalls[_policyId][foreignCallIndex];
         if (foreignCall.set) {
-            return _evaluateForeignCallForRule(foreignCall, callingFunctionArgs, retVals);
+            return evaluateForeignCallForRule(foreignCall, callingFunctionArgs, retVals);
         }
     }
 
@@ -302,7 +302,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @param functionArguments the arguments of the rules calling function (to be passed to the foreign call as needed)
      * @return retVal the foreign calls return value
      */
-    function _evaluateForeignCallForRule(ForeignCall memory fc, bytes calldata functionArguments, bytes[] memory retVals) public returns (ForeignCallReturnValue memory retVal) {
+    function evaluateForeignCallForRule(ForeignCall memory fc, bytes calldata functionArguments, bytes[] memory retVals) public returns (ForeignCallReturnValue memory retVal) {
         // First, calculate total size needed and positions of dynamic data
         bytes memory encodedCall = bytes.concat(bytes4(fc.signature));
         bytes memory dynamicData;
@@ -315,12 +315,12 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             bool isRetVal = false;
             bytes32 value;
             if (fc.typeSpecificIndices[i] < 0) {
-                typeSpecificIndex = getAbsoluteAssembly(fc.typeSpecificIndices[i]) - 1; // -1 because retVals is 0 indexed
+                typeSpecificIndex = _getAbsoluteAssembly(fc.typeSpecificIndices[i]) - 1; // -1 because retVals is 0 indexed
                 isRetVal = true;
                 value = bytes32(retVals[typeSpecificIndex]);
                 if (argType == PT.STR || argType == PT.BYTES) {
                     encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
-                    bytes memory stringData = extractStringData(retVals[typeSpecificIndex]);
+                    bytes memory stringData = _extractStringData(retVals[typeSpecificIndex]);
                     dynamicData = bytes.concat(
                         dynamicData,
                         stringData      // data (already padded)
@@ -329,14 +329,14 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 } else if (argType == PT.STATIC_TYPE_ARRAY || argType == PT.DYNAMIC_TYPE_ARRAY) {
                     // encode the static offset
                     encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
-                    bytes memory arrayData = extractDynamicArrayData(retVals[typeSpecificIndex]);
+                    bytes memory arrayData = _extractDynamicArrayData(retVals[typeSpecificIndex]);
                     dynamicData = bytes.concat(dynamicData, arrayData);
                     lengthToAppend += arrayData.length;
                 } else {
                     encodedCall = bytes.concat(encodedCall, value);
                 }
             } else {
-                typeSpecificIndex = getAbsoluteAssembly(fc.typeSpecificIndices[i]);
+                typeSpecificIndex = _getAbsoluteAssembly(fc.typeSpecificIndices[i]);
                 value = bytes32(functionArguments[typeSpecificIndex * 32: (typeSpecificIndex + 1) * 32]);
                 if (argType == PT.STR || argType == PT.BYTES) {
                     // Add offset to head
@@ -369,7 +369,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                     uint256 length = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
                     lengthToAppend += 32;
                     dynamicData = bytes.concat(dynamicData, abi.encode(length));
-                    (dynamicData, lengthToAppend) = getDynamicValueArrayData(functionArguments, dynamicData, length, lengthToAppend, uint(value));
+                    (dynamicData, lengthToAppend) = _getDynamicValueArrayData(functionArguments, dynamicData, length, lengthToAppend, uint(value));
                 }
                 else {
                     encodedCall = bytes.concat(encodedCall, value);
@@ -521,7 +521,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         }
     }
 
-    function getAbsoluteAssembly(int256 _number) public pure returns (uint256) {
+    function _getAbsoluteAssembly(int256 _number) public pure returns (uint256) {
         uint256 result;
         assembly {
             // If number is negative, negate it
@@ -569,7 +569,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @param encodedString The ABI-encoded string to extract the data from
      * @return stringData The extracted string data (length + content)
      */
-    function extractStringData(bytes memory encodedString) internal pure returns (bytes memory) {
+    function _extractStringData(bytes memory encodedString) internal pure returns (bytes memory) {
         // We want to skip the first 32 bytes (offset) and keep the rest
         require(encodedString.length >= 64, "Invalid encoded string");
         
@@ -602,7 +602,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     * @param encodedArray The ABI-encoded array data
     * @return result The extracted array data (length + values)
     */
-    function extractStaticArrayData(bytes memory encodedArray) internal pure returns (bytes memory) {
+    function _extractStaticArrayData(bytes memory encodedArray) internal pure returns (bytes memory) {
         // We need at least the offset (32 bytes) and length (32 bytes)
         require(encodedArray.length >= 64, "Invalid encoded array");
         
@@ -644,7 +644,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     * @param encodedArray The ABI-encoded array data
     * @return result The extracted array data
     */
-    function extractDynamicArrayData(bytes memory encodedArray) internal pure returns (bytes memory result) {
+    function _extractDynamicArrayData(bytes memory encodedArray) internal pure returns (bytes memory result) {
         // We need at least the offset (32 bytes) and length (32 bytes)
         require(encodedArray.length >= 64, "Invalid encoded array");
         // Get the array length from the data
