@@ -583,6 +583,60 @@ contract RulesEngineCommon is DiamondMine, Test {
         return policyIds[0];
     }
 
+    function setupRuleWithForeignCallWithRetVals(
+        uint256 _amount,
+        ET _effectType,
+        bool isPositive
+    ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256 policyId) {
+        uint256[] memory policyIds = new uint256[](1);
+
+        policyIds[0] = _createBlankPolicy();
+
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0]);
+
+        // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        Rule memory rule;
+
+        // Build the foreign call placeholder
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].foreignCall = true;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = _createInstructionSet(_amount);
+
+        rule = _setUpEffect(rule, _effectType, isPositive);
+
+        PT[] memory fcArgs = new PT[](1);
+        fcArgs[0] = PT.UINT;
+        int8[] memory typeSpecificIndices = new int8[](1);
+        typeSpecificIndices[0] = -1;
+        ForeignCall memory fc;
+        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
+        // Save the rule
+        uint256 ruleId = RulesEnginePolicyFacet(address(red)).createRule(policyIds[0], rule);
+
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);       
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+
+        return policyIds[0];
+    }
+
     function _setUpEffect(
         Rule memory rule,
         ET _effectType,
@@ -1809,7 +1863,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
-        uint8[] memory typeSpecificIndices = new uint8[](1);
+        int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 1;
         ForeignCall memory fc;
         fc.typeSpecificIndices = typeSpecificIndices;
@@ -1852,7 +1906,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
-        uint8[] memory typeSpecificIndices = new uint8[](1);
+        int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 2;
         ForeignCall memory fc;
         fc.typeSpecificIndices = typeSpecificIndices;
@@ -1890,7 +1944,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
-        uint8[] memory typeSpecificIndices = new uint8[](1);
+        int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 1;
         ForeignCall memory fc;
         fc.typeSpecificIndices = typeSpecificIndices;
