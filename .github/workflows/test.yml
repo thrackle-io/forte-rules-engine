@@ -1,4 +1,4 @@
-name: test
+name: Test
 
 on:
   push:
@@ -8,9 +8,6 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, edited, ready_for_review]
 
-env:
-  FOUNDRY_PROFILE: ci
-
 jobs:
   check:
     strategy:
@@ -19,27 +16,25 @@ jobs:
     name: Build and Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout the repository
+        uses: actions/checkout@v4
         with:
           submodules: recursive
-
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: stable
-      - name: Install dependencies
+      - name: Install python dependencies for tests
         run: |
-          git config user.email "cloudops@thrackle.io"
-          git config user.name "CloudOps Thrackle"
           sudo apt-get update
           sudo apt-get install -y python3-pip
           pip3 install -r requirements.txt
-      - name: Build
+      - name: Display Foundry version
+        run: forge --version
+      - name: Build the repository
         run: |
-          forge --version
           forge build
         id: build
-
       - name: Run tests
         run: |
           forge test --ffi -vvv 
