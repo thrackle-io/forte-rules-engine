@@ -29,6 +29,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y python3-pip
           pip3 install -r requirements.txt
+          forge soldeer install
       - name: Display Foundry version
         run: forge --version
       - name: Build the repository
