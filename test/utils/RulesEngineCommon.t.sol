@@ -650,6 +650,71 @@ contract RulesEngineCommon is DiamondMine, Test {
         return policyIds[0];
     }
 
+    function setupRuleWithForeignCallSquaringReferencedTrackerVals(
+        uint256 _amount,
+        ET _effectType,
+        bool isPositive
+    ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256 policyId) {
+        uint256[] memory policyIds = new uint256[](1);
+
+        policyIds[0] = _createBlankPolicy();
+
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
+
+        _addFunctionSignatureToPolicy(policyIds[0]);
+
+        // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        Rule memory rule;
+
+        // Build the foreign call placeholder
+        rule.placeHolders = new Placeholder[](2);
+        rule.placeHolders[0].trackerValue = true;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.placeHolders[1].foreignCall = true;
+        rule.placeHolders[1].typeSpecificIndex = 1;
+
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = _createInstructionSet(1, 0); // FC placeholder > tracker placeholder  
+
+        rule = _setUpEffect(rule, _effectType, isPositive);
+
+        Trackers memory tracker;
+
+        /// build the members of the struct:
+        tracker.pType = PT.UINT;
+        tracker.trackerValue = abi.encode(_amount / 2);
+        // Add the tracker
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
+        
+        PT[] memory fcArgs = new PT[](1);
+        fcArgs[0] = PT.UINT;
+        ForeignCall memory fc;
+        int8[] memory typeSpecificIndices2 = new int8[](1);
+        typeSpecificIndices2[0] = -1;
+        fc.typeSpecificIndices = typeSpecificIndices2;
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("square(uint256)")));
+        fc.returnType = PT.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "square(uint256)");
+        // Save the rule
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0]= ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);       
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+
+        return policyIds[0];
+
+    }
+
     function _setUpEffect(
         Rule memory rule,
         ET _effectType,
