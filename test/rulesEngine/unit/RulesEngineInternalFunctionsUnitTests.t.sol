@@ -833,6 +833,32 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         assertEq(foreignCall.getInternalArrayBytes()[4], abi.encodeWithSelector(bytes4(keccak256(bytes("test(uint256,string,address)"))), 5, "superduperduperduperduperduperduperduperduperduperduperduperduperlongstring", address(0x1234567)));
     }
 
+    function testRulesEngine_Unit_EncodingForeignCallRetVals_Reversed()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        string memory functionSig = "testSig(address,uint256)";
+        ForeignCallTestContract foreignCall = new ForeignCallTestContract();
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(foreignCall);
+        fc.signature = bytes4(keccak256(bytes(functionSig)));
+        fc.parameterTypes = new PT[](2);
+        fc.parameterTypes[0] = PT.ADDR;
+        fc.parameterTypes[1] = PT.UINT;
+        fc.typeSpecificIndices = new int8[](2);
+        fc.typeSpecificIndices[0] = -3;
+        fc.typeSpecificIndices[1] = -2;
+        bytes memory vals = abi.encode(address(0x1234567), 1);
+        bytes[] memory retVals = new bytes[](3);
+        retVals[0] = abi.encode("I'm a string");
+        retVals[1] = abi.encode(42);
+        retVals[2] = abi.encode(address(0xdeadbeefdeadbeef));
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
+        assertEq(foreignCall.getDecodedAddr(), address(0xdeadbeefdeadbeef));
+        assertEq(foreignCall.getDecodedIntOne(), 42);
+    }
+
     function testRulesEngine_Unit_EncodingForeignCallArrayMixedTypes_Simple()
         public
         ifDeploymentTestsEnabled
