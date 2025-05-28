@@ -26,7 +26,7 @@ def get_selectors(args):
     # Run the Forge command to inspect the contract and retrieve its method identifiers (selectors)
     while line == "":
         res = subprocess.run(
-            ["forge", "inspect", contract, "mi"], capture_output=True
+            ["forge", "inspect", contract, "mi", "--json"], capture_output=True
         )
         line = res.stdout.decode()
 

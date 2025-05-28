@@ -24,10 +24,9 @@ jobs:
           submodules: recursive
 
       - name: Install Foundry
-        run: |
-          curl -sSL https://raw.githubusercontent.com/thrackle-io/foundry/refs/heads/master/foundryup/foundryup -o $HOME/foundryup
-          FOUNDRY_DIR=$HOME/foundry bash $HOME/foundryup --version $(awk '$1~/^[^#]/' script/foundryScripts/foundry.lock)
-          echo "$HOME/foundry/bin" >> $GITHUB_PATH
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
       - name: Install dependencies
         run: |
           git config user.email "cloudops@thrackle.io"
