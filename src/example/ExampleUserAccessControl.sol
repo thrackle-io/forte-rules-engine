@@ -2,8 +2,8 @@
 pragma solidity ^0.8.24;
 
 import "src/client/RulesEngineClient.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/access/IAccessControl.sol";
+import "@openzeppelin/access/AccessControl.sol";
+import "@openzeppelin/access/IAccessControl.sol";
 
 /**
  * @title Example User Access Control Contract

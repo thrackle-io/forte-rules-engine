@@ -3,10 +3,10 @@ pragma solidity ^0.8.13;
 
 import "src/engine/facets/FacetCommonImports.sol";
 import "src/engine/facets/AdminRoles.sol";
-import "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol"; 
-import "@openzeppelin/contracts/access/IAccessControl.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/access/extensions/AccessControlEnumerable.sol"; 
+import "@openzeppelin/access/IAccessControl.sol";
+import "@openzeppelin/access/Ownable.sol";
+import "@openzeppelin/utils/ReentrancyGuard.sol";
 
 /**
  * @title Rules Engine Admin Roles Facet

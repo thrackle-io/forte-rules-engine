@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "./GasHelpers.sol";
-import "lib/forge-std/src/Test.sol";
+import "forge-std/src/Test.sol";
 import "test/utils/ExampleERC20Hardcoded.sol";
 import "src/example/ExampleERC20.sol";
 import "test/utils/ExampleERC20WithMinTransfer.sol"; 

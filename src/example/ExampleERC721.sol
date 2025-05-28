@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
+import "@openzeppelin/token/ERC721/ERC721.sol";
+import "@openzeppelin/utils/ReentrancyGuard.sol";
+import "@openzeppelin/token/ERC721/extensions/ERC721Burnable.sol";
 import "src/client/RulesEngineClientERC721.sol";
 
 /**

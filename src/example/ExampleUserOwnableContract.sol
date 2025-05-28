@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "src/client/RulesEngineClient.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/access/Ownable.sol";
 
 /**
  * @title Example User Ownable Contract for Testing the Rules Engine

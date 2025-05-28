@@ -1,13 +1,24 @@
 [profile.default]
 src = "src"
 out = "out"
-libs = ["lib"]
+libs = ["lib", "dependencies"]
 solc_version = "0.8.28"
 optimize = true
 optimizer_runs = 2000000000
 
-remappings = ["forge-std/=lib/forge-std/src/",
-"@openzeppelin/=lib/openzeppelin-contracts/",
+remappings = ["forge-std/=dependencies/forge-std-1.9.7/",
+"@openzeppelin/=dependencies/@openzeppelin-contracts-5.3.0/",
 "diamond-std/=lib/diamond-std/",]
+
+[soldeer]
+remappings_generate = true
+remappings_regenerate = false
+remappings_prefix = ""
+remappings_location = "config"
+recursive_deps = false
+
+[dependencies]
+forge-std = "1.9.7"
+"@openzeppelin-contracts" = "5.3.0"
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
