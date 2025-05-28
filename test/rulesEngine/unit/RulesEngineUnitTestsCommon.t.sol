@@ -203,6 +203,17 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         userContract.transfer(address(0x7654321), transferValue);
     }
 
+    function testRulesEngine_Unit_createRule_ForeignCall_FCValuesUsed()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        setupRuleWithForeignCallWithSquaredFCValues(8, ET.REVERT, false);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), 3);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        assertEq(response, 1);
+    }
+
     function testRulesEngine_Unit_CheckPolicies_Explicit_StringComparison_Positive()
         public
         ifDeploymentTestsEnabled

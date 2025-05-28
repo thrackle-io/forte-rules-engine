@@ -583,7 +583,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         return policyIds[0];
     }
 
-    function setupRuleWithForeignCallWithRetVals(
+    function setupRuleWithForeignCallWithSquaredFCValues(
         uint256 _amount,
         ET _effectType,
         bool isPositive
@@ -602,9 +602,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         Rule memory rule;
 
         // Build the foreign call placeholder
-        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders = new Placeholder[](2);
         rule.placeHolders[0].foreignCall = true;
         rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.placeHolders[1].foreignCall = true;
+        rule.placeHolders[1].typeSpecificIndex = 2;
 
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(_amount);
@@ -614,7 +616,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
         int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = -1;
+        typeSpecificIndices[0] = 0;
         ForeignCall memory fc;
         fc.typeSpecificIndices = typeSpecificIndices;
         fc.parameterTypes = fcArgs;
@@ -623,6 +625,17 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 0;
         RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
+
+        ForeignCall memory fc2;
+        int8[] memory typeSpecificIndices2 = new int8[](1);
+        typeSpecificIndices2[0] = -1;
+        fc2.typeSpecificIndices = typeSpecificIndices2;
+        fc2.parameterTypes = fcArgs;
+        fc2.foreignCallAddress = address(testContract);
+        fc2.signature = bytes4(keccak256(bytes("square(uint256)")));
+        fc2.returnType = PT.UINT;
+        fc2.foreignCallIndex = 0;
+        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc2, "square(uint256)");
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
