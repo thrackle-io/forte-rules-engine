@@ -318,47 +318,62 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 typeSpecificIndex = getAbsoluteAssembly(fc.typeSpecificIndices[i]) - 1; // -1 because retVals is 0 indexed
                 isRetVal = true;
                 value = bytes32(retVals[typeSpecificIndex]);
-                continue;
+                if (argType == PT.STR || argType == PT.BYTES) {
+                    encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
+                    bytes memory stringData = extractStringData(retVals[typeSpecificIndex]);
+                    dynamicData = bytes.concat(
+                        dynamicData,
+                        stringData      // data (already padded)
+                    );
+                    lengthToAppend += stringData.length;
+                } else if (argType == PT.STATIC_TYPE_ARRAY || argType == PT.DYNAMIC_TYPE_ARRAY) {
+                    // encode the static offset
+                    encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
+                    bytes memory arrayData = extractDynamicArrayData(retVals[typeSpecificIndex]);
+                    dynamicData = bytes.concat(dynamicData, arrayData);
+                    lengthToAppend += arrayData.length;
+                } else {
+                    encodedCall = bytes.concat(encodedCall, value);
+                }
             } else {
                 typeSpecificIndex = getAbsoluteAssembly(fc.typeSpecificIndices[i]);
                 value = bytes32(functionArguments[typeSpecificIndex * 32: (typeSpecificIndex + 1) * 32]);
-            }
-            
-            if (argType == PT.STR || argType == PT.BYTES) {
-                // Add offset to head
-                uint256 dynamicOffset = 32 * (fc.parameterTypes.length) + lengthToAppend;
-                encodedCall = bytes.concat(encodedCall, bytes32(dynamicOffset));
-                // Get the dynamic data
-                uint256 length = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
-                uint256 words = 32 + ((length / 32) + 1) * 32;
-                bytes memory dynamicValue = functionArguments[uint(value):uint(value) + words];
-                // Add length and data (data is already padded to 32 bytes)
-                dynamicData = bytes.concat(
-                    dynamicData,
-                    dynamicValue      // data (already padded)
-                );
-                lengthToAppend += words;  // 32 for length + 32 for padded data
-            } else if (argType == PT.STATIC_TYPE_ARRAY) {
-                // encode the static offset
-                encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
-                uint256 arrayLength = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
-                // Get the static type array
-                bytes memory staticArray = new bytes(arrayLength * 32);
-                uint256 lengthToGrab = ((arrayLength + 1) * 32);
-                staticArray = functionArguments[uint(value):uint(value) + lengthToGrab];
-                dynamicData = bytes.concat(dynamicData, staticArray);
-                lengthToAppend += lengthToGrab;
-            } else if (argType == PT.DYNAMIC_TYPE_ARRAY) {
-                // encode the dynamic offset
-                uint256 baseDynamicOffset = 32 * (fc.parameterTypes.length) + lengthToAppend;
-                encodedCall = bytes.concat(encodedCall, bytes32(baseDynamicOffset));
-                uint256 length = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
-                lengthToAppend += 32;
-                dynamicData = bytes.concat(dynamicData, abi.encode(length));
-                (dynamicData, lengthToAppend) = _getDynamicValueArrayData(functionArguments, dynamicData, length, lengthToAppend, uint(value));
-            }
-            else {
-                encodedCall = bytes.concat(encodedCall, value);
+                if (argType == PT.STR || argType == PT.BYTES) {
+                    // Add offset to head
+                    uint256 dynamicOffset = 32 * (fc.parameterTypes.length) + lengthToAppend;
+                    encodedCall = bytes.concat(encodedCall, bytes32(dynamicOffset));
+                    // Get the dynamic data
+                    uint256 length = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
+                    uint256 words = 32 + ((length / 32) + 1) * 32;
+                    bytes memory dynamicValue = functionArguments[uint(value):uint(value) + words];
+                    // Add length and data (data is already padded to 32 bytes)
+                    dynamicData = bytes.concat(
+                        dynamicData,
+                        dynamicValue      // data (already padded)
+                    );
+                    lengthToAppend += words;  // 32 for length + 32 for padded data
+                } else if (argType == PT.STATIC_TYPE_ARRAY) {
+                    // encode the static offset
+                    encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
+                    uint256 arrayLength = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
+                    // Get the static type array
+                    bytes memory staticArray = new bytes(arrayLength * 32);
+                    uint256 lengthToGrab = ((arrayLength + 1) * 32);
+                    staticArray = functionArguments[uint(value):uint(value) + lengthToGrab];
+                    dynamicData = bytes.concat(dynamicData, staticArray);
+                    lengthToAppend += lengthToGrab;
+                } else if (argType == PT.DYNAMIC_TYPE_ARRAY) {
+                    // encode the dynamic offset
+                    uint256 baseDynamicOffset = 32 * (fc.parameterTypes.length) + lengthToAppend;
+                    encodedCall = bytes.concat(encodedCall, bytes32(baseDynamicOffset));
+                    uint256 length = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
+                    lengthToAppend += 32;
+                    dynamicData = bytes.concat(dynamicData, abi.encode(length));
+                    (dynamicData, lengthToAppend) = getDynamicValueArrayData(functionArguments, dynamicData, length, lengthToAppend, uint(value));
+                }
+                else {
+                    encodedCall = bytes.concat(encodedCall, value);
+                }
             }
         }
 
@@ -549,6 +564,116 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     }
 
 
+    /**
+     * @notice Helper function to extract the actual string data from an ABI-encoded string
+     * @param encodedString The ABI-encoded string to extract the data from
+     * @return stringData The extracted string data (length + content)
+     */
+    function extractStringData(bytes memory encodedString) internal pure returns (bytes memory) {
+        // We want to skip the first 32 bytes (offset) and keep the rest
+        require(encodedString.length >= 64, "Invalid encoded string");
+        
+        // Create result with size needed for everything except the offset
+        bytes memory result = new bytes(encodedString.length - 32);
+        uint256 dataLength = encodedString.length;
+        // Copy the length and data, skipping the offset
+        assembly {
+            // Copy from position 32 in source to position 0 in result
+            let resultPtr := add(result, 32)  // Point to result data area
+            let sourcePtr := add(encodedString, 64)  // Skip offset (32) in source
+            
+            // Copy the length word
+            mstore(resultPtr, mload(add(encodedString, 32)))
+            let len := div(dataLength, 32)
+            
+            for { let i := 0 } lt(i, len) { i := add(i, 1) } {
+                mstore(
+                    add(resultPtr, mul(i, 32)),
+                    mload(add(sourcePtr, mul(i, 32)))
+                )
+            }
+        }
+        
+        return result;
+    }
+
+    /**
+    * @notice Extracts a static array (length + values) from ABI-encoded data
+    * @param encodedArray The ABI-encoded array data
+    * @return result The extracted array data (length + values)
+    */
+    function extractStaticArrayData(bytes memory encodedArray) internal pure returns (bytes memory) {
+        // We need at least the offset (32 bytes) and length (32 bytes)
+        require(encodedArray.length >= 64, "Invalid encoded array");
+        
+        // Get the array length from the data
+        uint256 arrayLength;
+        assembly {
+            arrayLength := mload(add(encodedArray, 64))
+        }
+        
+        // Calculate total size needed: 32 bytes for length + (arrayLength * 32 bytes for each element)
+        uint256 totalSize = 32 + (arrayLength * 32);
+        
+        // Create result with the calculated size
+        bytes memory result = new bytes(totalSize);
+        
+        // Copy the length and array elements
+        assembly {
+            // Point to the result data area (after length field of bytes array)
+            let resultPtr := add(result, 32)
+            
+            // Point to source data (skip offset)
+            let sourcePtr := add(encodedArray, 64)
+            
+            let len := add(arrayLength, 1)
+            // Copy array elements word by word
+            for { let i := 0 } lt(i, len) { i := add(i, 1) } {
+                mstore(
+                    add(resultPtr, mul(i, 32)),  // Start after length
+                    mload(add(sourcePtr, mul(i, 32)))
+                )
+            }
+        }
+        
+        return result;
+    }
+
+    /**
+    * @notice Extracts a dynamic array (length + values with their lengths) from ABI-encoded data
+    * @param encodedArray The ABI-encoded array data
+    * @return result The extracted array data
+    */
+    function extractDynamicArrayData(bytes memory encodedArray) internal pure returns (bytes memory result) {
+        // We need at least the offset (32 bytes) and length (32 bytes)
+        require(encodedArray.length >= 64, "Invalid encoded array");
+        // Get the array length from the data
+        uint256 arrayLength = (encodedArray.length) / 32;
+        
+        // Create result with the calculated size
+        result = new bytes(encodedArray.length - 32);
+        
+        // Copy the length and array elements
+        assembly {
+            // Point to the result data area (after length field of bytes array)
+            let resultPtr := add(result, 32)
+            
+            // Point to source data (skip offset)
+            let sourcePtr := add(encodedArray, 64)
+            
+            let len := add(arrayLength, 1)
+            // Copy array elements word by word
+            for { let i := 0 } lt(i, len) { i := add(i, 1) } {
+                mstore(
+                    add(resultPtr, mul(i, 32)),  // Start after length
+                    mload(add(sourcePtr, mul(i, 32)))
+                )
+            }
+        }
+        
+        return result;
+    }
+    
     /**
      * @notice Retrieves a portion of dynamic value array data from the provided inputs.
      * @dev This function extracts a segment of dynamic data based on the specified length and offset.

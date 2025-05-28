@@ -2079,7 +2079,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         RulesEngineComponentFacet(address(red)).deleteTracker(policyID, trackerId);
     }
 
-        function testRulesEngine_unit_adminRoles_CreateForeignCall_Event() public ifDeploymentTestsEnabled endWithStopPrank {
+    function testRulesEngine_unit_adminRoles_CreateForeignCall_Event() public ifDeploymentTestsEnabled endWithStopPrank {
         vm.startPrank(policyAdmin);
         uint256 policyID = _createBlankPolicy();
         uint256 foreignCallId = 1; 
@@ -2088,7 +2088,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.parameterTypes = new PT[](1);
         fc.parameterTypes[0] = PT.UINT;
-        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices = new int8[](1);
         fc.typeSpecificIndices[0] = 1;
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 0;
@@ -2339,7 +2339,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
-        uint8[] memory typeSpecificIndices = new uint8[](1);
+        int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 2; // set the placeholder index to retrieve value 
         ForeignCall memory fc;
         fc.typeSpecificIndices = typeSpecificIndices;
