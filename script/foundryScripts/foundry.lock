@@ -1,3 +1,0 @@
-# Pins a Foundry version (via commit hash), until they provide versions: https://github.com/foundry-rs/foundry/issues/3895
-# https://github.com/thrackle-io/foundry/releases/tag/v0.2.0
-v0.2.0
