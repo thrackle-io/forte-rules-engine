@@ -43,17 +43,6 @@ source .venv/bin/activate
 python3 -m pip install -r requirements.txt
 source .env
 ```
-
-Once the requirements are installed, we need to mock the anvil state. In another terminal, start anvil:
-```bash
-anvil
-```
-
-Next, we'll deploy the rules engine to this local anvil instance:
-```bash
-forge script script/deployment/DeployRulesDiamond.s.sol --ffi --broadcast -vvv --non-interactive --rpc-url=$ETH_RPC_URL --gas-price $GAS_NUMBER --legacy
-```
-
 Once everything is ready to go, we'll run the test suite:
 ```bash
  forge test -vv --ffi
