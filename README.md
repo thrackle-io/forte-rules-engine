@@ -24,7 +24,7 @@ This guide assumes the following tools are installed and configured correctly. P
 
 - [Git](https://git-scm.com/)
 - [NodeJS](https://nodejs.org/) - v20.x.x
-- [Foundry](https://book.getfoundry.sh/getting-started/installation) - ^v1.0.0-stable
+- [Foundry](https://book.getfoundry.sh/getting-started/installation) - v1.2.1-stable
 - [Python3](https://www.python.org/downloads/) - v3.x.x 
 
 ### Building
