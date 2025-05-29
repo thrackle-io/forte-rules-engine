@@ -1140,4 +1140,45 @@ abstract contract RulesEngineInternalFunctionsUnitTests is RulesEngineCommon {
         bytes memory b = "BYTES STRING OF SUFFICIENT LNGTH";
         assertEq(ProcessorLib._ui2bytes(uint256(abi.decode(b, (uint256)))),b);
     }
+
+    function testRulesEngine_Utils_DynamicArrayExtractionStringArray()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        string[] memory arr = new string[](3);
+        arr[0] = "deadbeefdeadbeef";
+        arr[1] = "justshootme";
+        arr[2] = "96quitebitterbeings";
+        bytes memory b = abi.encode(arr);
+        bytes memory extracted = hex"0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e000000000000000000000000000000000000000000000000000000000000000106465616462656566646561646265656600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b6a75737473686f6f746d650000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000013393671756974656269747465726265696e677300000000000000000000000000";
+        assertEq(ProcessorLib._extractDynamicArrayData(b), extracted);
+    }
+
+    function testRulesEngine_Utils_DynamicArrayExtractionUintArray()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256[] memory arr = new uint256[](3);
+        arr[0] = 1;
+        arr[1] = 2;
+        arr[2] = 3;
+        bytes memory b = abi.encode(arr);
+        bytes memory extracted = hex"0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003";
+        assertEq(ProcessorLib._extractDynamicArrayData(b), extracted);
+    }
+
+    function testRulesEngine_Utils_StringExtraction()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        string memory str = "superduperduperduperduperduperduperduperduperduperduperduperlongstring";
+        bytes memory b = abi.encode(str);
+        bytes memory extracted = hex"00000000000000000000000000000000000000000000000000000000000000467375706572647570657264757065726475706572647570657264757065726475706572647570657264757065726475706572647570657264757065726c6f6e67737472696e670000000000000000000000000000000000000000000000000000";
+        assertEq(ProcessorLib._extractStringData(b), extracted);
+    }
+
+
 }
