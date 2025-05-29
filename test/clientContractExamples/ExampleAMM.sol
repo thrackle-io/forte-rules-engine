@@ -3,8 +3,8 @@ pragma solidity ^0.8.24;
 
 /// note: this is a simple NFT marketplace contract from https://github.com/PatrickAlphaC/hardhat-nft-marketplace-fcc/blob/main/contracts/NftMarketplace.sol
 
-import "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol"; 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/token/ERC721/IERC721.sol"; 
+import "@openzeppelin/token/ERC20/IERC20.sol";
 
 // Check out https://github.com/Fantom-foundation/Artion-Contracts/blob/5c90d2bc0401af6fb5abf35b860b762b31dfee02/contracts/FantomMarketplace.sol
 // For a full decentralized nft marketplace

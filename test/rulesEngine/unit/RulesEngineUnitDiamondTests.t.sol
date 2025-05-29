@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "src/utils/DiamondMine.sol";
-import "lib/forge-std/src/Test.sol";
+import "forge-std/src/Test.sol";
 import "src/engine/facets/NativeFacet.sol";
 import "src/engine/facets/RulesEnginePolicyFacet.sol";
 import "src/engine/RulesEngineStorageStructure.sol";

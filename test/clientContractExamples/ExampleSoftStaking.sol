@@ -2,11 +2,11 @@
 pragma solidity ^0.8.24;
 
 
-import "lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
-import {ERC721Burnable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
-import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import "lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/token/ERC721/ERC721.sol";
+import {ERC721Burnable} from "@openzeppelin/token/ERC721/extensions/ERC721Burnable.sol";
+import {ERC721Enumerable} from "@openzeppelin/token/ERC721/extensions/ERC721Enumerable.sol";
+import {Ownable} from "@openzeppelin/access/Ownable.sol";
+import "@openzeppelin/utils/ReentrancyGuard.sol";
 
 contract MyToken is ERC721, ERC721Enumerable, ERC721Burnable, Ownable, ReentrancyGuard {
     event tokenStaked(); 

@@ -17,6 +17,37 @@ Please visit our [Contributor Guide](./CONTRIBUTING.md).
 
 Forte’s work is aided and supported by our ecosystem partner, Thrackle, a team of industry experts, including PhD-level engineers specializing in computer science, math, engineering, economics, and finance. Thrackle leverages its deep technical expertise to develop purpose-built, customizable products that enable the creation, growth, and stability of thriving digital asset economies. Together, Forte and Thrackle are driving innovation to build healthy, sustainable blockchain economies.
 
+## Getting Started
+###  Environment dependencies
+
+This guide assumes the following tools are installed and configured correctly. Please see each tool's installation instructions for more details:
+
+- [Git](https://git-scm.com/)
+- [NodeJS](https://nodejs.org/) - v20.x.x
+- [Foundry](https://book.getfoundry.sh/getting-started/installation) - v1.2.1-stable
+- [Python3](https://www.python.org/downloads/) - v3.x.x 
+
+### Building
+To build and install dependencies, run the following commands:
+```bash
+npm install
+forge soldeer install
+forge build
+```
+
+### Testing
+In order to run the full test suite, there are some other requirements. First, a python virtual environment is needed to install the python requirements. We'll also set the env source now.
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r requirements.txt
+source .env
+```
+Once everything is ready to go, we'll run the test suite:
+```bash
+ forge test -vv --ffi
+```
+
 ## Licensing
 
 The primary license for Forte Protocol Rules Engine is the Business Source License 1.1 (`BUSL-1.1`), see [`LICENSE`](./LICENSE). However, some files are dual licensed under `GPL-2.0-or-later`:

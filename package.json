@@ -2,10 +2,6 @@
   "name": "forte-rules-engine",
   "version": "0.0.1",
   "description": "Forte Rules Engine",
-  
-  "dependencies": {
-    "@openzeppelin/contracts": "4.9.6"
-  },
   "files": [
     "LICENSE",
     "README.md",

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "src/engine/RulesEngineDiamond.sol";
-import "forge-std/Script.sol";
+import "forge-std/src/Script.sol";
 import "src/engine/facets/NativeFacet.sol";
 import "src/engine/facets/RulesEngineProcessorFacet.sol";
 import "src/engine/facets/RulesEnginePolicyFacet.sol";
