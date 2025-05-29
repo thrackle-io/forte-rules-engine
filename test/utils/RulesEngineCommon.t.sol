@@ -583,6 +583,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         return policyIds[0];
     }
 
+    // Same as setupRuleWithForeignCall except that it contains a foreign call that is referenced by another foreign call that is then squared by the foreign call and then checked to see if it's greater than the original value
     function setupRuleWithForeignCallWithSquaredFCValues(
         uint256 _amount,
         ET _effectType,
@@ -650,6 +651,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         return policyIds[0];
     }
 
+    // Same as setupRuleWithForeignCall except that it contais a tracker value that is then squared by the foreign call and then checked to see if it's greater than the tracker value
     function setupRuleWithForeignCallSquaringReferencedTrackerVals(
         uint256 _amount,
         ET _effectType,
