@@ -172,7 +172,7 @@ struct ForeignCall {
     // The parameter types of the arguments the foreign call takes
     PT[] parameterTypes;
     // A list of type specific indices to use for the foreign call and where they sit in the calldata
-    uint8[] typeSpecificIndices;
+    int8[] typeSpecificIndices;
 }
 
 /// Tracker Structures
