@@ -240,7 +240,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
@@ -309,7 +309,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
@@ -383,7 +383,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
@@ -459,9 +459,9 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
         
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
 
-        _addFunctionSignatureToPolicy(policyIds[1]);
+        _addCallingFunctionToPolicy(policyIds[1]);
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
@@ -512,19 +512,19 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId1;
 
-        bytes4[] memory signaturesNew = new bytes4[](1);
-        signaturesNew[0] = bytes4(keccak256(bytes(functionSignature)));
-        uint256[] memory functionSignatureIdsNew = new uint256[](1);
-        functionSignatureIdsNew[0] = 1;
+        bytes4[] memory callingFunctionsNew = new bytes4[](1);
+        callingFunctionsNew[0] = bytes4(keccak256(bytes(callingFunction)));
+        uint256[] memory callingFunctionIdsNew = new uint256[](1);
+        callingFunctionIdsNew[0] = 1;
         // ruleIds[0][1] = ruleId2;
-        RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[0], signaturesNew, functionSignatureIdsNew, ruleIds, PolicyType.CLOSED_POLICY);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[0], callingFunctionsNew, callingFunctionIdsNew, ruleIds, PolicyType.CLOSED_POLICY);
 
         // Add rules for the second policy
         ruleId1 = RulesEngineRuleFacet(address(red)).createRule(policyIds[1], rule1);
         ruleId2 = RulesEngineRuleFacet(address(red)).createRule(policyIds[1], rule2);
         ruleIds[0][0] = ruleId2;
 
-        RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[1], signaturesNew, functionSignatureIdsNew, ruleIds, PolicyType.CLOSED_POLICY);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[1], callingFunctionsNew, callingFunctionIdsNew, ruleIds, PolicyType.CLOSED_POLICY);
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
         RulesEnginePolicyFacet(address(red)).applyPolicy(
@@ -546,7 +546,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
         uint8[] memory typeSpecificIndices = new uint8[](1);
@@ -630,7 +630,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         // Rule memory rule = _createGTRule(4);
@@ -905,7 +905,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         // Rule memory rule = _createGTRule(4);
@@ -954,7 +954,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[1] = PT.UINT;
         pTypes[2] = PT.ADDR;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
         // There is no reason to incorporate a toggle like the oracle flex rule in V1 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
@@ -1052,8 +1052,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[4] = PT.UINT;
         pTypes[5] = PT.UINT;
 
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
-            .createFunctionSignature(
+        uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
+            .createCallingFunction(
                 policyIds[0],
                 bytes4(bytes4(keccak256(bytes("transfer(address,uint256)")))), 
                 pTypes, 
@@ -1061,13 +1061,13 @@ contract GasReports is GasHelpers, RulesEngineCommon {
                 "address,uint256"    
             );
         // Save the Policy
-        signatures.push(bytes4(keccak256(bytes("transfer(address,uint256)"))));
-        functionSignatureIds.push(functionSignatureId);
+        callingFunctions.push(bytes4(keccak256(bytes("transfer(address,uint256)"))));
+        callingFunctionIds.push(callingFunctionId);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         RulesEnginePolicyFacet(address(red)).updatePolicy(
             policyIds[0],
-            signatures,
-            functionSignatureIds,
+            callingFunctions,
+            callingFunctionIds,
             blankRuleIds,
             PolicyType.CLOSED_POLICY
         );
@@ -1123,8 +1123,8 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         pTypes[4] = PT.UINT;
         pTypes[5] = PT.UINT;
 
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
-            .createFunctionSignature(
+        uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
+            .createCallingFunction(
                 policyIds[0], 
                 bytes4(bytes4(keccak256(bytes("transfer(address,uint256)")))), 
                 pTypes, 
@@ -1132,13 +1132,13 @@ contract GasReports is GasHelpers, RulesEngineCommon {
                 "address,uint256"    
             );
         // Save the Policy
-        signatures.push(bytes4(keccak256(bytes("transfer(address,uint256)"))));
-        functionSignatureIds.push(functionSignatureId);
+        callingFunctions.push(bytes4(keccak256(bytes("transfer(address,uint256)"))));
+        callingFunctionIds.push(callingFunctionId);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         RulesEnginePolicyFacet(address(red)).updatePolicy(
             policyIds[0],
-            signatures,
-            functionSignatureIds,
+            callingFunctions,
+            callingFunctionIds,
             blankRuleIds,
             PolicyType.CLOSED_POLICY
         );

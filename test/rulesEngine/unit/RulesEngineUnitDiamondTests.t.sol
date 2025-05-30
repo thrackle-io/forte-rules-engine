@@ -10,9 +10,9 @@ import "src/example/ExampleUserContract.sol";
 
 contract RulesEngineUnitDiamondTests is DiamondMine, Test {
     
-    string functionSignature = "transfer(address,uint256) returns (bool)";
-    bytes4[] signatures;        
-    uint256[] functionSignatureIds;
+    string callingFunction = "transfer(address,uint256) returns (bool)";
+    bytes4[] callingFunctions;        
+    uint256[] callingFunctionIds;
     uint256[][] ruleIds;
     ExampleUserContract userContract;
     address userContractAddress; 
@@ -81,20 +81,20 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         );
     }
 
-    function testRulesEngine_Unit_Diamond_FunctionSignatureStorage_Positive() public {
+    function testRulesEngine_Unit_Diamond_FunctioncallingFunctionstorage_Positive() public {
         uint256 policyId = _createBlankPolicy();
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
+        uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
             policyId,
-            bytes4(keccak256(bytes(functionSignature))),
+            bytes4(keccak256(bytes(callingFunction))),
             pTypes,
             "transfer(address,uint256) returns (bool)",
             "address,uint256"
         );
-        FunctionSignatureStorageSet memory sig = RulesEngineComponentFacet(address(red)).getFunctionSignature(policyId, functionSignatureId);
-        assertEq(sig.signature, bytes4(keccak256(bytes(functionSignature))));
+        CallingFunctionStorageSet memory sig = RulesEngineComponentFacet(address(red)).getCallingFunction(policyId, callingFunctionId);
+        assertEq(sig.signature, bytes4(keccak256(bytes(callingFunction))));
     }
 
     function testRulesEngine_Unit_Diamond_RuleStorage_Positive() public {
@@ -119,11 +119,11 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         uint256[] memory policyIds = new uint256[](1);
         // blank slate policy
         policyIds[0] = _createBlankPolicy();
-        // Add the function signature to the policy
+        // Add the calling function to the policy
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-        _addFunctionSignatureToPolicy(policyIds[0], bytes4(keccak256(bytes(functionSignature))), pTypes, "transfer(address,uint256) returns (bool)");
+        _addCallingFunctionToPolicy(policyIds[0], bytes4(keccak256(bytes(callingFunction))), pTypes, "transfer(address,uint256) returns (bool)");
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
@@ -160,30 +160,30 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         instructionSet[6] = 1;
     }
      function _createBlankPolicy() internal returns (uint256) {
-        FunctionSignatureStorageSet[] memory functionSignatures = new FunctionSignatureStorageSet[](0); 
+        CallingFunctionStorageSet[] memory functioncallingFunctions = new CallingFunctionStorageSet[](0); 
         Rule[] memory rules = new Rule[](0); 
-        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(functionSignatures, rules, PolicyType.CLOSED_POLICY);
+        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(functioncallingFunctions, rules, PolicyType.CLOSED_POLICY);
         RulesEngineComponentFacet(address(red)).addClosedPolicySubscriber(policyId, callingContractAdmin); 
         return policyId;
     }
 
-    function _addFunctionSignatureToPolicy(uint256 policyId, bytes4 _functionSignature, PT[] memory pTypes, string memory functionSignatureName) internal returns (uint256) {
-        // Save the function signature
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
+    function _addCallingFunctionToPolicy(uint256 policyId, bytes4 _callingFunction, PT[] memory pTypes, string memory callingFunctionName) internal returns (uint256) {
+        // Save the calling function
+        uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
             policyId, 
-            bytes4(_functionSignature), 
+            bytes4(_callingFunction), 
             pTypes, 
-            functionSignatureName,
+            callingFunctionName,
             "");
         // Save the Policy
-        signatures.push(_functionSignature);
-        functionSignatureIds.push(functionSignatureId);
+        callingFunctions.push(_callingFunction);
+        callingFunctionIds.push(callingFunctionId);
         uint256[][] memory blankRuleIds = new uint256[][](0);
-        RulesEnginePolicyFacet(address(red)).updatePolicy(policyId, signatures, functionSignatureIds, blankRuleIds, PolicyType.CLOSED_POLICY);
-        return functionSignatureId;
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyId, callingFunctions, callingFunctionIds, blankRuleIds, PolicyType.CLOSED_POLICY);
+        return callingFunctionId;
     }
 
     function _addRuleIdsToPolicy(uint256 policyId, uint256[][] memory _ruleIds) internal {
-        RulesEnginePolicyFacet(address(red)).updatePolicy(policyId, signatures, functionSignatureIds, _ruleIds, PolicyType.CLOSED_POLICY);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyId, callingFunctions, callingFunctionIds, _ruleIds, PolicyType.CLOSED_POLICY);
     }
 }

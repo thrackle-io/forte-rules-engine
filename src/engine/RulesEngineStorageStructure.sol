@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 /**
  * @title Rules Engine Storage Structures
  * @dev This contract defines the storage structures used throughout the Rules Engine. These structures are used to 
- *      manage policies, rules, trackers, function signatures, foreign calls, and other components of the Rules Engine. 
+ *      manage policies, rules, trackers, calling functions, foreign calls, and other components of the Rules Engine. 
  *      The storage structures are designed to support modular and efficient data management within the diamond proxy pattern.
  * @notice This contract is a critical component of the Rules Engine, enabling consistent and conflict-free storage management.
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
@@ -123,14 +123,14 @@ struct TrackerMetadataStruct {
     mapping(uint256 policyId => mapping(uint256 trackerIndex => string)) trackerMetadata;
 }
 
-struct FunctionSignatureHashMapping {
-    string functionSignature;
+struct CallingFunctionHashMapping {
+    string callingFunction;
     bytes4 signature;
     string encodedValues;
 }
 
-struct FunctionSignatureMetadataStruct {
-    mapping(uint256 policyId => mapping(uint256 functionId => FunctionSignatureHashMapping)) functionSignatureMetadata;
+struct CallingFunctionMetadataStruct {
+    mapping(uint256 policyId => mapping(uint256 functionId => CallingFunctionHashMapping)) callingFunctionMetadata;
 }
 
 /**
@@ -145,7 +145,7 @@ struct ForeignCallReturnValue {
 
 /**
  * Structure used to hold the decoded arguments.
- * Used to hold both the decoded arguments for a function signature in order,
+ * Used to hold both the decoded arguments for a calling function in order,
  * and the arguments for a rules placeholders in order.
  */
 struct Arguments {
@@ -198,13 +198,13 @@ struct Trackers {
     uint256 trackerIndex;
 }
 
-/// Function Signature Structures
-struct FunctionSignatureS {
+/// Calling Function Structures
+struct CallingFunctionStruct {
     mapping(uint256 policyId => uint256 functionId) functionIdCounter;
-    mapping(uint256 policyId => mapping(uint256 functionId => FunctionSignatureStorageSet)) functionSignatureStorageSets;
+    mapping(uint256 policyId => mapping(uint256 functionId => CallingFunctionStorageSet)) callingFunctionStorageSets;
 }
 
-struct FunctionSignatureStorageSet {
+struct CallingFunctionStorageSet {
     bool set;
     bytes4 signature;
     PT[] parameterTypes;
@@ -234,8 +234,8 @@ struct Rule {
     // The raw format string and addresses for values in the instruction set that have already been converted to uint256.
     RawData rawData;
     // List of all placeholders used in the rule in order
-    // Needs to contain the type, and index (zero based) of the particular type in the function signature
-    // For example if the argument in question is the 2nd address in the function signature the placeHolder would be:
+    // Needs to contain the type, and index (zero based) of the particular type in the calling function
+    // For example if the argument in question is the 2nd address in the calling function the placeHolder would be:
     // pType = parameterType.ADDR index = 1
     Placeholder[] placeHolders;
     Placeholder[] effectPlaceHolders;
@@ -290,12 +290,12 @@ struct PolicyStorageSet {
 }
 
 struct Policy {
-    // function signatures to function signature Id
-    mapping(bytes4 => uint256) functionSignatureIdMap;
-    // function signatures to ruleIds
-    mapping(bytes4 => uint256[]) signatureToRuleIds;
-    // Array to hold the function sigs for iterating
-    bytes4[] signatures;
+    // calling functions to calling function Id
+    mapping(bytes4 => uint256) callingFunctionIdMap;
+    // calling function signature to ruleIds
+    mapping(bytes4 => uint256[]) callingFunctionsToRuleIds;
+    // Array to hold the calling functions signatures for iterating
+    bytes4[] callingFunctions;
     // Policy type to determine if policy is open or closed
     PolicyType policyType;
     // Cemented status

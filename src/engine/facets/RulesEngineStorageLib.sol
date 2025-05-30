@@ -12,19 +12,19 @@ library RulesEngineStorageLib {
     /// This section is for internal functions used for validation of components. They are here to optimize gas consumption.
 
     /**
-     * @notice Checks if a function signature is set for the specified policy.
-     * @dev Validates whether the function signature exists in the policy's storage.
-     * @param _policyId The ID of the policy the function signature is associated with.
-     * @param _functionSignatureId The ID of the function signature to check.
-     * @return set True if the function signature is set, false otherwise.
+     * @notice Checks if a calling function is set for the specified policy.
+     * @dev Validates whether the calling function exists in the policy's storage.
+     * @param _policyId The ID of the policy the calling function is associated with.
+     * @param _callingFunctionId The ID of the calling function to check.
+     * @return set True if the calling funciton is set, false otherwise.
      */
-    function _isFunctionSignatureSet(
+    function _isCallingFunctionSet(
         uint256 _policyId,
-        uint256 _functionSignatureId
+        uint256 _callingFunctionId
     ) internal view returns (bool) {
-        // Load the function signature data from storage
+        // Load the calling function data from storage
         return
-            lib.getFunctionSignatureStorage().functionSignatureStorageSets[_policyId][_functionSignatureId].set;
+            lib.getCallingFunctionStorage().callingFunctionStorageSets[_policyId][_callingFunctionId].set;
     }
 
     /**

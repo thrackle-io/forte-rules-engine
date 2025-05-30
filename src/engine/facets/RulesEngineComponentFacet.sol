@@ -7,7 +7,7 @@ import "src/engine/facets/RulesEngineAdminRolesFacet.sol";
 /**
  * @title Rules Engine Component Facet
  * @dev This contract serves as the data facet for the Rules Engine subcomponents. It provides functionality for managing
- *      foreign calls, trackers, function signatures, and policy subscriptions. It enforces role-based access control
+ *      foreign calls, trackers, calling functions, and policy subscriptions. It enforces role-based access control
  *      and ensures that only authorized users can modify or retrieve data. The contract also supports policy cementing
  *      to prevent further modifications.
  * @notice This contract is a critical component of the Rules Engine, enabling secure and flexible data management.
@@ -335,206 +335,208 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     }
 
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
-    // Function Signature Management
+    // Calling Function Management
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
 
     /**
-     * @notice Creates a new function signature and stores it in the function signature storage mapping.
-     * @dev Associates the function signature with the specified policy ID and parameter types.
-     * @param _policyId The policy ID the function signature is associated with.
-     * @param _functionSignature The function signature to create.
-     * @param _pTypes The parameter types for the function signature.
-     * @return functionId The index of the created function signature.
+     * @notice Creates a new calling function and stores it in the calling function storage mapping.
+     * @dev Associates the calling function with the specified policy ID and parameter types.
+     * @param _policyId The policy ID the calling function is associated with.
+     * @param _functionSignature The function signature of the calling function.
+     * @param _pTypes The parameter types for the calling function.
+     * @param _callingFunctionName the name of the calling function (to be stored in metadata)
+     * @param _encodedValues the string representation of the values encoded with the calling function (to be stored in metadata)
+     * @return functionId The index of the created calling function.
      */    
-    function createFunctionSignature(
+    function createCallingFunction(
         uint256 _policyId,
         bytes4 _functionSignature,
         PT[] memory _pTypes,
-        string memory _functionSignatureName,
+        string memory _callingFunctionName,
         string memory _encodedValues
     ) external policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         notCemented(_policyId);
         // Step 1: Increment function ID
         uint256 functionId = _incrementFunctionId(_policyId);
 
-        // Step 2: Store function signature data
-        _storeFunctionSignatureData(_policyId, functionId, _functionSignature, _pTypes);
+        // Step 2: Store calling function data
+        _storeCallingFunctionData(_policyId, functionId, _functionSignature, _pTypes);
 
-        // Step 3: Store function signature metadata
-        _storeFunctionSignatureMetadata(_policyId, functionId, _functionSignature, _functionSignatureName, _encodedValues);
+        // Step 3: Store calling function metadata
+        _storeCallingFunctionMetadata(_policyId, functionId, _functionSignature, _callingFunctionName, _encodedValues);
 
         // Emit event
-        emit FunctionSignatureCreated(_policyId, functionId);
+        emit CallingFunctionCreated(_policyId, functionId);
 
         return functionId;
     }
 
     /**
      * @dev Helper function to increment function ID 
-     * @param _policyId The policy ID the function signature is associated with.
+     * @param _policyId The policy ID the calling function is associated with.
      */
     function _incrementFunctionId(uint256 _policyId) private returns (uint256) {
-        FunctionSignatureS storage data = lib.getFunctionSignatureStorage();
+        CallingFunctionStruct storage data = lib.getCallingFunctionStorage();
         return ++data.functionIdCounter[_policyId];
     }
 
     /**
-     * @dev Helper function to store function signature data 
-     * @param _policyId The policy ID the function signature is associated with.
+     * @dev Helper function to store calling function data 
+     * @param _policyId The policy ID the calling function is associated with.
      * @param _functionId The ID of the function 
-     * @param _functionSignature Function signature Bytes String 
-     * @param _pTypes The parameter types for the function signature.
+     * @param _functionSignature The function signature of the calling function
+     * @param _pTypes The parameter types for the calling function.
      */
-    function _storeFunctionSignatureData(
+    function _storeCallingFunctionData(
         uint256 _policyId,
         uint256 _functionId,
         bytes4 _functionSignature,
         PT[] memory _pTypes
     ) private {
-        FunctionSignatureS storage data = lib.getFunctionSignatureStorage();
-        data.functionSignatureStorageSets[_policyId][_functionId].set = true;
-        data.functionSignatureStorageSets[_policyId][_functionId].signature = _functionSignature;
-        data.functionSignatureStorageSets[_policyId][_functionId].parameterTypes = _pTypes;
+        CallingFunctionStruct storage data = lib.getCallingFunctionStorage();
+        data.callingFunctionStorageSets[_policyId][_functionId].set = true;
+        data.callingFunctionStorageSets[_policyId][_functionId].signature = _functionSignature;
+        data.callingFunctionStorageSets[_policyId][_functionId].parameterTypes = _pTypes;
     }
 
     /** 
-     * @dev Helper function to store function signature metadata
-     * @param _policyId The policy ID the function signature is associated with.
+     * @dev Helper function to store calling function metadata
+     * @param _policyId The policy ID the calling function is associated with.
      * @param _functionId The ID of the function 
-     * @param _functionSignature Function signature Bytes String 
-     * @param _functionSignatureName Name of the function signature 
+     * @param _functionSignature The function signature of the calling function 
+     * @param _callingFunctionName Name of the calling function
      * @param _encodedValues Arguments to be encoded 
      */
-    function _storeFunctionSignatureMetadata(
+    function _storeCallingFunctionMetadata(
         uint256 _policyId,
         uint256 _functionId,
         bytes4 _functionSignature,
-        string memory _functionSignatureName,
+        string memory _callingFunctionName,
         string memory _encodedValues
     ) private {
-        FunctionSignatureMetadataStruct storage metaData = lib.getFunctionSignatureMetadataStorage();
-        metaData.functionSignatureMetadata[_policyId][_functionId].functionSignature = _functionSignatureName;
-        metaData.functionSignatureMetadata[_policyId][_functionId].signature = _functionSignature;
-        metaData.functionSignatureMetadata[_policyId][_functionId].encodedValues = _encodedValues;
+        CallingFunctionMetadataStruct storage metaData = lib.getCallingFunctioneMetadataStorage();
+        metaData.callingFunctionMetadata[_policyId][_functionId].callingFunction = _callingFunctionName;
+        metaData.callingFunctionMetadata[_policyId][_functionId].signature = _functionSignature;
+        metaData.callingFunctionMetadata[_policyId][_functionId].encodedValues = _encodedValues;
     }
     
     /**
-     * @notice Updates an existing function signature by appending new parameter types.
+     * @notice Updates an existing calling function by appending new parameter types.
      * @dev Ensures that the new parameter types are compatible with the existing ones.
-     * @param _policyId The policy ID the function signature is associated with.
-     * @param _functionSignatureId The ID of the function signature to update.
-     * @param _functionSignature The function signature to update.
+     * @param _policyId The policy ID the calling function is associated with.
+     * @param _callingFunctionID The ID of the calling function to update.
+     * @param _functionSignature The function signature of the calling function.
      * @param _pTypes The new parameter types to append.
-     * @return functionId The updated function signature ID.
+     * @return functionId The updated calling function ID.
      */
-    function updateFunctionSignature(
+    function updateCallingFunction(
         uint256 _policyId,
-        uint256 _functionSignatureId,
+        uint256 _callingFunctionID,
         bytes4 _functionSignature,
         PT[] memory _pTypes
     ) external policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         notCemented(_policyId);
-        // Load the function signature data from storage
-        FunctionSignatureS storage data = lib.getFunctionSignatureStorage();
-        // increment the functionSignatureId if necessary
-        FunctionSignatureStorageSet storage functionSignature = data.functionSignatureStorageSets[_policyId][_functionSignatureId];
-        require(functionSignature.signature == _functionSignature, "Delete function signature before updating to a new one");
-        require(functionSignature.parameterTypes.length <= _pTypes.length, "New parameter types must be of greater or equal length to the original");
-        for (uint256 i = 0; i < functionSignature.parameterTypes.length; i++) {
-            require(_pTypes[i] == functionSignature.parameterTypes[i], "New parameter types must be of the same type as the original");
+        // Load the calling function data from storage
+        CallingFunctionStruct storage data = lib.getCallingFunctionStorage();
+        // increment the callingFunctionId if necessary
+        CallingFunctionStorageSet storage callingFunction = data.callingFunctionStorageSets[_policyId][_callingFunctionID];
+        require(callingFunction.signature == _functionSignature, "Delete calling function before updating to a new one");
+        require(callingFunction.parameterTypes.length <= _pTypes.length, "New parameter types must be of greater or equal length to the original");
+        for (uint256 i = 0; i < callingFunction.parameterTypes.length; i++) {
+            require(_pTypes[i] == callingFunction.parameterTypes[i], "New parameter types must be of the same type as the original");
         }
-        if (functionSignature.parameterTypes.length < _pTypes.length) {
-            for (uint256 i = functionSignature.parameterTypes.length; i < _pTypes.length; i++) {
-                functionSignature.parameterTypes.push(_pTypes[i]);
+        if (callingFunction.parameterTypes.length < _pTypes.length) {
+            for (uint256 i = callingFunction.parameterTypes.length; i < _pTypes.length; i++) {
+                callingFunction.parameterTypes.push(_pTypes[i]);
             }
         }
-        emit FunctionSignatureUpdated(_policyId, _functionSignatureId);
-        return _functionSignatureId;
+        emit CallingFunctionUpdated(_policyId, _callingFunctionID);
+        return _callingFunctionID;
     }
 
     /**
-     * @notice Deletes a function signature from storage.
-     * @dev Removes the function signature and its associated rules and mappings.
-     * @param _policyId The policy ID the function signature is associated with.
-     * @param _functionSignatureId The ID of the function signature to delete.
+     * @notice Deletes a calling function from storage.
+     * @dev Removes the calling function and its associated rules and mappings.
+     * @param _policyId The policy ID the calling function is associated with.
+     * @param _callingFunctionId The ID of the calling function to delete.
      */
-    function deleteFunctionSignature(uint256 _policyId, uint256 _functionSignatureId) external policyAdminOnly(_policyId, msg.sender) {
+    function deleteCallingFunction(uint256 _policyId, uint256 _callingFunctionId) external policyAdminOnly(_policyId, msg.sender) {
         notCemented(_policyId);
         // retrieve policy from storage 
         PolicyStorageSet storage data = lib.getPolicyStorage().policyStorageSets[_policyId];
-        // retrieve function signature to delete  
-        bytes4 signature = lib.getFunctionSignatureStorage().functionSignatureStorageSets[_policyId][_functionSignatureId].signature;  
-        // delete the function signature storage set struct 
-        delete lib.getFunctionSignatureStorage().functionSignatureStorageSets[_policyId][_functionSignatureId];
-        // delete signatures array from policy 
-        delete data.policy.signatures;
-        // delete function signature to id map 
-        delete data.policy.functionSignatureIdMap[signature];
-        // delete rule structures associated to function signature 
-        for(uint256 i; i < data.policy.signatureToRuleIds[signature].length; i++) {
+        // retrieve calling function to delete  
+        bytes4 signature = lib.getCallingFunctionStorage().callingFunctionStorageSets[_policyId][_callingFunctionId].signature;  
+        // delete the calling function storage set struct 
+        delete lib.getCallingFunctionStorage().callingFunctionStorageSets[_policyId][_callingFunctionId];
+        // delete calling function array from policy 
+        delete data.policy.callingFunctions;
+        // delete calling function to id map 
+        delete data.policy.callingFunctionIdMap[signature];
+        // delete rule structures associated to calling function 
+        for(uint256 i; i < data.policy.callingFunctionsToRuleIds[signature].length; i++) {
             // delete rules from storage 
             delete lib.getRuleStorage().ruleStorageSets[_policyId][i];
-            emit AssociatedRuleDeleted(_policyId, _functionSignatureId);
+            emit AssociatedRuleDeleted(_policyId, _callingFunctionId);
         }
-        // delete function signature to rule Ids mapping  
-        delete data.policy.signatureToRuleIds[signature];
-        // retrieve remaining function signature structs from storage that were not removed   
-        FunctionSignatureStorageSet[] memory functionSignatureStructs = getAllFunctionSignatures(_policyId);
-        // reset signature array for policy
-        for(uint256 j; j < functionSignatureStructs.length; j++) {
-            if(functionSignatureStructs[j].set) {
-                data.policy.signatures.push(functionSignatureStructs[j].signature);
+        // delete calling function to rule Ids mapping  
+        delete data.policy.callingFunctionsToRuleIds[signature];
+        // retrieve remaining calling function structs from storage that were not removed   
+        CallingFunctionStorageSet[] memory callingFunctionStructs = getAllCallingFunctions(_policyId);
+        // reset calling function array for policy
+        for(uint256 j; j < callingFunctionStructs.length; j++) {
+            if(callingFunctionStructs[j].set) {
+                data.policy.callingFunctions.push(callingFunctionStructs[j].signature);
             }
         }
-        emit FunctionSignatureDeleted(_policyId, _functionSignatureId);
+        emit CallingFunctionDeleted(_policyId, _callingFunctionId);
     }
 
     /**
-     * @notice Retrieves a function signature from storage.
-     * @param _policyId The policy ID the function signature is associated with.
-     * @param _functionSignatureId The ID of the function signature to retrieve.
-     * @return functionSignatureSet The function signature data.
+     * @notice Retrieves a calling function from storage.
+     * @param _policyId The policy ID the calling function is associated with.
+     * @param _callingFunctionId The ID of the calling function to retrieve.
+     * @return CallngFunctionStorageSet The calling function data.
      */
-    function getFunctionSignature(
+    function getCallingFunction(
         uint256 _policyId,
-        uint256 _functionSignatureId
-    ) public view returns (FunctionSignatureStorageSet memory) {
-        // Load the function signature data from storage
+        uint256 _callingFunctionId
+    ) public view returns (CallingFunctionStorageSet memory) {
+        // Load the calling function data from storage
         return
-            lib.getFunctionSignatureStorage().functionSignatureStorageSets[_policyId][_functionSignatureId];
+            lib.getCallingFunctionStorage().callingFunctionStorageSets[_policyId][_callingFunctionId];
     }
 
     /**
-     * @notice retrieves the function signature metadata
-     * @param _policyId The policy ID the function signature is associated with.
-     * @param _functionSignatureId The identifier for the function signature
-     * @return the metadata for the function signature
+     * @notice retrieves the calling function metadata
+     * @param _policyId The policy ID the calling function is associated with.
+     * @param _callingFunctionId The identifier for the calling function
+     * @return the metadata for the calling function
      */
-    function getFunctionSignatureMetadata(
+    function getCallingFunctionMetadata(
                 uint256 _policyId,
-        uint256 _functionSignatureId
-    ) public view returns (FunctionSignatureHashMapping memory) {
-        return lib.getFunctionSignatureMetadataStorage().functionSignatureMetadata[_policyId][_functionSignatureId];
+        uint256 _callingFunctionId
+    ) public view returns (CallingFunctionHashMapping memory) {
+        return lib.getCallingFunctioneMetadataStorage().callingFunctionMetadata[_policyId][_callingFunctionId];
     }
 
     /**
-     * @notice Retrieves all function signatures associated with a specific policy ID.
-     * @param _policyId The policy ID the function signatures are associated with.
-     * @return functionSignatureStorageSets An array of function signature data.
+     * @notice Retrieves all calling functions associated with a specific policy ID.
+     * @param _policyId The policy ID the calling functions are associated with.
+     * @return CallingFunctionStorageSet An array of calling function data.
      */
-    function getAllFunctionSignatures(uint256 _policyId) public view returns (FunctionSignatureStorageSet[] memory) {
-        // Load the function signature data from storage
-        FunctionSignatureS storage data = lib.getFunctionSignatureStorage();
+    function getAllCallingFunctions(uint256 _policyId) public view returns (CallingFunctionStorageSet[] memory) {
+        // Load the calling function data from storage
+        CallingFunctionStruct storage data = lib.getCallingFunctionStorage();
         uint256 functionIdCount = data.functionIdCounter[_policyId];
-        FunctionSignatureStorageSet[] memory functionSignatureStorageSets = new FunctionSignatureStorageSet[](functionIdCount);
+        CallingFunctionStorageSet[] memory callingFunctionStorageSets = new CallingFunctionStorageSet[](functionIdCount);
         uint256 j = 0;
         for (uint256 i = 1; i <= functionIdCount; i++) {
-            if (data.functionSignatureStorageSets[_policyId][i].set) {
-                functionSignatureStorageSets[j] = data.functionSignatureStorageSets[_policyId][i];
+            if (data.callingFunctionStorageSets[_policyId][i].set) {
+                callingFunctionStorageSets[j] = data.callingFunctionStorageSets[_policyId][i];
                 j++;
             }
         }
-        return functionSignatureStorageSets;
+        return callingFunctionStorageSets;
     }
 
     //-------------------------------------------------------------------------------------------------------------------------------------------------------

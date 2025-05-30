@@ -37,10 +37,10 @@ event PolicyRemoved(uint256 indexed removedPolicyId, address indexed callingCont
 event PolicySubsciberAdded(uint256 indexed policyId, address indexed subscriber);
 event PolicySubsciberRemoved(uint256 indexed policyId, address indexed subscriber);
 
-/// Function Signature Events 
-event FunctionSignatureCreated(uint256 indexed policyId, uint256 indexed functionSignatureId);
-event FunctionSignatureUpdated(uint256 indexed policyId, uint256 indexed functionSignatureId);
-event FunctionSignatureDeleted(uint256 indexed policyId, uint256 indexed functionSignatureId);
+/// Calling Function Events 
+event CallingFunctionCreated(uint256 indexed policyId, uint256 indexed callingFunctionId);
+event CallingFunctionUpdated(uint256 indexed policyId, uint256 indexed callingFunctionId);
+event CallingFunctionDeleted(uint256 indexed policyId, uint256 indexed callingFunctionId);
 
 /// Admin Events 
 event PolicyAdminRoleGranted(address indexed adminAddress, uint256 indexed policyId); 

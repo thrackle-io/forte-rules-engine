@@ -71,7 +71,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         Rule calldata _rule
     ) external policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         StorageLib.notCemented(_policyId);
-        // Load the function signature data from storage
+        // Load the rule data from storage
         RuleS storage data = lib.getRuleStorage();
         _storeRule(data, _policyId, _ruleId, _rule);
         emit RuleUpdated(_policyId, _ruleId);
@@ -85,7 +85,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      * @return ruleStorageSets The rule data.
      */
     function getRule(uint256 _policyId, uint256 _ruleId) public view returns (RuleStorageSet memory) {
-        // Load the function signature data from storage
+        // Load the rule data from storage
         return lib.getRuleStorage().ruleStorageSets[_policyId][_ruleId];
     }
 
@@ -103,15 +103,15 @@ contract RulesEngineRuleFacet is FacetCommonImports {
     /**
      * @notice Retrieves all rules associated with a specific policy.
      * @param _policyId The ID of the policy.
-     * @return rules A two-dimensional array of rules grouped by function signatures.
+     * @return rules A two-dimensional array of rules grouped by calling functions.
      */
     function getAllRules(uint256 _policyId) external view returns (Rule[][] memory) {
-        // Load the function signature data from storage
+        // Load the policy data from storage
         Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
-        bytes4[] memory signatures = data.signatures;
-        Rule[][] memory rules = new Rule[][](signatures.length);
-        for (uint256 i = 0; i < signatures.length; i++) {
-            uint256[] memory ruleIds = data.signatureToRuleIds[signatures[i]];
+        bytes4[] memory callingFunctions = data.callingFunctions;
+        Rule[][] memory rules = new Rule[][](callingFunctions.length);
+        for (uint256 i = 0; i < callingFunctions.length; i++) {
+            uint256[] memory ruleIds = data.callingFunctionsToRuleIds[callingFunctions[i]];
             rules[i] = new Rule[](ruleIds.length);
             for (uint256 j = 0; j < ruleIds.length; j++) {
                 if (lib.getRuleStorage().ruleStorageSets[_policyId][ruleIds[j]].set) {

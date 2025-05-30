@@ -27,27 +27,27 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         PT[] memory pTypes = new PT[](2);
         pTypes[0] =PT.ADDR;
         pTypes[1] =PT.UINT;
-        // Save the function signature
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red)).createFunctionSignature(
+        // Save the calling function
+        uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
             policyIds[0], 
-            bytes4(keccak256(bytes(functionSignature))),
+            bytes4(keccak256(bytes(callingFunction))),
             pTypes,
-            functionSignature,
+            callingFunction,
             ""
         );
         // Save the Policy
-        signatures.push(bytes4(keccak256(bytes(functionSignature))));  
-        functionSignatureIds.push(functionSignatureId);
+        callingFunctions.push(bytes4(keccak256(bytes(callingFunction))));  
+        callingFunctionIds.push(callingFunctionId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
          
-        RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[0], signatures, functionSignatureIds, ruleIds, PolicyType.CLOSED_POLICY);    
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[0], callingFunctions, callingFunctionIds, ruleIds, PolicyType.CLOSED_POLICY);    
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);    
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly 
 
-        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), transferValue);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), transferValue);
         if (ruleValue < transferValue) {
             response = RulesEngineProcessorFacet(address(red)).checkPolicies(userContractAddress, arguments);
             assertEq(response, 1);
@@ -62,7 +62,7 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         testAddressArray.push(newPolicyAdmin);
 
         vm.startPrank(policyAdmin); 
-        FunctionSignatureStorageSet[] memory functionSignatures = new FunctionSignatureStorageSet[](0); 
+        CallingFunctionStorageSet[] memory callingFunctions = new CallingFunctionStorageSet[](0); 
         Rule[] memory rules = new Rule[](0);
         uint256 policyID = _createBlankPolicy();
 
@@ -75,7 +75,7 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
             vm.stopPrank();
             vm.startPrank(newPolicyAdmin); 
             RulesEngineAdminRolesFacet(address(red)).confirmNewPolicyAdmin(policyID);
-            RulesEnginePolicyFacet(address(red)).createPolicy(functionSignatures, rules, PolicyType.CLOSED_POLICY);
+            RulesEnginePolicyFacet(address(red)).createPolicy(callingFunctions, rules, PolicyType.CLOSED_POLICY);
         } else {
             vm.expectRevert("Not Policy Admin");
             RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID);
