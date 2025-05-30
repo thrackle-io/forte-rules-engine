@@ -1139,7 +1139,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
         uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
-        vm.expectRevert("Delete calling Function before updating to a new one");
+        vm.expectRevert("Delete calling function before updating to a new one");
         RulesEngineComponentFacet(address(red)).updateCallingFunction(policyId, callingFunctionId, bytes4(keccak256(bytes(callingFunction2))), pTypes);
     }
 
