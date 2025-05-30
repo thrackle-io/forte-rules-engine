@@ -33,6 +33,7 @@ event PolicyCemented(uint256 indexed policyId);
 event PolicyOpened(uint256 indexed policyId);
 event PolicyClosed(uint256 indexed policyId);
 event PolicyApplied(uint256[] policyIds, address indexed callingContract);
+event PolicyUnapplied(uint256[] policyIds, address indexed callingContract);
 event PolicyRemoved(uint256 indexed removedPolicyId, address indexed callingContract);
 event PolicySubsciberAdded(uint256 indexed policyId, address indexed subscriber);
 event PolicySubsciberRemoved(uint256 indexed policyId, address indexed subscriber);
