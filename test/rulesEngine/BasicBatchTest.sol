@@ -12,12 +12,12 @@ contract BasicBatchTest is RulesEngineCommon {
     function test_basicBatching() public {
         bytes[] memory calls = new bytes[](3);
 
-        FunctionSignatureStorageSet[] memory blankSignatureSets = new FunctionSignatureStorageSet[](0);
-        bytes4[] memory blankSignatures = new bytes4[](0);
-        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        CallingFunctionStorageSet[] memory blankCallingFunctionSets = new CallingFunctionStorageSet[](0);
+        bytes4[] memory blankCallingFunctions = new bytes4[](0);
+        uint256[] memory blankCallingFunctionIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         Rule[] memory blankRules = new Rule[](0);
-        calls[0] = abi.encodeWithSelector(RulesEnginePolicyFacet.createPolicy.selector, blankSignatureSets, blankRules, PolicyType.CLOSED_POLICY);
+        calls[0] = abi.encodeWithSelector(RulesEnginePolicyFacet.createPolicy.selector, blankCallingFunctionSets, blankRules, PolicyType.CLOSED_POLICY);
         address _address = address(22);
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
@@ -31,7 +31,7 @@ contract BasicBatchTest is RulesEngineCommon {
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 1;
         calls[1] = abi.encodeWithSelector(RulesEngineComponentFacet.createForeignCall.selector, 1, fc, "simpleCheck(uint256)");
-        calls[2] = abi.encodeWithSelector(RulesEnginePolicyFacet.updatePolicy.selector, 1, blankSignatures, blankFunctionSignatureIds, blankRuleIds, PolicyType.CLOSED_POLICY);
+        calls[2] = abi.encodeWithSelector(RulesEnginePolicyFacet.updatePolicy.selector, 1, blankCallingFunctions, blankCallingFunctionIds, blankRuleIds, PolicyType.CLOSED_POLICY);
         RulesEngineDiamond(red).batch(calls, true);
     }
 }

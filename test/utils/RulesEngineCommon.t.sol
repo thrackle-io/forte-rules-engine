@@ -18,16 +18,16 @@ contract RulesEngineCommon is DiamondMine, Test {
     ForeignCallTestContractOFAC testContract2;
 
     // strings 
-    string functionSignature = "transfer(address,uint256)";
-    string functionSignature2 = "updateInfo(address _to, string info)";
-    string functionSignature3 = "transferFrom(address,uint256)";
-    string functionSignatureBytes = "transferBytes(address,uint256)";
-    string functionSignatureWithBytes = "transferWithBytes(address,uint256,bytes)";
-    string functionSignatureString = "transferString(address,uint256)";
-    string functionSignatureWithString = "transferWithString(address,uint256,string)";
-    string functionSignatureBool = "transferBool(address,uint256)";
-    string functionSignatureArrayStatic = "transferArray(address,uint256)";
-    string functionSignatureArrayDynamic = "transferDynamicArray(address,uint256)";
+    string callingFunction = "transfer(address,uint256)";
+    string callingFunction2 = "updateInfo(address _to, string info)";
+    string callingFunction3 = "transferFrom(address,uint256)";
+    string callingFunctionBytes = "transferBytes(address,uint256)";
+    string callingFunctionWithBytes = "transferWithBytes(address,uint256,bytes)";
+    string callingFunctionString = "transferString(address,uint256)";
+    string callingFunctionWithString = "transferWithString(address,uint256,string)";
+    string callingFunctionBool = "transferBool(address,uint256)";
+    string callingFunctionArrayStatic = "transferArray(address,uint256)";
+    string callingFunctionArrayDynamic = "transferDynamicArray(address,uint256)";
     string constant event_text = "Rules Engine Event";
     string constant revert_text = "Rules Engine Revert";
     string constant event_text2 = "Rules Engine Event 2";
@@ -39,7 +39,7 @@ contract RulesEngineCommon is DiamondMine, Test {
     bytes32 public constant EVENTTEXT2 = bytes32("Rules Engine Event 2");
 
     //bytes4 
-    bytes4[] signatures;
+    bytes4[] callingFunctions;
 
     // Effect structures 
     Effect effectId_revert;
@@ -56,7 +56,7 @@ contract RulesEngineCommon is DiamondMine, Test {
     Effect effectId_expression4;
     
     //uint256 arrays 
-    uint256[] functionSignatureIds;
+    uint256[] callingFunctionIds;
     uint256[][] ruleIds;
 
     // uint256
@@ -117,11 +117,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256[] memory policyIds = new uint256[](1);
         // blank slate policy
         policyIds[0] = _createBlankPolicy();
-        // Add the function signature to the policy
+        // Add the calling function to the policy
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
@@ -155,11 +155,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256[] memory policyIds = new uint256[](1);
         // blank slate policy
         policyIds[0] = _createBlankPolicy();
-        // Add the function signature to the policy
+        // Add the calling function to the policy
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
@@ -193,11 +193,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256[] memory policyIds = new uint256[](1);
         // blank slate policy
         policyIds[0] = _createBlankPolicy();
-        // Add the function signature to the policy
+        // Add the calling function  to the policy
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
         // Rule: amount >= 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         // Instruction set: LC.PLH, 0, LC.GTEQL, 4, LC.GT, 0, 1
@@ -232,11 +232,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256[] memory policyIds = new uint256[](1);
         // blank slate policy
         policyIds[0] = _createBlankPolicy();
-        // Add the function signature to the policy
+        // Add the calling function to the policy
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
         // Rule: amount <= 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         // Instruction set: LC.PLH, 0, LC.LTEQL, 4, LC.GT, 0, 1
@@ -303,22 +303,22 @@ contract RulesEngineCommon is DiamondMine, Test {
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.STR;
-        // Save the function signature
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
-            .createFunctionSignature(
+        // Save the calling function
+        uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
+            .createCallingFunction(
                 policyIds[0],
-                bytes4(keccak256(bytes(functionSignature2))),
+                bytes4(keccak256(bytes(callingFunction2))),
                 pTypes,
-                functionSignature2,
+                callingFunction2,
                 ""
             );
         // Save the Policy
-        signatures.push(bytes4(keccak256(bytes(functionSignature2))));
-        functionSignatureIds.push(functionSignatureId);
+        callingFunctions.push(bytes4(keccak256(bytes(callingFunction2))));
+        callingFunctionIds.push(callingFunctionId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
         
-        RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[0], signatures, functionSignatureIds, ruleIds, PolicyType.CLOSED_POLICY); 
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[0], callingFunctions, callingFunctionIds, ruleIds, PolicyType.CLOSED_POLICY); 
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);       
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
@@ -365,23 +365,23 @@ contract RulesEngineCommon is DiamondMine, Test {
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.STR;
-        // Save the function signature
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
-            .createFunctionSignature(
+        // Save the calling function
+        uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
+            .createCallingFunction(
                 policyIds[0],
-                bytes4(keccak256(bytes(functionSignature2))),
+                bytes4(keccak256(bytes(callingFunction2))),
                 pTypes,
-                functionSignature2,
+                callingFunction2,
                 ""
             );
         // Save the Policy
-        signatures.push(bytes4(keccak256(bytes(functionSignature2))));
-        functionSignatureIds.push(functionSignatureId);
+        callingFunctions.push(bytes4(keccak256(bytes(callingFunction2))));
+        callingFunctionIds.push(callingFunctionId);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
         vm.stopPrank();
         vm.startPrank(policyAdmin);
-        RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[0], signatures, functionSignatureIds, ruleIds, PolicyType.CLOSED_POLICY);    
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[0], callingFunctions, callingFunctionIds, ruleIds, PolicyType.CLOSED_POLICY);    
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);    
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
@@ -404,7 +404,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
 
         // Rule: 1 == 1 -> TRU:someTracker += FC:simpleCheck(amount) -> transfer(address _to, uint256 amount) returns (bool)
 
@@ -476,7 +476,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
 
         // Rule: 1 == 1 -> TRU:someTracker += FC:simpleCheck(amount) -> transfer(address _to, uint256 amount) returns (bool)
 
@@ -542,7 +542,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
 
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
@@ -620,7 +620,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         // Rule memory rule = _createGTRule(policyIds[0], 4);
@@ -667,7 +667,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
 
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule = _createGTRule(4);
@@ -698,7 +698,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
 
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule = _createGTRuleWithCustomEventParams(4, param, pType);
@@ -729,7 +729,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
         Rule memory rule;
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         if(pType == PT.ADDR){
@@ -762,7 +762,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
 
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule = _createGTRule(threshold);
@@ -780,8 +780,8 @@ contract RulesEngineCommon is DiamondMine, Test {
     }
 
     function _resetGlobalVariables() public {
-        delete signatures;
-        delete functionSignatureIds;
+        delete callingFunctions;
+        delete callingFunctionIds;
         delete ruleIds;
     }
 
@@ -799,7 +799,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
 
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         // Rule 1: GT 4
@@ -819,7 +819,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Save the rule
         ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        // // Save the fKureIds.push(functionSignatureId);
+        // // Save the fKureIds.push(callingFunctionId);
         ruleIds[0][1] = ruleId;
 
         // Rule 3: GT 6
@@ -829,7 +829,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Save the rule
         ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        // // Save the fKureIds.push(functionSignatureId);
+        // // Save the fKureIds.push(callingFunctionId);
         ruleIds[0][2] = ruleId;
 
         // Rule 4: GT 7
@@ -839,7 +839,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Save the rule
         ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        // // Save the fKureIds.push(functionSignatureId);
+        // // Save the fKureIds.push(callingFunctionId);
         ruleIds[0][3] = ruleId;
 
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
@@ -862,7 +862,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
 
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule = _createGTRule(4);
@@ -899,7 +899,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
 
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
@@ -958,7 +958,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[1] = PT.UINT;
         pTypes[2] = PT.ADDR;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
 
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
@@ -1024,7 +1024,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[1] = PT.UINT;
         pTypes[2] = PT.BYTES;
 
-        _addFunctionSignatureToPolicyWithString(policyIds[0]);
+        _addCallingFunctionToPolicyWithString(policyIds[0]);
 
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
@@ -1090,7 +1090,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[1] = PT.UINT;
         pTypes[2] = PT.ADDR;
 
-        _addFunctionSignatureToPolicyWithString(policyIds[0]);
+        _addCallingFunctionToPolicyWithString(policyIds[0]);
 
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
@@ -1155,7 +1155,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[1] = PT.UINT;
         pTypes[2] = PT.BOOL;
 
-        _addFunctionSignatureToPolicyWithString(policyIds[0]);
+        _addCallingFunctionToPolicyWithString(policyIds[0]);
 
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
@@ -1220,7 +1220,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[1] = PT.UINT;
         pTypes[2] = PT.UINT;
 
-        _addFunctionSignatureToPolicyWithString(policyIds[0]);
+        _addCallingFunctionToPolicyWithString(policyIds[0]);
 
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
@@ -1270,17 +1270,17 @@ contract RulesEngineCommon is DiamondMine, Test {
 
     /// Test helper functions
     function _createBlankPolicy() internal returns (uint256) {
-        FunctionSignatureStorageSet[] memory functionSignatures = new FunctionSignatureStorageSet[](0); 
+        CallingFunctionStorageSet[] memory functioncallingFunctions = new CallingFunctionStorageSet[](0); 
         Rule[] memory rules = new Rule[](0); 
-        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(functionSignatures, rules, PolicyType.CLOSED_POLICY);
+        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(functioncallingFunctions, rules, PolicyType.CLOSED_POLICY);
         RulesEngineComponentFacet(address(red)).addClosedPolicySubscriber(policyId, callingContractAdmin); 
         return policyId;
     }
 
     function _createBlankPolicyOpen() internal returns (uint256) {
-        FunctionSignatureStorageSet[] memory functionSignatures = new FunctionSignatureStorageSet[](0); 
+        CallingFunctionStorageSet[] memory functioncallingFunctions = new CallingFunctionStorageSet[](0); 
         Rule[] memory rules = new Rule[](0); 
-        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(functionSignatures, rules, PolicyType.OPEN_POLICY);
+        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(functioncallingFunctions, rules, PolicyType.OPEN_POLICY);
         return policyId;
     }
 
@@ -1288,9 +1288,9 @@ contract RulesEngineCommon is DiamondMine, Test {
         internal
         returns (uint256)
     {
-        FunctionSignatureStorageSet[] memory functionSignatures = new FunctionSignatureStorageSet[](0); 
+        CallingFunctionStorageSet[] memory functioncallingFunctions = new CallingFunctionStorageSet[](0); 
         Rule[] memory rules = new Rule[](0); 
-        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(functionSignatures, rules, PolicyType.CLOSED_POLICY);
+        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(functioncallingFunctions, rules, PolicyType.CLOSED_POLICY);
         return policyId;
     }
 
@@ -1399,123 +1399,123 @@ contract RulesEngineCommon is DiamondMine, Test {
     }
 
 
-    function _addFunctionSignatureToPolicy(uint256 policyId) internal returns (uint256) {
+    function _addCallingFunctionToPolicy(uint256 policyId) internal returns (uint256) {
         vm.stopPrank();
         vm.startPrank(policyAdmin);
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-        // Save the function signature
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
-            .createFunctionSignature(
+        // Save the calling function
+        uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
+            .createCallingFunction(
                 policyId, 
-                bytes4(bytes4(keccak256(bytes(functionSignature)))), 
+                bytes4(bytes4(keccak256(bytes(callingFunction)))), 
                 pTypes,
-                functionSignature,
+                callingFunction,
                 ""    
             );
         // Save the Policy
-        signatures.push(bytes4(keccak256(bytes(functionSignature))));
-        functionSignatureIds.push(functionSignatureId);
+        callingFunctions.push(bytes4(keccak256(bytes(callingFunction))));
+        callingFunctionIds.push(callingFunctionId);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         RulesEnginePolicyFacet(address(red)).updatePolicy(
             policyId,
-            signatures,
-            functionSignatureIds,
+            callingFunctions,
+            callingFunctionIds,
             blankRuleIds,
             PolicyType.CLOSED_POLICY
         );
-        return functionSignatureId;
+        return callingFunctionId;
     }
 
-    function _addFunctionSignatureToPolicyWithString(uint256 policyId) internal returns (uint256) {
+    function _addCallingFunctionToPolicyWithString(uint256 policyId) internal returns (uint256) {
         PT[] memory pTypes = new PT[](3);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
         pTypes[2] = PT.BYTES;
-        // Save the function signature
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
-            .createFunctionSignature(
+        // Save the calling function
+        uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
+            .createCallingFunction(
                 policyId, 
-                bytes4(bytes4(keccak256(bytes(functionSignature)))), 
+                bytes4(bytes4(keccak256(bytes(callingFunction)))), 
                 pTypes,
-                functionSignature,
+                callingFunction,
                 ""    
             );
         // Save the Policy
-        signatures.push(bytes4(keccak256(bytes(functionSignature))));
-        functionSignatureIds.push(functionSignatureId);
+        callingFunctions.push(bytes4(keccak256(bytes(callingFunction))));
+        callingFunctionIds.push(callingFunctionId);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         vm.stopPrank();
         vm.startPrank(policyAdmin);
         RulesEnginePolicyFacet(address(red)).updatePolicy(
             policyId,
-            signatures,
-            functionSignatureIds,
+            callingFunctions,
+            callingFunctionIds,
             blankRuleIds,
             PolicyType.CLOSED_POLICY
         );
-        return functionSignatureId;
+        return callingFunctionId;
     }
 
-    function _addFunctionSignatureToPolicy(
+    function _addCallingFunctionToPolicy(
         uint256 policyId,
-        bytes4 _functionSignature,
+        bytes4 _callingFunction,
         PT[] memory pTypes,
         string memory functionName
     ) internal returns (uint256) {
-        // Save the function signature
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
-            .createFunctionSignature(
+        // Save the calling function
+        uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
+            .createCallingFunction(
                 policyId, 
-                bytes4(_functionSignature), 
+                bytes4(_callingFunction), 
                 pTypes, 
                 functionName,
                 "");
         // Save the Policy
-        signatures.push(_functionSignature);
-        functionSignatureIds.push(functionSignatureId);
+        callingFunctions.push(_callingFunction);
+        callingFunctionIds.push(callingFunctionId);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         vm.stopPrank();
         vm.startPrank(policyAdmin);
         RulesEnginePolicyFacet(address(red)).updatePolicy(
             policyId,
-            signatures,
-            functionSignatureIds,
+            callingFunctions,
+            callingFunctionIds,
             blankRuleIds,
             PolicyType.CLOSED_POLICY
         );
-        return functionSignatureId;
+        return callingFunctionId;
     }
 
-    function _addFunctionSignatureToPolicyOpen(
+    function _addCallingFunctionToPolicyOpen(
         uint256 policyId,
-        bytes4 _functionSignature,
+        bytes4 _callingFunction,
         PT[] memory pTypes, 
         string memory functionName
     ) internal returns (uint256) {
-        // Save the function signature
-        uint256 functionSignatureId = RulesEngineComponentFacet(address(red))
-            .createFunctionSignature(
+        // Save the calling function
+        uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
+            .createCallingFunction(
                 policyId, 
-                bytes4(_functionSignature), 
+                bytes4(_callingFunction), 
                 pTypes, 
                 functionName,
                 "");
         // Save the Policy
-        signatures.push(_functionSignature);
-        functionSignatureIds.push(functionSignatureId);
+        callingFunctions.push(_callingFunction);
+        callingFunctionIds.push(callingFunctionId);
         uint256[][] memory blankRuleIds = new uint256[][](0);
         vm.stopPrank();
         vm.startPrank(policyAdmin);
         RulesEnginePolicyFacet(address(red)).updatePolicy(
             policyId,
-            signatures,
-            functionSignatureIds,
+            callingFunctions,
+            callingFunctionIds,
             blankRuleIds,
             PolicyType.OPEN_POLICY
         );
-        return functionSignatureId;
+        return callingFunctionId;
     }
     
 
@@ -1527,8 +1527,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         vm.startPrank(policyAdmin);
         RulesEnginePolicyFacet(address(red)).updatePolicy(
             policyId,
-            signatures,
-            functionSignatureIds,
+            callingFunctions,
+            callingFunctionIds,
             _ruleIds,
             PolicyType.CLOSED_POLICY
         );
@@ -1542,8 +1542,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         vm.startPrank(policyAdmin);
         RulesEnginePolicyFacet(address(red)).updatePolicy(
             policyId,
-            signatures,
-            functionSignatureIds,
+            callingFunctions,
+            callingFunctionIds,
             _ruleIds,
             PolicyType.OPEN_POLICY
         );
@@ -1793,7 +1793,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         PT[] memory pTypes = new PT[](2);
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
         Rule memory rule;
         // Build the foreign call placeholder
@@ -1836,7 +1836,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.ADDR;
         pTypes[2] = PT.UINT;
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
         Rule memory rule;
         // Build the foreign call placeholder
@@ -1874,7 +1874,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicy();
         
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
         Rule memory rule;
         // Build the foreign call placeholder

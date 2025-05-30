@@ -114,16 +114,16 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         userContract.mint(USER_ADDRESS, 5);
     }
 
-    function _setupRuleWithRevertTransferFrom(string memory _functionSignature, PT[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
+    function _setupRuleWithRevertTransferFrom(string memory _callingFunction, PT[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
         uint256[] memory policyIds = new uint256[](1);
         
         policyIds[0] = _createBlankPolicyOpen();
 
-        _addFunctionSignatureToPolicyOpen(
+        _addCallingFunctionToPolicyOpen(
             policyIds[0], 
-            bytes4(keccak256(bytes(_functionSignature))), 
+            bytes4(keccak256(bytes(_callingFunction))), 
             pTypes,
-            _functionSignature);
+            _callingFunction);
 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule =  _createGTRuleTransferFrom(4);
@@ -140,16 +140,16 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
-    function _setupRuleWithRevertMint(string memory _functionSignature, PT[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
+    function _setupRuleWithRevertMint(string memory _callingFunction, PT[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
         uint256[] memory policyIds = new uint256[](1);
         
         policyIds[0] = _createBlankPolicyOpen();
 
-        _addFunctionSignatureToPolicyOpen(
+        _addCallingFunctionToPolicyOpen(
             policyIds[0], 
-            bytes4(keccak256(bytes(_functionSignature))), 
+            bytes4(keccak256(bytes(_callingFunction))), 
             pTypes,
-            _functionSignature
+            _callingFunction
         );
 
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"

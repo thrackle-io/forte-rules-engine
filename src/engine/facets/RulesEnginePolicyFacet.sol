@@ -23,29 +23,29 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
 
     /**
      * @notice Updates a policy in storage.
-     * @dev Updates the policy type, function signatures, and associated rules.
+     * @dev Updates the policy type, calling functions, and associated rules.
      * @param _policyId The ID of the policy to update.
-     * @param _signatures The function signatures in the policy.
-     * @param _functionSignatureIds The IDs of the function signatures.
+     * @param _callingFunctions The function signatures of the calling functions in the policy.
+     * @param _callingFunctionIds The IDs of the calling functions.
      * @param _ruleIds A two-dimensional array of rule IDs associated with the policy.
      * @param _policyType The type of the policy (CLOSED_POLICY or OPEN_POLICY).
      * @return policyId The updated policy ID.
      */
     function updatePolicy(
         uint256 _policyId, 
-        bytes4[] calldata _signatures, 
-        uint256[] calldata _functionSignatureIds, 
+        bytes4[] calldata _callingFunctions, 
+        uint256[] calldata _callingFunctionIds, 
         uint256[][] calldata _ruleIds,
         PolicyType _policyType
     ) external policyAdminOnly(_policyId, msg.sender) returns(uint256) {
         StorageLib.notCemented(_policyId);
-        // signature length must match the signature id length
-        if (_signatures.length != _functionSignatureIds.length) revert(SIGNATURES_INCONSISTENT); 
+        // calling functions length must match the calling function ids length
+        if (_callingFunctions.length != _callingFunctionIds.length) revert(SIGNATURES_INCONSISTENT); 
         // if policy ID is zero no policy has been created and cannot be updated. 
         if (_policyId == 0) revert(POLICY_ID_0);
         emit PolicyUpdated(_policyId);
         // Update the policy type
-        return _storePolicyData(_policyId, _signatures, _functionSignatureIds, _ruleIds, _policyType);
+        return _storePolicyData(_policyId, _callingFunctions, _callingFunctionIds, _ruleIds, _policyType);
     }
 
     /**
@@ -90,9 +90,9 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         delete data.set;
 
         Policy storage policy = data.policy;
-        bytes4[] memory signatures = policy.signatures;
-        for (uint256 i = 0; i < signatures.length; i++) {
-            uint256[] memory ruleIds = policy.signatureToRuleIds[signatures[i]];
+        bytes4[] memory callingFunctions = policy.callingFunctions;
+        for (uint256 i = 0; i < callingFunctions.length; i++) {
+            uint256[] memory ruleIds = policy.callingFunctionsToRuleIds[callingFunctions[i]];
             for (uint256 j = 0; j < ruleIds.length; j++) {
                 callAnotherFacet(0xa31c8ebb, abi.encodeWithSignature("deleteRule(uint256,uint256)", _policyId, ruleIds[j]));
             }
@@ -115,9 +115,9 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
             }
         }
 
-        for (uint256 i = 0; i < data.policy.signatures.length; i++) {
-            delete data.policy.functionSignatureIdMap[data.policy.signatures[i]];
-            delete data.policy.signatureToRuleIds[data.policy.signatures[i]];
+        for (uint256 i = 0; i < data.policy.callingFunctions.length; i++) {
+            delete data.policy.callingFunctionIdMap[data.policy.callingFunctions[i]];
+            delete data.policy.callingFunctionsToRuleIds[data.policy.callingFunctions[i]];
         }
         emit PolicyDeleted(_policyId);
     }
@@ -130,7 +130,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      */
     function applyPolicy(address _contractAddress, uint256[] calldata _policyIds) callingContractAdminOnly(_contractAddress, msg.sender) external { 
         if (_contractAddress == address(0)) revert(ZERO_ADDRESS);
-        // Load the function signature data from storage
+        // Load the policy data from storage
         PolicyAssociationS storage data = lib.getPolicyAssociationStorage();
         
         // Check policy type for each policy being applied
@@ -173,13 +173,13 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     /**
      * @notice Creates a new policy and assigns a policy admin.
      * @dev Generates a policy ID and initializes the policy with the specified type.
-     * @param _functionSignatures The function signatures associated with the policy.
+     * @param _callingFunctions The calling functions associated with the policy.
      * @param _rules The rules associated with the policy.
      * @param _policyType The type of the policy (CLOSED_POLICY or OPEN_POLICY).
      * @return uint256 The generated policy ID.
      */
     function createPolicy(
-        FunctionSignatureStorageSet[] calldata _functionSignatures, 
+        CallingFunctionStorageSet[] calldata _callingFunctions, 
         Rule[] calldata _rules,
         PolicyType _policyType
     ) external returns(uint256) {
@@ -197,9 +197,9 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         RulesEngineAdminRolesFacet(address(this)).generatePolicyAdminRole(policyId, address(msg.sender));
         //TODO remove this when create policy is atomic 
         // Temporarily disabling _storePolicyData
-        // return _storePolicyData(policyId, _functionSignatures, _rules);
+        // return _storePolicyData(policyId, _callingFunctions, _rules);
         
-        _functionSignatures;
+        _callingFunctions;
         _rules;
         emit PolicyCreated(policyId);
         return policyId;
@@ -207,32 +207,32 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
 
     /**
      * @notice Internal helper function for creating and updating policy data.
-     * @dev This function processes and stores policy data, including function signatures, rules, and policy type.
+     * @dev This function processes and stores policy data, including calling functions, rules, and policy type.
      * @param _policyId The ID of the policy.
-     * @param _signatures All function signatures in the policy.
-     * @param _functionSignatureIds Corresponding signature IDs in the policy. Each element matches one-to-one with the elements in `_signatures`.
-     * @param _ruleIds A two-dimensional array of rule IDs. The first level represents function signatures, and the second level contains rule IDs for each signature.
+     * @param _callingFunctions All callingFunctions in the policy.
+     * @param _callingFunctionIds Corresponding Calling Function IDs in the policy. Each element matches one-to-one with the elements in `_callingFunctions`.
+     * @param _ruleIds A two-dimensional array of rule IDs. The first level represents calling functions, and the second level contains rule IDs for each calling function.
      * @param _policyType The type of the policy (OPEN or CLOSED).
      * @return policyId The updated policy ID.
      * @dev The parameters are complex because nested structs are not allowed for externally facing functions.
      */
-    function _storePolicyData(uint256 _policyId, bytes4[] calldata _signatures, uint256[] calldata _functionSignatureIds, uint256[][] calldata _ruleIds, PolicyType _policyType) internal returns(uint256){   
+    function _storePolicyData(uint256 _policyId, bytes4[] calldata _callingFunctions, uint256[] calldata _callingFunctionIds, uint256[][] calldata _ruleIds, PolicyType _policyType) internal returns(uint256){   
         // Load the policy data from storage
         Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
         // if the policy type is changing, perform all data maintenance
         _processPolicyTypeChange(_policyId, _policyType);
         // clear the iterator array
-        delete data.signatures;
+        delete data.callingFunctions;
         if (_ruleIds.length > 0) {
-            // Loop through all the passed in signatures for the policy      
-            for (uint256 i = 0; i < _signatures.length; i++) {
-                // make sure that all the function signatures exist
-                if(!StorageLib._isFunctionSignatureSet(_policyId, _functionSignatureIds[i])) revert(INVALID_SIGNATURE);
+            // Loop through all the passed in calling functions for the policy      
+            for (uint256 i = 0; i < _callingFunctions.length; i++) {
+                // make sure that all the calling functions exist
+                if(!StorageLib._isCallingFunctionSet(_policyId, _callingFunctionIds[i])) revert(INVALID_SIGNATURE);
                 // Load into the mapping
-                data.functionSignatureIdMap[_signatures[i]] = _functionSignatureIds[i];
+                data.callingFunctionIdMap[_callingFunctions[i]] = _callingFunctionIds[i];
                 // load the iterator array
-                data.signatures.push(_signatures[i]);
-                // make sure that all the rules attached to each function signature exist
+                data.callingFunctions.push(_callingFunctions[i]);
+                // make sure that all the rules attached to each calling function exist
                 for (uint256 j = 0; j < _ruleIds[i].length; j++) {
                     RuleStorageSet memory ruleStore = lib.getRuleStorage().ruleStorageSets[_policyId][_ruleIds[i][j]];
                     if(!ruleStore.set) revert(INVALID_RULE);
@@ -245,19 +245,19 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
                         }
 
                     }
-                    data.signatureToRuleIds[_signatures[i]].push(_ruleIds[i][j]);
+                    data.callingFunctionsToRuleIds[_callingFunctions[i]].push(_ruleIds[i][j]);
                 }
                 
             }
         } else {
-            // Solely loop through and add signatures to the policy
-            for (uint256 i = 0; i < _signatures.length; i++) {
-                // make sure that all the function signatures exist
-                if(!StorageLib._isFunctionSignatureSet(_policyId, _functionSignatureIds[i])) revert(INVALID_SIGNATURE);
+            // Solely loop through and add calling functions to the policy
+            for (uint256 i = 0; i < _callingFunctions.length; i++) {
+                // make sure that all the calling functions exist
+                if(!StorageLib._isCallingFunctionSet(_policyId, _callingFunctionIds[i])) revert(INVALID_SIGNATURE);
                 // Load into the mapping
-                data.functionSignatureIdMap[_signatures[i]] = _functionSignatureIds[i];
+                data.callingFunctionIdMap[_callingFunctions[i]] = _callingFunctionIds[i];
                 // load the iterator array
-                data.signatures.push(_signatures[i]);
+                data.callingFunctions.push(_callingFunctions[i]);
             }
         }    
         
@@ -274,7 +274,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         // If closing, remove all applied contract associations
         Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
         if (_policyType == PolicyType.CLOSED_POLICY){
-            // Load the function signature data from storage
+            // Load the calling function data from storage
             PolicyAssociationS storage assocData = lib.getPolicyAssociationStorage();
             for (uint256 i = 0; i < assocData.policyIdContractMap[_policyId].length; i++) { 
                 delete assocData.contractPolicyIdMap[assocData.policyIdContractMap[_policyId][i]];
@@ -288,29 +288,29 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      * @notice Retrieves a policy from storage.
      * @dev Since `Policy` contains nested mappings, the data is broken into arrays for external return.
      * @param _policyId The ID of the policy.
-     * @return functionSigs The function signatures within the policy.
-     * @return functionSigIds The function signature IDs corresponding to each function signature.
-     * @return ruleIds The rule IDs corresponding to each function signature.
+     * @return callingFunctions The calling functions within the policy.
+     * @return callingFunctionIds The calling function IDs corresponding to each calling function.
+     * @return ruleIds The rule IDs corresponding to each calling function.
      */
-    function getPolicy(uint256 _policyId) external view returns(bytes4[] memory functionSigs, uint256[] memory functionSigIds, uint256[][] memory ruleIds) {
+    function getPolicy(uint256 _policyId) external view returns(bytes4[] memory callingFunctions, uint256[] memory callingFunctionIds, uint256[][] memory ruleIds) {
         // Load the policy data from storage
         Policy storage policy = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
         // Initialize the return arrays if necessary
-        if(policy.signatures.length > 0){
-            functionSigs = new bytes4[](policy.signatures.length);
-            functionSigIds = new uint256[](policy.signatures.length);
-            ruleIds = new uint256[][](policy.signatures.length);
+        if(policy.callingFunctions.length > 0){
+            callingFunctions = new bytes4[](policy.callingFunctions.length);
+            callingFunctionIds = new uint256[](policy.callingFunctions.length);
+            ruleIds = new uint256[][](policy.callingFunctions.length);
         }
-        ruleIds = new uint256[][](policy.signatures.length);
-        // Loop through the function signatures and load the return arrays
-        for (uint256 i = 0; i < policy.signatures.length; i++) {
-            functionSigs[i] = policy.signatures[i];
-            functionSigIds[i] = policy.functionSignatureIdMap[policy.signatures[i]];
+        ruleIds = new uint256[][](policy.callingFunctions.length);
+        // Loop through the callng functions and load the return arrays
+        for (uint256 i = 0; i < policy.callingFunctions.length; i++) {
+            callingFunctions[i] = policy.callingFunctions[i];
+            callingFunctionIds[i] = policy.callingFunctionIdMap[policy.callingFunctions[i]];
             // Initialize the ruleId return array if necessary
-            for (uint256 ruleIndex = 0; ruleIndex < policy.signatureToRuleIds[policy.signatures[i]].length; ruleIndex++) {
+            for (uint256 ruleIndex = 0; ruleIndex < policy.callingFunctionsToRuleIds[policy.callingFunctions[i]].length; ruleIndex++) {
                 // have to allocate the memory array here
-                ruleIds[i] = new uint256[](policy.signatureToRuleIds[policy.signatures[i]].length);
-                ruleIds[i][ruleIndex] = policy.signatureToRuleIds[policy.signatures[i]][ruleIndex];
+                ruleIds[i] = new uint256[](policy.callingFunctionsToRuleIds[policy.callingFunctions[i]].length);
+                ruleIds[i][ruleIndex] = policy.callingFunctionsToRuleIds[policy.callingFunctions[i]][ruleIndex];
             }
         }
     }
