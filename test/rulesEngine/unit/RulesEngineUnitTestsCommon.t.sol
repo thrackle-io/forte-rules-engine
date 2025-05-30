@@ -1614,6 +1614,79 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
+        function testRulesEngine_Unit_UnapplyPolicy_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyId, blankSignatures, blankFunctionSignatureIds, blankRuleIds, PolicyType.OPEN_POLICY);
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = policyId;
+        vm.startPrank(callingContractAdmin);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        RulesEnginePolicyFacet(address(red)).unapplyPolicy(address(userContract), policyIds);
+        assertEq(RulesEnginePolicyFacet(address(red)).getAppliedPolicyIds(userContractAddress).length,0);
+    }
+
+    function testRulesEngine_Unit_UnapplyPolicyMultiple_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256[] memory policyIds = new uint256[](2);
+        
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyId, blankSignatures, blankFunctionSignatureIds, blankRuleIds, PolicyType.OPEN_POLICY);
+        
+        uint256 policyId2 = _createBlankPolicy();
+        bytes4[] memory blankSignatures2 = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds2 = new uint256[](0);
+        uint256[][] memory blankRuleIds2 = new uint256[][](0);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyId2, blankSignatures2, blankFunctionSignatureIds2, blankRuleIds2, PolicyType.OPEN_POLICY);
+        policyIds[0] = policyId;
+        policyIds[1] = policyId2;
+        vm.startPrank(callingContractAdmin);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        RulesEnginePolicyFacet(address(red)).unapplyPolicy(address(userContract), policyIds);
+        assertEq(RulesEnginePolicyFacet(address(red)).getAppliedPolicyIds(userContractAddress).length,0);
+    }
+
+    function testRulesEngine_Unit_UnapplyPolicy_Multiple_OnlyRemoveOne_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyId, blankSignatures, blankFunctionSignatureIds, blankRuleIds, PolicyType.OPEN_POLICY);
+        uint256[] memory policyIds = new uint256[](2);
+        uint256 policyId2 = _createBlankPolicy();
+        bytes4[] memory blankSignatures2 = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds2 = new uint256[](0);
+        uint256[][] memory blankRuleIds2 = new uint256[][](0);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyId2, blankSignatures2, blankFunctionSignatureIds2, blankRuleIds2, PolicyType.OPEN_POLICY);
+        policyIds[0] = policyId;
+        policyIds[1] = policyId2;
+        vm.startPrank(callingContractAdmin);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        policyIds = new uint256[](1);
+        policyIds[0] = policyId;
+        RulesEnginePolicyFacet(address(red)).unapplyPolicy(address(userContract), policyIds);
+        policyIds = RulesEnginePolicyFacet(address(red)).getAppliedPolicyIds(userContractAddress);
+        assertEq(policyIds.length,1);
+        assertEq(policyIds[0], policyId2);
+    }
+
+    function testRulesEngine_Unit_UnapplyPolicy_Negative_NotCallingContractAdmin() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory blankSignatures = new bytes4[](0);
+        uint256[] memory blankFunctionSignatureIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyId, blankSignatures, blankFunctionSignatureIds, blankRuleIds, PolicyType.CLOSED_POLICY);
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = policyId;
+        vm.startPrank(policyAdmin);
+        vm.expectRevert("Not Authorized Admin");
+        RulesEnginePolicyFacet(address(red)).unapplyPolicy(address(userContract), policyIds);
+    }
+
     function testRulesEngine_Unit_CreateForeignCall_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
         uint256 policyId = _createBlankPolicy();
         bytes4[] memory blankcallingFunctions = new bytes4[](0);
