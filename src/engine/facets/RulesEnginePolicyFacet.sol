@@ -158,7 +158,43 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         emit PolicyApplied(_policyIds, _contractAddress);
     }
 
-    // TODO add removePolicy fn
+    /**
+     * @notice Unapplies policies from a specified contract.
+     * @dev Ensures that only calling contract admins can unapply policies. Removes associations between the contract and the specified policies.
+     * @param _contractAddress The address of the contract from which policies will be unapplied.
+     * @param _policyIds The IDs of the policies to unapply.
+     */
+    function unapplyPolicy(address _contractAddress, uint256[] calldata _policyIds) callingContractAdminOnly(_contractAddress, msg.sender) external { 
+        if (_contractAddress == address(0)) revert(ZERO_ADDRESS);
+        // Load the policy association data from storage
+        PolicyAssociationS storage data = lib.getPolicyAssociationStorage();
+        // Get the currently applied policyIds
+        uint256[] memory allPolicyIds = data.contractPolicyIdMap[_contractAddress];
+        // Blow away the contract to policyId association data in order to keep the associated id's array length in line with the amount of policies associated.
+        delete data.contractPolicyIdMap[_contractAddress];
+        bool found;
+        for(uint256 i = 0; i < allPolicyIds.length; i++) {
+            found = false;
+            for(uint256 j = 0; j < _policyIds.length; j++) {
+                // if the id exists in the unapply list, don't carry it forward
+                if (allPolicyIds[i] == _policyIds[j]) found = true;
+            }
+            if (!found) data.contractPolicyIdMap[_contractAddress].push(allPolicyIds[i]);
+        } 
+
+        // Get the currently applied policyIds
+        address[] memory allContracts = data.policyIdContractMap[_policyIds[0]];
+        // Loop through the policyId to contract arrays, clear them and add back only the correct addresses
+        for(uint256 i = 0; i < _policyIds.length; i++) {
+            // Blow away the policyId to contract association data in order to keep the associated id's array length in line with the amount of contracts associated.
+            delete data.policyIdContractMap[_policyIds[i]];
+            for(uint256 j = 0; j < allContracts.length; j++) {
+                // if the address is not the current address, add it back to the array.
+                if (allContracts[j] != _contractAddress) data.policyIdContractMap[_policyIds[i]].push(allContracts[j]);
+            } 
+        }
+        emit PolicyUnapplied(_policyIds, _contractAddress);
+    }
 
     /**
      * @notice Retrieves the IDs of policies applied to a specific contract.
