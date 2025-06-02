@@ -203,7 +203,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         userContract.transfer(address(0x7654321), transferValue);
     }
 
-    function testRulesEngine_Unit_createRule_ForeignCall_TrackerValuesUsed()
+    function testRulesEngine_Unit_createRule_ForeignCall_TrackerValuesUsed_Positive()
         public
         ifDeploymentTestsEnabled
         endWithStopPrank
@@ -214,15 +214,38 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(response, 1);
     }
 
-    function testRulesEngine_Unit_createRule_ForeignCall_ForeignCallReferenced()
+        function testRulesEngine_Unit_createRule_ForeignCall_TrackerValuesUsed_Negative()
         public
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        setupRuleWithForeignCallWithSquaredFCValues(4, ET.REVERT, false);
+        setupRuleWithForeignCallSquaringReferencedTrackerVals(0, ET.REVERT, false);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), 3);
+        vm.expectRevert(abi.encodePacked(revert_text));
+        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+    }
+
+    function testRulesEngine_Unit_createRule_ForeignCall_ForeignCallReferenced_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        setupRuleWithForeignCallWithSquaredFCValues(ET.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), 3);
         uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
         assertEq(response, 1);
+    }
+
+
+        function testRulesEngine_Unit_createRule_ForeignCall_ForeignCallReferenced_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        setupRuleWithForeignCallWithSquaredFCValues(ET.REVERT, false);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), 0);
+        vm.expectRevert(abi.encodePacked(revert_text));
+        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
     }
 
     function testRulesEngine_Unit_CheckPolicies_Explicit_StringComparison_Positive()

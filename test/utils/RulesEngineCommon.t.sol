@@ -585,7 +585,6 @@ contract RulesEngineCommon is DiamondMine, Test {
 
     // Same as setupRuleWithForeignCall except that it contains a foreign call that is referenced by another foreign call that is then squared by the foreign call and then checked to see if it's greater than the original value
     function setupRuleWithForeignCallWithSquaredFCValues(
-        uint256 _amount,
         ET _effectType,
         bool isPositive
     ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256 policyId) {
@@ -601,7 +600,6 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
-
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](2);
         rule.placeHolders[0].foreignCall = true;
@@ -610,14 +608,14 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders[1].typeSpecificIndex = 2;
 
         // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet(_amount);
+        rule.instructionSet = _createInstructionSet(1, 0); // is placeholder 1 > placeholder 0?
 
         rule = _setUpEffect(rule, _effectType, isPositive);
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
         int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 0;
+        typeSpecificIndices[0] = 1;
         ForeignCall memory fc;
         fc.typeSpecificIndices = typeSpecificIndices;
         fc.parameterTypes = fcArgs;
@@ -686,7 +684,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         /// build the members of the struct:
         tracker.pType = PT.UINT;
-        tracker.trackerValue = abi.encode(_amount / 2);
+        tracker.trackerValue = abi.encode(_amount);
         // Add the tracker
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
         
