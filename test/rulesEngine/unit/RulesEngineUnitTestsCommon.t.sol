@@ -237,7 +237,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     }
 
 
-        function testRulesEngine_Unit_createRule_ForeignCall_ForeignCallReferenced_Negative()
+    function testRulesEngine_Unit_createRule_ForeignCall_ForeignCallReferenced_Negative()
         public
         ifDeploymentTestsEnabled
         endWithStopPrank
