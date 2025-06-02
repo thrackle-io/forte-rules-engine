@@ -88,17 +88,17 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         userContract.transferFrom(USER_ADDRESS, USER_ADDRESS_2, 0);
     }
     
-    function _setupRuleWithRevertSafeMint(string memory _functionSignature, PT[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
+    function _setupRuleWithRevertSafeMint(string memory _callingFunction, PT[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
         // if the address equals the mint to address, then emit event, else revert
         uint256[] memory policyIds = new uint256[](1);
         
         policyIds[0] = _createBlankPolicyOpen();
 
-        _addFunctionSignatureToPolicy(
+        _addCallingFunctionToPolicy(
             policyIds[0], 
-            bytes4(keccak256(bytes(_functionSignature))), 
+            bytes4(keccak256(bytes(_callingFunction))), 
             pTypes,
-            _functionSignature  
+            _callingFunction  
         );
 
         Rule memory rule =  _createEQRuleSafeMint(USER_ADDRESS);
@@ -115,17 +115,17 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
-    function _setupRuleWithRevertSafeTransferFrom(string memory _functionSignature, PT[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
+    function _setupRuleWithRevertSafeTransferFrom(string memory _callingFunction, PT[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
         // if the address equals the mint to address, then emit event, else revert
         uint256[] memory policyIds = new uint256[](1);
         
         policyIds[0] = _createBlankPolicyOpen();
 
-        _addFunctionSignatureToPolicy(
+        _addCallingFunctionToPolicy(
             policyIds[0], 
-            bytes4(keccak256(bytes(_functionSignature))), 
+            bytes4(keccak256(bytes(_callingFunction))), 
             pTypes,
-            _functionSignature);
+            _callingFunction);
 
         Rule memory rule =  _createEQRuleSafeTransferFrom(USER_ADDRESS);
         rule.negEffects[0] = effectId_revert;
@@ -141,17 +141,17 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
-    function _setupRuleWithRevertTransferFrom(string memory _functionSignature, PT[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
+    function _setupRuleWithRevertTransferFrom(string memory _callingFunction, PT[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
         // if the address equals the mint to address, then emit event, else revert
         uint256[] memory policyIds = new uint256[](1);
         
         policyIds[0] = _createBlankPolicyOpen();
 
-        _addFunctionSignatureToPolicy(
+        _addCallingFunctionToPolicy(
             policyIds[0], 
-            bytes4(keccak256(bytes(_functionSignature))),
+            bytes4(keccak256(bytes(_callingFunction))),
              pTypes,
-             _functionSignature
+             _callingFunction
         );
 
         Rule memory rule =  _createEQRuleTransferFrom(USER_ADDRESS);

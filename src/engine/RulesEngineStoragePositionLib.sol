@@ -5,7 +5,7 @@ import "src/engine/RulesEngineStorageStructure.sol";
 /**
  * @title Rules Engine Storage Position Library
  * @dev This library provides functions to access and manage storage positions for various components of the Rules Engine.
- *      It defines fixed storage slots for initialized flags, foreign calls, trackers, function signatures, rules, policies, 
+ *      It defines fixed storage slots for initialized flags, foreign calls, trackers, calling functions, rules, policies, 
  *      and policy associations. These storage slots are used to ensure consistent and conflict-free storage management 
  *      across the diamond proxy pattern.
  * @notice This library is a critical component of the Rules Engine, enabling modular and efficient storage management.
@@ -16,12 +16,12 @@ library RulesEngineStoragePositionLib {
     bytes32 constant INITIALIZED_POSITION = bytes32(uint256(keccak256("initialized-position")) - 1);
     bytes32 constant FOREIGN_CALL_POSITION = bytes32(uint256(keccak256("foreign-call-position")) - 1);
     bytes32 constant TRACKER_POSITION = bytes32(uint256(keccak256("tracker-position")) - 1);
-    bytes32 constant FUNCTION_SIGNATURE_POSITION = bytes32(uint256(keccak256("function-signature-position")) - 1);
+    bytes32 constant CALLING_FUNCTION_POSITION = bytes32(uint256(keccak256("calling-function-position")) - 1);
     bytes32 constant RULE_POSITION = bytes32(uint256(keccak256("rule-position")) - 1);
     bytes32 constant POLICY_POSITION = bytes32(uint256(keccak256("policy-position")) - 1);
     bytes32 constant POLICY_ASSOCIATION_POSITION = bytes32(uint256(keccak256("policy-association-position")) - 1);
     bytes32 constant FOREIGN_CALL_METADATA_POSITION = bytes32(uint256(keccak256("foreign-call-metadata-position")) - 1);
-    bytes32 constant FUNCTION_SIGNATURE_METADATA_POSITION = bytes32(uint256(keccak256("function-signature-metadata-position")) - 1);
+    bytes32 constant CALLING_FUNCTION_METADATA_POSITION = bytes32(uint256(keccak256("calling-function-metadata-position")) - 1);
     bytes32 constant TRACKER_METADATA_POSITION = bytes32(uint256(keccak256("tracker-metadata-position")) - 1);
 
     /**
@@ -85,24 +85,24 @@ library RulesEngineStoragePositionLib {
     }
 
     /**
-     * @notice Retrieves the storage for function signatures.
+     * @notice Retrieves the storage for calling functions.
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
-     * @return ds The storage structure for the function signature map.
+     * @return ds The storage structure for the calling function map.
      */
-    function getFunctionSignatureStorage() internal pure returns (FunctionSignatureS storage ds) {
-        bytes32 position = FUNCTION_SIGNATURE_POSITION;
+    function getCallingFunctionStorage() internal pure returns (CallingFunctionStruct storage ds) {
+        bytes32 position = CALLING_FUNCTION_POSITION;
         assembly {
             ds.slot := position
         }
     }
 
     /**
-     * @notice Retrieves the storage for function signature metadata.
+     * @notice Retrieves the storage for calling function metadata.
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
-     * @return ds The storage structure for the function signature metadata map.
+     * @return ds The storage structure for the calling function metadata map.
      */
-    function getFunctionSignatureMetadataStorage() internal pure returns (FunctionSignatureMetadataStruct storage ds) {
-        bytes32 position = FUNCTION_SIGNATURE_METADATA_POSITION;
+    function getCallingFunctioneMetadataStorage() internal pure returns (CallingFunctionMetadataStruct storage ds) {
+        bytes32 position = CALLING_FUNCTION_METADATA_POSITION;
         assembly {
             ds.slot := position
         }
