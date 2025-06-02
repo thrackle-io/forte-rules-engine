@@ -35,8 +35,4 @@ contract BasicBatchTest is RulesEngineCommon {
         calls[2] = abi.encodeWithSelector(RulesEnginePolicyFacet.updatePolicy.selector, 1, blankSignatures, blankFunctionSignatureIds, blankRuleIds, PolicyType.CLOSED_POLICY);
         RulesEngineDiamond(red).batch(calls, true);
     }
-
-    function test_ERC721A_Batch_Transfer() public {
-        
-    }
 }
