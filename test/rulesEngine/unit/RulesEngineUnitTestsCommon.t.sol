@@ -209,7 +209,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         setupRuleWithForeignCallSquaringReferencedTrackerVals(8, ET.REVERT, false);
-        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), 3);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 3);
         uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
         assertEq(response, 1);
     }
@@ -220,7 +220,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         setupRuleWithForeignCallSquaringReferencedTrackerVals(0, ET.REVERT, false);
-        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), 3);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 3);
         vm.expectRevert(abi.encodePacked(revert_text));
         RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
     }
@@ -231,7 +231,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         setupRuleWithForeignCallWithSquaredFCValues(ET.REVERT, false);
-        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), 3);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 3);
         uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
         assertEq(response, 1);
     }
@@ -243,7 +243,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         setupRuleWithForeignCallWithSquaredFCValues(ET.REVERT, false);
-        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(functionSignature))), address(0x7654321), 0);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 0);
         vm.expectRevert(abi.encodePacked(revert_text));
         RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
     }

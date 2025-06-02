@@ -596,7 +596,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
 
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
@@ -663,7 +663,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[0] = PT.ADDR;
         pTypes[1] = PT.UINT;
 
-        _addFunctionSignatureToPolicy(policyIds[0]);
+        _addCallingFunctionToPolicy(policyIds[0]);
 
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
