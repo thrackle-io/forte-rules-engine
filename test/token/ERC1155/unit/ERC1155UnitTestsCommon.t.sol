@@ -135,7 +135,7 @@ abstract contract ERC1155UnitTestsCommon is RulesEngineCommon {
         
         policyIds[0] = _createBlankPolicyOpen();
 
-        _addFunctionSignatureToPolicy(
+        _addCallingFunctionToPolicy(
             policyIds[0], 
             bytes4(keccak256(bytes(_functionSignature))), 
             pTypes,
@@ -162,7 +162,7 @@ abstract contract ERC1155UnitTestsCommon is RulesEngineCommon {
         
         policyIds[0] = _createBlankPolicyOpen();
 
-        _addFunctionSignatureToPolicy(
+        _addCallingFunctionToPolicy(
             policyIds[0], 
             bytes4(keccak256(bytes(_functionSignature))), 
             pTypes,
@@ -188,7 +188,7 @@ abstract contract ERC1155UnitTestsCommon is RulesEngineCommon {
         
         policyIds[0] = _createBlankPolicyOpen();
 
-        _addFunctionSignatureToPolicy(
+        _addCallingFunctionToPolicy(
             policyIds[0], 
             bytes4(keccak256(bytes(_functionSignature))),
              pTypes,

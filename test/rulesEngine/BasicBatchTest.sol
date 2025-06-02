@@ -22,7 +22,7 @@ contract BasicBatchTest is RulesEngineCommon {
         address _address = address(22);
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.UINT;
-        uint8[] memory typeSpecificIndices = new uint8[](1);
+        int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 1;
         ForeignCall memory fc;
         fc.typeSpecificIndices = typeSpecificIndices;

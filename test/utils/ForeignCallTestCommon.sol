@@ -64,6 +64,12 @@ contract ForeignCallTestContract {
         return true;
     }
 
+    function testSig(address encodedAddr, uint256 encodedInt) public returns (bool) {
+        decodedAddr = encodedAddr;
+        decodedIntOne = encodedInt;
+        return true;
+    }
+
     function testSig(string memory encodedStr) public returns (bool) {
         decodedStrOne = encodedStr;
         return true;
@@ -172,6 +178,10 @@ contract ForeignCallTestContract {
     function simpleCheck(uint256 value) public returns (uint256) {
         internalValue = value;
         return value;
+    }
+
+    function square(uint256 value) public pure returns (uint256) {
+        return value * value;
     }
 
     function getInternalValue() public view returns (uint256) {

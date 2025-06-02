@@ -203,6 +203,51 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         userContract.transfer(address(0x7654321), transferValue);
     }
 
+    function testRulesEngine_Unit_createRule_ForeignCall_TrackerValuesUsed_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        setupRuleWithForeignCallSquaringReferencedTrackerVals(8, ET.REVERT, false);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 3);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        assertEq(response, 1);
+    }
+
+        function testRulesEngine_Unit_createRule_ForeignCall_TrackerValuesUsed_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        setupRuleWithForeignCallSquaringReferencedTrackerVals(0, ET.REVERT, false);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 3);
+        vm.expectRevert(abi.encodePacked(revert_text));
+        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+    }
+
+    function testRulesEngine_Unit_createRule_ForeignCall_ForeignCallReferenced_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        setupRuleWithForeignCallWithSquaredFCValues(ET.REVERT, false);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 3);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        assertEq(response, 1);
+    }
+
+
+    function testRulesEngine_Unit_createRule_ForeignCall_ForeignCallReferenced_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        setupRuleWithForeignCallWithSquaredFCValues(ET.REVERT, false);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 0);
+        vm.expectRevert(abi.encodePacked(revert_text));
+        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+    }
+
     function testRulesEngine_Unit_CheckPolicies_Explicit_StringComparison_Positive()
         public
         ifDeploymentTestsEnabled
@@ -2079,7 +2124,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         RulesEngineComponentFacet(address(red)).deleteTracker(policyID, trackerId);
     }
 
-        function testRulesEngine_unit_adminRoles_CreateForeignCall_Event() public ifDeploymentTestsEnabled endWithStopPrank {
+    function testRulesEngine_unit_adminRoles_CreateForeignCall_Event() public ifDeploymentTestsEnabled endWithStopPrank {
         vm.startPrank(policyAdmin);
         uint256 policyID = _createBlankPolicy();
         uint256 foreignCallId = 1; 
@@ -2088,7 +2133,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.parameterTypes = new PT[](1);
         fc.parameterTypes[0] = PT.UINT;
-        fc.typeSpecificIndices = new uint8[](1);
+        fc.typeSpecificIndices = new int8[](1);
         fc.typeSpecificIndices[0] = 1;
         fc.returnType = PT.UINT;
         fc.foreignCallIndex = 0;
@@ -2339,7 +2384,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         PT[] memory fcArgs = new PT[](1);
         fcArgs[0] = PT.ADDR;
-        uint8[] memory typeSpecificIndices = new uint8[](1);
+        int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 2; // set the placeholder index to retrieve value 
         ForeignCall memory fc;
         fc.typeSpecificIndices = typeSpecificIndices;
