@@ -29,7 +29,7 @@ library RulesEngineStoragePositionLib {
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
      * @return ds The storage structure for the initialized flag.
      */
-    function initializedStorage() internal pure returns (InitializedS storage ds) {
+    function initializedStorage() internal pure returns (InitializedStorage storage ds) {
         bytes32 position = INITIALIZED_POSITION;
         assembly {
             ds.slot := position
@@ -41,7 +41,7 @@ library RulesEngineStoragePositionLib {
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
      * @return ds The storage structure for the foreign call map.
      */
-    function getForeignCallStorage() internal pure returns (ForeignCallS storage ds) {
+    function getForeignCallStorage() internal pure returns (ForeignCallStorage storage ds) {
         bytes32 position = FOREIGN_CALL_POSITION;
         assembly {
             ds.slot := position
@@ -65,7 +65,7 @@ library RulesEngineStoragePositionLib {
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
      * @return ds The storage structure for the tracker map.
      */
-    function getTrackerStorage() internal pure returns (TrackerS storage ds) {
+    function getTrackerStorage() internal pure returns (TrackerStorage storage ds) {
         bytes32 position = TRACKER_POSITION;
         assembly {
             ds.slot := position
@@ -113,7 +113,7 @@ library RulesEngineStoragePositionLib {
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
      * @return ds The storage structure for the rule map.
      */
-    function getRuleStorage() internal pure returns (RuleS storage ds) {
+    function getRuleStorage() internal pure returns (RuleStorage storage ds) {
         bytes32 position = RULE_POSITION;
         assembly {
             ds.slot := position
@@ -125,7 +125,7 @@ library RulesEngineStoragePositionLib {
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
      * @return ds The storage structure for the policy map.
      */
-    function getPolicyStorage() internal pure returns (PolicyS storage ds) {
+    function getPolicyStorage() internal pure returns (PolicyStorage storage ds) {
         bytes32 position = POLICY_POSITION;
         assembly {
             ds.slot := position
@@ -137,7 +137,7 @@ library RulesEngineStoragePositionLib {
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
      * @return ds The storage structure for the policy association map.
      */
-    function getPolicyAssociationStorage() internal pure returns (PolicyAssociationS storage ds) {
+    function getPolicyAssociationStorage() internal pure returns (PolicyAssociationStorage storage ds) {
         bytes32 position = POLICY_ASSOCIATION_POSITION;
         assembly {
             ds.slot := position

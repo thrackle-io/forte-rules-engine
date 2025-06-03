@@ -17,24 +17,24 @@ contract RulesEngineInitialFacet is FacetCommonImports{
     /**
      * @notice Initializes the Rules Engine with the specified owner.
      * @dev This function sets the initial owner of the diamond and ensures the contract is only initialized once.
-     * @param _owner The initial owner of the diamond.
+     * @param owner The initial owner of the diamond.
      */
-    function initialize(address _owner) external {
-        InitializedS storage init = lib.initializedStorage();
+    function initialize(address owner) external {
+        InitializedStorage storage init = lib.initializedStorage();
         if(init.initialized) revert ("AlreadyInitialized");
-        callAnotherFacet(0xf2fde38b, abi.encodeWithSignature("transferOwnership(address)", _owner));
+        callAnotherFacet(0xf2fde38b, abi.encodeWithSignature("transferOwnership(address)", owner));
     }
 
     /**
      * @notice Retrieves the raw string associated with a specific instruction set within a rule and policy.
      * @dev This function is used to fetch a `StringVerificationStruct` containing the raw string data.
-     * @param _policyId The ID of the policy containing the rule.
-     * @param _ruleId The ID of the rule containing the instruction set.
+     * @param policyId The ID of the policy containing the rule.
+     * @param ruleId The ID of the rule containing the instruction set.
      * @param instructionSetId The ID of the instruction set to retrieve the raw string from.
      * @return retVal A `StringVerificationStruct` containing the raw string data for the specified instruction set.
      */
-    function retrieveRawStringFromInstructionSet(uint256 _policyId, uint256 _ruleId, uint256 instructionSetId) public view returns (StringVerificationStruct memory retVal) {
-        (uint256 instructionSetValue, bytes memory encoded) = _retreiveRawEncodedFromInstructionSet(_policyId, _ruleId, instructionSetId, PT.STR);
+    function retrieveRawStringFromInstructionSet(uint256 policyId, uint256 ruleId, uint256 instructionSetId) public view returns (StringVerificationStruct memory retVal) {
+        (uint256 instructionSetValue, bytes memory encoded) = _retreiveRawEncodedFromInstructionSet(policyId, ruleId, instructionSetId, PT.STR);
         retVal.rawData = abi.decode(encoded, (string));
         retVal.instructionSetValue = instructionSetValue;
     }
@@ -43,13 +43,13 @@ contract RulesEngineInitialFacet is FacetCommonImports{
      * @notice Retrieves the raw address from a specific instruction set.
      * @dev This function is used to fetch the raw address associated with a given
      *      policy ID, rule ID, and instruction set ID.
-     * @param _policyId The ID of the policy to which the rule belongs.
-     * @param _ruleId The ID of the rule within the policy.
+     * @param policyId The ID of the policy to which the rule belongs.
+     * @param ruleId The ID of the rule within the policy.
      * @param instructionSetId The ID of the instruction set to retrieve the address verification structure from.
      * @return retVal The AddressVerificationStruct containing the raw address data.
      */
-    function retrieveRawAddressFromInstructionSet(uint256 _policyId, uint256 _ruleId, uint256 instructionSetId) public view returns (AddressVerificationStruct memory retVal) {
-        (uint256 instructionSetValue, bytes memory encoded) = _retreiveRawEncodedFromInstructionSet(_policyId, _ruleId, instructionSetId, PT.ADDR);
+    function retrieveRawAddressFromInstructionSet(uint256 policyId, uint256 ruleId, uint256 instructionSetId) public view returns (AddressVerificationStruct memory retVal) {
+        (uint256 instructionSetValue, bytes memory encoded) = _retreiveRawEncodedFromInstructionSet(policyId, ruleId, instructionSetId, PT.ADDR);
         retVal.rawData = abi.decode(encoded, (address));
         retVal.instructionSetValue = instructionSetValue;
     }
@@ -79,5 +79,4 @@ contract RulesEngineInitialFacet is FacetCommonImports{
             }
         }
     }
-
 }

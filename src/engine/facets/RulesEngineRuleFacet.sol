@@ -29,7 +29,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      */
     function createRule(uint256 _policyId, Rule calldata _rule) external policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         StorageLib.notCemented(_policyId);
-        RuleS storage data = lib.getRuleStorage();
+        RuleStorage storage data = lib.getRuleStorage();
         uint256 ruleId = ++data.ruleIdCounter[_policyId];
         _storeRule(data, _policyId, ruleId, _rule);
         data.ruleIdCounter[_policyId] = ruleId;
@@ -46,7 +46,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      * @param _rule The rule to store.
      * @return ruleId The stored rule ID.
      */
-    function _storeRule(RuleS storage _data, uint256 _policyId, uint256 _ruleId, Rule calldata _rule) internal returns (uint256) {
+    function _storeRule(RuleStorage storage _data, uint256 _policyId, uint256 _ruleId, Rule calldata _rule) internal returns (uint256) {
         // TODO: Add validations for rule
         
         // Validate that the policy exists
@@ -72,7 +72,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
     ) external policyAdminOnly(_policyId, msg.sender) returns (uint256) {
         StorageLib.notCemented(_policyId);
         // Load the rule data from storage
-        RuleS storage data = lib.getRuleStorage();
+        RuleStorage storage data = lib.getRuleStorage();
         _storeRule(data, _policyId, _ruleId, _rule);
         emit RuleUpdated(_policyId, _ruleId);
         return _ruleId;

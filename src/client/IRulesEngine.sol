@@ -9,16 +9,6 @@ pragma solidity ^0.8.13;
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 interface IRulesEngine {
-
-    // Supported Parameter Types
-    enum PT {
-        ADDR,  // Address type
-        STR,   // String type
-        UINT,  // Unsigned integer type
-        BOOL,  // Boolean type
-        VOID,  // Void type (no value)
-        BYTES  // Bytes type
-    }
     
     /**
      * @notice Evaluates the conditions associated with all applicable rules and returns the result.

@@ -10,7 +10,7 @@ pragma solidity ^0.8.24;
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 
-struct InitializedS {
+struct InitializedStorage {
     bool initialized;
 }
 
@@ -110,7 +110,7 @@ struct Effect {
 }
 
 /// Foreign Call Structures
-struct ForeignCallS {
+struct ForeignCallStorage {
     mapping(uint256 policyId => uint256) foreignCallIdxCounter;
     mapping(uint256 policyId => mapping(uint256 foreignCallIndex => ForeignCall)) foreignCalls;
 }
@@ -176,7 +176,7 @@ struct ForeignCall {
 }
 
 /// Tracker Structures
-struct TrackerS {
+struct TrackerStorage {
     //uint256 TrackerIndex;
     mapping(uint256 policyId => uint256 trackerIndex) trackerIndexCounter;
     mapping(uint256 policyId => mapping(uint256 trackerIndex => Trackers)) trackers;
@@ -211,7 +211,7 @@ struct CallingFunctionStorageSet {
 }
 
 /// Rule Structures
-struct RuleS {
+struct RuleStorage {
     mapping(uint256 policyId => uint256 ruleId) ruleIdCounter;
     mapping(uint256 policyId => mapping(uint256 ruleId => RuleStorageSet)) ruleStorageSets;
 }
@@ -272,7 +272,7 @@ struct AddressVerificationStruct {
 }
 
 /// POLICY Storage Structures
-struct PolicyS {
+struct PolicyStorage {
     uint256 policyId;
     mapping(uint256 policyId => PolicyStorageSet) policyStorageSets;
 }
@@ -304,7 +304,7 @@ struct Policy {
 }
 
 /// Policy Association Storage Structures
-struct PolicyAssociationS {
+struct PolicyAssociationStorage {
     mapping(address contractAddress => uint256[]) contractPolicyIdMap;
     mapping(uint256 policyId => address[]) policyIdContractMap;
 }

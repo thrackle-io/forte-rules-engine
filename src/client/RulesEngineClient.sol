@@ -17,6 +17,15 @@ abstract contract RulesEngineClient {
     address public rulesEngineAddress;
 
     /**
+     * @notice Sets the admin role for the calling contract in the Rules Engine.
+     * @dev This function assigns the admin role for the calling contract to the specified address.
+     * @param callingContractAdmin The address to be assigned as the admin for the calling contract.
+     */
+    function setCallingContractAdmin(address callingContractAdmin) external {
+        IRulesEngine(rulesEngineAddress).grantCallingContractRole(address(this), callingContractAdmin);
+    }
+
+    /**
      * @notice Sets the address of the Rules Engine contract.
      * @dev This function should be overridden in inheriting contracts to implement role-based access control.
      * @param rulesEngine The address of the Rules Engine contract.
@@ -37,14 +46,5 @@ abstract contract RulesEngineClient {
         if (rulesEngineAddress != address(0)) {
             return IRulesEngine(rulesEngineAddress).checkPolicies(address(this), encoded);
         }
-    }
-
-    /**
-     * @notice Sets the admin role for the calling contract in the Rules Engine.
-     * @dev This function assigns the admin role for the calling contract to the specified address.
-     * @param callingContractAdmin The address to be assigned as the admin for the calling contract.
-     */
-    function setCallingContractAdmin(address callingContractAdmin) external {
-        IRulesEngine(rulesEngineAddress).grantCallingContractRole(address(this), callingContractAdmin);
     }
 }
