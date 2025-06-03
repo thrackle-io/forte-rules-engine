@@ -181,6 +181,7 @@ struct TrackerStorage {
     //uint256 TrackerIndex;
     mapping(uint256 policyId => uint256 trackerIndex) trackerIndexCounter;
     mapping(uint256 policyId => mapping(uint256 trackerIndex => Trackers)) trackers;
+    mapping(uint256 policyId => mapping(uint256 trackerIndex => mapping(bytes key => bytes value))) mappedTrackerValues;
 }
 
 /**
@@ -192,11 +193,14 @@ struct Trackers {
     // Whether the tracker has been set
     bool set;
     // Define what type of tracker
-    ParamTypes pType;
+    PT pType;
+    bool mapped; // if true, the tracker is using top level mapping: mappedTrackerValues
+    bytes trackerKey; // used for mapped trackers, this is the key to the mapping
     // tracker types arrays
     bytes trackerValue;
     // to be added: uint lastUpdatedTimestamp;
     uint256 trackerIndex;
+
 }
 
 /// Calling Function Structures
