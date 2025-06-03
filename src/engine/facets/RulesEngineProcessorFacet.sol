@@ -13,7 +13,6 @@ import {RulesEngineProcessorLib as ProcessorLib} from "src/engine/facets/RulesEn
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 contract RulesEngineProcessorFacet is FacetCommonImports{
-
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
     // Rule Evaluation Functions
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -227,7 +226,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         } else {
             placeHolders = _rule.placeHolders;
         }       
-
         bytes[] memory retVals = new bytes[](placeHolders.length);
         for(uint256 placeholderIndex = 0; placeholderIndex < placeHolders.length; placeholderIndex++) {
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
@@ -241,6 +239,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 // Load the Tracker data from storage
                 Trackers memory tracker = lib._getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex];
                 retVals[placeholderIndex] = tracker.trackerValue;
+                if (tracker.mapped) {
+                    // if the tracker is a mapped tracker, retrieve the value from the key stored in the tracker 
+                    bytes memory mappedTrackerValue = lib._getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][placeholder.mappedTrackerKey];
+                    retVals[placeholderIndex] = mappedTrackerValue;
+                }
             } else {
                 // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
                 if(placeholder.pType == ParamTypes.STR || placeholder.pType == ParamTypes.BYTES) {
@@ -302,7 +305,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                     // v = 0; but already set to 0 above no need to do anything
                     idx += 2;
                 }
-
             } else if(op == LogicalOp.TRU) {
                 // update the tracker value
                 // If the Tracker Type == Place Holder, pull the data from the place holder, otherwise, pull it from Memory
@@ -313,6 +315,23 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                     _updateTrackerValue(_policyId, _prog[idx + 1], _arguments[_prog[idx+2]]);
                 }
                 idx += 4;
+            } else if (op == LogicalOp.TRUM) {
+                // update the tracker value
+                /** 
+                idx = TRUM opcode
+                idx + 1 = tracker index
+                idx + 2 = memory/argument index
+                idx + 3 = mapped tracker key
+                idx + 4 = type (memory vs argument)
+                */
+                // If the Tracker Type == Place Holder, pull the data from the place holder, otherwise, pull it from Memory
+                TrackerTypes tt = TrackerTypes(_prog[idx+4]);
+                if (tt == TrackerTypes.MEMORY){
+                    _updateMappedTrackerValue(_policyId, _prog[idx + 1], mem[_prog[idx+2]], _prog[idx+3]); // + key for mapped tracker 
+                } else {
+                    _updateMappedTrackerValue(_policyId, _prog[idx + 1], _arguments[_prog[idx+2]], _prog[idx+3]); // + key for mapped tracker 
+                }
+                idx += 5;
             } else if (op == LogicalOp.NUM) { v = _prog[idx+1]; idx += 2; }
             else if (op == LogicalOp.ADD) { v = mem[_prog[idx+1]] + mem[_prog[idx+2]]; idx += 3; }
             else if (op == LogicalOp.SUB) { v = mem[_prog[idx+1]] - mem[_prog[idx+2]]; idx += 3; }
@@ -365,6 +384,67 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         // retrieve the tracker
         Trackers storage trk = lib._getTrackerStorage().trackers[_policyId][_trackerId];
         trk.trackerValue = _trackerValue;
+    }
+
+    /**
+     * @dev This function updates the tracker value with the information provided for a mapped tracker 
+     * @param _policyId Policy id being evaluated.
+     * @param _trackerId ID of the tracker to update.
+     * @param _trackerValue Value to update within the tracker
+     */
+    function _updateMappedTrackerValue(uint256 _policyId, uint256 _trackerId, uint256 _trackerValue, uint256 _mappedTrackerKey) internal {
+        // retrieve the tracker
+        Trackers storage trk = lib._getTrackerStorage().trackers[_policyId][_trackerId];
+        // store the updated value to the tracker mapping 
+        bytes memory encodedValue;
+        bytes memory encodedKey;
+        
+        // encode uint key to type 
+        if(trk.trackerKeyType == ParamTypes.UINT){
+            encodedKey = abi.encode(_mappedTrackerKey);
+        } else if (trk.trackerKeyType == ParamTypes.ADDR) {
+            encodedKey = abi.encode(ProcessorLib._uintToAddr(_mappedTrackerKey));
+        } else if (trk.trackerKeyType == ParamTypes.BOOL) {
+            encodedKey = abi.encode(ProcessorLib._uintToBool(_mappedTrackerKey));
+        } else if (trk.trackerKeyType == ParamTypes.BYTES) {
+            encodedKey = ProcessorLib._uintToBytes(_mappedTrackerKey);
+        }
+
+        if (trk.pType == ParamTypes.UINT) {
+            encodedValue = abi.encode(_trackerValue);
+        } else if (trk.pType == ParamTypes.ADDR) {
+            encodedValue = abi.encode(ProcessorLib._uintToAddr(_trackerValue));
+        } else if (trk.pType == ParamTypes.BOOL) {
+            encodedValue = abi.encode(ProcessorLib._uintToBool(_trackerValue));
+        } else if (trk.pType == ParamTypes.BYTES) {
+            encodedValue = ProcessorLib._uintToBytes(_trackerValue);
+        }
+        // re encode as bytes to mapping 
+        lib._getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][encodedKey] = encodedValue;
+    }
+
+    /**
+     * @dev Internal function to update the value of a mapped tracker associated with a specific policy.
+     * @param _policyId The ID of the policy to which the tracker belongs.
+     * @param _trackerId The ID of the tracker whose value is being updated.
+     * @param _trackerValue The new value to be assigned to the tracker, encoded as bytes.
+     */
+    function _updateMappedTrackerValue(uint256 _policyId, uint256 _trackerId, bytes memory _trackerValue,  uint256 _mappedTrackerKey) internal{
+        // retrieve the tracker
+        Trackers storage trk = lib._getTrackerStorage().trackers[_policyId][_trackerId];
+        bytes memory encodedKey;
+        // encode uint key to type 
+        if(trk.trackerKeyType == ParamTypes.UINT){
+            encodedKey = abi.encode(_mappedTrackerKey);
+        } else if (trk.trackerKeyType == ParamTypes.ADDR) {
+            encodedKey = abi.encode(ProcessorLib._uintToAddr(_mappedTrackerKey));
+        } else if (trk.trackerKeyType == ParamTypes.BOOL) {
+            encodedKey = abi.encode(ProcessorLib._uintToBool(_mappedTrackerKey));
+        } else if (trk.trackerKeyType == ParamTypes.BYTES) {
+            encodedKey = ProcessorLib._uintToBytes(_mappedTrackerKey);
+        }
+        // store the tracker  value to the tracker mapping
+        lib._getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][encodedKey] = _trackerValue;
     }
 
     /**

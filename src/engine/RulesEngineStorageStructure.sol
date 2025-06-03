@@ -51,7 +51,8 @@ enum LogicalOp {
     ASSIGN,
     GTEQL,
     LTEQL,
-    NOTEQ
+    NOTEQ,
+    TRUM
 }
 
 // Supported Parameter Types
@@ -86,6 +87,7 @@ struct Placeholder {
     bool trackerValue;
     // Used to determine whether this Placeholder represents the value returned from a foreign call
     bool foreignCall;
+    bytes mappedTrackerKey; 
 }
 
 /**
@@ -181,6 +183,7 @@ struct TrackerStorage {
     //uint256 TrackerIndex;
     mapping(uint256 policyId => uint256 trackerIndex) trackerIndexCounter;
     mapping(uint256 policyId => mapping(uint256 trackerIndex => Trackers)) trackers;
+    mapping(uint256 policyId => mapping(uint256 trackerIndex => mapping(bytes key => bytes value))) mappedTrackerValues;
 }
 
 /**
@@ -192,11 +195,14 @@ struct Trackers {
     // Whether the tracker has been set
     bool set;
     // Define what type of tracker
-    ParamTypes pType;
+    ParamTypes pType; // determine the type of tracker value
+    bool mapped; // if true, the tracker is using top level mapping: mappedTrackerValues
+    ParamTypes trackerKeyType; // if mapped, this is the type of the key used in the mapping
     // tracker types arrays
     bytes trackerValue;
     // to be added: uint lastUpdatedTimestamp;
     uint256 trackerIndex;
+
 }
 
 /// Calling Function Structures
