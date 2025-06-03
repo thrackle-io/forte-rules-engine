@@ -155,7 +155,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
            data.contractPolicyIdMap[contractAddress][i] = policyIds[i];
            data.policyIdContractMap[policyIds[i]].push(contractAddress);
         }
-        emit PolicyApplied(_policyIds, _contractAddress);
+        emit PolicyApplied(policyIds, contractAddress);
     }
 
     /**
@@ -167,7 +167,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     function unapplyPolicy(address _contractAddress, uint256[] calldata _policyIds) callingContractAdminOnly(_contractAddress, msg.sender) external { 
         if (_contractAddress == address(0)) revert(ZERO_ADDRESS);
         // Load the policy association data from storage
-        PolicyAssociationS storage data = lib.getPolicyAssociationStorage();
+        PolicyAssociationStorage storage data = lib.getPolicyAssociationStorage();
         // Get the currently applied policyIds
         uint256[] memory allPolicyIds = data.contractPolicyIdMap[_contractAddress];
         // Blow away the contract to policyId association data in order to keep the associated id's array length in line with the amount of policies associated.
