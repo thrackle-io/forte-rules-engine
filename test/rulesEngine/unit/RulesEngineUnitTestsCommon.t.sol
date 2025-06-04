@@ -3236,5 +3236,12 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
     }
 
+    // function test_GrantCallingContractRole() public {
+    //     vm.startPrank(address(0x1337));
+    //     // vm.expectRevert("Only Calling Contract Can Create Admin");
+    //     RulesEngineAdminRolesFacet(address(red)).grantCallingContractRole(address(0x1337), callingContractAdmin);
+    //     // RulesEngineAdminRolesFacet(address(red)).proposeNewCallingContractAdmin(address(0x1337), callingContractAdmin);
+    // }
+
 
 }

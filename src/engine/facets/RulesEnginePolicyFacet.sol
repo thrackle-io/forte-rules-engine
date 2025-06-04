@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
 import "src/engine/facets/RulesEngineAdminRolesFacet.sol";
-import "src/engine/facets/RulesEngineComponentFacet.sol";
 import {RulesEngineStorageLib as StorageLib} from "src/engine/facets/RulesEngineStorageLib.sol";
 
 /**
