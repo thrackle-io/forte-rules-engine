@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
 import {RulesEngineProcessorLib as ProcessorLib} from "src/engine/facets/RulesEngineProcessorLib.sol";
-
+import {SSTORE2} from "solady/src/utils/SSTORE2.sol";
 /**
  * @title Rules Engine Processor Facet
  * @dev This contract serves as the core processor for evaluating rules and executing effects in the Rules Engine.
@@ -17,7 +17,13 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
     // Rule Evaluation Functions
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
+    mapping(address callingContract => uint256[] policyIds) public callingContractToPolicyIds;
+    mapping(uint256 policyId => address policyContract) public policyContractToPolicyId;
 
+    function writePolicyContract(address callingContract, Policy memory policy) external {
+        uint256 length = callingContractToPolicyIds[callingContract].push(policy.policyId);
+        policyContractToPolicyId[length] = SSTORE2.write(abi.encode(policy));
+    }
     /**
      * @notice Evaluates the conditions associated with all applicable rules and returns the result.
      * @dev Primary entry point for policy checks.

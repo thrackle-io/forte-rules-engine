@@ -290,10 +290,12 @@ struct PolicyStorageSet {
 }
 
 struct Policy {
-    // calling functions to calling function Id
-    mapping(bytes4 => uint256) callingFunctionIdMap;
+    // Foreign Calls
+    ForeignCall[] foreignCalls;
+    // Trackers
+    Trackers[] trackers;
     // calling function signature to ruleIds
-    mapping(bytes4 => uint256[]) callingFunctionsToRuleIds;
+    Rule[] rules;
     // Array to hold the calling functions signatures for iterating
     bytes4[] callingFunctions;
     // Policy type to determine if policy is open or closed
