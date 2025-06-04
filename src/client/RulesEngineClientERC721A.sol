@@ -88,36 +88,36 @@ abstract contract RulesEngineClientERC721A is RulesEngineClient {
     /**
      * @notice Calls the Rules Engine to evaluate policies for an ERC721A `safeTransferFrom` operation.
      * @dev Encodes the parameters and invokes the `_invokeRulesEngine` function.
-     * @param from The sending address.
-     * @param to The receiving address.
-     * @param tokenId The token identifier.
+     * @param _from The sending address.
+     * @param _to The receiving address.
+     * @param _tokenId The token identifier.
      */
-    function _checkPoliciesERC721ASafeTransferFrom(address from, address to, uint256 tokenId) internal {
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, from, to, tokenId, msg.sender);
+    function _checkPoliciesERC721ASafeTransferFrom(address _from, address _to, uint256 _tokenId) internal {
+        bytes memory encoded = abi.encodeWithSelector(msg.sig, _from, _to, _tokenId, msg.sender);
         _invokeRulesEngine(encoded);
     }
 
     /**
      * @notice Calls the Rules Engine to evaluate policies for an ERC721A `safeTransferFrom` operation.
      * @dev Encodes the parameters and invokes the `_invokeRulesEngine` function.
-     * @param from The sending address.
-     * @param to The receiving address.
-     * @param tokenIds The token identifiers.
-     * @param data Generic data to pass along with the transfer.
+     * @param _from The sending address.
+     * @param _to The receiving address.
+     * @param _tokenIds The token identifiers.
+     * @param _data Generic data to pass along with the transfer.
      */
-    function _checkPoliciesERC721ASafeBatchTransferFrom(address by, address from, address to, uint256[] memory tokenIds, bytes memory data) internal {
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, by, from, to, tokenIds, data, msg.sender);
+    function _checkPoliciesERC721ASafeBatchTransferFrom(address _by, address _from, address _to, uint256[] memory _tokenIds, bytes memory _data) internal {
+        bytes memory encoded = abi.encodeWithSelector(msg.sig, _by, _from, _to, _tokenIds, _data, msg.sender);
         _invokeRulesEngine(encoded);
     }
 
     /**
      * @notice Calls the Rules Engine to evaluate policies for an ERC721 `safeMint` operation.
      * @dev Encodes the parameters and invokes the `_invokeRulesEngine` function.
-     * @param to The receiving address.
-     * @param quantity The amount of tokens minted.
+     * @param _to The receiving address.
+     * @param _quantity The amount of tokens minted.
      */
-    function _checkPoliciesERC721AMint(address to, uint256 quantity) internal {
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, to, quantity, msg.sender);
+    function _checkPoliciesERC721AMint(address _to, uint256 _quantity) internal {
+        bytes memory encoded = abi.encodeWithSelector(msg.sig, _to, _quantity, msg.sender);
         _invokeRulesEngine(encoded);
     }
 }

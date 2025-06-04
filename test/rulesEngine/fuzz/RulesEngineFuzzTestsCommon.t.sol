@@ -19,14 +19,14 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         rule.instructionSet = _createInstructionSet(ruleValue);
         // Build the calling function argument placeholder 
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType =PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] =PT.ADDR;
-        pTypes[1] =PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         // Save the calling function
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
             policyIds[0], 

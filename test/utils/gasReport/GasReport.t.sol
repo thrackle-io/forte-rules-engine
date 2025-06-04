@@ -44,7 +44,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
     function setUp() public {
         vm.startPrank(policyAdmin);
-        red = _createRulesEngineDiamond(address(0xB0b));
+        red = createRulesEngineDiamond(address(0xB0b));
 
         //R2V2 Setup
         //-------------------------------------------------------------------------------------
@@ -69,7 +69,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         testContract2 = new ForeignCallTestContractOFAC();
         vm.stopPrank();
         vm.startPrank(policyAdmin);
-        setupRuleWithOFACForeignCall(address(testContract2), ET.REVERT, true);
+        setupRuleWithOFACForeignCall(address(testContract2), EffectTypes.REVERT, true);
         testContract2.addToNaughtyList(address(0x7654321));
 
         // OFAC Plus Min Transfer
@@ -79,7 +79,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         userContractFCPlusMin.setCallingContractAdmin(callingContractAdmin);
         vm.stopPrank();
         vm.startPrank(policyAdmin);
-        setupRulesWithForeignCallAndMinTransfer(address(testContract2), ET.REVERT, true);
+        setupRulesWithForeignCallAndMinTransfer(address(testContract2), EffectTypes.REVERT, true);
 
         // OFAC Plus Min In One Rule        
         userContractFCPlusMinPlusMaxOneRule = new ExampleERC20("Token Name", "SYMB");
@@ -88,7 +88,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         userContractFCPlusMinPlusMaxOneRule.setCallingContractAdmin(callingContractAdmin);
         vm.stopPrank();
         vm.startPrank(policyAdmin);
-        setupRulesWithForeignCallPlusMinTransferAndMaxTransferInOneRule(address(testContract2), ET.REVERT, true);
+        setupRulesWithForeignCallPlusMinTransferAndMaxTransferInOneRule(address(testContract2), EffectTypes.REVERT, true);
 
         // OFAC Plus Min In Separate Policies
         userContractFCPlusMinSeparatePolicy = new ExampleERC20("Token Name", "SYMB");
@@ -97,7 +97,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         userContractFCPlusMinSeparatePolicy.setCallingContractAdmin(callingContractAdmin);
         vm.stopPrank();
         vm.startPrank(policyAdmin);
-        setupRulesWithForeignCallAndMinTransferSeparatePolicies(address(testContract2), ET.REVERT, true);
+        setupRulesWithForeignCallAndMinTransferSeparatePolicies(address(testContract2), EffectTypes.REVERT, true);
 
         // Min Transfer 20 iterations 
         userContractManyChecksMin = new ExampleERC20("Token Name", "SYMB");
@@ -115,7 +115,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         userContractFCPlusMinPlusMax.setCallingContractAdmin(callingContractAdmin);
         vm.stopPrank();
         vm.startPrank(policyAdmin);
-        setupRulesWithForeignCallPlusMinTransferAndMaxTransfer(address(testContract2), ET.REVERT, true);
+        setupRulesWithForeignCallPlusMinTransferAndMaxTransfer(address(testContract2), EffectTypes.REVERT, true);
 
         // Pause Rule  
         userContractPause = new ExampleERC20("Token Name", "SYMB");
@@ -134,7 +134,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         testContract2.addToNaughtyList(address(0xD00d));
         vm.stopPrank();
         vm.startPrank(policyAdmin);
-        setupRuleWithOracleFlexForeignCall(address(testContract2), ET.REVERT, true);
+        setupRuleWithOracleFlexForeignCall(address(testContract2), EffectTypes.REVERT, true);
 
         // Min Max Balance 
         userContractMinMaxBalance = new ExampleERC20("Token Name", "SYMB");
@@ -229,21 +229,21 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
     function setupRuleWithOFACForeignCall(
         address _contractAddress,
-        ET _effectType,
+        EffectTypes _effectType,
         bool isPositive
     ) public ifDeploymentTestsEnabled resetsGlobalVariables {
         uint256[] memory policyIds = new uint256[](1);
 
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicy(policyIds[0]);
 
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.ADDR;
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.ADDR;
         int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 0;
         ForeignCall memory fc;
@@ -251,7 +251,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = _contractAddress;
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
-        fc.returnType = PT.UINT;
+        fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 1;
         uint256 foreignCallId = RulesEngineComponentFacet(address(red))
             .createForeignCall(
@@ -267,16 +267,16 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule.placeHolders = new Placeholder[](2);
         rule.placeHolders[0].foreignCall = true;
         rule.placeHolders[0].typeSpecificIndex = uint128(foreignCallId);
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1;
 
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
         rule.instructionSet[1] = 0;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
@@ -298,21 +298,21 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
     function setupRulesWithForeignCallAndMinTransfer(
         address _contractAddress,
-        ET _effectType,
+        EffectTypes _effectType,
         bool isPositive
     ) public ifDeploymentTestsEnabled resetsGlobalVariables {
         uint256[] memory policyIds = new uint256[](1);
 
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicy(policyIds[0]);
 
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.ADDR;
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.ADDR;
         int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 0;
         ForeignCall memory fc;
@@ -320,7 +320,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = _contractAddress;
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
-        fc.returnType = PT.UINT;
+        fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 1;
         uint256 foreignCallId = RulesEngineComponentFacet(address(red))
             .createForeignCall(
@@ -336,17 +336,17 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule1.placeHolders = new Placeholder[](2);
         rule1.placeHolders[0].foreignCall = true;
         rule1.placeHolders[0].typeSpecificIndex = uint128(foreignCallId);
-        rule1.placeHolders[1].pType = PT.UINT;
+        rule1.placeHolders[1].pType = ParamTypes.UINT;
         rule1.placeHolders[1].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
         // We don't want this one to trigger the revert effect, we want both rules to be captured in the gas test
         // forcing this rule to fail
         rule1.instructionSet = new uint256[](7);
-        rule1.instructionSet[0] = uint(LC.PLH);
+        rule1.instructionSet[0] = uint(LogicalOp.PLH);
         rule1.instructionSet[1] = 0;
-        rule1.instructionSet[2] = uint(LC.NUM);
+        rule1.instructionSet[2] = uint(LogicalOp.NUM);
         rule1.instructionSet[3] = 0;
-        rule1.instructionSet[4] = uint(LC.EQ);
+        rule1.instructionSet[4] = uint(LogicalOp.EQ);
         rule1.instructionSet[5] = 0;
         rule1.instructionSet[6] = 1;
 
@@ -372,21 +372,21 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
    function setupRulesWithForeignCallPlusMinTransferAndMaxTransferInOneRule(
         address _contractAddress,
-        ET _effectType,
+        EffectTypes _effectType,
         bool isPositive
     ) public ifDeploymentTestsEnabled resetsGlobalVariables {
         uint256[] memory policyIds = new uint256[](1);
 
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicy(policyIds[0]);
 
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.ADDR;
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.ADDR;
         int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 1;
         ForeignCall memory fc;
@@ -394,7 +394,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = _contractAddress;
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
-        fc.returnType = PT.UINT;
+        fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 1;
         uint256 foreignCallId = RulesEngineComponentFacet(address(red))
             .createForeignCall(
@@ -409,25 +409,25 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule1.placeHolders = new Placeholder[](2);
         rule1.placeHolders[0].foreignCall = true;
         rule1.placeHolders[0].typeSpecificIndex = uint128(foreignCallId);
-        rule1.placeHolders[1].pType = PT.UINT;
+        rule1.placeHolders[1].pType = ParamTypes.UINT;
         rule1.placeHolders[1].typeSpecificIndex = 1;
 
         rule1.instructionSet = new uint256[](17);
-        rule1.instructionSet[0] = uint(LC.PLH);
+        rule1.instructionSet[0] = uint(LogicalOp.PLH);
         rule1.instructionSet[1] = 0; // register 0
-        rule1.instructionSet[2] = uint(LC.NUM);
+        rule1.instructionSet[2] = uint(LogicalOp.NUM);
         rule1.instructionSet[3] = 1; // register 1
-        rule1.instructionSet[4] = uint(LC.EQ);
+        rule1.instructionSet[4] = uint(LogicalOp.EQ);
         rule1.instructionSet[5] = 0;
         rule1.instructionSet[6] = 1; // register 2
-        rule1.instructionSet[7] = uint(LC.PLH);
+        rule1.instructionSet[7] = uint(LogicalOp.PLH);
         rule1.instructionSet[8] = 1; // register 3
-        rule1.instructionSet[9] = uint(LC.NUM);
+        rule1.instructionSet[9] = uint(LogicalOp.NUM);
         rule1.instructionSet[10] = 4; // register 4
-        rule1.instructionSet[11] = uint(LC.GT);
+        rule1.instructionSet[11] = uint(LogicalOp.GT);
         rule1.instructionSet[12] = 3;
         rule1.instructionSet[13] = 4; // register 5
-        rule1.instructionSet[14] = uint256(LC.AND);
+        rule1.instructionSet[14] = uint256(LogicalOp.AND);
         rule1.instructionSet[15] = 2;
         rule1.instructionSet[16] = 5;
         // Swapping isPositive to make sure the revert doesn't trigger (for comparison with V1 numbers)
@@ -447,7 +447,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
     function setupRulesWithForeignCallAndMinTransferSeparatePolicies(
         address _contractAddress,
-        ET _effectType,
+        EffectTypes _effectType,
         bool isPositive
     ) public ifDeploymentTestsEnabled resetsGlobalVariables {
         uint256[] memory policyIds = new uint256[](2);
@@ -455,16 +455,16 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         policyIds[0] = _createBlankPolicy();
         policyIds[1] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         
         _addCallingFunctionToPolicy(policyIds[0]);
 
         _addCallingFunctionToPolicy(policyIds[1]);
 
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.ADDR;
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.ADDR;
         int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 0;
         ForeignCall memory fc;
@@ -472,7 +472,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = _contractAddress;
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
-        fc.returnType = PT.UINT;
+        fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 1;
         uint256 foreignCallId = RulesEngineComponentFacet(address(red))
             .createForeignCall(
@@ -488,17 +488,17 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule1.placeHolders = new Placeholder[](2);
         rule1.placeHolders[0].foreignCall = true;
         rule1.placeHolders[0].typeSpecificIndex = uint128(foreignCallId);
-        rule1.placeHolders[1].pType = PT.UINT;
+        rule1.placeHolders[1].pType = ParamTypes.UINT;
         rule1.placeHolders[1].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
         // We don't want this one to trigger the revert effect, we want both rules to be captured in the gas test
         // forcing this rule to fail
         rule1.instructionSet = new uint256[](7);
-        rule1.instructionSet[0] = uint(LC.PLH);
+        rule1.instructionSet[0] = uint(LogicalOp.PLH);
         rule1.instructionSet[1] = 0;
-        rule1.instructionSet[2] = uint(LC.NUM);
+        rule1.instructionSet[2] = uint(LogicalOp.NUM);
         rule1.instructionSet[3] = 0;
-        rule1.instructionSet[4] = uint(LC.EQ);
+        rule1.instructionSet[4] = uint(LogicalOp.EQ);
         rule1.instructionSet[5] = 0;
         rule1.instructionSet[6] = 1;
         rule1 = _setUpEffect(rule1, _effectType, isPositive);
@@ -535,20 +535,20 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
    function setupRulesWithForeignCallPlusMinTransferAndMaxTransfer(
         address _contractAddress,
-        ET _effectType,
+        EffectTypes _effectType,
         bool isPositive
     ) public ifDeploymentTestsEnabled resetsGlobalVariables {
         uint256[] memory policyIds = new uint256[](1);
 
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicy(policyIds[0]);
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.ADDR;
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.ADDR;
         int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 0;
 
@@ -557,7 +557,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = _contractAddress;
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
-        fc.returnType = PT.UINT;
+        fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 1;
         uint256 foreignCallId; 
         {
@@ -578,17 +578,17 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             rule1.placeHolders = new Placeholder[](2);
             rule1.placeHolders[0].foreignCall = true;
             rule1.placeHolders[0].typeSpecificIndex = uint128(foreignCallId);
-            rule1.placeHolders[1].pType = PT.UINT;
+            rule1.placeHolders[1].pType = ParamTypes.UINT;
             rule1.placeHolders[1].typeSpecificIndex = 1;
             // Build the instruction set for the rule (including placeholders)
             // We don't want this one to trigger the revert effect, we want both rules to be captured in the gas test
             // forcing this rule to fail
             rule1.instructionSet = new uint256[](7);
-            rule1.instructionSet[0] = uint(LC.PLH);
+            rule1.instructionSet[0] = uint(LogicalOp.PLH);
             rule1.instructionSet[1] = 0;
-            rule1.instructionSet[2] = uint(LC.NUM);
+            rule1.instructionSet[2] = uint(LogicalOp.NUM);
             rule1.instructionSet[3] = 0;
-            rule1.instructionSet[4] = uint(LC.EQ);
+            rule1.instructionSet[4] = uint(LogicalOp.EQ);
             rule1.instructionSet[5] = 0;
             rule1.instructionSet[6] = 1;
             rule1 = _setUpEffect(rule1, _effectType, isPositive);
@@ -626,9 +626,9 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicy(policyIds[0]);
 
@@ -636,248 +636,248 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Rule memory rule = _createGTRule(4);
         Rule memory rule;
         _setupEffectProcessor();
-        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, _amount, LogicalOp.GT, 0, 1
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
 
         rule.instructionSet = new uint256[](194);
-        rule.instructionSet[0] = uint(LC.PLH); // register 0
+        rule.instructionSet[0] = uint(LogicalOp.PLH); // register 0
         rule.instructionSet[1] = 0;
-        rule.instructionSet[2] = uint(LC.NUM); // register 1
+        rule.instructionSet[2] = uint(LogicalOp.NUM); // register 1
         rule.instructionSet[3] = 4;
-        rule.instructionSet[4] = uint(LC.GT); // register 2
+        rule.instructionSet[4] = uint(LogicalOp.GT); // register 2
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
-        rule.instructionSet[7] = uint(LC.PLH); // register 3
+        rule.instructionSet[7] = uint(LogicalOp.PLH); // register 3
         rule.instructionSet[8] = 0;
-        rule.instructionSet[9] = uint(LC.NUM); // register 4
+        rule.instructionSet[9] = uint(LogicalOp.NUM); // register 4
         rule.instructionSet[10] = 4;
-        rule.instructionSet[11] = uint(LC.GT); // register 5
+        rule.instructionSet[11] = uint(LogicalOp.GT); // register 5
         rule.instructionSet[12] = 3;
         rule.instructionSet[13] = 4;
 
-        rule.instructionSet[14] = uint(LC.PLH); // register 6
+        rule.instructionSet[14] = uint(LogicalOp.PLH); // register 6
         rule.instructionSet[15] = 0;
-        rule.instructionSet[16] = uint(LC.NUM); // register 7
+        rule.instructionSet[16] = uint(LogicalOp.NUM); // register 7
         rule.instructionSet[17] = 4;
-        rule.instructionSet[18] = uint(LC.GT); // register 8
+        rule.instructionSet[18] = uint(LogicalOp.GT); // register 8
         rule.instructionSet[19] = 6;
         rule.instructionSet[20] = 7;
 
-        rule.instructionSet[21] = uint(LC.PLH); // register 9
+        rule.instructionSet[21] = uint(LogicalOp.PLH); // register 9
         rule.instructionSet[22] = 0;
-        rule.instructionSet[23] = uint(LC.NUM); // register 10
+        rule.instructionSet[23] = uint(LogicalOp.NUM); // register 10
         rule.instructionSet[24] = 4;
-        rule.instructionSet[25] = uint(LC.GT); // register 11
+        rule.instructionSet[25] = uint(LogicalOp.GT); // register 11
         rule.instructionSet[26] = 9;
         rule.instructionSet[27] = 10;
 
-        rule.instructionSet[28] = uint(LC.PLH); // register 12
+        rule.instructionSet[28] = uint(LogicalOp.PLH); // register 12
         rule.instructionSet[29] = 0;
-        rule.instructionSet[30] = uint(LC.NUM); // register 13
+        rule.instructionSet[30] = uint(LogicalOp.NUM); // register 13
         rule.instructionSet[31] = 4;
-        rule.instructionSet[32] = uint(LC.GT); // register 14
+        rule.instructionSet[32] = uint(LogicalOp.GT); // register 14
         rule.instructionSet[33] = 12;
         rule.instructionSet[34] = 13;
 
-        rule.instructionSet[35] = uint(LC.PLH); // register 15
+        rule.instructionSet[35] = uint(LogicalOp.PLH); // register 15
         rule.instructionSet[36] = 0;
-        rule.instructionSet[37] = uint(LC.NUM); // register 16
+        rule.instructionSet[37] = uint(LogicalOp.NUM); // register 16
         rule.instructionSet[38] = 4;
-        rule.instructionSet[39] = uint(LC.GT); // register 17
+        rule.instructionSet[39] = uint(LogicalOp.GT); // register 17
         rule.instructionSet[40] = 15;
         rule.instructionSet[41] = 16;
 
-        rule.instructionSet[42] = uint(LC.PLH); // register 18
+        rule.instructionSet[42] = uint(LogicalOp.PLH); // register 18
         rule.instructionSet[43] = 0;
-        rule.instructionSet[44] = uint(LC.NUM); // register 19
+        rule.instructionSet[44] = uint(LogicalOp.NUM); // register 19
         rule.instructionSet[45] = 4;
-        rule.instructionSet[46] = uint(LC.GT); // register 20
+        rule.instructionSet[46] = uint(LogicalOp.GT); // register 20
         rule.instructionSet[47] = 18;
         rule.instructionSet[48] = 19;
 
-        rule.instructionSet[49] = uint(LC.PLH); // register 21
+        rule.instructionSet[49] = uint(LogicalOp.PLH); // register 21
         rule.instructionSet[50] = 0;
-        rule.instructionSet[51] = uint(LC.NUM); // register 22
+        rule.instructionSet[51] = uint(LogicalOp.NUM); // register 22
         rule.instructionSet[52] = 4;
-        rule.instructionSet[53] = uint(LC.GT); // register 23
+        rule.instructionSet[53] = uint(LogicalOp.GT); // register 23
         rule.instructionSet[54] = 21;
         rule.instructionSet[55] = 22;
 
-        rule.instructionSet[56] = uint(LC.PLH); // register 24
+        rule.instructionSet[56] = uint(LogicalOp.PLH); // register 24
         rule.instructionSet[57] = 0;
-        rule.instructionSet[58] = uint(LC.NUM); // register 25
+        rule.instructionSet[58] = uint(LogicalOp.NUM); // register 25
         rule.instructionSet[59] = 4;
-        rule.instructionSet[60] = uint(LC.GT); // register 26
+        rule.instructionSet[60] = uint(LogicalOp.GT); // register 26
         rule.instructionSet[61] = 24;
         rule.instructionSet[62] = 25;
 
-        rule.instructionSet[63] = uint(LC.PLH); // register 27
+        rule.instructionSet[63] = uint(LogicalOp.PLH); // register 27
         rule.instructionSet[64] = 0;
-        rule.instructionSet[65] = uint(LC.NUM); // register 28
+        rule.instructionSet[65] = uint(LogicalOp.NUM); // register 28
         rule.instructionSet[66] = 4;
-        rule.instructionSet[67] = uint(LC.GT); // register 29
+        rule.instructionSet[67] = uint(LogicalOp.GT); // register 29
         rule.instructionSet[68] = 27;
         rule.instructionSet[69] = 28;
 
-        rule.instructionSet[70] = uint(LC.PLH); // register 30
+        rule.instructionSet[70] = uint(LogicalOp.PLH); // register 30
         rule.instructionSet[71] = 0;
-        rule.instructionSet[72] = uint(LC.NUM); // register 31
+        rule.instructionSet[72] = uint(LogicalOp.NUM); // register 31
         rule.instructionSet[73] = 4;
-        rule.instructionSet[74] = uint(LC.GT); // register 32
+        rule.instructionSet[74] = uint(LogicalOp.GT); // register 32
         rule.instructionSet[75] = 30;
         rule.instructionSet[76] = 31;
 
-        rule.instructionSet[77] = uint(LC.PLH); // register 33
+        rule.instructionSet[77] = uint(LogicalOp.PLH); // register 33
         rule.instructionSet[78] = 0;
-        rule.instructionSet[79] = uint(LC.NUM); // register 34
+        rule.instructionSet[79] = uint(LogicalOp.NUM); // register 34
         rule.instructionSet[80] = 4;
-        rule.instructionSet[81] = uint(LC.GT); // register 35
+        rule.instructionSet[81] = uint(LogicalOp.GT); // register 35
         rule.instructionSet[82] = 33;
         rule.instructionSet[83] = 34;
 
-        rule.instructionSet[84] = uint(LC.PLH); // register 36
+        rule.instructionSet[84] = uint(LogicalOp.PLH); // register 36
         rule.instructionSet[85] = 0;
-        rule.instructionSet[86] = uint(LC.NUM); // register 37
+        rule.instructionSet[86] = uint(LogicalOp.NUM); // register 37
         rule.instructionSet[87] = 4;
-        rule.instructionSet[88] = uint(LC.GT); // register 38
+        rule.instructionSet[88] = uint(LogicalOp.GT); // register 38
         rule.instructionSet[89] = 36;
         rule.instructionSet[90] = 37;
 
-        rule.instructionSet[91] = uint(LC.PLH); // register 39
+        rule.instructionSet[91] = uint(LogicalOp.PLH); // register 39
         rule.instructionSet[92] = 0;
-        rule.instructionSet[93] = uint(LC.NUM); // register 40
+        rule.instructionSet[93] = uint(LogicalOp.NUM); // register 40
         rule.instructionSet[94] = 4;
-        rule.instructionSet[95] = uint(LC.GT); // register 41
+        rule.instructionSet[95] = uint(LogicalOp.GT); // register 41
         rule.instructionSet[96] = 39;
         rule.instructionSet[97] = 40;
 
-        rule.instructionSet[98] = uint(LC.PLH); // register 42
+        rule.instructionSet[98] = uint(LogicalOp.PLH); // register 42
         rule.instructionSet[99] = 0;
-        rule.instructionSet[100] = uint(LC.NUM); // register 43
+        rule.instructionSet[100] = uint(LogicalOp.NUM); // register 43
         rule.instructionSet[101] = 4;
-        rule.instructionSet[102] = uint(LC.GT); // register 44
+        rule.instructionSet[102] = uint(LogicalOp.GT); // register 44
         rule.instructionSet[103] = 42;
         rule.instructionSet[104] = 43;
 
-        rule.instructionSet[105] = uint(LC.PLH); // register 45
+        rule.instructionSet[105] = uint(LogicalOp.PLH); // register 45
         rule.instructionSet[106] = 0;
-        rule.instructionSet[107] = uint(LC.NUM); // register 46
+        rule.instructionSet[107] = uint(LogicalOp.NUM); // register 46
         rule.instructionSet[108] = 4;
-        rule.instructionSet[109] = uint(LC.GT); // register 47
+        rule.instructionSet[109] = uint(LogicalOp.GT); // register 47
         rule.instructionSet[110] = 45;
         rule.instructionSet[111] = 46;
 
-        rule.instructionSet[112] = uint(LC.PLH); // register 48
+        rule.instructionSet[112] = uint(LogicalOp.PLH); // register 48
         rule.instructionSet[113] = 0;
-        rule.instructionSet[114] = uint(LC.NUM); // register 49
+        rule.instructionSet[114] = uint(LogicalOp.NUM); // register 49
         rule.instructionSet[115] = 4;
-        rule.instructionSet[116] = uint(LC.GT); // register 50
+        rule.instructionSet[116] = uint(LogicalOp.GT); // register 50
         rule.instructionSet[117] = 48;
         rule.instructionSet[118] = 49;
 
-        rule.instructionSet[119] = uint(LC.PLH); // register 51
+        rule.instructionSet[119] = uint(LogicalOp.PLH); // register 51
         rule.instructionSet[120] = 0;
-        rule.instructionSet[121] = uint(LC.NUM); // register 52
+        rule.instructionSet[121] = uint(LogicalOp.NUM); // register 52
         rule.instructionSet[122] = 4;
-        rule.instructionSet[123] = uint(LC.GT); // register 53
+        rule.instructionSet[123] = uint(LogicalOp.GT); // register 53
         rule.instructionSet[124] = 51;
         rule.instructionSet[125] = 52;
 
-        rule.instructionSet[126] = uint(LC.PLH); // register 54
+        rule.instructionSet[126] = uint(LogicalOp.PLH); // register 54
         rule.instructionSet[127] = 0;
-        rule.instructionSet[128] = uint(LC.NUM); // register 55
+        rule.instructionSet[128] = uint(LogicalOp.NUM); // register 55
         rule.instructionSet[129] = 4;
-        rule.instructionSet[130] = uint(LC.GT); // register 56
+        rule.instructionSet[130] = uint(LogicalOp.GT); // register 56
         rule.instructionSet[131] = 54;
         rule.instructionSet[132] = 55;
 
-        rule.instructionSet[133] = uint(LC.PLH); // register 57
+        rule.instructionSet[133] = uint(LogicalOp.PLH); // register 57
         rule.instructionSet[134] = 0;
-        rule.instructionSet[135] = uint(LC.NUM); // register 58
+        rule.instructionSet[135] = uint(LogicalOp.NUM); // register 58
         rule.instructionSet[136] = 4;
-        rule.instructionSet[137] = uint(LC.GT); // register 59
+        rule.instructionSet[137] = uint(LogicalOp.GT); // register 59
         rule.instructionSet[138] = 56;
         rule.instructionSet[139] = 57;
 
-        rule.instructionSet[140] = uint(LC.AND); // register 60
+        rule.instructionSet[140] = uint(LogicalOp.AND); // register 60
         rule.instructionSet[141] = 2;
         rule.instructionSet[142] = 5;
 
-        rule.instructionSet[140] = uint(LC.AND); // register 61
+        rule.instructionSet[140] = uint(LogicalOp.AND); // register 61
         rule.instructionSet[141] = 60;
         rule.instructionSet[142] = 8;
 
-        rule.instructionSet[143] = uint(LC.AND); // register 62
+        rule.instructionSet[143] = uint(LogicalOp.AND); // register 62
         rule.instructionSet[144] = 61;
         rule.instructionSet[145] = 11;
 
-        rule.instructionSet[146] = uint(LC.AND); // register 63
+        rule.instructionSet[146] = uint(LogicalOp.AND); // register 63
         rule.instructionSet[147] = 62;
         rule.instructionSet[148] = 14;
 
-        rule.instructionSet[149] = uint(LC.AND); // register 64
+        rule.instructionSet[149] = uint(LogicalOp.AND); // register 64
         rule.instructionSet[150] = 63;
         rule.instructionSet[151] = 17;
 
-        rule.instructionSet[152] = uint(LC.AND); // register 65
+        rule.instructionSet[152] = uint(LogicalOp.AND); // register 65
         rule.instructionSet[153] = 64;
         rule.instructionSet[154] = 20;
 
-        rule.instructionSet[155] = uint(LC.AND); // register 66
+        rule.instructionSet[155] = uint(LogicalOp.AND); // register 66
         rule.instructionSet[156] = 65;
         rule.instructionSet[157] = 23;
 
-        rule.instructionSet[158] = uint(LC.AND); // register 67
+        rule.instructionSet[158] = uint(LogicalOp.AND); // register 67
         rule.instructionSet[159] = 66;
         rule.instructionSet[160] = 26;
 
-        rule.instructionSet[161] = uint(LC.AND); // register 68
+        rule.instructionSet[161] = uint(LogicalOp.AND); // register 68
         rule.instructionSet[162] = 67;
         rule.instructionSet[163] = 29;
 
-        rule.instructionSet[164] = uint(LC.AND); // register 69
+        rule.instructionSet[164] = uint(LogicalOp.AND); // register 69
         rule.instructionSet[165] = 68;
         rule.instructionSet[166] = 32;
 
-        rule.instructionSet[167] = uint(LC.AND); // register 70
+        rule.instructionSet[167] = uint(LogicalOp.AND); // register 70
         rule.instructionSet[168] = 69;
         rule.instructionSet[169] = 35;
 
-        rule.instructionSet[170] = uint(LC.AND); // register 71
+        rule.instructionSet[170] = uint(LogicalOp.AND); // register 71
         rule.instructionSet[171] = 70;
         rule.instructionSet[172] = 38;
 
-        rule.instructionSet[173] = uint(LC.AND); // register 72
+        rule.instructionSet[173] = uint(LogicalOp.AND); // register 72
         rule.instructionSet[174] = 71;
         rule.instructionSet[175] = 41;
 
-        rule.instructionSet[176] = uint(LC.AND); // register 73
+        rule.instructionSet[176] = uint(LogicalOp.AND); // register 73
         rule.instructionSet[177] = 72;
         rule.instructionSet[178] = 44;
 
-        rule.instructionSet[179] = uint(LC.AND); // register 74
+        rule.instructionSet[179] = uint(LogicalOp.AND); // register 74
         rule.instructionSet[180] = 73;
         rule.instructionSet[181] = 47;
 
-        rule.instructionSet[182] = uint(LC.AND); // register 75
+        rule.instructionSet[182] = uint(LogicalOp.AND); // register 75
         rule.instructionSet[183] = 74;
         rule.instructionSet[184] = 50;
 
-        rule.instructionSet[185] = uint(LC.AND); // register 76
+        rule.instructionSet[185] = uint(LogicalOp.AND); // register 76
         rule.instructionSet[186] = 75;
         rule.instructionSet[187] = 53;
 
-        rule.instructionSet[188] = uint(LC.AND); // register 77
+        rule.instructionSet[188] = uint(LogicalOp.AND); // register 77
         rule.instructionSet[189] = 76;
         rule.instructionSet[190] = 56;
 
-        rule.instructionSet[191] = uint(LC.AND); // register 78
+        rule.instructionSet[191] = uint(LogicalOp.AND); // register 78
         rule.instructionSet[192] = 77;
         rule.instructionSet[193] = 59;
 
@@ -893,7 +893,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         RulesEnginePolicyFacet(address(red)).applyPolicy(address(userContractManyChecksMin), policyIds);
     }
 
-    function _setupRuleWithEventParamsMinTransfer(bytes memory param, PT pType) 
+    function _setupRuleWithEventParamsMinTransfer(bytes memory param, ParamTypes pType) 
         public
         ifDeploymentTestsEnabled
         resetsGlobalVariables
@@ -901,9 +901,9 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicy();
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicy(policyIds[0]);
 
@@ -911,20 +911,20 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // Rule memory rule = _createGTRule(4);
         Rule memory rule;
         effectId_event = _createCustomEffectEvent(param, pType);
-        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, _amount, LogicalOp.GT, 0, 1
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
 
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
         rule.instructionSet[1] = 0;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = 4;
-        rule.instructionSet[4] = uint(LC.GT); // register 2
+        rule.instructionSet[4] = uint(LogicalOp.GT); // register 2
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
@@ -942,22 +942,22 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
     function setupRuleWithOracleFlexForeignCall(
         address _contractAddress,
-        ET _effectType,
+        EffectTypes _effectType,
         bool isPositive
     ) public ifDeploymentTestsEnabled resetsGlobalVariables {
         uint256[] memory policyIds = new uint256[](1);
 
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.ADDR;
+        ParamTypes[] memory pTypes = new ParamTypes[](3);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.ADDR;
 
         _addCallingFunctionToPolicy(policyIds[0]);
         // There is no reason to incorporate a toggle like the oracle flex rule in V1 
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.ADDR;
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.ADDR;
         int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 0;
         ForeignCall memory fc;
@@ -965,7 +965,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = _contractAddress;
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
-        fc.returnType = PT.BOOL;
+        fc.returnType = ParamTypes.BOOL;
         fc.foreignCallIndex = 1;
         uint256 foreignCallId = RulesEngineComponentFacet(address(red))
             .createForeignCall(
@@ -982,7 +982,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         newfc.parameterTypes = fcArgs;
         newfc.foreignCallAddress = _contractAddress;
         newfc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
-        newfc.returnType = PT.BOOL;
+        newfc.returnType = ParamTypes.BOOL;
         newfc.foreignCallIndex = 1;
         uint256 foreignCallId2 = RulesEngineComponentFacet(address(red))
             .createForeignCall(
@@ -998,27 +998,27 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule.placeHolders = new Placeholder[](4);
         rule.placeHolders[0].foreignCall = true;
         rule.placeHolders[0].typeSpecificIndex = uint128(foreignCallId);
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1;
         rule.placeHolders[2].foreignCall = true;
         rule.placeHolders[2].typeSpecificIndex = uint128(foreignCallId2);
-        rule.placeHolders[3].pType = PT.UINT;
+        rule.placeHolders[3].pType = ParamTypes.UINT;
         rule.placeHolders[3].typeSpecificIndex = 1;
 
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = new uint256[](14);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
         rule.instructionSet[1] = 0;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
-        rule.instructionSet[7] = uint(LC.PLH);
+        rule.instructionSet[7] = uint(LogicalOp.PLH);
         rule.instructionSet[8] = 3; //plh 3
-        rule.instructionSet[9] = uint(LC.NUM);
+        rule.instructionSet[9] = uint(LogicalOp.NUM);
         rule.instructionSet[10] = 3; // register 3 
-        rule.instructionSet[11] = uint(LC.EQ);
+        rule.instructionSet[11] = uint(LogicalOp.EQ);
         rule.instructionSet[12] = 3;
         rule.instructionSet[13] = 3;
 
@@ -1044,13 +1044,13 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](6);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.ADDR;
-        pTypes[3] = PT.UINT;
-        pTypes[4] = PT.UINT;
-        pTypes[5] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](6);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.ADDR;
+        pTypes[3] = ParamTypes.UINT;
+        pTypes[4] = ParamTypes.UINT;
+        pTypes[5] = ParamTypes.UINT;
 
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
             .createCallingFunction(
@@ -1077,19 +1077,19 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
         rule.instructionSet[1] = 0;
-        rule.instructionSet[2] = uint(LC.PLH);
+        rule.instructionSet[2] = uint(LogicalOp.PLH);
         rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.LT);
+        rule.instructionSet[4] = uint(LogicalOp.LT);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
         rule.placeHolders = new Placeholder[](2);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].trackerValue = true;
         rule.placeHolders[0].typeSpecificIndex = 1;
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 5;
 
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
@@ -1097,7 +1097,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         //build tracker
         Trackers memory tracker;
         /// build the members of the struct:
-        tracker.pType = PT.UINT;
+        tracker.pType = ParamTypes.UINT;
         tracker.trackerValue = abi.encode(1000000000);
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
 
@@ -1115,13 +1115,13 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](6);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.ADDR;
-        pTypes[3] = PT.UINT;
-        pTypes[4] = PT.UINT;
-        pTypes[5] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](6);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.ADDR;
+        pTypes[3] = ParamTypes.UINT;
+        pTypes[4] = ParamTypes.UINT;
+        pTypes[5] = ParamTypes.UINT;
 
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
             .createCallingFunction(
@@ -1148,35 +1148,35 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         rule.instructionSet = new uint256[](22);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
         rule.instructionSet[1] = 0; //register 0
-        rule.instructionSet[2] = uint(LC.PLH);
+        rule.instructionSet[2] = uint(LogicalOp.PLH);
         rule.instructionSet[3] = 1; //register 1
-        rule.instructionSet[4] = uint(LC.SUB);
+        rule.instructionSet[4] = uint(LogicalOp.SUB);
         rule.instructionSet[5] = 1; 
         rule.instructionSet[6] = 0; //register 2 (balance to - amount)
-        rule.instructionSet[7] = uint(LC.NUM);
+        rule.instructionSet[7] = uint(LogicalOp.NUM);
         rule.instructionSet[8] = 1; // register 3 (rule min balance)
-        rule.instructionSet[9] = uint(LC.LT);
+        rule.instructionSet[9] = uint(LogicalOp.LT);
         rule.instructionSet[10] = 3;
         rule.instructionSet[11] = 2; // check that amount + balanceOf to > 10 
-        rule.instructionSet[12] = uint(LC.PLH);
+        rule.instructionSet[12] = uint(LogicalOp.PLH);
         rule.instructionSet[13] = 1; //register 5
-        rule.instructionSet[14] = uint(LC.ADD);
+        rule.instructionSet[14] = uint(LogicalOp.ADD);
         rule.instructionSet[15] = 5; 
         rule.instructionSet[16] = 0; //register 6 (amount + balance to)
-        rule.instructionSet[17] = uint(LC.NUM);
+        rule.instructionSet[17] = uint(LogicalOp.NUM);
         rule.instructionSet[18] = 10; // register 7 (rule max balance)
-        rule.instructionSet[19] = uint(LC.GT);
+        rule.instructionSet[19] = uint(LogicalOp.GT);
         rule.instructionSet[20] = 6;
         rule.instructionSet[21] = 7; // check that amount + balanceOf to > 10 
 
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1; // amount
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 3; // balance from 
-        rule.placeHolders[2].pType = PT.UINT;
+        rule.placeHolders[2].pType = ParamTypes.UINT;
         rule.placeHolders[2].typeSpecificIndex = 4; // balance to
 
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);

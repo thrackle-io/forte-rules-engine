@@ -19,7 +19,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
     address callingContractAdmin = address(0x12345);
 
     function setUp() public {
-        red = _createRulesEngineDiamond(address(0xB0b)); 
+        red = createRulesEngineDiamond(address(0xB0b)); 
         userContract = new ExampleUserContract();
         userContractAddress = address(userContract); 
         userContract.setRulesEngineAddress(address(red));
@@ -33,8 +33,8 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
     function testRulesEngine_Unit_Diamond_ForeignCallStorage_Positive() public {
         uint256 policyId = _createBlankPolicy(); // create blank policy just to assign policyAdmin
         address _address = address(22);
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.UINT;
         int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 0;
         ForeignCall memory fc;
@@ -42,7 +42,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = _address;
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.returnType = PT.UINT;
+        fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 0;
         uint256 foreignCallId = RulesEngineComponentFacet(address(red))
             .createForeignCall(
@@ -65,7 +65,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         uint256 trackerValue = 5150;
 
         /// build the members of the struct:
-        tracker.pType = PT.UINT;
+        tracker.pType = ParamTypes.UINT;
         tracker.trackerValue = abi.encode(trackerValue);
         // Add the tracker
         uint256 trackerIndex = RulesEngineComponentFacet(address(red)).createTracker(
@@ -83,9 +83,9 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
 
     function testRulesEngine_Unit_Diamond_FunctioncallingFunctionstorage_Positive() public {
         uint256 policyId = _createBlankPolicy();
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
             policyId,
             bytes4(keccak256(bytes(callingFunction))),
@@ -101,12 +101,12 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         uint256 policyId = _createBlankPolicy();
         
         Rule memory rule;
-        // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, 4, LogicalOp.GT, 0, 1
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(4);
         // Build the calling function argument placeholder 
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyId, 0, rule);
@@ -120,18 +120,18 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         // blank slate policy
         policyIds[0] = _createBlankPolicy();
         // Add the calling function to the policy
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         _addCallingFunctionToPolicy(policyIds[0], bytes4(keccak256(bytes(callingFunction))), pTypes, "transfer(address,uint256) returns (bool)");
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
-        // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, 4, LogicalOp.GT, 0, 1
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(4);
         // Build the calling function argument placeholder 
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyIds[0], 0, rule);
@@ -151,11 +151,11 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
 
     function _createInstructionSet(uint256 plh1) public pure returns (uint256[] memory instructionSet) {
         instructionSet = new uint256[](7);
-        instructionSet[0] = uint(LC.PLH);
+        instructionSet[0] = uint(LogicalOp.PLH);
         instructionSet[1] = 0;
-        instructionSet[2] = uint(LC.NUM);
+        instructionSet[2] = uint(LogicalOp.NUM);
         instructionSet[3] = plh1;
-        instructionSet[4] = uint(LC.GT);
+        instructionSet[4] = uint(LogicalOp.GT);
         instructionSet[5] = 0;
         instructionSet[6] = 1;
     }
@@ -167,7 +167,7 @@ contract RulesEngineUnitDiamondTests is DiamondMine, Test {
         return policyId;
     }
 
-    function _addCallingFunctionToPolicy(uint256 policyId, bytes4 _callingFunction, PT[] memory pTypes, string memory callingFunctionName) internal returns (uint256) {
+    function _addCallingFunctionToPolicy(uint256 policyId, bytes4 _callingFunction, ParamTypes[] memory pTypes, string memory callingFunctionName) internal returns (uint256) {
         // Save the calling function
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
             policyId, 

@@ -118,9 +118,9 @@ contract RulesEngineCommon is DiamondMine, Test {
         // blank slate policy
         policyIds[0] = _createBlankPolicy();
         // Add the calling function to the policy
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         _addCallingFunctionToPolicy(policyIds[0]);
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
@@ -129,7 +129,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.instructionSet = _createInstructionSet(4);
         // Build the calling function argument placeholder
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
@@ -156,9 +156,9 @@ contract RulesEngineCommon is DiamondMine, Test {
         // blank slate policy
         policyIds[0] = _createBlankPolicy();
         // Add the calling function to the policy
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         _addCallingFunctionToPolicy(policyIds[0]);
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
@@ -167,7 +167,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.instructionSet = _createInstructionSet(4);
         // Build the calling function argument placeholder
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Save the rule
         ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
@@ -194,19 +194,19 @@ contract RulesEngineCommon is DiamondMine, Test {
         // blank slate policy
         policyIds[0] = _createBlankPolicy();
         // Add the calling function  to the policy
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         _addCallingFunctionToPolicy(policyIds[0]);
         // Rule: amount >= 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         // Instruction set: LC.PLH, 0, LC.GTEQL, 4, LC.GT, 0, 1
         // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet("GTEQL", 4, LC.GTEQL);
+        rule.instructionSet = _createInstructionSet("GTEQL", 4, LogicalOp.GTEQL);
         
         // Build the calling function argument placeholder
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Save the rule
         ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
@@ -233,19 +233,19 @@ contract RulesEngineCommon is DiamondMine, Test {
         // blank slate policy
         policyIds[0] = _createBlankPolicy();
         // Add the calling function to the policy
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         _addCallingFunctionToPolicy(policyIds[0]);
         // Rule: amount <= 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         // Instruction set: LC.PLH, 0, LC.LTEQL, 4, LC.GT, 0, 1
         // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet("LTEQL", 4, LC.LTEQL);
+        rule.instructionSet = _createInstructionSet("LTEQL", 4, LogicalOp.LTEQL);
         
         // Build the calling function argument placeholder
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Save the rule
         ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
@@ -275,34 +275,34 @@ contract RulesEngineCommon is DiamondMine, Test {
         policyIds[0] = _createBlankPolicy();
         // Rule: info == "Bad Info" -> revert -> updateInfo(address _to, string info) returns (bool)"
         Rule memory rule;
-        // Instruction set: LC.PLH, 0, LC.NUM, *uint256 representation of Bad Info*, LC.EQ, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, *uint256 representation of Bad Info*, LogicalOp.EQ, 0, 1
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
         rule.instructionSet[1] = 0;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = uint256(keccak256(abi.encode("Bad Info")));
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
-        rule.rawData.argumentTypes = new PT[](1);
+        rule.rawData.argumentTypes = new ParamTypes[](1);
         rule.rawData.dataValues = new bytes[](1);
         rule.rawData.instructionSetIndex = new uint256[](1);
-        rule.rawData.argumentTypes[0] = PT.STR;
+        rule.rawData.argumentTypes[0] = ParamTypes.STR;
         rule.rawData.dataValues[0] = abi.encode("Bad Info");
         rule.rawData.instructionSetIndex[0] = 3;
 
         // Build the calling function argument placeholder
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.STR;
+        rule.placeHolders[0].pType = ParamTypes.STR;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Save the rule
         ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyIds[0], 0, rule);
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.STR;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.STR;
         // Save the calling function
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
             .createCallingFunction(
@@ -337,34 +337,34 @@ contract RulesEngineCommon is DiamondMine, Test {
         policyIds[0] = _createBlankPolicy();
         // Rule: _to == 0x1234567 -> revert -> updateInfo(address _to, string info) returns (bool)"
         Rule memory rule;
-        // Instruction set: LC.PLH, 0, LC.NUM, *uint256 representation of 0x1234567o*, LC.EQ, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, *uint256 representation of 0x1234567o*, LogicalOp.EQ, 0, 1
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
         rule.instructionSet[1] = 0;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = uint256(uint160(address(0x1234567)));
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
-        rule.rawData.argumentTypes = new PT[](1);
+        rule.rawData.argumentTypes = new ParamTypes[](1);
         rule.rawData.dataValues = new bytes[](1);
         rule.rawData.instructionSetIndex = new uint256[](1);
-        rule.rawData.argumentTypes[0] = PT.ADDR;
+        rule.rawData.argumentTypes[0] = ParamTypes.ADDR;
         rule.rawData.dataValues[0] = abi.encode(0x1234567);
         rule.rawData.instructionSetIndex[0] = 3;
 
         // Build the calling function argument placeholder
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.ADDR;
+        rule.placeHolders[0].pType = ParamTypes.ADDR;
         rule.placeHolders[0].typeSpecificIndex = 0;
         // Save the rule
         ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.STR;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.STR;
         // Save the calling function
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
             .createCallingFunction(
@@ -400,9 +400,9 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicy(policyIds[0]);
 
@@ -412,18 +412,18 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.posEffects = new Effect[](1);
         rule.posEffects[0] = effectId_expression2;
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.NUM);
+        rule.instructionSet[0] = uint(LogicalOp.NUM);
         rule.instructionSet[1] = 1;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
         rule.effectPlaceHolders = new Placeholder[](2);
-        rule.effectPlaceHolders[0].pType = PT.ADDR;
+        rule.effectPlaceHolders[0].pType = ParamTypes.ADDR;
         rule.effectPlaceHolders[0].typeSpecificIndex = 2;
-        rule.effectPlaceHolders[1].pType = PT.ADDR;
+        rule.effectPlaceHolders[1].pType = ParamTypes.ADDR;
         rule.effectPlaceHolders[1].trackerValue = true;
         rule.effectPlaceHolders[1].typeSpecificIndex = 1;
 
@@ -432,7 +432,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         //build tracker
         Trackers memory tracker;
         /// build the members of the struct:
-        tracker.pType = PT.UINT;
+        tracker.pType = ParamTypes.UINT;
         tracker.trackerValue = abi.encode(2);
 
         ruleIds.push(new uint256[](1));
@@ -440,8 +440,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
 
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");      
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.UINT;
         int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 1;
 
@@ -450,7 +450,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.returnType = PT.UINT;
+        fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 0;
         RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
 
@@ -472,9 +472,9 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         policyIds[0] = _policyId;
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicy(policyIds[0]);
 
@@ -484,19 +484,19 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.posEffects = new Effect[](1);
         rule.posEffects[0] = effectId_expression2;
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.NUM);
+        rule.instructionSet[0] = uint(LogicalOp.NUM);
         rule.instructionSet[1] = 1;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
         rule.effectPlaceHolders = new Placeholder[](2);
-        rule.effectPlaceHolders[0].pType = PT.UINT;
+        rule.effectPlaceHolders[0].pType = ParamTypes.UINT;
         rule.effectPlaceHolders[0].foreignCall = true;
         rule.effectPlaceHolders[0].typeSpecificIndex = 1;
-        rule.effectPlaceHolders[1].pType = PT.UINT;
+        rule.effectPlaceHolders[1].pType = ParamTypes.UINT;
         rule.effectPlaceHolders[1].trackerValue = true;
         rule.effectPlaceHolders[1].typeSpecificIndex = 1;
 
@@ -508,8 +508,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
 
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");      
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.UINT;
         int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 1;
 
@@ -518,7 +518,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.returnType = PT.UINT;
+        fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 0;
         RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
 
@@ -531,16 +531,16 @@ contract RulesEngineCommon is DiamondMine, Test {
 
     function setupRuleWithForeignCall(
         uint256 _amount,
-        ET _effectType,
+        EffectTypes _effectType,
         bool isPositive
     ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256 policyId) {
         uint256[] memory policyIds = new uint256[](1);
 
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicy(policyIds[0]);
 
@@ -557,8 +557,8 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         rule = _setUpEffect(rule, _effectType, isPositive);
 
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.UINT;
         int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 1;
         ForeignCall memory fc;
@@ -566,7 +566,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.returnType = PT.UINT;
+        fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 0;
         RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
         // Save the rule
@@ -585,16 +585,16 @@ contract RulesEngineCommon is DiamondMine, Test {
 
     // Same as setupRuleWithForeignCall except that it contains a foreign call that is referenced by another foreign call that is then squared by the foreign call and then checked to see if it's greater than the original value
     function setupRuleWithForeignCallWithSquaredFCValues(
-        ET _effectType,
+        EffectTypes _effectType,
         bool isPositive
     ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256 policyId) {
         uint256[] memory policyIds = new uint256[](1);
 
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicy(policyIds[0]);
 
@@ -612,8 +612,8 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         rule = _setUpEffect(rule, _effectType, isPositive);
 
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.UINT;
         int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 1;
         ForeignCall memory fc;
@@ -621,7 +621,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.returnType = PT.UINT;
+        fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 0;
         RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
 
@@ -632,7 +632,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc2.parameterTypes = fcArgs;
         fc2.foreignCallAddress = address(testContract);
         fc2.signature = bytes4(keccak256(bytes("square(uint256)")));
-        fc2.returnType = PT.UINT;
+        fc2.returnType = ParamTypes.UINT;
         fc2.foreignCallIndex = 0;
         RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc2, "square(uint256)");
         // Save the rule
@@ -652,16 +652,16 @@ contract RulesEngineCommon is DiamondMine, Test {
     // Same as setupRuleWithForeignCall except that it contais a tracker value that is then squared by the foreign call and then checked to see if it's greater than the tracker value
     function setupRuleWithForeignCallSquaringReferencedTrackerVals(
         uint256 _amount,
-        ET _effectType,
+        EffectTypes _effectType,
         bool isPositive
     ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256 policyId) {
         uint256[] memory policyIds = new uint256[](1);
 
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicy(policyIds[0]);
 
@@ -683,13 +683,13 @@ contract RulesEngineCommon is DiamondMine, Test {
         Trackers memory tracker;
 
         /// build the members of the struct:
-        tracker.pType = PT.UINT;
+        tracker.pType = ParamTypes.UINT;
         tracker.trackerValue = abi.encode(_amount);
         // Add the tracker
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
         
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.UINT;
         ForeignCall memory fc;
         int8[] memory typeSpecificIndices2 = new int8[](1);
         typeSpecificIndices2[0] = -1;
@@ -697,7 +697,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("square(uint256)")));
-        fc.returnType = PT.UINT;
+        fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 0;
         RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "square(uint256)");
         // Save the rule
@@ -717,23 +717,23 @@ contract RulesEngineCommon is DiamondMine, Test {
 
     function _setUpEffect(
         Rule memory rule,
-        ET _effectType,
+        EffectTypes _effectType,
         bool isPositive
     ) public view returns (Rule memory _rule) {
         if (isPositive) {
             rule.posEffects = new Effect[](1);
-            if (_effectType == ET.REVERT) {
+            if (_effectType == EffectTypes.REVERT) {
                 rule.posEffects[0] = effectId_revert;
             }
-            if (_effectType == ET.EVENT) {
+            if (_effectType == EffectTypes.EVENT) {
                 rule.posEffects[0] = effectId_event;
             }
         } else {
             rule.negEffects = new Effect[](1);
-            if (_effectType == ET.REVERT) {
+            if (_effectType == EffectTypes.REVERT) {
                 rule.negEffects[0] = effectId_revert;
             }
-            if (_effectType == ET.EVENT) {
+            if (_effectType == EffectTypes.EVENT) {
                 rule.negEffects[0] = effectId_event;
             }
         }
@@ -748,9 +748,9 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         policyIds[0] = _createBlankPolicyOpen();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicy(policyIds[0]);
 
@@ -759,18 +759,18 @@ contract RulesEngineCommon is DiamondMine, Test {
         Rule memory rule;
         // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
 
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
         rule.instructionSet[1] = 0;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = 4;
-        rule.instructionSet[4] = uint(LC.GT); // register 2
+        rule.instructionSet[4] = uint(LogicalOp.GT); // register 2
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
         rule.posEffects[0] = effectId_revert;
@@ -795,9 +795,9 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicy(policyIds[0]);
 
@@ -816,7 +816,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
-    function _setupRuleWithPosEventParams(bytes memory param, PT pType) 
+    function _setupRuleWithPosEventParams(bytes memory param, ParamTypes pType) 
         public
         ifDeploymentTestsEnabled
         endWithStopPrank
@@ -826,9 +826,9 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicy(policyIds[0]);
 
@@ -847,7 +847,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
-    function _setupRuleWithPosEventDynamicParamsFromCallingFunctionParams(PT pType) 
+    function _setupRuleWithPosEventDynamicParamsFromCallingFunctionParams(ParamTypes pType) 
         public
         ifDeploymentTestsEnabled
         endWithStopPrank
@@ -857,14 +857,14 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicy(policyIds[0]);
         Rule memory rule;
         // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
-        if(pType == PT.ADDR){
+        if(pType == ParamTypes.ADDR){
             rule = _createGTRuleWithDynamicEventParamsAddress(4);
             rule.posEffects[0] = effectId_event;
         } else{
@@ -890,9 +890,9 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicy(policyIds[0]);
 
@@ -927,9 +927,9 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicy(policyIds[0]);
 
@@ -990,9 +990,9 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicy(policyIds[0]);
 
@@ -1027,9 +1027,9 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicy(policyIds[0]);
 
@@ -1040,9 +1040,9 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.instructionSet = _createInstructionSet(0, 1);
 
         rule.placeHolders = new Placeholder[](2);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].trackerValue = true;
         rule.placeHolders[1].typeSpecificIndex = 1;
         // Add a negative/positive effects
@@ -1057,7 +1057,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         Trackers memory tracker;
 
         /// build the members of the struct:
-        tracker.pType = PT.UINT;
+        tracker.pType = ParamTypes.UINT;
         tracker.trackerValue = abi.encode(trackerValue);
         // Add the tracker
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
@@ -1085,36 +1085,36 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         policyIds[0] = _policyId;
 
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.ADDR;
+        ParamTypes[] memory pTypes = new ParamTypes[](3);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.ADDR;
 
         _addCallingFunctionToPolicy(policyIds[0]);
 
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
 
-        // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.PLH, 1, LogicalOp.GT, 0, 1
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.NUM);
+        rule.instructionSet[0] = uint(LogicalOp.NUM);
         rule.instructionSet[1] = 1;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR;
+        rule.placeHolders[0].pType = ParamTypes.ADDR;
         rule.placeHolders[0].typeSpecificIndex = 0;
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1;
-        rule.placeHolders[2].pType = PT.BYTES;
+        rule.placeHolders[2].pType = ParamTypes.BYTES;
         rule.placeHolders[2].typeSpecificIndex = 2;
 
         rule.effectPlaceHolders = new Placeholder[](1);
-        rule.effectPlaceHolders[0].pType = PT.BYTES;
+        rule.effectPlaceHolders[0].pType = ParamTypes.BYTES;
         rule.effectPlaceHolders[0].typeSpecificIndex = 2;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
@@ -1151,36 +1151,36 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         policyIds[0] = _policyId;
 
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.BYTES;
+        ParamTypes[] memory pTypes = new ParamTypes[](3);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.BYTES;
 
         _addCallingFunctionToPolicyWithString(policyIds[0]);
 
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
 
-        // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.PLH, 1, LogicalOp.GT, 0, 1
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.NUM);
+        rule.instructionSet[0] = uint(LogicalOp.NUM);
         rule.instructionSet[1] = 1;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR;
+        rule.placeHolders[0].pType = ParamTypes.ADDR;
         rule.placeHolders[0].typeSpecificIndex = 0;
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1;
-        rule.placeHolders[2].pType = PT.BYTES;
+        rule.placeHolders[2].pType = ParamTypes.BYTES;
         rule.placeHolders[2].typeSpecificIndex = 2;
 
         rule.effectPlaceHolders = new Placeholder[](1);
-        rule.effectPlaceHolders[0].pType = PT.BYTES;
+        rule.effectPlaceHolders[0].pType = ParamTypes.BYTES;
         rule.effectPlaceHolders[0].typeSpecificIndex = 2;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
@@ -1217,36 +1217,36 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         policyIds[0] = _policyId;
 
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.ADDR;
+        ParamTypes[] memory pTypes = new ParamTypes[](3);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.ADDR;
 
         _addCallingFunctionToPolicyWithString(policyIds[0]);
 
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
 
-        // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.PLH, 1, LogicalOp.GT, 0, 1
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.NUM);
+        rule.instructionSet[0] = uint(LogicalOp.NUM);
         rule.instructionSet[1] = 1;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR;
+        rule.placeHolders[0].pType = ParamTypes.ADDR;
         rule.placeHolders[0].typeSpecificIndex = 0;
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1;
-        rule.placeHolders[2].pType = PT.ADDR;
+        rule.placeHolders[2].pType = ParamTypes.ADDR;
         rule.placeHolders[2].typeSpecificIndex = 2;
 
         rule.effectPlaceHolders = new Placeholder[](1);
-        rule.effectPlaceHolders[0].pType = PT.ADDR;
+        rule.effectPlaceHolders[0].pType = ParamTypes.ADDR;
         rule.effectPlaceHolders[0].typeSpecificIndex = 2;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
@@ -1282,36 +1282,36 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         policyIds[0] = _policyId;
 
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.BOOL;
+        ParamTypes[] memory pTypes = new ParamTypes[](3);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.BOOL;
 
         _addCallingFunctionToPolicyWithString(policyIds[0]);
 
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
 
-        // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.PLH, 1, LogicalOp.GT, 0, 1
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.NUM);
+        rule.instructionSet[0] = uint(LogicalOp.NUM);
         rule.instructionSet[1] = 1;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR;
+        rule.placeHolders[0].pType = ParamTypes.ADDR;
         rule.placeHolders[0].typeSpecificIndex = 0;
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1;
-        rule.placeHolders[2].pType = PT.BOOL;
+        rule.placeHolders[2].pType = ParamTypes.BOOL;
         rule.placeHolders[2].typeSpecificIndex = 2;
 
         rule.effectPlaceHolders = new Placeholder[](1);
-        rule.effectPlaceHolders[0].pType = PT.ADDR;
+        rule.effectPlaceHolders[0].pType = ParamTypes.ADDR;
         rule.effectPlaceHolders[0].typeSpecificIndex = 2;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
@@ -1347,36 +1347,36 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         policyIds[0] = _policyId;
 
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](3);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicyWithString(policyIds[0]);
 
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
 
-        // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.PLH, 1, LogicalOp.GT, 0, 1
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.NUM);
+        rule.instructionSet[0] = uint(LogicalOp.NUM);
         rule.instructionSet[1] = 1;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR;
+        rule.placeHolders[0].pType = ParamTypes.ADDR;
         rule.placeHolders[0].typeSpecificIndex = 0;
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1;
-        rule.placeHolders[2].pType = PT.UINT;
+        rule.placeHolders[2].pType = ParamTypes.UINT;
         rule.placeHolders[2].typeSpecificIndex = 2;
 
         rule.effectPlaceHolders = new Placeholder[](1);
-        rule.effectPlaceHolders[0].pType = PT.UINT;
+        rule.effectPlaceHolders[0].pType = ParamTypes.UINT;
         rule.effectPlaceHolders[0].typeSpecificIndex = 2;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
@@ -1437,7 +1437,7 @@ contract RulesEngineCommon is DiamondMine, Test {
             _amount
         );
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
@@ -1445,7 +1445,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         return rule;
     }
 
-    function _createGTRuleWithCustomEventParams(uint256 _amount, bytes memory param, PT paramType) public returns (Rule memory) {
+    function _createGTRuleWithCustomEventParams(uint256 _amount, bytes memory param, ParamTypes paramType) public returns (Rule memory) {
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         // Set up custom event param effect.
@@ -1455,7 +1455,7 @@ contract RulesEngineCommon is DiamondMine, Test {
             _amount
         );
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
@@ -1473,11 +1473,11 @@ contract RulesEngineCommon is DiamondMine, Test {
             _amount
         );
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
 
         rule.effectPlaceHolders = new Placeholder[](1);
-        rule.effectPlaceHolders[0].pType = PT.UINT;
+        rule.effectPlaceHolders[0].pType = ParamTypes.UINT;
         rule.effectPlaceHolders[0].typeSpecificIndex = 1;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
@@ -1495,11 +1495,11 @@ contract RulesEngineCommon is DiamondMine, Test {
             _amount
         );
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
 
         rule.effectPlaceHolders = new Placeholder[](1);
-        rule.effectPlaceHolders[0].pType = PT.ADDR;
+        rule.effectPlaceHolders[0].pType = ParamTypes.ADDR;
         rule.effectPlaceHolders[0].typeSpecificIndex = 0;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
@@ -1512,17 +1512,17 @@ contract RulesEngineCommon is DiamondMine, Test {
         Rule memory rule;
         // Set up some effects.
         _setupEffectProcessor();
-        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, _amount, LogicalOp.GT, 0, 1
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.NUM);
+        rule.instructionSet[0] = uint(LogicalOp.NUM);
         rule.instructionSet[1] = 0;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = 2;
-        rule.instructionSet[4] = uint(LC.LT);
+        rule.instructionSet[4] = uint(LogicalOp.LT);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
@@ -1534,9 +1534,9 @@ contract RulesEngineCommon is DiamondMine, Test {
     function _addCallingFunctionToPolicy(uint256 policyId) internal returns (uint256) {
         vm.stopPrank();
         vm.startPrank(policyAdmin);
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         // Save the calling function
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
             .createCallingFunction(
@@ -1561,10 +1561,10 @@ contract RulesEngineCommon is DiamondMine, Test {
     }
 
     function _addCallingFunctionToPolicyWithString(uint256 policyId) internal returns (uint256) {
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.BYTES;
+        ParamTypes[] memory pTypes = new ParamTypes[](3);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.BYTES;
         // Save the calling function
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
             .createCallingFunction(
@@ -1593,7 +1593,7 @@ contract RulesEngineCommon is DiamondMine, Test {
     function _addCallingFunctionToPolicy(
         uint256 policyId,
         bytes4 _callingFunction,
-        PT[] memory pTypes,
+        ParamTypes[] memory pTypes,
         string memory functionName
     ) internal returns (uint256) {
         // Save the calling function
@@ -1623,7 +1623,7 @@ contract RulesEngineCommon is DiamondMine, Test {
     function _addCallingFunctionToPolicyOpen(
         uint256 policyId,
         bytes4 _callingFunction,
-        PT[] memory pTypes, 
+        ParamTypes[] memory pTypes, 
         string memory functionName
     ) internal returns (uint256) {
         // Save the calling function
@@ -1703,8 +1703,8 @@ contract RulesEngineCommon is DiamondMine, Test {
             Effect({
                 valid: true,
                 dynamicParam:false,
-                effectType: ET.EVENT,
-                pType: PT.STR,
+                effectType: EffectTypes.EVENT,
+                pType: ParamTypes.STR,
                 param: abi.encode(_text),
                 text: EVENTTEXT,
                 errorMessage: _text,
@@ -1712,18 +1712,18 @@ contract RulesEngineCommon is DiamondMine, Test {
             });
     }
 
-    function _createCustomEffectEvent(bytes memory param, PT paramType) public pure returns(Effect memory){
+    function _createCustomEffectEvent(bytes memory param, ParamTypes paramType) public pure returns(Effect memory){
         uint256[] memory emptyArray = new uint256[](1); 
         bytes memory encodedParam; 
-        if (paramType == PT.UINT) {
+        if (paramType == ParamTypes.UINT) {
             encodedParam = abi.encode(abi.decode(param, (uint)));  
-        } else if (paramType == PT.ADDR) {
+        } else if (paramType == ParamTypes.ADDR) {
             encodedParam = abi.encode(abi.decode(param, (address)));
-        } else if (paramType == PT.BOOL) {
+        } else if (paramType == ParamTypes.BOOL) {
             encodedParam = abi.encode(abi.decode(param, (bool)));
-        } else if (paramType == PT.STR) {
+        } else if (paramType == ParamTypes.STR) {
             encodedParam = abi.encode(abi.decode(param, (string)));
-        } else if (paramType == PT.BYTES) {
+        } else if (paramType == ParamTypes.BYTES) {
             encodedParam = abi.encode(abi.decode(param, (bytes32)));
         }
         // Create a event effect
@@ -1731,7 +1731,7 @@ contract RulesEngineCommon is DiamondMine, Test {
             Effect({
                 valid: true,
                 dynamicParam:false,
-                effectType: ET.EVENT,
+                effectType: EffectTypes.EVENT,
                 pType: paramType,
                 param: encodedParam,
                 text: EVENTTEXT,
@@ -1744,14 +1744,14 @@ contract RulesEngineCommon is DiamondMine, Test {
         Effect memory effect;
         effect.valid = true;
         effect.dynamicParam = true;
-        effect.effectType = ET.EVENT;
+        effect.effectType = EffectTypes.EVENT;
         effect.text = EVENTTEXT;
         effect.instructionSet = new uint256[](4);
         // Foreign Call Placeholder
-        effect.instructionSet[0] = uint(LC.NUM);
+        effect.instructionSet[0] = uint(LogicalOp.NUM);
         effect.instructionSet[1] = 0;
         // // Tracker Placeholder
-        effect.instructionSet[2] = uint(LC.NUM);
+        effect.instructionSet[2] = uint(LogicalOp.NUM);
         effect.instructionSet[3] = 1;
 
         return effect;
@@ -1761,14 +1761,14 @@ contract RulesEngineCommon is DiamondMine, Test {
         Effect memory effect;
         effect.valid = true;
         effect.dynamicParam = true;
-        effect.effectType = ET.EVENT;
+        effect.effectType = EffectTypes.EVENT;
         effect.text = EVENTTEXT;
         effect.instructionSet = new uint256[](4);
         // Foreign Call Placeholder
-        effect.instructionSet[0] = uint(LC.NUM);
+        effect.instructionSet[0] = uint(LogicalOp.NUM);
         effect.instructionSet[1] = 1;
         // // Tracker Placeholder
-        effect.instructionSet[2] = uint(LC.NUM);
+        effect.instructionSet[2] = uint(LogicalOp.NUM);
         effect.instructionSet[3] = 1;
 
         return effect;
@@ -1781,8 +1781,8 @@ contract RulesEngineCommon is DiamondMine, Test {
             Effect({
                 valid: true,
                 dynamicParam:false,
-                effectType: ET.REVERT,
-                pType: PT.STR,
+                effectType: EffectTypes.REVERT,
+                pType: ParamTypes.STR,
                 param: abi.encode(_text),
                 text: EVENTTEXT,
                 errorMessage: revert_text,
@@ -1794,7 +1794,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         Effect memory effect;
 
         effect.valid = true;
-        effect.effectType = ET.EXPRESSION;
+        effect.effectType = EffectTypes.EXPRESSION;
         effect.text = "";
         effect.instructionSet = new uint256[](1);
 
@@ -1805,19 +1805,19 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Effect: TRU:someTracker += FC:simpleCheck(amount)
         Effect memory effect;
         effect.valid = true;
-        effect.effectType = ET.EXPRESSION;
+        effect.effectType = EffectTypes.EXPRESSION;
         effect.text = "";
         effect.instructionSet = new uint256[](10);
         // Foreign Call Placeholder
-        effect.instructionSet[0] = uint(LC.PLH);
+        effect.instructionSet[0] = uint(LogicalOp.PLH);
         effect.instructionSet[1] = 0;
         // Tracker Placeholder
-        effect.instructionSet[2] = uint(LC.PLH);
+        effect.instructionSet[2] = uint(LogicalOp.PLH);
         effect.instructionSet[3] = 1;
-        effect.instructionSet[4] = uint(LC.ADD);
+        effect.instructionSet[4] = uint(LogicalOp.ADD);
         effect.instructionSet[5] = 0;
         effect.instructionSet[6] = 1;
-        effect.instructionSet[7] = uint(LC.TRU);
+        effect.instructionSet[7] = uint(LogicalOp.TRU);
         effect.instructionSet[8] = 1;
         effect.instructionSet[9] = 2;
 
@@ -1828,17 +1828,17 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Effect: TRU:someTracker = parameter 3
         Effect memory effect;
         effect.valid = true;
-        effect.effectType = ET.EXPRESSION;
+        effect.effectType = EffectTypes.EXPRESSION;
         effect.text = "";
         effect.instructionSet = new uint256[](6);
         // Foreign Call Placeholder
-        effect.instructionSet[0] = uint(LC.PLH);
+        effect.instructionSet[0] = uint(LogicalOp.PLH);
         effect.instructionSet[1] = 0;
         // Tracker Placeholder
-        effect.instructionSet[2] = uint(LC.TRU);
+        effect.instructionSet[2] = uint(LogicalOp.TRU);
         effect.instructionSet[3] = 1;
         effect.instructionSet[4] = 0;
-        effect.instructionSet[5] = uint(TT.PLACE_HOLDER);
+        effect.instructionSet[5] = uint(TrackerTypes.PLACE_HOLDER);
 
         return effect;
     }
@@ -1847,14 +1847,14 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Effect: TRU:someTracker = parameter 3
         Effect memory effect;
         effect.valid = true;
-        effect.effectType = ET.EXPRESSION;
+        effect.effectType = EffectTypes.EXPRESSION;
         effect.text = "";
         effect.instructionSet = new uint256[](6);
         // Tracker Placeholder
-        effect.instructionSet[0] = uint(LC.TRU);
+        effect.instructionSet[0] = uint(LogicalOp.TRU);
         effect.instructionSet[1] = 1;
         effect.instructionSet[2] = 0;
-        effect.instructionSet[3] = uint(TT.MEMORY);
+        effect.instructionSet[3] = uint(TrackerTypes.MEMORY);
 
         return effect;
     }
@@ -1866,11 +1866,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         returns (uint256[] memory instructionSet)
     {
         instructionSet = new uint256[](7);
-        instructionSet[0] = uint(LC.NUM);
+        instructionSet[0] = uint(LogicalOp.NUM);
         instructionSet[1] = 0;
-        instructionSet[2] = uint(LC.NUM);
+        instructionSet[2] = uint(LogicalOp.NUM);
         instructionSet[3] = 1;
-        instructionSet[4] = uint(LC.GT);
+        instructionSet[4] = uint(LogicalOp.GT);
         instructionSet[5] = 0;
         instructionSet[6] = 1;
     }
@@ -1879,11 +1879,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256 plh1
     ) public pure returns (uint256[] memory instructionSet) {
         instructionSet = new uint256[](7);
-        instructionSet[0] = uint(LC.PLH);
+        instructionSet[0] = uint(LogicalOp.PLH);
         instructionSet[1] = 0;
-        instructionSet[2] = uint(LC.NUM);
+        instructionSet[2] = uint(LogicalOp.NUM);
         instructionSet[3] = plh1;
-        instructionSet[4] = uint(LC.GT);
+        instructionSet[4] = uint(LogicalOp.GT);
         instructionSet[5] = 0;
         instructionSet[6] = 1;
     }
@@ -1891,12 +1891,12 @@ contract RulesEngineCommon is DiamondMine, Test {
     function _createInstructionSet(
         string memory testString, // string added to identify this overloaded function vs the two uint256 param version 
         uint256 plh1,
-        LC plcType
+        LogicalOp plcType
     ) public pure returns (uint256[] memory instructionSet) {
         instructionSet = new uint256[](7);
-        instructionSet[0] = uint(LC.PLH);
+        instructionSet[0] = uint(LogicalOp.PLH);
         instructionSet[1] = 0;
-        instructionSet[2] = uint(LC.NUM);
+        instructionSet[2] = uint(LogicalOp.NUM);
         instructionSet[3] = plh1;
         instructionSet[4] = uint(plcType);
         instructionSet[5] = 0;
@@ -1909,11 +1909,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256 plh2
     ) public pure returns (uint256[] memory instructionSet) {
         instructionSet = new uint256[](7);
-        instructionSet[0] = uint(LC.PLH);
+        instructionSet[0] = uint(LogicalOp.PLH);
         instructionSet[1] = plh1;
-        instructionSet[2] = uint(LC.PLH);
+        instructionSet[2] = uint(LogicalOp.PLH);
         instructionSet[3] = plh2;
-        instructionSet[4] = uint(LC.GT);
+        instructionSet[4] = uint(LogicalOp.GT);
         instructionSet[5] = 0;
         instructionSet[6] = 1;
     }
@@ -1922,9 +1922,9 @@ contract RulesEngineCommon is DiamondMine, Test {
        
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicyOpen();
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         _addCallingFunctionToPolicy(policyIds[0]);
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
         Rule memory rule;
@@ -1939,8 +1939,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.UINT;
         int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 1;
         ForeignCall memory fc;
@@ -1948,7 +1948,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.returnType = PT.UINT;
+        fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 0;
         RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
         ruleIds.push(new uint256[](1));
@@ -1964,10 +1964,10 @@ contract RulesEngineCommon is DiamondMine, Test {
        
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicyOpen();
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.ADDR;
-        pTypes[2] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](3);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.ADDR;
+        pTypes[2] = ParamTypes.UINT;
         _addCallingFunctionToPolicy(policyIds[0]);
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
         Rule memory rule;
@@ -1982,8 +1982,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.UINT;
         int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 2;
         ForeignCall memory fc;
@@ -1991,7 +1991,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.returnType = PT.UINT;
+        fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 0;
         RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
         ruleIds.push(new uint256[](1));
@@ -2020,8 +2020,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.UINT;
         int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 1;
         ForeignCall memory fc;
@@ -2029,7 +2029,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.returnType = PT.UINT;
+        fc.returnType = ParamTypes.UINT;
 
         RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
         ruleIds.push(new uint256[](1));
@@ -2044,11 +2044,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         ForeignCall memory fc;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.parameterTypes = new PT[](1);
-        fc.parameterTypes[0] = PT.UINT;
+        fc.parameterTypes = new ParamTypes[](1);
+        fc.parameterTypes[0] = ParamTypes.UINT;
         fc.typeSpecificIndices = new int8[](1);
         fc.typeSpecificIndices[0] = 1;
-        fc.returnType = PT.UINT;
+        fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 0;
         RulesEngineComponentFacet(address(red)).createForeignCall(_policyId, fc, "simpleCheck(uint256)");
         return fc; 
@@ -2058,11 +2058,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         ForeignCall memory fc;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.parameterTypes = new PT[](1);
-        fc.parameterTypes[0] = PT.UINT;
+        fc.parameterTypes = new ParamTypes[](1);
+        fc.parameterTypes[0] = ParamTypes.UINT;
         fc.typeSpecificIndices = new int8[](1);
         fc.typeSpecificIndices[0] = 1;
-        fc.returnType = PT.UINT;
+        fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 0;
         uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(_policyId, fc, "simpleCheck(uint256)");
         return (fc, foreignCallId); 

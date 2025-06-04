@@ -121,63 +121,66 @@ abstract contract RulesEngineClientERC1155 is RulesEngineClient {
     /**
      * @notice Calls the Rules Engine to evaluate policies for an ERC1155 `Mint` operation.
      * @dev Encodes the parameters and invokes the `_invokeRulesEngine` function.
-     * @param to The receiving address.
+     * @param _to The receiving address.
+     * @param _tokenId The token identifier.
+     * @param _value The value of tokenId being transfered.
+     * @param _data Generic data to pass along with the transfer.
      */
-    function _checkPoliciesERC1155Mint(address to, uint256 tokenId, uint256 value, bytes memory data) internal {
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, to, tokenId, value, data, msg.sender);
+    function _checkPoliciesERC1155Mint(address _to, uint256 _tokenId, uint256 _value, bytes memory _data) internal {
+        bytes memory encoded = abi.encodeWithSelector(msg.sig, _to, _tokenId, _value, _data, msg.sender);
         _invokeRulesEngine(encoded);
     }
 
     /**
      * @notice Calls the Rules Engine to evaluate policies for an ERC1155 `MintBatch` operation.
      * @dev Encodes the parameters and invokes the `_invokeRulesEngine` function.
-     * @param to The receiving address.
-     * @param tokenIds The token identifiers.
-     * @param values The values of tokenIds being transfered.
-     * @param data Generic data to pass along with the transfer.
+     * @param _to The receiving address.
+     * @param _tokenIds The token identifiers.
+     * @param _values The values of tokenIds being transfered.
+     * @param _data Generic data to pass along with the transfer.
      */
-    function _checkPoliciesERC1155MintBatch(address to, uint256[] memory tokenIds, uint256[] memory values, bytes memory data) internal {
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, to, tokenIds, values, data, msg.sender);
+    function _checkPoliciesERC1155MintBatch(address _to, uint256[] memory _tokenIds, uint256[] memory _values, bytes memory _data) internal {
+        bytes memory encoded = abi.encodeWithSelector(msg.sig, _to, _tokenIds, _values, _data, msg.sender);
         _invokeRulesEngine(encoded);
     }
 
     /**
      * @notice Calls the Rules Engine to evaluate policies for an ERC1155 `safeTransferFrom` operation.
      * @dev Encodes the parameters and invokes the `_invokeRulesEngine` function.
-     * @param from The sending address.
-     * @param to The receiving address.
-     * @param tokenId The token identifier.
-     * @param value The value of tokenId being transfered.
-     * @param data Generic data to pass along with the transfer.
+     * @param _from The sending address.
+     * @param _to The receiving address.
+     * @param _tokenId The token identifier.
+     * @param _value The value of tokenId being transfered.
+     * @param _data Generic data to pass along with the transfer.
      */
-    function _checkPoliciesERC1155SafeTransferFrom(address from, address to, uint256 tokenId, uint256 value, bytes memory data) internal {
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, from, to, tokenId, value, data, msg.sender);
+    function _checkPoliciesERC1155SafeTransferFrom(address _from, address _to, uint256 _tokenId, uint256 _value, bytes memory _data) internal {
+        bytes memory encoded = abi.encodeWithSelector(msg.sig, _from, _to, _tokenId, _value, _data, msg.sender);
         _invokeRulesEngine(encoded);
     }
 
     /**
      * @notice Calls the Rules Engine to evaluate policies for an ERC1155 `safeTransferFrom` operation.
      * @dev Encodes the parameters and invokes the `_invokeRulesEngine` function.
-     * @param from The sending address.
-     * @param to The receiving address.
-     * @param tokenIds The token identifiers.
-     * @param values The values of tokenIds being transfered.
-     * @param data Generic data to pass along with the transfer.
+     * @param _from The sending address.
+     * @param _to The receiving address.
+     * @param _tokenIds The token identifiers.
+     * @param _values The values of tokenIds being transfered.
+     * @param _data Generic data to pass along with the transfer.
      */
-    function _checkPoliciesERC1155SafeBatchTransferFrom(address from, address to, uint256[] memory tokenIds, uint256[] memory values, bytes memory data) internal {
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, from, to, tokenIds, values, data, msg.sender);
+    function _checkPoliciesERC1155SafeBatchTransferFrom(address _from, address _to, uint256[] memory _tokenIds, uint256[] memory _values, bytes memory _data) internal {
+        bytes memory encoded = abi.encodeWithSelector(msg.sig, _from, _to, _tokenIds, _values, _data, msg.sender);
         _invokeRulesEngine(encoded);
     }
 
     /**
      * @notice Calls the Rules Engine to evaluate policies for an ERC1155 `transferFrom` operation.
      * @dev Encodes the parameters and invokes the `_invokeRulesEngine` function.
-     * @param from The sending address.
-     * @param to The receiving address.
-     * @param tokenId The token identifier.
+     * @param _from The sending address.
+     * @param _to The receiving address.
+     * @param _tokenId The token identifier.
      */
-    function _checkPoliciesERC1155TransferFrom(address from, address to, uint256 tokenId) internal {
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, from, to, tokenId, msg.sender);
+    function _checkPoliciesERC1155TransferFrom(address _from, address _to, uint256 _tokenId) internal {
+        bytes memory encoded = abi.encodeWithSelector(msg.sig, _from, _to, _tokenId, msg.sender);
         _invokeRulesEngine(encoded);
     }
 }

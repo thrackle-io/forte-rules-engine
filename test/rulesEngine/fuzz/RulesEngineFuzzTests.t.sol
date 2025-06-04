@@ -10,7 +10,7 @@ contract RulesEngineFuzzTests is RulesEngineFuzzTestsCommon {
   ExampleUserContract userContract;
 
   function setUp() public{
-        red = _createRulesEngineDiamond(address(0xB0b)); 
+        red = createRulesEngineDiamond(address(0xB0b)); 
         userContract = new ExampleUserContract();
         userContractAddress = address(userContract);
         userContract.setRulesEngineAddress(address(red));

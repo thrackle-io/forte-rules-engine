@@ -6,7 +6,7 @@ import "test/token/ERC1155/unit/ERC1155UnitTestsCommon.t.sol";
 contract ERC1155UnitTests is ERC1155UnitTestsCommon {
 
   function setUp() public{
-        red = _createRulesEngineDiamond(address(0xB0b)); 
+        red = createRulesEngineDiamond(address(0xB0b)); 
         userContract = new ExampleERC1155("example.uri/");
         userContractAddress = address(userContract);
         userContract.setRulesEngineAddress(address(red));

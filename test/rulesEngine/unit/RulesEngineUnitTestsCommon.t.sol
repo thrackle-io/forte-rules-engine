@@ -161,7 +161,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        setupRuleWithForeignCall(4, ET.REVERT, false);
+        setupRuleWithForeignCall(4, EffectTypes.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), transferValue);
         uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
         assertEq(response, 1);
@@ -175,7 +175,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // change values in order to violate rule 
         ruleValue = 15;
         transferValue = 10;
-        setupRuleWithForeignCall(ruleValue, ET.REVERT, false);
+        setupRuleWithForeignCall(ruleValue, EffectTypes.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), transferValue);
         vm.expectRevert(abi.encodePacked(revert_text));
         RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
@@ -208,7 +208,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        setupRuleWithForeignCallSquaringReferencedTrackerVals(8, ET.REVERT, false);
+        setupRuleWithForeignCallSquaringReferencedTrackerVals(8, EffectTypes.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 3);
         uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
         assertEq(response, 1);
@@ -219,7 +219,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        setupRuleWithForeignCallSquaringReferencedTrackerVals(0, ET.REVERT, false);
+        setupRuleWithForeignCallSquaringReferencedTrackerVals(0, EffectTypes.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 3);
         vm.expectRevert(abi.encodePacked(revert_text));
         RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
@@ -230,7 +230,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        setupRuleWithForeignCallWithSquaredFCValues(ET.REVERT, false);
+        setupRuleWithForeignCallWithSquaredFCValues(EffectTypes.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 3);
         uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
         assertEq(response, 1);
@@ -242,7 +242,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        setupRuleWithForeignCallWithSquaredFCValues(ET.REVERT, false);
+        setupRuleWithForeignCallWithSquaredFCValues(EffectTypes.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 0);
         vm.expectRevert(abi.encodePacked(revert_text));
         RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
@@ -327,7 +327,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        setupRuleWithForeignCall(4, ET.REVERT, false);
+        setupRuleWithForeignCall(4, EffectTypes.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 5);
         uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
         assertEq(response, 1);
@@ -338,7 +338,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        setupRuleWithForeignCall(4, ET.REVERT, false);
+        setupRuleWithForeignCall(4, EffectTypes.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 5);
         // The Foreign call will be placed during the effect for the single rule in this policy.
         // The value being set in the foreign contract is then polled to verify that it has been udpated.
@@ -357,7 +357,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         //build tracker
         Trackers memory tracker;
         /// build the members of the struct:
-        tracker.pType = PT.ADDR;
+        tracker.pType = ParamTypes.ADDR;
         tracker.set = true;
         tracker.trackerValue = abi.encode(0xD00D);
         setupRuleWithTrackerAddr(policyId, tracker);
@@ -380,7 +380,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         //build tracker
         Trackers memory tracker;
         /// build the members of the struct:
-        tracker.pType = PT.BOOL;
+        tracker.pType = ParamTypes.BOOL;
         tracker.set = true;
         tracker.trackerValue = abi.encode(bool(false));
         setupRuleWithTrackerBool(policyId, tracker);
@@ -403,7 +403,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         //build tracker
         Trackers memory tracker;
         /// build the members of the struct:
-        tracker.pType = PT.UINT;
+        tracker.pType = ParamTypes.UINT;
         tracker.set = true;
         tracker.trackerValue = abi.encode(uint256(13));
         setupRuleWithTrackerUint(policyId, tracker);
@@ -426,7 +426,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         //build tracker
         Trackers memory tracker;
         /// build the members of the struct:
-        tracker.pType = PT.BYTES;
+        tracker.pType = ParamTypes.BYTES;
         tracker.set = true;
         tracker.trackerValue = bytes("initial");
         setupRuleWithTracker2(policyId, tracker);
@@ -450,7 +450,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         //build tracker
         Trackers memory tracker;
         /// build the members of the struct:
-        tracker.pType = PT.BYTES;
+        tracker.pType = ParamTypes.BYTES;
         tracker.set = true;
         tracker.trackerValue = "initial";
         setupRuleWithTracker2(policyId, tracker);
@@ -469,7 +469,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        setupRuleWithForeignCall(4, ET.REVERT, false);
+        setupRuleWithForeignCall(4, EffectTypes.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 3);
         vm.expectRevert(abi.encodePacked(revert_text));
         RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
@@ -504,7 +504,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         bytes memory eventParam = abi.encode(uint256(100)); 
-        _setupRuleWithPosEventParams(eventParam, PT.UINT);
+        _setupRuleWithPosEventParams(eventParam, ParamTypes.UINT);
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, 100);
         userContract.transfer(address(0x7654321), 5);
@@ -516,7 +516,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         bytes memory eventParam = abi.encode(string("Test")); 
-        _setupRuleWithPosEventParams(eventParam, PT.STR);
+        _setupRuleWithPosEventParams(eventParam, ParamTypes.STR);
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, string("test"));
         userContract.transfer(address(0x7654321), 5);
@@ -528,7 +528,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         bytes memory eventParam = abi.encode(address(0x100)); 
-        _setupRuleWithPosEventParams(eventParam, PT.ADDR);
+        _setupRuleWithPosEventParams(eventParam, ParamTypes.ADDR);
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, address(0x100));
         userContract.transfer(address(0x7654321), 5);
@@ -540,7 +540,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         bytes memory eventParam = abi.encode(bool(true)); 
-        _setupRuleWithPosEventParams(eventParam, PT.BOOL);
+        _setupRuleWithPosEventParams(eventParam, ParamTypes.BOOL);
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, true);
         userContract.transfer(address(0x7654321), 5);
@@ -552,7 +552,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         bytes memory eventParam = abi.encode(bytes32("Bytes32 Test")); 
-        _setupRuleWithPosEventParams(eventParam, PT.BYTES);
+        _setupRuleWithPosEventParams(eventParam, ParamTypes.BYTES);
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, bytes32("Bytes32 Test"));
         userContract.transfer(address(0x7654321), 5);
@@ -563,7 +563,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        _setupRuleWithPosEventDynamicParamsFromCallingFunctionParams(PT.UINT);
+        _setupRuleWithPosEventDynamicParamsFromCallingFunctionParams(ParamTypes.UINT);
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, 100);
         userContract.transfer(address(0x7654321), 100);
@@ -575,7 +575,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        _setupRuleWithPosEventDynamicParamsFromCallingFunctionParams(PT.ADDR);
+        _setupRuleWithPosEventDynamicParamsFromCallingFunctionParams(ParamTypes.ADDR);
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, address(0x7654321));
         userContract.transfer(address(0x7654321), 100);
@@ -715,9 +715,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         rule.placeHolders = new Placeholder[](2);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].foreignCall = true;
         rule.placeHolders[1].typeSpecificIndex = 1;
 
@@ -741,13 +741,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
-        // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.PLH, 1, LogicalOp.GT, 0, 1
         rule.instructionSet = _createInstructionSet(0, 1);
 
         rule.placeHolders = new Placeholder[](2);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].trackerValue = true;
         rule.placeHolders[1].typeSpecificIndex = 1;
 
@@ -871,7 +871,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertTrue(hasAdminRole);
         Trackers memory tracker;
         tracker.trackerValue = abi.encode(address(testContract));
-        tracker.pType = PT.ADDR;
+        tracker.pType = ParamTypes.ADDR;
 
         RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
     }
@@ -890,7 +890,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertFalse(hasAdminRole);
         Trackers memory tracker;
         tracker.trackerValue = abi.encode(address(testContract));
-        tracker.pType = PT.ADDR;
+        tracker.pType = ParamTypes.ADDR;
 
         vm.expectRevert("Not Authorized To Policy");
         RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
@@ -907,7 +907,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertTrue(hasAdminRole);
         Trackers memory tracker;
         tracker.trackerValue = abi.encode(address(testContract));
-        tracker.pType = PT.ADDR;
+        tracker.pType = ParamTypes.ADDR;
 
         uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
 
@@ -924,14 +924,14 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         uint256 policyID = _createBlankPolicy();
         Trackers memory tracker;
         tracker.trackerValue = abi.encode(address(testContract));
-        tracker.pType = PT.ADDR;
+        tracker.pType = ParamTypes.ADDR;
         uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
         vm.stopPrank();
         vm.startPrank(newPolicyAdmin);
         bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
         assertFalse(hasAdminRole);
         tracker.trackerValue = abi.encode(address(userContractAddress));
-        tracker.pType = PT.ADDR;
+        tracker.pType = ParamTypes.ADDR;
 
         vm.expectRevert("Not Authorized To Policy");
         RulesEngineComponentFacet(address(red)).updateTracker(policyID, trackerId, tracker);
@@ -948,8 +948,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         CallingFunctionStorageSet memory sig = RulesEngineComponentFacet(address(red)).getCallingFunction(policyId, callingFunctionId);
         assertEq(sig.set, true);
         assertEq(sig.signature, bytes4(keccak256(bytes(callingFunction))));
-        assertEq(uint8(sig.parameterTypes[0]), uint8(PT.ADDR));
-        assertEq(uint8(sig.parameterTypes[1]), uint8(PT.UINT));
+        assertEq(uint8(sig.parameterTypes[0]), uint8(ParamTypes.ADDR));
+        assertEq(uint8(sig.parameterTypes[1]), uint8(ParamTypes.UINT));
     }
 
     function testRulesEngine_Unit_createCallingFunction_Negative()
@@ -958,9 +958,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         uint256 policyId = _createBlankPolicy();
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         vm.startPrank(newPolicyAdmin);
         vm.expectRevert("Not Authorized To Policy");
         RulesEngineComponentFacet(address(red)).createCallingFunction(policyId, 
@@ -977,11 +977,11 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         uint256 policyId = _createBlankPolicy();
         uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
-        PT[] memory pTypes2 = new PT[](4);
-        pTypes2[0] = PT.ADDR;
-        pTypes2[1] = PT.UINT;
-        pTypes2[2] = PT.ADDR;
-        pTypes2[3] = PT.UINT;
+        ParamTypes[] memory pTypes2 = new ParamTypes[](4);
+        pTypes2[0] = ParamTypes.ADDR;
+        pTypes2[1] = ParamTypes.UINT;
+        pTypes2[2] = ParamTypes.ADDR;
+        pTypes2[3] = ParamTypes.UINT;
         RulesEngineComponentFacet(address(red)).updateCallingFunction(policyId, callingFunctionId, bytes4(keccak256(bytes(callingFunction))), pTypes2);
         CallingFunctionStorageSet memory sig = RulesEngineComponentFacet(address(red)).getCallingFunction(policyId, callingFunctionId);
         assertEq(sig.set, true);
@@ -997,9 +997,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         uint256 policyId = _createBlankPolicy();
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
         assertEq(callingFunctionId, 1);
         CallingFunctionStorageSet memory matchingCallingFunction = RulesEngineComponentFacet(address(red)).getCallingFunction(policyId, callingFunctionId);
@@ -1021,9 +1021,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         uint256[] memory _callingFunctionIds;
         uint256[][] memory _ruleIds;
         // This test does not utilize helper _addCallingFunctionToPolicy(policyId) because it needs to individually set the function callingFunctions for deletion 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
             policyId, 
             bytes4(keccak256(bytes(callingFunction))), 
@@ -1067,9 +1067,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         uint256 policyId = _createBlankPolicy();
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
         assertEq(callingFunctionId, 1);
 
@@ -1089,10 +1089,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         bool response = userContract.transfer(address(0x7654321), 3);
         assertFalse(response);
         // create pTypes array for new contract + new transfer function 
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.ADDR;
+        ParamTypes[] memory pTypes = new ParamTypes[](3);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.ADDR;
         RulesEngineComponentFacet(address(red)).getCallingFunction(1, 0);
         vm.stopPrank();
         vm.startPrank(policyAdmin);
@@ -1110,12 +1110,12 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         uint256 policyId = _createBlankPolicy();
         Rule memory rule;
-        // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, 4, LogicalOp.GT, 0, 1
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(4);
         // Build the calling function argument placeholder 
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyId, 0, rule);
@@ -1132,12 +1132,12 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         uint256 policyId = _createBlankPolicy();
         Rule memory rule;
-        // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, 4, LogicalOp.GT, 0, 1
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(4);
         // Build the calling function argument placeholder 
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyId, 0, rule);
@@ -1154,8 +1154,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         uint256 policyId = _createBlankPolicy();
         uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
-        PT[] memory pTypes2 = new PT[](1);
-        pTypes2[0] = PT.ADDR;
+        ParamTypes[] memory pTypes2 = new ParamTypes[](1);
+        pTypes2[0] = ParamTypes.ADDR;
         vm.expectRevert("New parameter types must be of greater or equal length to the original");
         RulesEngineComponentFacet(address(red)).updateCallingFunction(policyId, callingFunctionId, bytes4(keccak256(bytes(callingFunction))), pTypes2);
     }
@@ -1167,9 +1167,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         uint256 policyId = _createBlankPolicy();
         uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
-        PT[] memory pTypes2 = new PT[](2);
-        pTypes2[0] = PT.UINT;
-        pTypes2[1] = PT.UINT;
+        ParamTypes[] memory pTypes2 = new ParamTypes[](2);
+        pTypes2[0] = ParamTypes.UINT;
+        pTypes2[1] = ParamTypes.UINT;
         vm.expectRevert("New parameter types must be of the same type as the original");
         RulesEngineComponentFacet(address(red)).updateCallingFunction(policyId, callingFunctionId, bytes4(keccak256(bytes(callingFunction))), pTypes2);
     }
@@ -1180,9 +1180,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         uint256 policyId = _createBlankPolicy();
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
         vm.expectRevert("Delete calling function before updating to a new one");
         RulesEngineComponentFacet(address(red)).updateCallingFunction(policyId, callingFunctionId, bytes4(keccak256(bytes(callingFunction2))), pTypes);
@@ -1194,9 +1194,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         uint256 policyId = _createBlankPolicy();
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
         vm.startPrank(newPolicyAdmin);
         vm.expectRevert("Not Authorized To Policy");
@@ -1214,10 +1214,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         bool response = userContract.transfer(address(0x7654321), 47);
         assertTrue(response);
         // create pTypes array for new contract + new transfer function 
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.ADDR;
+        ParamTypes[] memory pTypes = new ParamTypes[](3);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.ADDR;
         CallingFunctionStorageSet memory sig = RulesEngineComponentFacet(address(red)).getCallingFunction(1, 1);
         vm.stopPrank();
         vm.startPrank(policyAdmin);
@@ -1242,10 +1242,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         bool response = userContract.transfer(address(0x7654321), 3);
         assertFalse(response);
         // create pTypes array for new contract + new transfer function 
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.ADDR;
+        ParamTypes[] memory pTypes = new ParamTypes[](3);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.ADDR;
         CallingFunctionStorageSet memory sig = RulesEngineComponentFacet(address(red)).getCallingFunction(1, 1);
         vm.stopPrank();
         vm.startPrank(policyAdmin);
@@ -1268,7 +1268,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         uint256 policyID = _createBlankPolicy();
         Trackers memory tracker;
         tracker.trackerValue = abi.encode(address(testContract));
-        tracker.pType = PT.ADDR;
+        tracker.pType = ParamTypes.ADDR;
         uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
         bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, policyAdmin);
         assertTrue(hasAdminRole);
@@ -1276,7 +1276,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         tracker = RulesEngineComponentFacet(address(red)).getTracker(policyID, trackerId);
         assertEq(tracker.set, false);
-        assertEq(uint8(tracker.pType), uint8(PT.ADDR));
+        assertEq(uint8(tracker.pType), uint8(ParamTypes.ADDR));
         assertEq(tracker.trackerValue, bytes(""));
     }
 
@@ -1289,7 +1289,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         uint256 policyID = _createBlankPolicy();
         Trackers memory tracker;
         tracker.trackerValue = abi.encode(address(testContract));
-        tracker.pType = PT.ADDR;
+        tracker.pType = ParamTypes.ADDR;
         uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trkName");
         vm.stopPrank();
         vm.startPrank(newPolicyAdmin);
@@ -1385,7 +1385,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(fc2.signature, bytes4(0));
         assertEq(fc2.parameterTypes.length, 0);
         assertEq(fc2.typeSpecificIndices.length, 0);
-        assertEq(uint8(fc2.returnType), uint8(PT.ADDR));
+        assertEq(uint8(fc2.returnType), uint8(ParamTypes.ADDR));
         assertEq(fc2.foreignCallIndex, 0);
     }
 
@@ -1443,7 +1443,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         for (uint256 i = 0; i < 10; i++) {
             Trackers memory tracker;
             tracker.trackerValue = abi.encode(uint256(i));
-            tracker.pType = PT.UINT;
+            tracker.pType = ParamTypes.UINT;
             RulesEngineComponentFacet(address(red)).createTracker(policyId, tracker, "trName");
         }
 
@@ -1491,9 +1491,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
 
         _addCallingFunctionToPolicy(policyIds[0]);
         (_functionSigs, _functionSigIds, _ruleIds) = RulesEnginePolicyFacet(address(red)).getPolicy(policyIds[0]);
@@ -1785,7 +1785,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertTrue(hasAdminRole);
         Trackers memory tracker;
         tracker.trackerValue = abi.encode(address(testContract));
-        tracker.pType = PT.ADDR;
+        tracker.pType = ParamTypes.ADDR;
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyID);
         vm.expectRevert("Not allowed for cemented policy");
         RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
@@ -1802,7 +1802,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertTrue(hasAdminRole);
         Trackers memory tracker;
         tracker.trackerValue = abi.encode(address(testContract));
-        tracker.pType = PT.ADDR;
+        tracker.pType = ParamTypes.ADDR;
         uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyID);
         vm.expectRevert("Not allowed for cemented policy");
@@ -1815,9 +1815,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         uint256 policyID = _createBlankPolicy();
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyID);
         vm.expectRevert("Not allowed for cemented policy");
         RulesEngineComponentFacet(address(red)).createCallingFunction(
@@ -1841,7 +1841,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         vm.startPrank(policyAdmin);
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyID);
         vm.expectRevert("Not allowed for cemented policy");
-        RulesEngineComponentFacet(address(red)).updateCallingFunction(1, 1, bytes4(keccak256(bytes(callingFunction))), new PT[](3));
+        RulesEngineComponentFacet(address(red)).updateCallingFunction(1, 1, bytes4(keccak256(bytes(callingFunction))), new ParamTypes[](3));
     }
 
     function testRulesEngine_Unit_deleteCallingFunction_Negative_CementedPolicy()
@@ -1850,9 +1850,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         uint256 policyId = _createBlankPolicy();
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
         assertEq(callingFunctionId, 1);
         CallingFunctionStorageSet memory matchingCallingFunction = RulesEngineComponentFacet(address(red)).getCallingFunction(policyId, callingFunctionId);
@@ -1871,13 +1871,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         uint256 policyId = _createBlankPolicy();
         Rule memory rule;
 
-        // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.PLH, 1, LogicalOp.GT, 0, 1
         rule.instructionSet = _createInstructionSet(0, 1);
 
         rule.placeHolders = new Placeholder[](2);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].trackerValue = true;
         rule.placeHolders[1].typeSpecificIndex = 1;
         // Add a negative/positive effects
@@ -2098,9 +2098,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     function testRulesEngine_Unit_createCallingFunction_Event() public ifDeploymentTestsEnabled endWithStopPrank {
         uint256 policyId = _createBlankPolicy();
         uint256 callingFunctionId = 1;
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         vm.expectEmit(true, false, false, false);
         emit CallingFunctionCreated(policyId, callingFunctionId);
         RulesEngineComponentFacet(address(red)).createCallingFunction(
@@ -2115,11 +2115,11 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     function testRulesEngine_Unit_updateCallingFunction_Event() public ifDeploymentTestsEnabled endWithStopPrank {
         uint256 policyId = _createBlankPolicy();
         uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
-        PT[] memory pTypes2 = new PT[](4);
-        pTypes2[0] = PT.ADDR;
-        pTypes2[1] = PT.UINT;
-        pTypes2[2] = PT.ADDR;
-        pTypes2[3] = PT.UINT;
+        ParamTypes[] memory pTypes2 = new ParamTypes[](4);
+        pTypes2[0] = ParamTypes.ADDR;
+        pTypes2[1] = ParamTypes.UINT;
+        pTypes2[2] = ParamTypes.ADDR;
+        pTypes2[3] = ParamTypes.UINT;
         vm.expectEmit(true, false, false, false);
         emit CallingFunctionUpdated(policyId, callingFunctionId);
         RulesEngineComponentFacet(address(red)).updateCallingFunction(policyId, callingFunctionId, bytes4(keccak256(bytes(callingFunction))), pTypes2);
@@ -2127,9 +2127,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
     function testRulesEngine_Unit_deleteCallingFunction_Event() public ifDeploymentTestsEnabled endWithStopPrank {
         uint256 policyId = _createBlankPolicy();
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
         vm.expectEmit(true, false, false, false);
         emit CallingFunctionDeleted(policyId, callingFunctionId);
@@ -2140,12 +2140,12 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     function testRulesEngine_Unit_deleteRule_Event() public ifDeploymentTestsEnabled endWithStopPrank {
         uint256 policyId = _createBlankPolicy();
         Rule memory rule;
-        // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, 4, LogicalOp.GT, 0, 1
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(4);
         // Build the calling function argument placeholder 
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyId, 0, rule);
@@ -2163,7 +2163,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertTrue(hasAdminRole);
         Trackers memory tracker;
         tracker.trackerValue = abi.encode(address(testContract));
-        tracker.pType = PT.ADDR;
+        tracker.pType = ParamTypes.ADDR;
         vm.expectEmit(true, false, false, false);
         emit TrackerCreated(policyID, trackerId);
         RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
@@ -2176,7 +2176,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertTrue(hasAdminRole);
         Trackers memory tracker;
         tracker.trackerValue = abi.encode(address(testContract));
-        tracker.pType = PT.ADDR;
+        tracker.pType = ParamTypes.ADDR;
         uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
         tracker.trackerValue = abi.encode(address(userContractAddress));
         vm.expectEmit(true, false, false, false);
@@ -2189,7 +2189,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         uint256 policyID = _createBlankPolicy();
         Trackers memory tracker;
         tracker.trackerValue = abi.encode(address(testContract));
-        tracker.pType = PT.ADDR;
+        tracker.pType = ParamTypes.ADDR;
         uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
 
         vm.expectEmit(true, false, false, false);
@@ -2204,11 +2204,11 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         ForeignCall memory fc;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.parameterTypes = new PT[](1);
-        fc.parameterTypes[0] = PT.UINT;
+        fc.parameterTypes = new ParamTypes[](1);
+        fc.parameterTypes[0] = ParamTypes.UINT;
         fc.typeSpecificIndices = new int8[](1);
         fc.typeSpecificIndices[0] = 1;
-        fc.returnType = PT.UINT;
+        fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 0;
         vm.expectEmit(true, false, false, false);
         emit ForeignCallCreated(policyID, foreignCallId);
@@ -2274,10 +2274,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicy();
         /// Build the calling Function to include additional pTypes to match the data being passed in
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](3);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.UINT;
         // Save the calling Function
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
             .createCallingFunction(
@@ -2307,28 +2307,28 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         _setupEffectProcessor();
 
         rule.instructionSet = new uint256[](14);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
         rule.instructionSet[1] = 1; //0
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = 100; // 1
-        rule.instructionSet[4] = uint(LC.GT);
+        rule.instructionSet[4] = uint(LogicalOp.GT);
         rule.instructionSet[5] = 1;
         rule.instructionSet[6] = 0; // 2   
-        rule.instructionSet[7] = uint(LC.PLH);
+        rule.instructionSet[7] = uint(LogicalOp.PLH);
         rule.instructionSet[8] = 2; // 3
-        rule.instructionSet[9] = uint(LC.NUM);
+        rule.instructionSet[9] = uint(LogicalOp.NUM);
         rule.instructionSet[10] = 75; // 4 
-        rule.instructionSet[11] = uint(LC.GT);
+        rule.instructionSet[11] = uint(LogicalOp.GT);
         rule.instructionSet[12] = 4;
         rule.instructionSet[13] = 3; // 5 
 
     
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR; 
+        rule.placeHolders[0].pType = ParamTypes.ADDR; 
         rule.placeHolders[0].typeSpecificIndex = 0; // to address 
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1; // amount 
-        rule.placeHolders[2].pType = PT.UINT;
+        rule.placeHolders[2].pType = ParamTypes.UINT;
         rule.placeHolders[2].typeSpecificIndex = 2; // Additional uint 
 
 
@@ -2367,34 +2367,34 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Set up some effects.
         _setupEffectProcessor();
         /// Build the calling Function to include additional pTypes to match the data being passed in
-        PT[] memory pTypes = new PT[](4);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.ADDR;
-        pTypes[3] = PT.ADDR;
+        ParamTypes[] memory pTypes = new ParamTypes[](4);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.ADDR;
+        pTypes[3] = ParamTypes.ADDR;
 
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
         rule.instructionSet[1] = 2;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = uint256(uint160(address(0x1234567)));
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
-        rule.rawData.argumentTypes = new PT[](1);
+        rule.rawData.argumentTypes = new ParamTypes[](1);
         rule.rawData.dataValues = new bytes[](1);
         rule.rawData.instructionSetIndex = new uint256[](1);
-        rule.rawData.argumentTypes[0] = PT.ADDR;
+        rule.rawData.argumentTypes[0] = ParamTypes.ADDR;
         rule.rawData.dataValues[0] = abi.encode(0x1234567);
         rule.rawData.instructionSetIndex[0] = 3;
 
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR; 
+        rule.placeHolders[0].pType = ParamTypes.ADDR; 
         rule.placeHolders[0].typeSpecificIndex = 0; // to address 
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1; // amount 
-        rule.placeHolders[2].pType = PT.ADDR;
+        rule.placeHolders[2].pType = ParamTypes.ADDR;
         rule.placeHolders[2].typeSpecificIndex = 2; // additional address param 
 
         // Add a negative/positive effects
@@ -2449,14 +2449,14 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Set up some effects.
         _setupEffectProcessor();
         /// Build the calling Function to include additional pTypes to match the data being passed in
-        PT[] memory pTypes = new PT[](4);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.ADDR;
-        pTypes[3] = PT.ADDR;
+        ParamTypes[] memory pTypes = new ParamTypes[](4);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.ADDR;
+        pTypes[3] = ParamTypes.ADDR;
 
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.ADDR;
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.ADDR;
         int8[] memory typeSpecificIndices = new int8[](1);
         typeSpecificIndices[0] = 2; // set the placeholder index to retrieve value 
         ForeignCall memory fc;
@@ -2464,32 +2464,32 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = address(testContract2);
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
-        fc.returnType = PT.UINT;
+        fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 1;
         uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "getNaughty(address)");
 
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
         rule.instructionSet[1] = 2;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
-        rule.rawData.argumentTypes = new PT[](1);
+        rule.rawData.argumentTypes = new ParamTypes[](1);
         rule.rawData.dataValues = new bytes[](1);
         rule.rawData.instructionSetIndex = new uint256[](1);
-        rule.rawData.argumentTypes[0] = PT.ADDR;
+        rule.rawData.argumentTypes[0] = ParamTypes.ADDR;
         rule.rawData.dataValues[0] = abi.encode(0x1234567);
         rule.rawData.instructionSetIndex[0] = 3;
 
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR; 
+        rule.placeHolders[0].pType = ParamTypes.ADDR; 
         rule.placeHolders[0].typeSpecificIndex = 0; // to address 
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1; // amount 
-        rule.placeHolders[2].pType = PT.ADDR;
+        rule.placeHolders[2].pType = ParamTypes.ADDR;
         rule.placeHolders[2].typeSpecificIndex = 2; // additional address param 
         rule.placeHolders[2].foreignCall = true;
         rule.placeHolders[2].typeSpecificIndex = uint128(foreignCallId);
@@ -2547,27 +2547,27 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Set up some effects.
         _setupEffectProcessor();
         /// Build the calling Function to include additional pTypes to match the data being passed in
-        PT[] memory pTypes = new PT[](4);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.BOOL;
-        pTypes[3] = PT.ADDR;
+        ParamTypes[] memory pTypes = new ParamTypes[](4);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.BOOL;
+        pTypes[3] = ParamTypes.ADDR;
 
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
         rule.instructionSet[1] = 2;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = uint256(1);
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR; 
+        rule.placeHolders[0].pType = ParamTypes.ADDR; 
         rule.placeHolders[0].typeSpecificIndex = 0; // to address 
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1; // amount 
-        rule.placeHolders[2].pType = PT.BOOL;
+        rule.placeHolders[2].pType = ParamTypes.BOOL;
         rule.placeHolders[2].typeSpecificIndex = 2; // additional bytes32 param 
 
         // Add a negative/positive effects
@@ -2618,32 +2618,32 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Set up some effects.
         _setupEffectProcessor();
         /// Build the calling Function to include additional pTypes to match the data being passed in
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.BYTES;
+        ParamTypes[] memory pTypes = new ParamTypes[](3);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.BYTES;
 
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
         rule.instructionSet[1] = 2;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = uint256(keccak256(abi.encode(TEST)));
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR; 
+        rule.placeHolders[0].pType = ParamTypes.ADDR; 
         rule.placeHolders[0].typeSpecificIndex = 0; // to address 
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1; // amount 
-        rule.placeHolders[2].pType = PT.BYTES;
+        rule.placeHolders[2].pType = ParamTypes.BYTES;
         rule.placeHolders[2].typeSpecificIndex = 2; // additional bytes32 param 
 
-        rule.rawData.argumentTypes = new PT[](1);
+        rule.rawData.argumentTypes = new ParamTypes[](1);
         rule.rawData.dataValues = new bytes[](1);
         rule.rawData.instructionSetIndex = new uint256[](1);
-        rule.rawData.argumentTypes[0] = PT.BYTES;
+        rule.rawData.argumentTypes[0] = ParamTypes.BYTES;
         rule.rawData.dataValues[0] = abi.encode(TEST);
         rule.rawData.instructionSetIndex[0] = 3;
 
@@ -2700,33 +2700,33 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Set up some effects.
         _setupEffectProcessor();
         /// Build the calling Function to include additional pTypes to match the data being passed in
-        PT[] memory pTypes = new PT[](4);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.BYTES;
-        pTypes[3] = PT.ADDR;
+        ParamTypes[] memory pTypes = new ParamTypes[](4);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.BYTES;
+        pTypes[3] = ParamTypes.ADDR;
 
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
         rule.instructionSet[1] = 2;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = uint256(keccak256(abi.encode(TEST)));
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR; 
+        rule.placeHolders[0].pType = ParamTypes.ADDR; 
         rule.placeHolders[0].typeSpecificIndex = 0; // to address 
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1; // amount 
-        rule.placeHolders[2].pType = PT.BYTES;
+        rule.placeHolders[2].pType = ParamTypes.BYTES;
         rule.placeHolders[2].typeSpecificIndex = 2; // additional bytes32 param 
 
-        rule.rawData.argumentTypes = new PT[](1);
+        rule.rawData.argumentTypes = new ParamTypes[](1);
         rule.rawData.dataValues = new bytes[](1);
         rule.rawData.instructionSetIndex = new uint256[](1);
-        rule.rawData.argumentTypes[0] = PT.BYTES;
+        rule.rawData.argumentTypes[0] = ParamTypes.BYTES;
         rule.rawData.dataValues[0] = abi.encode(TEST);
         rule.rawData.instructionSetIndex[0] = 3;
 
@@ -2781,32 +2781,32 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Set up some effects.
         _setupEffectProcessor();
         /// Build the calling Function to include additional pTypes to match the data being passed in
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.STR;
+        ParamTypes[] memory pTypes = new ParamTypes[](3);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.STR;
 
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
         rule.instructionSet[1] = 2;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = uint256(keccak256(abi.encode(testString)));
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR; 
+        rule.placeHolders[0].pType = ParamTypes.ADDR; 
         rule.placeHolders[0].typeSpecificIndex = 0; // to address 
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1; // amount 
-        rule.placeHolders[2].pType = PT.STR;
+        rule.placeHolders[2].pType = ParamTypes.STR;
         rule.placeHolders[2].typeSpecificIndex = 2; // additional string param 
 
-        rule.rawData.argumentTypes = new PT[](1);
+        rule.rawData.argumentTypes = new ParamTypes[](1);
         rule.rawData.dataValues = new bytes[](1);
         rule.rawData.instructionSetIndex = new uint256[](1);
-        rule.rawData.argumentTypes[0] = PT.STR;
+        rule.rawData.argumentTypes[0] = ParamTypes.STR;
         rule.rawData.dataValues[0] = abi.encode(testString);
         rule.rawData.instructionSetIndex[0] = 3;
 
@@ -2867,27 +2867,27 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         // Set up some effects.
         _setupEffectProcessor();
         /// Build the calling Function to include additional pTypes to match the data being passed in
-        PT[] memory pTypes = new PT[](4);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.STATIC_TYPE_ARRAY;
-        pTypes[3] = PT.ADDR;
+        ParamTypes[] memory pTypes = new ParamTypes[](4);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.STATIC_TYPE_ARRAY;
+        pTypes[3] = ParamTypes.ADDR;
 
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
         rule.instructionSet[1] = 2;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = uint256(3); // uint length of array to test that rule retreives uint array length correctly 
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR; 
+        rule.placeHolders[0].pType = ParamTypes.ADDR; 
         rule.placeHolders[0].typeSpecificIndex = 0; // to address 
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1; // amount 
-        rule.placeHolders[2].pType = PT.STATIC_TYPE_ARRAY;
+        rule.placeHolders[2].pType = ParamTypes.STATIC_TYPE_ARRAY;
         rule.placeHolders[2].typeSpecificIndex = 2; // additional bytes32 param 
 
         // Add a negative/positive effects
@@ -2948,27 +2948,27 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         _setupEffectProcessor();
 
         /// Build the calling Function to include additional pTypes to match the data being passed in
-        PT[] memory pTypes = new PT[](4);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.STATIC_TYPE_ARRAY;
-        pTypes[3] = PT.ADDR;
+        ParamTypes[] memory pTypes = new ParamTypes[](4);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.STATIC_TYPE_ARRAY;
+        pTypes[3] = ParamTypes.ADDR;
 
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
         rule.instructionSet[1] = 2;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = uint256(5); // uint length of array to test that rule retreives uint array length correctly 
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR; 
+        rule.placeHolders[0].pType = ParamTypes.ADDR; 
         rule.placeHolders[0].typeSpecificIndex = 0; // to address 
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1; // amount 
-        rule.placeHolders[2].pType = PT.DYNAMIC_TYPE_ARRAY;
+        rule.placeHolders[2].pType = ParamTypes.DYNAMIC_TYPE_ARRAY;
         rule.placeHolders[2].typeSpecificIndex = 2; // additional bytes32 param 
 
         // Add a negative/positive effects
@@ -3029,27 +3029,27 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         _setupEffectProcessor();
 
         /// Build the calling Function to include additional pTypes to match the data being passed in
-        PT[] memory pTypes = new PT[](4);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.STATIC_TYPE_ARRAY;
-        pTypes[3] = PT.ADDR;
+        ParamTypes[] memory pTypes = new ParamTypes[](4);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.STATIC_TYPE_ARRAY;
+        pTypes[3] = ParamTypes.ADDR;
 
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
         rule.instructionSet[1] = 2;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = uint256(3); // uint length of array to test that rule retreives uint array length correctly 
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR; 
+        rule.placeHolders[0].pType = ParamTypes.ADDR; 
         rule.placeHolders[0].typeSpecificIndex = 0; // to address 
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1; // amount 
-        rule.placeHolders[2].pType = PT.DYNAMIC_TYPE_ARRAY;
+        rule.placeHolders[2].pType = ParamTypes.DYNAMIC_TYPE_ARRAY;
         rule.placeHolders[2].typeSpecificIndex = 2; // additional bytes32 param 
 
         // Add a negative/positive effects
@@ -3140,13 +3140,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](6);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.ADDR;
-        pTypes[3] = PT.UINT;
-        pTypes[4] = PT.UINT;
-        pTypes[5] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](6);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.ADDR;
+        pTypes[3] = ParamTypes.UINT;
+        pTypes[4] = ParamTypes.UINT;
+        pTypes[5] = ParamTypes.UINT;
 
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
             .createCallingFunction(
@@ -3173,30 +3173,30 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         rule.instructionSet = new uint256[](15);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
         rule.instructionSet[1] = 0; //r0 tracker 1
-        rule.instructionSet[2] = uint(LC.PLH);
+        rule.instructionSet[2] = uint(LogicalOp.PLH);
         rule.instructionSet[3] = 2; //r1 blocktime 
-        rule.instructionSet[4] = uint(LC.LT);
+        rule.instructionSet[4] = uint(LogicalOp.LT);
         rule.instructionSet[5] = 1; 
         rule.instructionSet[6] = 0; //r2 check that blocktime is less than tracker 1  
-        rule.instructionSet[7] = uint(LC.PLH);
+        rule.instructionSet[7] = uint(LogicalOp.PLH);
         rule.instructionSet[8] = 1; //r3 second tracker 
-        rule.instructionSet[9] = uint(LC.GT);
+        rule.instructionSet[9] = uint(LogicalOp.GT);
         rule.instructionSet[10] = 1; // use register 1
         rule.instructionSet[11] = 3; //r4 check that blocktime is greater than second tracker 
-        rule.instructionSet[12] = uint(LC.OR);
+        rule.instructionSet[12] = uint(LogicalOp.OR);
         rule.instructionSet[13] = 2;
         rule.instructionSet[14] = 4;
 
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].trackerValue = true;
         rule.placeHolders[0].typeSpecificIndex = 1;
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].trackerValue = true;
         rule.placeHolders[1].typeSpecificIndex = 2;
-        rule.placeHolders[2].pType = PT.UINT;
+        rule.placeHolders[2].pType = ParamTypes.UINT;
         rule.placeHolders[2].typeSpecificIndex = 5;
 
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
@@ -3204,14 +3204,14 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         //build tracker
         Trackers memory tracker;
         /// build the members of the struct:
-        tracker.pType = PT.UINT;
+        tracker.pType = ParamTypes.UINT;
         tracker.trackerValue = abi.encode(1000000000);
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
 
         //build second tracker
         Trackers memory tracker2;
         /// build the members of the struct:
-        tracker2.pType = PT.UINT;
+        tracker2.pType = ParamTypes.UINT;
         tracker2.trackerValue = abi.encode(2000000000);
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker2, "trName");
 

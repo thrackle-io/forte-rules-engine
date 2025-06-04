@@ -25,45 +25,31 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
 
     /**
      * @notice Checks if an address is the policy admin for a specific policy ID.
-     * @param _policyId The ID of the policy.
-     * @param _account The address to check for the policy admin role.
+     * @param policyId The ID of the policy.
+     * @param account The address to check for the policy admin role.
      * @return bool True if the address has the policy admin role, false otherwise.
      */
-    function isPolicyAdmin(uint256 _policyId, address _account) public view returns (bool) { 
-        return hasRole(_generatePolicyAdminRoleId(_policyId, POLICY_ADMIN), _account);
+    function isPolicyAdmin(uint256 policyId, address account) public view returns (bool) { 
+        return hasRole(_generatePolicyAdminRoleId(policyId, POLICY_ADMIN), account);
     }
 
     /**
      * @notice Generates and assigns a policy admin role to an address.
      * @dev This function is called internally by the Rules Engine to assign the policy admin role.
-     * @param _policyId The ID of the policy.
-     * @param _account The address to assign the policy admin role.
+     * @param policyId The ID of the policy.
+     * @param account The address to assign the policy admin role.
      * @return bytes32 The generated admin role identifier.
      */
-    function generatePolicyAdminRole(uint256 _policyId, address _account) public nonReentrant returns (bytes32) {
-        if (_account == address(0)) revert(ZERO_ADDRESS);  
+    function generatePolicyAdminRole(uint256 policyId, address account) public nonReentrant returns (bytes32) {
+        if (account == address(0)) revert(ZERO_ADDRESS);  
         if(msg.sender != address(this)) revert(RULES_ENGINE_ONLY);
         // Create Admin Role for Policy: concat the policyId and adminRole key together and keccak them. Cast to bytes32 for Admin Role identifier 
-        bytes32 adminRoleId = _generatePolicyAdminRoleId(_policyId, POLICY_ADMIN);  
+        bytes32 adminRoleId = _generatePolicyAdminRoleId(policyId, POLICY_ADMIN);  
         // grant the admin role to the calling address of the createPolicy function from RulesEnginePolicyFacet 
-        _grantRolePolicyAdmin(adminRoleId, _account); 
-        emit PolicyAdminRoleGranted(_account, _policyId); 
+        _grantRolePolicyAdmin(adminRoleId, account); 
+        emit PolicyAdminRoleGranted(account, policyId); 
         return adminRoleId;
     }
-
-    /**
-     * @notice Grants a policy admin role to an address.
-     * @dev Internal function to assign the policy admin role.
-     * @param _role The admin role identifier.
-     * @param _account The address to be granted the role.
-     */
-    function _grantRolePolicyAdmin(bytes32 _role, address _account) internal {
-        if (_account == address(0)) revert(ZERO_ADDRESS); 
-        if (hasRole(_role, _account)) revert(POLICY_ADMIN_ALREADY_CREATED);
-        // internal function of Access Control used here so we do not have to set RulesEngineAddress as the base admin for Policy Admins 
-        _grantRole(_role, _account); 
-    }
-
 
     /**
      * @notice Proposes a new policy admin for a specific policy.
@@ -92,17 +78,6 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
     }
 
     /**
-     * @notice Generates a unique identifier for a policy admin role.
-     * @param _policyId The ID of the policy.
-     * @param _adminRole The role constant identifier.
-     * @return bytes32 The generated admin role identifier.
-     */
-    function _generatePolicyAdminRoleId(uint256 _policyId, bytes32 _adminRole) internal pure returns(bytes32) {
-        // Create Admin Role for Policy: concat the policyId and adminRole strings together and keccak them. Cast to bytes32 for Admin Role identifier 
-        return bytes32(abi.encodePacked(keccak256(bytes(string.concat(string(abi.encode(_policyId)), string(abi.encode(_adminRole)))))));
-    }
-
-    /**
      * @dev This function is used to renounce Role. It is also preventing policyAdmins from renouncing ther role.
      * They must set another policyAdmin through the function proposeNewPolicyAdmin().
      * @param role the role to renounce.
@@ -128,6 +103,30 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
         // slither-disable-next-line reentrancy-events
         AccessControl.revokeRole(role, account);
         emit PolicyAdminRoleRevoked(account, policyId); 
+    }
+
+    /**
+     * @notice Grants a policy admin role to an address.
+     * @dev Internal function to assign the policy admin role.
+     * @param _role The admin role identifier.
+     * @param _account The address to be granted the role.
+     */
+    function _grantRolePolicyAdmin(bytes32 _role, address _account) internal {
+        if (_account == address(0)) revert(ZERO_ADDRESS); 
+        if (hasRole(_role, _account)) revert(POLICY_ADMIN_ALREADY_CREATED);
+        // internal function of Access Control used here so we do not have to set RulesEngineAddress as the base admin for Policy Admins 
+        _grantRole(_role, _account); 
+    }
+
+    /**
+     * @notice Generates a unique identifier for a policy admin role.
+     * @param _policyId The ID of the policy.
+     * @param _adminRole The role constant identifier.
+     * @return bytes32 The generated admin role identifier.
+     */
+    function _generatePolicyAdminRoleId(uint256 _policyId, bytes32 _adminRole) internal pure returns(bytes32) {
+        // Create Admin Role for Policy: concat the policyId and adminRole strings together and keccak them. Cast to bytes32 for Admin Role identifier 
+        return bytes32(abi.encodePacked(keccak256(bytes(string.concat(string(abi.encode(_policyId)), string(abi.encode(_adminRole)))))));
     }
 
 
@@ -204,17 +203,6 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
         return adminRoleId;
     }
 
-   /**
-     * @notice Generates a unique identifier for a calling contract admin role.
-     * @param _callingContract The address of the calling contract.
-     * @param _adminRole The role constant identifier.
-     * @return bytes32 The generated admin role identifier.
-     */
-    function _generateCallingContractAdminRoleId(address _callingContract, bytes32 _adminRole) internal pure returns(bytes32) {
-        // Create Admin Role for Policy: concat the policyId and adminRole strings together and keccak them. Cast to bytes32 for Admin Role identifier 
-        return bytes32(abi.encodePacked(keccak256(bytes(string.concat(string(abi.encode(_callingContract)), string(abi.encode(_adminRole)))))));
-    }
-
     /**
      * @dev This function grants the proposed admin role to the newPolicyAdmin address 
      * @dev Calling Contract Admin does not have a revoke or renounce function. Only Use Propose and Confirm to transfer Role. 
@@ -243,23 +231,20 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
         emit CallingContractAdminRoleConfirmed(callingContractAddress, msg.sender);  
     }
 
+   /**
+     * @notice Generates a unique identifier for a calling contract admin role.
+     * @param _callingContract The address of the calling contract.
+     * @param _adminRole The role constant identifier.
+     * @return bytes32 The generated admin role identifier.
+     */
+    function _generateCallingContractAdminRoleId(address _callingContract, bytes32 _adminRole) internal pure returns(bytes32) {
+        // Create Admin Role for Policy: concat the policyId and adminRole strings together and keccak them. Cast to bytes32 for Admin Role identifier 
+        return bytes32(abi.encodePacked(keccak256(bytes(string.concat(string(abi.encode(_callingContract)), string(abi.encode(_adminRole)))))));
+    }
+
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
     // Overridden Functions
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
-
-    /**
-     * @notice Overrides the parent's `grantRole` function to disable its public nature.
-     * @dev This function is intentionally disabled to enforce role granting through specific channels.
-     * @param role The role to grant.
-     * @param account The address to grant the role to.
-     */
-    function grantRole(bytes32 role, address account) public pure override(AccessControl, IAccessControl) {
-        /// this is done to funnel all the role granting functions through this contract since
-        /// the policyAdmins could add other policyAdmins through this back door
-        role;
-        account;
-        revert("Function disabled");
-    }
 
    /**
      * @notice Overrides the parent's `renounceRole` function to disable its public nature.
@@ -280,6 +265,20 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
      * @param account The address of the revoked role.
      */
     function revokeRole(bytes32 role, address account) public virtual override(AccessControl, IAccessControl) {
+        role;
+        account;
+        revert("Function disabled");
+    }
+
+    /**
+     * @notice Overrides the parent's `grantRole` function to disable its public nature.
+     * @dev This function is intentionally disabled to enforce role granting through specific channels.
+     * @param role The role to grant.
+     * @param account The address to grant the role to.
+     */
+    function grantRole(bytes32 role, address account) public pure override(AccessControl, IAccessControl) {
+        /// this is done to funnel all the role granting functions through this contract since
+        /// the policyAdmins could add other policyAdmins through this back door
         role;
         account;
         revert("Function disabled");

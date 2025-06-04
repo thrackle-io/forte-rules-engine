@@ -8,7 +8,7 @@ contract RulesEngineUnitTests is RulesEngineUnitTestsCommon, RulesEngineInternal
 
   function setUp() public{
         vm.startPrank(policyAdmin);
-        red = _createRulesEngineDiamond(address(0xB0b)); 
+        red = createRulesEngineDiamond(address(0xB0b)); 
         userContract = new ExampleUserContract();
         userContractInternal = new ExampleUserContract();
         userContractAddress = address(userContract);

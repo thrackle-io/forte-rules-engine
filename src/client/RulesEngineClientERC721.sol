@@ -85,35 +85,35 @@ abstract contract RulesEngineClientERC721 is RulesEngineClient {
     /**
      * @notice Calls the Rules Engine to evaluate policies for an ERC721 `safeMint` operation.
      * @dev Encodes the parameters and invokes the `_invokeRulesEngine` function.
-     * @param to The receiving address.
+     * @param _to The receiving address.
      */
-    function _checkPoliciesERC721SafeMint(address to) internal {
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, to, msg.sender);
+    function _checkPoliciesERC721SafeMint(address _to) internal {
+        bytes memory encoded = abi.encodeWithSelector(msg.sig, _to, msg.sender);
         _invokeRulesEngine(encoded);
     }
 
     /**
      * @notice Calls the Rules Engine to evaluate policies for an ERC721 `safeTransferFrom` operation.
      * @dev Encodes the parameters and invokes the `_invokeRulesEngine` function.
-     * @param from The sending address.
-     * @param to The receiving address.
-     * @param tokenId The token identifier.
-     * @param data Generic data to pass along with the transfer.
+     * @param _from The sending address.
+     * @param _to The receiving address.
+     * @param _tokenId The token identifier.
+     * @param _data Generic data to pass along with the transfer.
      */
-    function _checkPoliciesERC721SafeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) internal {
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, from, to, tokenId, data, msg.sender);
+    function _checkPoliciesERC721SafeTransferFrom(address _from, address _to, uint256 _tokenId, bytes memory _data) internal {
+        bytes memory encoded = abi.encodeWithSelector(msg.sig, _from, _to, _tokenId, _data, msg.sender);
         _invokeRulesEngine(encoded);
     }
 
     /**
      * @notice Calls the Rules Engine to evaluate policies for an ERC721 `transferFrom` operation.
      * @dev Encodes the parameters and invokes the `_invokeRulesEngine` function.
-     * @param from The sending address.
-     * @param to The receiving address.
-     * @param tokenId The token identifier.
+     * @param _from The sending address.
+     * @param _to The receiving address.
+     * @param _tokenId The token identifier.
      */
-    function _checkPoliciesERC721TransferFrom(address from, address to, uint256 tokenId) internal {
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, from, to, tokenId, msg.sender);
+    function _checkPoliciesERC721TransferFrom(address _from, address _to, uint256 _tokenId) internal {
+        bytes memory encoded = abi.encodeWithSelector(msg.sig, _from, _to, _tokenId, msg.sender);
         _invokeRulesEngine(encoded);
     }
 }

@@ -101,43 +101,43 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
     /**
      * @notice Calls the Rules Engine to evaluate policies for an ERC20 `transfer` operation.
      * @dev Encodes the parameters and invokes the `_invokeRulesEngine` function.
-     * @param to The receiving address.
-     * @param value The amount to transfer.
-     * @param balanceFrom The sender's balance.
-     * @param balanceTo The receiver's balance.
-     * @param blockTime The current block timestamp.
+     * @param _to The receiving address.
+     * @param _value The amount to transfer.
+     * @param _balanceFrom The sender's balance.
+     * @param _balanceTo The receiver's balance.
+     * @param _blockTime The current block timestamp.
      */
-    function _checksPoliciesERC20Transfer(address to, uint256 value, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) internal {
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, to, value, msg.sender, balanceFrom, balanceTo, blockTime);
+    function _checksPoliciesERC20Transfer(address _to, uint256 _value, uint256 _balanceFrom, uint256 _balanceTo, uint256 _blockTime) internal {
+        bytes memory encoded = abi.encodeWithSelector(msg.sig, _to, _value, msg.sender, _balanceFrom, _balanceTo, _blockTime);
         _invokeRulesEngine(encoded);
     }
 
     /**
      * @notice Calls the Rules Engine to evaluate policies for an ERC20 `transferFrom` operation.
      * @dev Encodes the parameters and invokes the `_invokeRulesEngine` function.
-     * @param from The sending address.
-     * @param to The receiving address.
-     * @param value The amount to transfer.
-     * @param balanceFrom The sender's balance.
-     * @param balanceTo The receiver's balance.
-     * @param blockTime The current block timestamp.
+     * @param _from The sending address.
+     * @param _to The receiving address.
+     * @param _value The amount to transfer.
+     * @param _balanceFrom The sender's balance.
+     * @param _balanceTo The receiver's balance.
+     * @param _blockTime The current block timestamp.
      */
-    function _checksPoliciesERC20TransferFrom(address from, address to, uint256 value, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) internal {
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, from, to, value, msg.sender, balanceFrom, balanceTo, blockTime);
+    function _checksPoliciesERC20TransferFrom(address _from, address _to, uint256 _value, uint256 _balanceFrom, uint256 _balanceTo, uint256 _blockTime) internal {
+        bytes memory encoded = abi.encodeWithSelector(msg.sig, _from, _to, _value, msg.sender, _balanceFrom, _balanceTo, _blockTime);
         _invokeRulesEngine(encoded);
     }
 
     /**
      * @notice Calls the Rules Engine to evaluate policies for an ERC20 `mint` operation.
      * @dev Encodes the parameters and invokes the `_invokeRulesEngine` function.
-     * @param to The receiving address.
-     * @param amount The amount to mint.
-     * @param balanceFrom The sender's balance.
-     * @param balanceTo The receiver's balance.
-     * @param blockTime The current block timestamp.
+     * @param _to The receiving address.
+     * @param _amount The amount to mint.
+     * @param _balanceFrom The sender's balance.
+     * @param _balanceTo The receiver's balance.
+     * @param _blockTime The current block timestamp.
      */
-    function _checksPoliciesERC20Mint(address to, uint256 amount, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) internal {
-        bytes memory encoded = abi.encodeWithSelector(msg.sig, to, amount, msg.sender, balanceFrom, balanceTo, blockTime);
+    function _checksPoliciesERC20Mint(address _to, uint256 _amount, uint256 _balanceFrom, uint256 _balanceTo, uint256 _blockTime) internal {
+        bytes memory encoded = abi.encodeWithSelector(msg.sig, _to, _amount, msg.sender, _balanceFrom, _balanceTo, _blockTime);
         _invokeRulesEngine(encoded);
     }
 }

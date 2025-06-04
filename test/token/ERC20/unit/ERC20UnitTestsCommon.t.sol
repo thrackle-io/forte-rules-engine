@@ -26,9 +26,9 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
     function testERC20_Transfer_Before_Unit_checkRule_ForeignCall_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
         // set up the ERC20
         userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
         ruleValue = 15; 
         transferValue = 10;
         _setup_checkRule_ForeignCall_Negative(ruleValue);
@@ -62,11 +62,11 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
     function testERC20_TransferFrom_Unit_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
         // set up the ERC20
         userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
-        PT[] memory pTypes = new PT[](4);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.ADDR;
-        pTypes[2] = PT.UINT;
-        pTypes[3] = PT.ADDR;
+        ParamTypes[] memory pTypes = new ParamTypes[](4);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.ADDR;
+        pTypes[2] = ParamTypes.UINT;
+        pTypes[3] = ParamTypes.ADDR;
         _setupRuleWithRevertTransferFrom(ERC20_TRANSFER_FROM_SIGNATURE,pTypes);
         vm.startPrank(USER_ADDRESS);
         userContract.approve(USER_ADDRESS, 3);
@@ -77,11 +77,11 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
     function testERC20_TransferFrom_Unit_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
         // set up the ERC20
         userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
-        PT[] memory pTypes = new PT[](4);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.ADDR;
-        pTypes[2] = PT.UINT;
-        pTypes[3] = PT.ADDR;
+        ParamTypes[] memory pTypes = new ParamTypes[](4);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.ADDR;
+        pTypes[2] = ParamTypes.UINT;
+        pTypes[3] = ParamTypes.ADDR;
         _setupRuleWithRevertTransferFrom(ERC20_TRANSFER_FROM_SIGNATURE,pTypes);
         vm.startPrank(USER_ADDRESS);
         userContract.approve(USER_ADDRESS, 5);
@@ -92,10 +92,10 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
     }
 
     function testERC20_Mint_Unit_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.ADDR;
+        ParamTypes[] memory pTypes = new ParamTypes[](3);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.ADDR;
         _setupRuleWithRevertMint(ERC20_MINT_SIGNATURE, pTypes);
         vm.startPrank(USER_ADDRESS);
         vm.expectRevert(abi.encodePacked(revert_text)); 
@@ -103,10 +103,10 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
     }
 
     function testERC20_Mint_Unit_Positve() public ifDeploymentTestsEnabled endWithStopPrank {
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.ADDR;
+        ParamTypes[] memory pTypes = new ParamTypes[](3);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.ADDR;
         _setupRuleWithRevertMint(ERC20_MINT_SIGNATURE, pTypes);
         vm.startPrank(USER_ADDRESS);
         vm.expectEmit(true, true, false, false);
@@ -114,7 +114,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         userContract.mint(USER_ADDRESS, 5);
     }
 
-    function _setupRuleWithRevertTransferFrom(string memory _callingFunction, PT[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
+    function _setupRuleWithRevertTransferFrom(string memory _callingFunction, ParamTypes[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
         uint256[] memory policyIds = new uint256[](1);
         
         policyIds[0] = _createBlankPolicyOpen();
@@ -140,7 +140,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
-    function _setupRuleWithRevertMint(string memory _callingFunction, PT[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
+    function _setupRuleWithRevertMint(string memory _callingFunction, ParamTypes[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
         uint256[] memory policyIds = new uint256[](1);
         
         policyIds[0] = _createBlankPolicyOpen();
@@ -172,18 +172,18 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         Rule memory rule;
         // Set up some effects.
         _setupEffectProcessor();
-        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, _amount, LogicalOp.GT, 0, 1
         uint256[] memory instructionSet = new uint256[](7);
-        instructionSet[0] = uint(LC.PLH);
+        instructionSet[0] = uint(LogicalOp.PLH);
         instructionSet[1] = 0;
-        instructionSet[2] = uint(LC.NUM);
+        instructionSet[2] = uint(LogicalOp.NUM);
         instructionSet[3] = _amount;
-        instructionSet[4] = uint(LC.GT);
+        instructionSet[4] = uint(LogicalOp.GT);
         instructionSet[5] = 0;
         instructionSet[6] = 1;
         rule.instructionSet = rule.instructionSet = instructionSet;
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 2;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
@@ -196,18 +196,18 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         Rule memory rule;
         // Set up some effects.
         _setupEffectProcessor();
-        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, _amount, LogicalOp.GT, 0, 1
         uint256[] memory instructionSet = new uint256[](7);
-        instructionSet[0] = uint(LC.PLH);
+        instructionSet[0] = uint(LogicalOp.PLH);
         instructionSet[1] = 0;
-        instructionSet[2] = uint(LC.NUM);
+        instructionSet[2] = uint(LogicalOp.NUM);
         instructionSet[3] = _amount;
-        instructionSet[4] = uint(LC.GT);
+        instructionSet[4] = uint(LogicalOp.GT);
         instructionSet[5] = 0;
         instructionSet[6] = 1;
         rule.instructionSet = rule.instructionSet = instructionSet;
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);

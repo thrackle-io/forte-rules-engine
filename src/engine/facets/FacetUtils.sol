@@ -18,14 +18,14 @@ contract FacetUtils{
      *      Reverts with the returned error message if the delegate call fails.
      * @param _functionSelector The function selector of the target function in the other facet.
      * @param _callData The encoded call data to pass to the target function.
-     * @return success A boolean indicating whether the delegate call was successful.
-     * @return res The returned data from the delegate call.
+     * @return _success A boolean indicating whether the delegate call was successful.
+     * @return _res The returned data from the delegate call.
      */
-    function callAnotherFacet(bytes4 _functionSelector, bytes memory _callData) internal returns(bool success, bytes memory res){
+    function _callAnotherFacet(bytes4 _functionSelector, bytes memory _callData) internal returns(bool _success, bytes memory _res){
         RulesEngineDiamondStorage storage ds = RulesEngineDiamondLib.s();
         address facet = ds.facetAddressAndSelectorPosition[_functionSelector].facetAddress;
-        (success, res) = address(facet).delegatecall(_callData);
-        if (!success) assembly {revert(add(res,0x20),mload(res))}
+        (_success, _res) = address(facet).delegatecall(_callData);
+        if (!_success) assembly {revert(add(_res,0x20),mload(_res))}
     }
 
 }
