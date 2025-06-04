@@ -38,7 +38,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         uint256[][] calldata ruleIds,
         PolicyType policyType
     ) external policyAdminOnly(policyId, msg.sender) returns(uint256) {
-        StorageLib.notCemented(policyId);
+        StorageLib._notCemented(policyId);
         // calling functions length must match the calling function ids length
         if (callingFunctions.length != callingFunctionIds.length) revert(SIGNATURES_INCONSISTENT); 
         // if policy ID is zero no policy has been created and cannot be updated. 
@@ -54,7 +54,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      * @param policyId The ID of the policy to close.
      */
     function closePolicy(uint256 policyId) external policyAdminOnly(policyId, msg.sender) {
-        StorageLib.notCemented(policyId);
+        StorageLib._notCemented(policyId);
         _processPolicyTypeChange(policyId, PolicyType.CLOSED_POLICY);        
         emit PolicyClosed(policyId);
     }
@@ -65,7 +65,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      * @param policyId The ID of the policy to open.
      */
     function openPolicy(uint256 policyId) external policyAdminOnly(policyId, msg.sender) {
-        StorageLib.notCemented(policyId);
+        StorageLib._notCemented(policyId);
         _processPolicyTypeChange(policyId, PolicyType.OPEN_POLICY);        
         emit PolicyOpened(policyId);
     }
@@ -75,7 +75,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      * @param policyId The ID of the policy to cement.
      */
     function cementPolicy(uint256 policyId) external policyAdminOnly(policyId, msg.sender) {
-        lib.getPolicyStorage().policyStorageSets[policyId].policy.cemented = true;
+        lib._getPolicyStorage().policyStorageSets[policyId].policy.cemented = true;
         emit PolicyCemented(policyId);
     }
 
@@ -85,8 +85,8 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      * @param policyId The ID of the policy to delete.
      */
     function deletePolicy(uint256 policyId) external policyAdminOnly(policyId, msg.sender) {
-        StorageLib.notCemented(policyId);
-        PolicyStorageSet storage data = lib.getPolicyStorage().policyStorageSets[policyId];
+        StorageLib._notCemented(policyId);
+        PolicyStorageSet storage data = lib._getPolicyStorage().policyStorageSets[policyId];
         delete data.set;
 
         Policy storage policy = data.policy;
@@ -94,23 +94,23 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         for (uint256 i = 0; i < callingFunctions.length; i++) {
             uint256[] memory ruleIds = policy.callingFunctionsToRuleIds[callingFunctions[i]];
             for (uint256 j = 0; j < ruleIds.length; j++) {
-                callAnotherFacet(0xa31c8ebb, abi.encodeWithSignature("deleteRule(uint256,uint256)", policyId, ruleIds[j]));
+                _callAnotherFacet(0xa31c8ebb, abi.encodeWithSignature("deleteRule(uint256,uint256)", policyId, ruleIds[j]));
             }
         }
 
-        uint256 foreignCallCount = lib.getForeignCallStorage().foreignCallIdxCounter[policyId];
+        uint256 foreignCallCount = lib._getForeignCallStorage().foreignCallIdxCounter[policyId];
         for (uint256 i = 0; i <= foreignCallCount; i++) {
-            if (lib.getForeignCallStorage().foreignCalls[policyId][i].set) {
-                delete lib.getForeignCallStorage().foreignCalls[policyId][i];
+            if (lib._getForeignCallStorage().foreignCalls[policyId][i].set) {
+                delete lib._getForeignCallStorage().foreignCalls[policyId][i];
                 emit ForeignCallDeleted(policyId, i);
             }
         }
 
-        TrackerStorage storage trackerData = lib.getTrackerStorage();
+        TrackerStorage storage trackerData = lib._getTrackerStorage();
         uint256 trackerCount = trackerData.trackerIndexCounter[policyId];
         for (uint256 i = 1; i <= trackerCount; i++) {
             if (trackerData.trackers[policyId][i].set) {
-                delete lib.getTrackerStorage().trackers[policyId][i];
+                delete lib._getTrackerStorage().trackers[policyId][i];
                 emit TrackerDeleted(policyId, i); 
             }
         }
@@ -131,15 +131,15 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     function applyPolicy(address contractAddress, uint256[] calldata policyIds) callingContractAdminOnly(contractAddress, msg.sender) external { 
         if (contractAddress == address(0)) revert(ZERO_ADDRESS);
         // Load the policy data from storage
-        PolicyAssociationStorage storage data = lib.getPolicyAssociationStorage();
+        PolicyAssociationStorage storage data = lib._getPolicyAssociationStorage();
         
         // Check policy type for each policy being applied
         for(uint256 i = 0; i < policyIds.length; i++) {
-            PolicyStorageSet storage policySet = lib.getPolicyStorage().policyStorageSets[policyIds[i]];
+            PolicyStorageSet storage policySet = lib._getPolicyStorage().policyStorageSets[policyIds[i]];
             require(policySet.set, POLICY_DOES_NOT_EXIST);
             
             // If policy is cemented, no one can apply it
-            StorageLib.notCemented(policyIds[i]);
+            StorageLib._notCemented(policyIds[i]);
 
             // If policy is closed, only admin can apply it
             if(policySet.policy.policyType == PolicyType.CLOSED_POLICY) {
@@ -167,7 +167,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     function unapplyPolicy(address _contractAddress, uint256[] calldata _policyIds) callingContractAdminOnly(_contractAddress, msg.sender) external { 
         if (_contractAddress == address(0)) revert(ZERO_ADDRESS);
         // Load the policy association data from storage
-        PolicyAssociationStorage storage data = lib.getPolicyAssociationStorage();
+        PolicyAssociationStorage storage data = lib._getPolicyAssociationStorage();
         // Get the currently applied policyIds
         uint256[] memory allPolicyIds = data.contractPolicyIdMap[_contractAddress];
         // Blow away the contract to policyId association data in order to keep the associated id's array length in line with the amount of policies associated.
@@ -197,16 +197,6 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     }
 
     /**
-     * @notice Retrieves the IDs of policies applied to a specific contract.
-     * @param _contractAddress The address of the contract.
-     * @return uint256[] An array of applied policy IDs.
-     */
-    function getAppliedPolicyIds(address _contractAddress) external view returns (uint256[] memory) {
-        // Load the policy association data from storage
-        return lib.getPolicyAssociationStorage().contractPolicyIdMap[_contractAddress];
-    }
-
-    /**
      * @notice Creates a new policy and assigns a policy admin.
      * @dev Generates a policy ID and initializes the policy with the specified type.
      * @param callingFunctions The calling functions associated with the policy.
@@ -220,7 +210,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         PolicyType policyType
     ) external returns(uint256) {
         // retrieve Policy Storage 
-        PolicyStorage storage data = lib.getPolicyStorage();
+        PolicyStorage storage data = lib._getPolicyStorage();
         uint256 policyId = data.policyId; 
         // If this is the first policy created increment by 1 to start id counter. 
         unchecked{
@@ -250,7 +240,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      */
     function getAppliedPolicyIds(address contractAddress) external view returns (uint256[] memory) {
         // Load the policy association data from storage
-        return lib.getPolicyAssociationStorage().contractPolicyIdMap[contractAddress];
+        return lib._getPolicyAssociationStorage().contractPolicyIdMap[contractAddress];
     }
 
     /**
@@ -259,7 +249,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      * @return bool True if the policy is closed, false otherwise.
      */
     function isClosedPolicy(uint256 policyId) external view returns (bool) {
-        return (lib.getPolicyStorage().policyStorageSets[policyId].policy.policyType == PolicyType.CLOSED_POLICY);
+        return (lib._getPolicyStorage().policyStorageSets[policyId].policy.policyType == PolicyType.CLOSED_POLICY);
     }
 
     /**
@@ -272,7 +262,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      */
     function getPolicy(uint256 policyId) external view returns(bytes4[] memory callingFunctions, uint256[] memory callingFunctionIds, uint256[][] memory ruleIds) {
         // Load the policy data from storage
-        Policy storage policy = lib.getPolicyStorage().policyStorageSets[policyId].policy;
+        Policy storage policy = lib._getPolicyStorage().policyStorageSets[policyId].policy;
         // Initialize the return arrays if necessary
         if(policy.callingFunctions.length > 0){
             callingFunctions = new bytes4[](policy.callingFunctions.length);
@@ -306,7 +296,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      */
     function _storePolicyData(uint256 _policyId, bytes4[] calldata _callingFunctions, uint256[] calldata _callingFunctionIds, uint256[][] calldata _ruleIds, PolicyType _policyType) internal returns(uint256){   
         // Load the policy data from storage
-        Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
+        Policy storage data = lib._getPolicyStorage().policyStorageSets[_policyId].policy;
         // if the policy type is changing, perform all data maintenance
         _processPolicyTypeChange(_policyId, _policyType);
         // clear the iterator array
@@ -322,7 +312,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
                 data.callingFunctions.push(_callingFunctions[i]);
                 // make sure that all the rules attached to each calling function exist
                 for (uint256 j = 0; j < _ruleIds[i].length; j++) {
-                    RuleStorageSet memory ruleStore = lib.getRuleStorage().ruleStorageSets[_policyId][_ruleIds[i][j]];
+                    RuleStorageSet memory ruleStore = lib._getRuleStorage().ruleStorageSets[_policyId][_ruleIds[i][j]];
                     if(!ruleStore.set) revert(INVALID_RULE);
                     for (uint256 k = 0; k < ruleStore.rule.placeHolders.length; k++) {
                         if(ruleStore.rule.placeHolders[k].foreignCall) {
@@ -360,10 +350,10 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      */
     function _processPolicyTypeChange(uint256 _policyId, PolicyType _policyType) internal {
         // If closing, remove all applied contract associations
-        Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
+        Policy storage data = lib._getPolicyStorage().policyStorageSets[_policyId].policy;
         if (_policyType == PolicyType.CLOSED_POLICY){
             // Load the calling function data from storage
-            PolicyAssociationStorage storage assocData = lib.getPolicyAssociationStorage();
+            PolicyAssociationStorage storage assocData = lib._getPolicyAssociationStorage();
             for (uint256 i = 0; i < assocData.policyIdContractMap[_policyId].length; i++) { 
                 delete assocData.contractPolicyIdMap[assocData.policyIdContractMap[_policyId][i]];
             }

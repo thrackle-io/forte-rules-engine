@@ -29,7 +29,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     function checkPolicies(address contractAddress, bytes calldata arguments) public returns (uint256 retVal) {  
         retVal = 1; 
         // Load the calling function data from storage
-        PolicyAssociationStorage storage data = lib.getPolicyAssociationStorage();
+        PolicyAssociationStorage storage data = lib._getPolicyAssociationStorage();
         uint256[] memory policyIds = data.contractPolicyIdMap[contractAddress];
         // loop through all the active policies
         for(uint256 policyIdx = 0; policyIdx < policyIds.length; policyIdx++) {
@@ -57,7 +57,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         bytes[] memory retVals
     ) public returns(ForeignCallReturnValue memory returnValue) {
         // Load the Foreign Call data from storage
-        ForeignCall memory foreignCall = lib.getForeignCallStorage().foreignCalls[policyId][foreignCallIndex];
+        ForeignCall memory foreignCall = lib._getForeignCallStorage().foreignCalls[policyId][foreignCallIndex];
         if (foreignCall.set) {
             return evaluateForeignCallForRule(foreignCall, callingFunctionArgs, retVals);
         }
@@ -77,7 +77,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         uint256 lengthToAppend = 0;
         // First pass: calculate sizes
         for(uint256 i = 0; i < fc.parameterTypes.length; i++) {
-            PT argType = fc.parameterTypes[i];
+            ParamTypes argType = fc.parameterTypes[i];
             uint256 typeSpecificIndex;
             bool isRetVal = false;
             bytes32 value;
@@ -85,7 +85,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 typeSpecificIndex = _getAbsoluteAssembly(fc.typeSpecificIndices[i]) - 1; // -1 because retVals is 0 indexed
                 isRetVal = true;
                 value = bytes32(retVals[typeSpecificIndex]);
-                if (argType == PT.STR || argType == PT.BYTES) {
+                if (argType == ParamTypes.STR || argType == ParamTypes.BYTES) {
                     encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
                     bytes memory stringData = ProcessorLib._extractStringData(retVals[typeSpecificIndex]);
                     dynamicData = bytes.concat(
@@ -93,7 +93,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                         stringData      // data (already padded)
                     );
                     lengthToAppend += stringData.length;
-                } else if (argType == PT.STATIC_TYPE_ARRAY || argType == PT.DYNAMIC_TYPE_ARRAY) {
+                } else if (argType == ParamTypes.STATIC_TYPE_ARRAY || argType == ParamTypes.DYNAMIC_TYPE_ARRAY) {
                     // encode the static offset
                     encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
                     bytes memory arrayData = ProcessorLib._extractDynamicArrayData(retVals[typeSpecificIndex]);
@@ -105,7 +105,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             } else {
                 typeSpecificIndex = _getAbsoluteAssembly(fc.typeSpecificIndices[i]);
                 value = bytes32(functionArguments[typeSpecificIndex * 32: (typeSpecificIndex + 1) * 32]);
-                if (argType == PT.STR || argType == PT.BYTES) {
+                if (argType == ParamTypes.STR || argType == ParamTypes.BYTES) {
                     // Add offset to head
                     uint256 dynamicOffset = 32 * (fc.parameterTypes.length) + lengthToAppend;
                     encodedCall = bytes.concat(encodedCall, bytes32(dynamicOffset));
@@ -119,7 +119,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                         dynamicValue      // data (already padded)
                     );
                     lengthToAppend += words;  // 32 for length + 32 for padded data
-                } else if (argType == PT.STATIC_TYPE_ARRAY) {
+                } else if (argType == ParamTypes.STATIC_TYPE_ARRAY) {
                     // encode the static offset
                     encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
                     uint256 arrayLength = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
@@ -129,7 +129,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                     staticArray = functionArguments[uint(value):uint(value) + lengthToGrab];
                     dynamicData = bytes.concat(dynamicData, staticArray);
                     lengthToAppend += lengthToGrab;
-                } else if (argType == PT.DYNAMIC_TYPE_ARRAY) {
+                } else if (argType == ParamTypes.DYNAMIC_TYPE_ARRAY) {
                     // encode the dynamic offset
                     uint256 baseDynamicOffset = 32 * (fc.parameterTypes.length) + lengthToAppend;
                     encodedCall = bytes.concat(encodedCall, bytes32(baseDynamicOffset));
@@ -167,8 +167,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     function _checkPolicy(uint256 _policyId, address _contractAddress, bytes calldata _arguments) internal returns (bool retVal) {
         _contractAddress; // added to remove wanring. TODO remove this once msg.sender testing is complete 
         // Load the policy data from storage   
-        PolicyStorageSet storage policyStorageSet = lib.getPolicyStorage().policyStorageSets[_policyId];
-        mapping(uint256 ruleId => RuleStorageSet) storage ruleData = lib.getRuleStorage().ruleStorageSets[_policyId];
+        PolicyStorageSet storage policyStorageSet = lib._getPolicyStorage().policyStorageSets[_policyId];
+        mapping(uint256 ruleId => RuleStorageSet) storage ruleData = lib._getRuleStorage().ruleStorageSets[_policyId];
 
         // Retrieve placeHolder[] for specific rule to be evaluated and translate function signature argument array 
         // to rule specific argument array
@@ -213,7 +213,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
 
     /**
      * @dev Constructs the arguments required for building the rule's place holders.
-     * @param rule The storage reference to the Rule struct containing the rule's details.
+     * @param _rule The storage reference to the Rule struct containing the rule's details.
      * @param _policyId The unique identifier of the policy associated with the rule.
      * @param _callingFunctionArgs The calldata containing the arguments for the calling function.
      * @param _effect A boolean indicating whether the rule has an effect or not.
@@ -221,12 +221,12 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      *         - An array of bytes representing the constructed arguments.
      *         - An array of Placeholder structs used for argument substitution.
      */
-    function _buildArguments(Rule storage rule, uint256 _policyId, bytes calldata _callingFunctionArgs, bool _effect) internal returns (bytes[] memory, Placeholder[] memory) {
+    function _buildArguments(Rule storage _rule, uint256 _policyId, bytes calldata _callingFunctionArgs, bool _effect) internal returns (bytes[] memory, Placeholder[] memory) {
         Placeholder[] memory placeHolders;
         if(_effect) {
-            placeHolders = rule.effectPlaceHolders;
+            placeHolders = _rule.effectPlaceHolders;
         } else {
-            placeHolders = rule.placeHolders;
+            placeHolders = _rule.placeHolders;
         }       
 
         bytes[] memory retVals = new bytes[](placeHolders.length);
@@ -240,13 +240,13 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                     placeHolders[placeholderIndex].pType = retVal.pType;
             } else if (placeholder.trackerValue) {
                 // Load the Tracker data from storage
-                Trackers memory tracker = lib.getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex];
+                Trackers memory tracker = lib._getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex];
                 retVals[placeholderIndex] = tracker.trackerValue;
             } else {
                 // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
-                if(placeholder.pType == PT.STR || placeholder.pType == PT.BYTES) {
+                if(placeholder.pType == ParamTypes.STR || placeholder.pType == ParamTypes.BYTES) {
                     retVals[placeholderIndex] = _getDynamicVariableFromCalldata(_callingFunctionArgs, placeholder.typeSpecificIndex);
-                } else if (placeholder.pType == PT.STATIC_TYPE_ARRAY || placeholder.pType == PT.DYNAMIC_TYPE_ARRAY) {
+                } else if (placeholder.pType == ParamTypes.STATIC_TYPE_ARRAY || placeholder.pType == ParamTypes.DYNAMIC_TYPE_ARRAY) {
                     // if the placeholder represents an array, determine the length and set lenth as placeholder value in ruleArgs 
                     bytes32 value = bytes32(_callingFunctionArgs[placeholder.typeSpecificIndex * 32: (placeholder.typeSpecificIndex + 1) * 32]);
                     retVals[placeholderIndex] = abi.encode(uint256(bytes32(_callingFunctionArgs[uint(value):uint(value) + 32])));
@@ -277,63 +277,63 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         uint256 opi = 0;
         while (idx < _prog.length) {
             uint256 v = 0;
-            LC op = LC(_prog[idx]);
-            if(op == LC.PLH) {
+            LogicalOp op = LogicalOp(_prog[idx]);
+            if(op == LogicalOp.PLH) {
                 // Placeholder format is: get the index of the argument in the array. For example, PLH 0 is the first argument in the arguments array and its type and value
                 uint256 pli = _prog[idx+1];
-                PT typ = _placeHolders[pli].pType;
-                if(typ == PT.UINT) {
+                ParamTypes typ = _placeHolders[pli].pType;
+                if(typ == ParamTypes.UINT) {
                     v = abi.decode(_arguments[pli], (uint256)); idx += 2;
-                } else if(typ == PT.ADDR) {
+                } else if(typ == ParamTypes.ADDR) {
                     // Convert address to uint256 for direct comparison using == and != operations
                     v = uint256(uint160(address(abi.decode(_arguments[pli], (address))))); idx += 2;
-                } else if(typ == PT.STR) {
+                } else if(typ == ParamTypes.STR) {
                     // Convert string to uint256 for direct comparison using == and != operations
                     v = uint256(keccak256(abi.encode(abi.decode(_arguments[pli], (string))))); idx += 2;
-                } else if(typ == PT.BOOL) {
+                } else if(typ == ParamTypes.BOOL) {
                     // Convert bool to uint256 for direct comparison using == and != operations
-                    v = uint256(ProcessorLib._bool2ui((abi.decode(_arguments[pli], (bool))))); idx += 2;
-                } else if(typ == PT.BYTES) {
+                    v = uint256(ProcessorLib._boolToUint((abi.decode(_arguments[pli], (bool))))); idx += 2;
+                } else if(typ == ParamTypes.BYTES) {
                     // Convert bytes to uint256 for direct comparison using == and != operations
                     v = uint256(keccak256(abi.encode(abi.decode(_arguments[pli], (bytes))))); idx += 2;
-                } else if(typ == PT.STATIC_TYPE_ARRAY || typ == PT.DYNAMIC_TYPE_ARRAY) {
+                } else if(typ == ParamTypes.STATIC_TYPE_ARRAY || typ == ParamTypes.DYNAMIC_TYPE_ARRAY) {
                     // length of array for direct comparison using == and != operations
                     v = abi.decode(_arguments[pli], (uint256)); idx += 2;
-                } else if (typ == PT.VOID) {
+                } else if (typ == ParamTypes.VOID) {
                     // v = 0; but already set to 0 above no need to do anything
                     idx += 2;
                 }
 
-            } else if(op == LC.TRU) {
+            } else if(op == LogicalOp.TRU) {
                 // update the tracker value
                 // If the Tracker Type == Place Holder, pull the data from the place holder, otherwise, pull it from Memory
-                TT tt = TT(_prog[idx+3]);
-                if (tt == TT.MEMORY){
+                TrackerTypes tt = TrackerTypes(_prog[idx+3]);
+                if (tt == TrackerTypes.MEMORY){
                     _updateTrackerValue(_policyId, _prog[idx + 1], mem[_prog[idx+2]]);
                 } else {
                     _updateTrackerValue(_policyId, _prog[idx + 1], _arguments[_prog[idx+2]]);
                 }
                 idx += 4;
-            } else if (op == LC.NUM) { v = _prog[idx+1]; idx += 2; }
-            else if (op == LC.ADD) { v = mem[_prog[idx+1]] + mem[_prog[idx+2]]; idx += 3; }
-            else if (op == LC.SUB) { v = mem[_prog[idx+1]] - mem[_prog[idx+2]]; idx += 3; }
-            else if (op == LC.MUL) { v = mem[_prog[idx+1]] * mem[_prog[idx+2]]; idx += 3; }
-            else if (op == LC.DIV) { v = mem[_prog[idx+1]] / mem[_prog[idx+2]]; idx += 3; }
-            else if (op == LC.ASSIGN) { v = mem[_prog[idx+2]]; idx += 3; }
-            else if (op == LC.LT) { v = ProcessorLib._bool2ui(mem[_prog[idx+1]] < mem[_prog[idx+2]]); idx += 3; }
-            else if (op == LC.GT) { v = ProcessorLib._bool2ui(mem[_prog[idx+1]] > mem[_prog[idx+2]]); idx += 3; }
-            else if (op == LC.EQ) { v = ProcessorLib._bool2ui(mem[_prog[idx+1]] == mem[_prog[idx+2]]); idx += 3; }
-            else if (op == LC.NOTEQ) { v = ProcessorLib._bool2ui(mem[_prog[idx+1]] != mem[_prog[idx+2]]); idx += 3; }
-            else if (op == LC.GTEQL) { v = ProcessorLib._bool2ui(mem[_prog[idx+1]] >= mem[_prog[idx+2]]); idx += 3; }
-            else if (op == LC.LTEQL) { v = ProcessorLib._bool2ui(mem[_prog[idx+1]] <= mem[_prog[idx+2]]); idx += 3; }
-            else if (op == LC.AND) { v = ProcessorLib._bool2ui(ProcessorLib._ui2bool(mem[_prog[idx+1]]) && ProcessorLib._ui2bool(mem[_prog[idx+2]])); idx += 3; }
-            else if (op == LC.OR ) { v = ProcessorLib._bool2ui(ProcessorLib._ui2bool(mem[_prog[idx+1]]) || ProcessorLib._ui2bool(mem[_prog[idx+2]])); idx += 3; }
-            else if (op == LC.NOT) { v = ProcessorLib._bool2ui(! ProcessorLib._ui2bool(mem[_prog[idx+1]])); idx += 2; }
+            } else if (op == LogicalOp.NUM) { v = _prog[idx+1]; idx += 2; }
+            else if (op == LogicalOp.ADD) { v = mem[_prog[idx+1]] + mem[_prog[idx+2]]; idx += 3; }
+            else if (op == LogicalOp.SUB) { v = mem[_prog[idx+1]] - mem[_prog[idx+2]]; idx += 3; }
+            else if (op == LogicalOp.MUL) { v = mem[_prog[idx+1]] * mem[_prog[idx+2]]; idx += 3; }
+            else if (op == LogicalOp.DIV) { v = mem[_prog[idx+1]] / mem[_prog[idx+2]]; idx += 3; }
+            else if (op == LogicalOp.ASSIGN) { v = mem[_prog[idx+2]]; idx += 3; }
+            else if (op == LogicalOp.LT) { v = ProcessorLib._boolToUint(mem[_prog[idx+1]] < mem[_prog[idx+2]]); idx += 3; }
+            else if (op == LogicalOp.GT) { v = ProcessorLib._boolToUint(mem[_prog[idx+1]] > mem[_prog[idx+2]]); idx += 3; }
+            else if (op == LogicalOp.EQ) { v = ProcessorLib._boolToUint(mem[_prog[idx+1]] == mem[_prog[idx+2]]); idx += 3; }
+            else if (op == LogicalOp.NOTEQ) { v = ProcessorLib._boolToUint(mem[_prog[idx+1]] != mem[_prog[idx+2]]); idx += 3; }
+            else if (op == LogicalOp.GTEQL) { v = ProcessorLib._boolToUint(mem[_prog[idx+1]] >= mem[_prog[idx+2]]); idx += 3; }
+            else if (op == LogicalOp.LTEQL) { v = ProcessorLib._boolToUint(mem[_prog[idx+1]] <= mem[_prog[idx+2]]); idx += 3; }
+            else if (op == LogicalOp.AND) { v = ProcessorLib._boolToUint(ProcessorLib._uintToBool(mem[_prog[idx+1]]) && ProcessorLib._uintToBool(mem[_prog[idx+2]])); idx += 3; }
+            else if (op == LogicalOp.OR ) { v = ProcessorLib._boolToUint(ProcessorLib._uintToBool(mem[_prog[idx+1]]) || ProcessorLib._uintToBool(mem[_prog[idx+2]])); idx += 3; }
+            else if (op == LogicalOp.NOT) { v = ProcessorLib._boolToUint(! ProcessorLib._uintToBool(mem[_prog[idx+1]])); idx += 2; }
             else { revert("Illegal instruction"); }
             mem[opi] = v;
             opi += 1;
         }
-        return ProcessorLib._ui2bool(mem[opi - 1]);
+        return ProcessorLib._uintToBool(mem[opi - 1]);
     }
 
     /**
@@ -344,15 +344,15 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      */
     function _updateTrackerValue(uint256 _policyId, uint256 _trackerId, uint256 _trackerValue) internal{
         // retrieve the tracker
-        Trackers storage trk = lib.getTrackerStorage().trackers[_policyId][_trackerId];
-        if(trk.pType == PT.UINT) {
+        Trackers storage trk = lib._getTrackerStorage().trackers[_policyId][_trackerId];
+        if(trk.pType == ParamTypes.UINT) {
             trk.trackerValue = abi.encode(_trackerValue);
-        } else if(trk.pType == PT.ADDR) {
-            trk.trackerValue = abi.encode(ProcessorLib._ui2addr(_trackerValue));
-        } else if(trk.pType == PT.BOOL) {
-            trk.trackerValue = abi.encode(ProcessorLib._ui2bool(_trackerValue));
-        } else if(trk.pType == PT.BYTES) {
-            trk.trackerValue = ProcessorLib._ui2bytes(_trackerValue);
+        } else if(trk.pType == ParamTypes.ADDR) {
+            trk.trackerValue = abi.encode(ProcessorLib._uintToAddr(_trackerValue));
+        } else if(trk.pType == ParamTypes.BOOL) {
+            trk.trackerValue = abi.encode(ProcessorLib._uintToBool(_trackerValue));
+        } else if(trk.pType == ParamTypes.BYTES) {
+            trk.trackerValue = ProcessorLib._uintToBytes(_trackerValue);
         } 
     }
 
@@ -364,7 +364,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      */
     function _updateTrackerValue(uint256 _policyId, uint256 _trackerId, bytes memory _trackerValue) internal{
         // retrieve the tracker
-        Trackers storage trk = lib.getTrackerStorage().trackers[_policyId][_trackerId];
+        Trackers storage trk = lib._getTrackerStorage().trackers[_policyId][_trackerId];
         trk.trackerValue = _trackerValue;
     }
 
@@ -421,9 +421,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         for(uint256 i = 0; i < _effects.length; i++) {
             Effect memory effect = _effects[i];
             if(effect.valid) {
-                if (effect.effectType == ET.REVERT) { 
+                if (effect.effectType == EffectTypes.REVERT) { 
                     _doRevert(effect.errorMessage);
-                } else if (effect.effectType == ET.EVENT) {
+                } else if (effect.effectType == EffectTypes.EVENT) {
                     _buildEvent(_rule, _effects[i].dynamicParam, _policyId, _effects[i].text, _effects[i], _callingFunctionArgs);
                 } else {
                     _evaluateExpression(_rule, _policyId, _callingFunctionArgs, effect.instructionSet);
@@ -470,19 +470,19 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         (bytes[] memory effectArguments, Placeholder[] memory placeholders) = _buildArguments(_rule, _policyId, _callingFunctionArgs, true);
         for(uint256 i = 0; i < effectArguments.length; i++) { 
             // loop through parameter types and set eventParam 
-            if (placeholders[i].pType == PT.UINT) {
+            if (placeholders[i].pType == ParamTypes.UINT) {
                 uint256 uintParam = abi.decode(effectArguments[i], (uint)); 
                 emit RulesEngineEvent(_policyId, _message, uintParam);
-            } else if (placeholders[i].pType == PT.ADDR) {
+            } else if (placeholders[i].pType == ParamTypes.ADDR) {
                 address addrParam = abi.decode(effectArguments[i], (address));
                 emit RulesEngineEvent(_policyId, _message, addrParam);
-            } else if (placeholders[i].pType == PT.BOOL) {
+            } else if (placeholders[i].pType == ParamTypes.BOOL) {
                 bool boolParam = abi.decode(effectArguments[i], (bool));
                 emit RulesEngineEvent(_policyId, _message, boolParam);
-            } else if (placeholders[i].pType == PT.STR) {
+            } else if (placeholders[i].pType == ParamTypes.STR) {
                 string memory textParam = abi.decode(effectArguments[i], (string));
                 emit RulesEngineEvent(_policyId, _message, textParam);
-            } else if (placeholders[i].pType == PT.BYTES) {
+            } else if (placeholders[i].pType == ParamTypes.BYTES) {
                 bytes32 bytesParam = abi.decode(effectArguments[i], (bytes32));
                 emit RulesEngineEvent(_policyId, _message, bytesParam);
             }
@@ -496,19 +496,19 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @param _effectStruct A struct containing the effect data to be processed during the event.
      */
     function _fireEvent(uint256 _policyId, bytes32 _message, Effect memory _effectStruct) internal { 
-        if (_effectStruct.pType == PT.UINT) {
+        if (_effectStruct.pType == ParamTypes.UINT) {
             uint256 uintParam = abi.decode(_effectStruct.param, (uint));
             emit RulesEngineEvent(_policyId, _message, uintParam);
-        } else if (_effectStruct.pType == PT.ADDR) {
+        } else if (_effectStruct.pType == ParamTypes.ADDR) {
             address addrParam = abi.decode(_effectStruct.param, (address));
             emit RulesEngineEvent(_policyId, _message, addrParam);
-        } else if (_effectStruct.pType == PT.BOOL) {
+        } else if (_effectStruct.pType == ParamTypes.BOOL) {
             bool boolParam = abi.decode(_effectStruct.param, (bool));
             emit RulesEngineEvent(_policyId, _message, boolParam);
-        } else if (_effectStruct.pType == PT.STR) {
+        } else if (_effectStruct.pType == ParamTypes.STR) {
             string memory textParam = abi.decode(_effectStruct.param, (string));
             emit RulesEngineEvent(_policyId, _message, textParam);
-        } else if (_effectStruct.pType == PT.BYTES) {
+        } else if (_effectStruct.pType == ParamTypes.BYTES) {
             bytes32 bytesParam = abi.decode(_effectStruct.param, (bytes32));
             emit RulesEngineEvent(_policyId, _message, bytesParam);
         }
@@ -516,15 +516,15 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
 
     /**
      * @dev Evaluate an effect expression
-     * @param rule the rule structure containing the instruction set, with placeholders, to execute
+     * @param _rule the rule structure containing the instruction set, with placeholders, to execute
      * @param _policyId the policy id
-     * @param callingFunctionArgs arguments of the calling function
-     * @param instructionSet instruction set 
+     * @param _callingFunctionArgs arguments of the calling function
+     * @param _instructionSet instruction set 
      */
-    function _evaluateExpression(Rule storage rule, uint256 _policyId, bytes calldata callingFunctionArgs, uint256[] memory instructionSet) internal {
-        (bytes[] memory effectArguments, Placeholder[] memory placeholders) = _buildArguments(rule, _policyId, callingFunctionArgs, true);
-        if(instructionSet.length > 1) {
-            _run(instructionSet, placeholders, _policyId, effectArguments);
+    function _evaluateExpression(Rule storage _rule, uint256 _policyId, bytes calldata _callingFunctionArgs, uint256[] memory _instructionSet) internal {
+        (bytes[] memory effectArguments, Placeholder[] memory placeholders) = _buildArguments(_rule, _policyId, _callingFunctionArgs, true);
+        if(_instructionSet.length > 1) {
+            _run(_instructionSet, placeholders, _policyId, effectArguments);
         }
     }
 

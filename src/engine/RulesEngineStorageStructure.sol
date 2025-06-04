@@ -32,8 +32,9 @@ struct InitializedStorage {
  * TRU - perform a tracker update, the next three slots in the instruction set will denote the tracker index and address to update and the memory address of the value to use.
  * GTEQL - perform a greater than or equal to comparison with the values at the memory addresses denoted by the next two slots in the instruction set
  * LTEQL - perform a less than or equal to comparison with the values at the memory addresses denoted by the next two slots in the instruction set
+ * NOTEQ - perform a not equal to comparison with the values at the memory addresses denoted by the next two slots in the instruction set
  */
-enum LC {
+enum LogicalOp {
     NUM,
     ADD,
     SUB,
@@ -54,7 +55,7 @@ enum LC {
 }
 
 // Supported Parameter Types
-enum PT {
+enum ParamTypes {
     ADDR,
     STR,
     UINT,
@@ -66,7 +67,7 @@ enum PT {
 }
 /// Effect Storage Structures
 // Supported Effect Types
-enum ET {
+enum EffectTypes {
     REVERT,
     EVENT,
     EXPRESSION
@@ -78,7 +79,7 @@ enum ET {
  */
 struct Placeholder {
     // The type of parameter the placeholder represents
-    PT pType;
+    ParamTypes pType;
     // The index in the specific array for the specified type;
     uint128 typeSpecificIndex;
     /// Determine if the index of value to replace the placeholder is a tracker value
@@ -90,7 +91,7 @@ struct Placeholder {
 /**
  * Supported Tracker Instruction Set Retrieval Types. This is used to tell the engine where to pull the tracker data from.
  */
-enum TT {
+enum TrackerTypes {
     MEMORY,
     PLACE_HOLDER
 }
@@ -99,9 +100,9 @@ enum TT {
 struct Effect {
     bool valid;
     bool dynamicParam; //bool to determine if event requires  
-    ET effectType;
+    EffectTypes effectType;
     // event data 
-    PT pType;
+    ParamTypes pType;
     bytes param;
     bytes32 text; // This is used by events to "Name" the event. It is an unindexed bytes32 param in RulesEngineEvent: _eventString. Bytes32 is used to reduce gas costs
     string errorMessage;
@@ -138,7 +139,7 @@ struct CallingFunctionMetadataStruct {
  */
 struct ForeignCallReturnValue {
     // Parameter type of the return value
-    PT pType;
+    ParamTypes pType;
     // The actual value of the return value
     bytes value;
 }
@@ -150,7 +151,7 @@ struct ForeignCallReturnValue {
  */
 struct Arguments {
     // Parameter types of arguments in order
-    PT[] argumentTypes;
+    ParamTypes[] argumentTypes;
     // The actual values of the arguments in order
     bytes[] values;
 }
@@ -166,11 +167,11 @@ struct ForeignCall {
     // The function signature of the foreign call
     bytes4 signature;
     // The parameter type of the foreign calls return
-    PT returnType;
+    ParamTypes returnType;
     // Unique identifier for the foreign contract structure (used by the rule to reference it)
     uint256 foreignCallIndex;
     // The parameter types of the arguments the foreign call takes
-    PT[] parameterTypes;
+    ParamTypes[] parameterTypes;
     // A list of type specific indices to use for the foreign call and where they sit in the calldata
     int8[] typeSpecificIndices;
 }
@@ -191,7 +192,7 @@ struct Trackers {
     // Whether the tracker has been set
     bool set;
     // Define what type of tracker
-    PT pType;
+    ParamTypes pType;
     // tracker types arrays
     bytes trackerValue;
     // to be added: uint lastUpdatedTimestamp;
@@ -207,7 +208,7 @@ struct CallingFunctionStruct {
 struct CallingFunctionStorageSet {
     bool set;
     bytes4 signature;
-    PT[] parameterTypes;
+    ParamTypes[] parameterTypes;
 }
 
 /// Rule Structures
@@ -250,7 +251,7 @@ struct RawData {
     // The index in the instruction set that contains the "converted" version of this data (converted to uint256)
     uint256[] instructionSetIndex;
     // The types for the data values in order (to aid with decoding them)
-    PT[] argumentTypes;
+    ParamTypes[] argumentTypes;
     // The data (encoded using the viem equivalent of abi.encode, encoded types capture in argumentTypes in order)
     bytes[] dataValues;
 }

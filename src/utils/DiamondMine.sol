@@ -33,7 +33,7 @@ contract DiamondMine is Script {
      * @param owner The address to be set as the owner of the diamond.
      * @return diamond The fully configured Rules Engine Diamond.
      */
-    function _createRulesEngineDiamond(
+    function createRulesEngineDiamond(
         address owner
     ) public returns (RulesEngineDiamond diamond) {
         delete _ruleProcessorFacetCuts;
@@ -54,7 +54,7 @@ contract DiamondMine is Script {
             FacetCut({
                 facetAddress: address(new NativeFacet()),
                 action: FacetCutAction.Add,
-                functionSelectors: _createSelectorArray("NativeFacet")
+                functionSelectors: createSelectorArray("NativeFacet")
             })
         );
 
@@ -63,7 +63,7 @@ contract DiamondMine is Script {
             FacetCut({
                 facetAddress: address(new RulesEngineProcessorFacet()),
                 action: FacetCutAction.Add,
-                functionSelectors: _createSelectorArray("RulesEngineProcessorFacet")
+                functionSelectors: createSelectorArray("RulesEngineProcessorFacet")
             })
         );
 
@@ -72,7 +72,7 @@ contract DiamondMine is Script {
             FacetCut({
                 facetAddress: address(new RulesEnginePolicyFacet()),
                 action: FacetCutAction.Add,
-                functionSelectors: _createSelectorArray("RulesEnginePolicyFacet")
+                functionSelectors: createSelectorArray("RulesEnginePolicyFacet")
             })
         );
 
@@ -81,7 +81,7 @@ contract DiamondMine is Script {
             FacetCut({
                 facetAddress: address(new RulesEngineComponentFacet()),
                 action: FacetCutAction.Add,
-                functionSelectors: _createSelectorArray("RulesEngineComponentFacet")
+                functionSelectors: createSelectorArray("RulesEngineComponentFacet")
             })
         );
 
@@ -90,7 +90,7 @@ contract DiamondMine is Script {
             FacetCut({
                 facetAddress: address(new RulesEngineAdminRolesFacet()),
                 action: FacetCutAction.Add,
-                functionSelectors: _createSelectorArray("RulesEngineAdminRolesFacet")
+                functionSelectors: createSelectorArray("RulesEngineAdminRolesFacet")
             })
         );
 
@@ -99,7 +99,7 @@ contract DiamondMine is Script {
             FacetCut({
                 facetAddress: address(new RulesEngineInitialFacet()),
                 action: FacetCutAction.Add,
-                functionSelectors: _createSelectorArray("RulesEngineInitialFacet")
+                functionSelectors: createSelectorArray("RulesEngineInitialFacet")
             })
         );
 
@@ -108,7 +108,7 @@ contract DiamondMine is Script {
             FacetCut({
                 facetAddress: address(new RulesEngineRuleFacet()),
                 action: FacetCutAction.Add,
-                functionSelectors: _createSelectorArray("RulesEngineRuleFacet")
+                functionSelectors: createSelectorArray("RulesEngineRuleFacet")
             })
         );
 
@@ -125,16 +125,16 @@ contract DiamondMine is Script {
     /**
      * @notice Create the selector array for a given facet.
      * @dev This function uses a Python script to generate the function selectors for the specified facet.
-     * @param _facet The name of the facet for which to generate selectors.
-     * @return _selectors The array of function selectors for the facet.
+     * @param facet The name of the facet for which to generate selectors.
+     * @return selectors The array of function selectors for the facet.
      */
-    function _createSelectorArray(
-        string memory _facet
-    ) public returns (bytes4[] memory _selectors) {
+    function createSelectorArray(
+        string memory facet
+    ) public returns (bytes4[] memory selectors) {
         string[] memory _inputs = new string[](3);
         _inputs[0] = "python3";
         _inputs[1] = "script/python/get_selectors.py";
-        _inputs[2] = _facet;
+        _inputs[2] = facet;
         bytes memory res = vm.ffi(_inputs);
         return abi.decode(res, (bytes4[]));
     }

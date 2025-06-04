@@ -24,7 +24,7 @@ library RulesEngineStorageLib {
     ) internal view returns (bool) {
         // Load the calling function data from storage
         return
-            lib.getCallingFunctionStorage().callingFunctionStorageSets[_policyId][_callingFunctionId].set;
+            lib._getCallingFunctionStorage().callingFunctionStorageSets[_policyId][_callingFunctionId].set;
     }
 
     /**
@@ -39,7 +39,7 @@ library RulesEngineStorageLib {
         uint256 _foreignCallId
     ) internal view returns (bool) {
         // Load the Foreign Call data from storage
-        return lib.getForeignCallStorage().foreignCalls[_policyId][_foreignCallId].set;
+        return lib._getForeignCallStorage().foreignCalls[_policyId][_foreignCallId].set;
     }
 
     /**
@@ -54,15 +54,14 @@ library RulesEngineStorageLib {
         uint256 _index
     ) internal view returns (bool) {
         // return trackers for contract address at speficic index
-        return lib.getTrackerStorage().trackers[_policyId][_index].set;
+        return lib._getTrackerStorage().trackers[_policyId][_index].set;
     }
 
     /**
      * @notice Checks that a policy is not cemented.
      * @param _policyId The ID of the policy.
      */
-    function notCemented(uint256 _policyId) internal view {
-        if(lib.getPolicyStorage().policyStorageSets[_policyId].policy.cemented) revert ("Not allowed for cemented policy");
+    function _notCemented(uint256 _policyId) internal view {
+        if(lib._getPolicyStorage().policyStorageSets[_policyId].policy.cemented) revert ("Not allowed for cemented policy");
     }
-
 }

@@ -25,29 +25,29 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
 
     /**
      * @notice Checks if an address is the policy admin for a specific policy ID.
-     * @param _policyId The ID of the policy.
-     * @param _account The address to check for the policy admin role.
+     * @param policyId The ID of the policy.
+     * @param account The address to check for the policy admin role.
      * @return bool True if the address has the policy admin role, false otherwise.
      */
-    function isPolicyAdmin(uint256 _policyId, address _account) public view returns (bool) { 
-        return hasRole(_generatePolicyAdminRoleId(_policyId, POLICY_ADMIN), _account);
+    function isPolicyAdmin(uint256 policyId, address account) public view returns (bool) { 
+        return hasRole(_generatePolicyAdminRoleId(policyId, POLICY_ADMIN), account);
     }
 
     /**
      * @notice Generates and assigns a policy admin role to an address.
      * @dev This function is called internally by the Rules Engine to assign the policy admin role.
-     * @param _policyId The ID of the policy.
-     * @param _account The address to assign the policy admin role.
+     * @param policyId The ID of the policy.
+     * @param account The address to assign the policy admin role.
      * @return bytes32 The generated admin role identifier.
      */
-    function generatePolicyAdminRole(uint256 _policyId, address _account) public nonReentrant returns (bytes32) {
-        if (_account == address(0)) revert(ZERO_ADDRESS);  
+    function generatePolicyAdminRole(uint256 policyId, address account) public nonReentrant returns (bytes32) {
+        if (account == address(0)) revert(ZERO_ADDRESS);  
         if(msg.sender != address(this)) revert(RULES_ENGINE_ONLY);
         // Create Admin Role for Policy: concat the policyId and adminRole key together and keccak them. Cast to bytes32 for Admin Role identifier 
-        bytes32 adminRoleId = _generatePolicyAdminRoleId(_policyId, POLICY_ADMIN);  
+        bytes32 adminRoleId = _generatePolicyAdminRoleId(policyId, POLICY_ADMIN);  
         // grant the admin role to the calling address of the createPolicy function from RulesEnginePolicyFacet 
-        _grantRolePolicyAdmin(adminRoleId, _account); 
-        emit PolicyAdminRoleGranted(_account, _policyId); 
+        _grantRolePolicyAdmin(adminRoleId, account); 
+        emit PolicyAdminRoleGranted(account, policyId); 
         return adminRoleId;
     }
 
@@ -246,20 +246,6 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
     // Overridden Functions
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    /**
-     * @notice Overrides the parent's `grantRole` function to disable its public nature.
-     * @dev This function is intentionally disabled to enforce role granting through specific channels.
-     * @param role The role to grant.
-     * @param account The address to grant the role to.
-     */
-    function grantRole(bytes32 role, address account) public pure override(AccessControl, IAccessControl) {
-        /// this is done to funnel all the role granting functions through this contract since
-        /// the policyAdmins could add other policyAdmins through this back door
-        role;
-        account;
-        revert("Function disabled");
-    }
-
    /**
      * @notice Overrides the parent's `renounceRole` function to disable its public nature.
      * @dev This function is intentionally disabled to enforce role renouncing through specific channels.
@@ -279,6 +265,20 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
      * @param account The address of the revoked role.
      */
     function revokeRole(bytes32 role, address account) public virtual override(AccessControl, IAccessControl) {
+        role;
+        account;
+        revert("Function disabled");
+    }
+
+    /**
+     * @notice Overrides the parent's `grantRole` function to disable its public nature.
+     * @dev This function is intentionally disabled to enforce role granting through specific channels.
+     * @param role The role to grant.
+     * @param account The address to grant the role to.
+     */
+    function grantRole(bytes32 role, address account) public pure override(AccessControl, IAccessControl) {
+        /// this is done to funnel all the role granting functions through this contract since
+        /// the policyAdmins could add other policyAdmins through this back door
         role;
         account;
         revert("Function disabled");

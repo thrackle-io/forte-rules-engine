@@ -27,120 +27,120 @@ library RulesEngineStoragePositionLib {
     /**
      * @notice Retrieves the storage for the initialized flag.
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
-     * @return ds The storage structure for the initialized flag.
+     * @return _ds The storage structure for the initialized flag.
      */
-    function initializedStorage() internal pure returns (InitializedStorage storage ds) {
+    function _initializedStorage() internal pure returns (InitializedStorage storage _ds) {
         bytes32 position = INITIALIZED_POSITION;
         assembly {
-            ds.slot := position
+            _ds.slot := position
         }
     }
 
     /**
      * @notice Retrieves the storage for foreign calls.
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
-     * @return ds The storage structure for the foreign call map.
+     * @return _ds The storage structure for the foreign call map.
      */
-    function getForeignCallStorage() internal pure returns (ForeignCallStorage storage ds) {
+    function _getForeignCallStorage() internal pure returns (ForeignCallStorage storage _ds) {
         bytes32 position = FOREIGN_CALL_POSITION;
         assembly {
-            ds.slot := position
+            _ds.slot := position
         }
     }
 
     /**
      * @notice Retrieves the storage for foreign call metadata.
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
-     * @return ds The storage structure for the foreign call metadata map.
+     * @return _ds The storage structure for the foreign call metadata map.
      */
-    function getForeignCallMetadataStorage() internal pure returns (ForeignCallMetadataStruct storage ds) {
+    function _getForeignCallMetadataStorage() internal pure returns (ForeignCallMetadataStruct storage _ds) {
         bytes32 position = FOREIGN_CALL_METADATA_POSITION;
         assembly {
-            ds.slot := position
+            _ds.slot := position
         }
     }
 
     /**
      * @notice Retrieves the storage for trackers.
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
-     * @return ds The storage structure for the tracker map.
+     * @return _ds The storage structure for the tracker map.
      */
-    function getTrackerStorage() internal pure returns (TrackerStorage storage ds) {
+    function _getTrackerStorage() internal pure returns (TrackerStorage storage _ds) {
         bytes32 position = TRACKER_POSITION;
         assembly {
-            ds.slot := position
+            _ds.slot := position
         }
     }
 
     /**
      * @notice Retrieves the storage for tracker metadata.
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
-     * @return ds The storage structure for the tracker metadata map.
+     * @return _ds The storage structure for the tracker metadata map.
      */
-    function getTrackerMetadataStorage() internal pure returns (TrackerMetadataStruct storage ds) {
+    function _getTrackerMetadataStorage() internal pure returns (TrackerMetadataStruct storage _ds) {
         bytes32 position = TRACKER_METADATA_POSITION;
         assembly {
-            ds.slot := position
+            _ds.slot := position
         }
     }
 
     /**
      * @notice Retrieves the storage for calling functions.
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
-     * @return ds The storage structure for the calling function map.
+     * @return _ds The storage structure for the calling function map.
      */
-    function getCallingFunctionStorage() internal pure returns (CallingFunctionStruct storage ds) {
+    function _getCallingFunctionStorage() internal pure returns (CallingFunctionStruct storage _ds) {
         bytes32 position = CALLING_FUNCTION_POSITION;
         assembly {
-            ds.slot := position
+            _ds.slot := position
         }
     }
 
     /**
      * @notice Retrieves the storage for calling function metadata.
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
-     * @return ds The storage structure for the calling function metadata map.
+     * @return _ds The storage structure for the calling function metadata map.
      */
-    function getCallingFunctioneMetadataStorage() internal pure returns (CallingFunctionMetadataStruct storage ds) {
+    function _getCallingFunctioneMetadataStorage() internal pure returns (CallingFunctionMetadataStruct storage _ds) {
         bytes32 position = CALLING_FUNCTION_METADATA_POSITION;
         assembly {
-            ds.slot := position
+            _ds.slot := position
         }
     }
 
     /**
      * @notice Retrieves the storage for rules.
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
-     * @return ds The storage structure for the rule map.
+     * @return _ds The storage structure for the rule map.
      */
-    function getRuleStorage() internal pure returns (RuleStorage storage ds) {
+    function _getRuleStorage() internal pure returns (RuleStorage storage _ds) {
         bytes32 position = RULE_POSITION;
         assembly {
-            ds.slot := position
+            _ds.slot := position
         }
     }
 
     /**
      * @notice Retrieves the storage for policies.
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
-     * @return ds The storage structure for the policy map.
+     * @return _ds The storage structure for the policy map.
      */
-    function getPolicyStorage() internal pure returns (PolicyStorage storage ds) {
+    function _getPolicyStorage() internal pure returns (PolicyStorage storage _ds) {
         bytes32 position = POLICY_POSITION;
         assembly {
-            ds.slot := position
+            _ds.slot := position
         }
     }
 
     /**
      * @notice Retrieves the storage for policy associations.
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
-     * @return ds The storage structure for the policy association map.
+     * @return _ds The storage structure for the policy association map.
      */
-    function getPolicyAssociationStorage() internal pure returns (PolicyAssociationStorage storage ds) {
+    function _getPolicyAssociationStorage() internal pure returns (PolicyAssociationStorage storage _ds) {
         bytes32 position = POLICY_ASSOCIATION_POSITION;
         assembly {
-            ds.slot := position
+            _ds.slot := position
         }
     }
 

@@ -17,12 +17,12 @@ contract AccessModifiers is FacetUtils {
      * @notice Ensures that the function caller is a Policy Admin for the specified policy.
      * @dev This modifier checks if the caller has the Policy Admin role for the given policy ID by delegating the check 
      *      to another facet. If the caller is not authorized, the transaction is reverted.
-     * @param _policyId The ID of the policy to check.
-     * @param _address The address of the user to verify.
+     * @param policyId The ID of the policy to check.
+     * @param addr The address of the user to verify.
      */
-    modifier policyAdminOnly(uint256 _policyId, address _address) {   
+    modifier policyAdminOnly(uint256 policyId, address addr) {   
         // 0x901cee11 = isPolicyAdmin(uint256,address)   
-        (bool success, bytes memory res) = callAnotherFacet(0x901cee11, abi.encodeWithSignature("isPolicyAdmin(uint256,address)", _policyId, _address));   
+        (bool success, bytes memory res) = _callAnotherFacet(0x901cee11, abi.encodeWithSignature("isPolicyAdmin(uint256,address)", policyId, addr));   
         bool returnBool;
         if (success) {
             if (res.length >= 4) {
@@ -42,12 +42,12 @@ contract AccessModifiers is FacetUtils {
      * @notice Ensures that the function caller is a Calling Contract Admin for the specified contract.
      * @dev This modifier checks if the caller has the Calling Contract Admin role for the given contract address by delegating 
      *      the check to another facet. If the caller is not authorized, the transaction is reverted.
-     * @param _callingContract The address of the calling contract to check.
-     * @param _address The address of the user to verify.
+     * @param callingContract The address of the calling contract to check.
+     * @param addr The address of the user to verify.
      */
-    modifier callingContractAdminOnly(address _callingContract, address _address) {   
+    modifier callingContractAdminOnly(address callingContract, address addr) {   
         // 0x70aca092 = isCallingContractAdmin(address,address) 
-        (bool success, bytes memory res) = callAnotherFacet(0x70aca092, abi.encodeWithSignature("isCallingContractAdmin(address,address)", _callingContract, _address));   
+        (bool success, bytes memory res) = _callAnotherFacet(0x70aca092, abi.encodeWithSignature("isCallingContractAdmin(address,address)", callingContract, addr));   
         bool returnBool;
         if (success) {
             if (res.length >= 4) {

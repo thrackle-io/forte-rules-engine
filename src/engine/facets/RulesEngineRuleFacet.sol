@@ -23,18 +23,83 @@ contract RulesEngineRuleFacet is FacetCommonImports {
     /**
      * @notice Creates a rule in storage.
      * @dev Adds a new rule to the specified policy. Only accessible by policy admins.
-     * @param _policyId ID of the policy the rule will be added to.
-     * @param _rule The rule to create.
+     * @param policyId ID of the policy the rule will be added to.
+     * @param rule The rule to create.
      * @return ruleId The generated rule ID.
      */
-    function createRule(uint256 _policyId, Rule calldata _rule) external policyAdminOnly(_policyId, msg.sender) returns (uint256) {
-        StorageLib.notCemented(_policyId);
-        RuleStorage storage data = lib.getRuleStorage();
-        uint256 ruleId = ++data.ruleIdCounter[_policyId];
-        _storeRule(data, _policyId, ruleId, _rule);
-        data.ruleIdCounter[_policyId] = ruleId;
-        emit RuleCreated(_policyId, ruleId);
+    function createRule(uint256 policyId, Rule calldata rule) external policyAdminOnly(policyId, msg.sender) returns (uint256) {
+        StorageLib._notCemented(policyId);
+        RuleStorage storage data = lib._getRuleStorage();
+        uint256 ruleId = ++data.ruleIdCounter[policyId];
+        _storeRule(data, policyId, ruleId, rule);
+        data.ruleIdCounter[policyId] = ruleId;
+        emit RuleCreated(policyId, ruleId);
         return ruleId;
+    }
+
+    /**
+     * @notice Updates a rule in storage.
+     * @dev Modifies an existing rule in the specified policy. Only accessible by policy admins.
+     * @param policyId ID of the policy the rule belongs to.
+     * @param ruleId The ID of the rule to update.
+     * @param rule The updated rule data.
+     * @return ruleId The updated rule ID.
+     */
+    function updateRule(
+        uint256 policyId,
+        uint256 ruleId,
+        Rule calldata rule
+    ) external policyAdminOnly(policyId, msg.sender) returns (uint256) {
+        StorageLib._notCemented(policyId);
+        // Load the rule data from storage
+        RuleStorage storage data = lib._getRuleStorage();
+        _storeRule(data, policyId, ruleId, rule);
+        emit RuleUpdated(policyId, ruleId);
+        return ruleId;
+    }
+
+    /**
+     * @notice Retrieves all rules associated with a specific policy.
+     * @param policyId The ID of the policy.
+     * @return rules A two-dimensional array of rules grouped by calling functions.
+     */
+    function getAllRules(uint256 policyId) external view returns (Rule[][] memory) {
+        // Load the policy data from storage
+        Policy storage data = lib._getPolicyStorage().policyStorageSets[policyId].policy;
+        bytes4[] memory callingFunctions = data.callingFunctions;
+        Rule[][] memory rules = new Rule[][](callingFunctions.length);
+        for (uint256 i = 0; i < callingFunctions.length; i++) {
+            uint256[] memory ruleIds = data.callingFunctionsToRuleIds[callingFunctions[i]];
+            rules[i] = new Rule[](ruleIds.length);
+            for (uint256 j = 0; j < ruleIds.length; j++) {
+                if (lib._getRuleStorage().ruleStorageSets[policyId][ruleIds[j]].set) {
+                    rules[i][j] = lib._getRuleStorage().ruleStorageSets[policyId][ruleIds[j]].rule;
+                }
+            }
+        }
+        return rules;
+    }
+
+    /**
+     * @notice Deletes a rule from storage.
+     * @param policyId The ID of the policy the rule belongs to.
+     * @param ruleId The ID of the rule to delete.
+     */
+    function deleteRule(uint256 policyId, uint256 ruleId) public policyAdminOnly(policyId, msg.sender) {
+        StorageLib._notCemented(policyId);
+        delete lib._getRuleStorage().ruleStorageSets[policyId][ruleId];
+        emit RuleDeleted(policyId, ruleId); 
+    }
+
+    /**
+     * @notice Retrieves a rule from storage.
+     * @param policyId The ID of the policy the rule belongs to.
+     * @param ruleId The ID of the rule to retrieve.
+     * @return ruleStorageSets The rule data.
+     */
+    function getRule(uint256 policyId, uint256 ruleId) public view returns (RuleStorageSet memory) {
+        // Load the rule data from storage
+        return lib._getRuleStorage().ruleStorageSets[policyId][ruleId];
     }
 
     /**
@@ -50,76 +115,10 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         // TODO: Add validations for rule
         
         // Validate that the policy exists
-        if(!lib.getPolicyStorage().policyStorageSets[_policyId].set) revert ("Invalid PolicyId");
+        if(!lib._getPolicyStorage().policyStorageSets[_policyId].set) revert ("Invalid PolicyId");
 
         _data.ruleStorageSets[_policyId][_ruleId].set = true;
         _data.ruleStorageSets[_policyId][_ruleId].rule = _rule;
         return _ruleId;
     }
-
-    /**
-     * @notice Updates a rule in storage.
-     * @dev Modifies an existing rule in the specified policy. Only accessible by policy admins.
-     * @param _policyId ID of the policy the rule belongs to.
-     * @param _ruleId The ID of the rule to update.
-     * @param _rule The updated rule data.
-     * @return ruleId The updated rule ID.
-     */
-    function updateRule(
-        uint256 _policyId,
-        uint256 _ruleId,
-        Rule calldata _rule
-    ) external policyAdminOnly(_policyId, msg.sender) returns (uint256) {
-        StorageLib.notCemented(_policyId);
-        // Load the rule data from storage
-        RuleStorage storage data = lib.getRuleStorage();
-        _storeRule(data, _policyId, _ruleId, _rule);
-        emit RuleUpdated(_policyId, _ruleId);
-        return _ruleId;
-    }
-
-    /**
-     * @notice Retrieves a rule from storage.
-     * @param _policyId The ID of the policy the rule belongs to.
-     * @param _ruleId The ID of the rule to retrieve.
-     * @return ruleStorageSets The rule data.
-     */
-    function getRule(uint256 _policyId, uint256 _ruleId) public view returns (RuleStorageSet memory) {
-        // Load the rule data from storage
-        return lib.getRuleStorage().ruleStorageSets[_policyId][_ruleId];
-    }
-
-    /**
-     * @notice Deletes a rule from storage.
-     * @param _policyId The ID of the policy the rule belongs to.
-     * @param _ruleId The ID of the rule to delete.
-     */
-    function deleteRule(uint256 _policyId, uint256 _ruleId) public policyAdminOnly(_policyId, msg.sender) {
-        StorageLib.notCemented(_policyId);
-        delete lib.getRuleStorage().ruleStorageSets[_policyId][_ruleId];
-        emit RuleDeleted(_policyId, _ruleId); 
-    }
-
-    /**
-     * @notice Retrieves all rules associated with a specific policy.
-     * @param _policyId The ID of the policy.
-     * @return rules A two-dimensional array of rules grouped by calling functions.
-     */
-    function getAllRules(uint256 _policyId) external view returns (Rule[][] memory) {
-        // Load the policy data from storage
-        Policy storage data = lib.getPolicyStorage().policyStorageSets[_policyId].policy;
-        bytes4[] memory callingFunctions = data.callingFunctions;
-        Rule[][] memory rules = new Rule[][](callingFunctions.length);
-        for (uint256 i = 0; i < callingFunctions.length; i++) {
-            uint256[] memory ruleIds = data.callingFunctionsToRuleIds[callingFunctions[i]];
-            rules[i] = new Rule[](ruleIds.length);
-            for (uint256 j = 0; j < ruleIds.length; j++) {
-                if (lib.getRuleStorage().ruleStorageSets[_policyId][ruleIds[j]].set) {
-                    rules[i][j] = lib.getRuleStorage().ruleStorageSets[_policyId][ruleIds[j]].rule;
-                }
-            }
-        }
-        return rules;
-    }
-
 }

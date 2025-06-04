@@ -32,7 +32,7 @@ contract DeployRulesDiamond is DiamondMine {
         vm.startBroadcast(privateKey);
 
         // Deploy the RulesEngineDiamond contract
-        RulesEngineDiamond diamond = _createRulesEngineDiamond(owner);
+        RulesEngineDiamond diamond = createRulesEngineDiamond(owner);
         string memory diamondAddress = vm.toString(address(diamond));
         setENVAddress("DIAMOND_ADDRESS", diamondAddress);
 
