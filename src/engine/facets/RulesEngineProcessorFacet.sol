@@ -17,12 +17,20 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
     // Rule Evaluation Functions
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
+    mapping(address callingContract => uint256 policyIdCounter) public policyIdCounter;
     mapping(address callingContract => uint256[] policyIds) public callingContractToPolicyIds;
-    mapping(uint256 policyId => address policyContract) public policyContractToPolicyId;
+    mapping(address callingContract => mapping(uint256 policyId => address policyContract)) public policyContractToPolicyId;
+    mapping(address callingContract => mapping(uint256 policyId => Trackers[])) public trackerStorage;
 
     function writePolicyContract(address callingContract, Policy memory policy) external {
-        uint256 length = callingContractToPolicyIds[callingContract].push(policy.policyId);
-        policyContractToPolicyId[length] = SSTORE2.write(abi.encode(policy));
+        uint256 counter = policyIdCounter[callingContract]++;
+        callingContractToPolicyIds[callingContract].push(counter);
+        policy.policyId = counter;
+        policyContractToPolicyId[callingContract][counter] = SSTORE2.write(abi.encode(policy));
+        policyIdCounter[callingContract] = counter;
+        for (uint256 i = 0; i < policy.trackers.length; i++) {
+            trackerStorage[callingContract][counter].push(policy.trackers[i]);
+        }
     }
     /**
      * @notice Evaluates the conditions associated with all applicable rules and returns the result.
@@ -35,8 +43,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     function checkPolicies(address contractAddress, bytes calldata arguments) public returns (uint256 retVal) {  
         retVal = 1; 
         // Load the calling function data from storage
-        PolicyAssociationS storage data = lib.getPolicyAssociationStorage();
-        uint256[] memory policyIds = data.contractPolicyIdMap[contractAddress];
+        //Policy storage data = abi.decode(SSTORE2.read(policyContractToPolicyId[policyId]), (Policy));
+        uint256[] memory policyIds = callingContractToPolicyIds[contractAddress];
         // loop through all the active policies
         for(uint256 policyIdx = 0; policyIdx < policyIds.length; policyIdx++) {
             if(!_checkPolicy(policyIds[policyIdx], contractAddress, arguments)) {
@@ -55,81 +63,77 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     function _checkPolicy(uint256 _policyId, address _contractAddress, bytes calldata arguments) internal returns (bool retVal) {
         _contractAddress; // added to remove wanring. TODO remove this once msg.sender testing is complete 
         // Load the policy data from storage   
-        PolicyStorageSet storage policyStorageSet = lib.getPolicyStorage().policyStorageSets[_policyId];
-        mapping(uint256 ruleId => RuleStorageSet) storage ruleData = lib.getRuleStorage().ruleStorageSets[_policyId];
-
+        Policy memory policy = abi.decode(SSTORE2.read(policyContractToPolicyId[_contractAddress][_policyId]), (Policy));
         // Retrieve placeHolder[] for specific rule to be evaluated and translate function signature argument array 
         // to rule specific argument array
         // note that arguments is being sliced, first 4 bytes are the function signature being passed (:4) and the rest (4:) 
         // are all the arguments associated for the rule to be invoked. This saves on further calculations so that we don't need to factor in the signature.
-        retVal = _evaluateRulesAndExecuteEffects(ruleData ,_policyId, _loadApplicableRules(ruleData, policyStorageSet.policy, bytes4(arguments[:4])), arguments[4:]);
+        retVal = _evaluateRulesAndExecuteEffects(policy, /*_loadApplicableRules(ruleData, policyStorageSet.policy, bytes4(arguments[:4])),*/ arguments[4:]);
     }
 
-    /**
-     * @notice Loads applicable rules for a given calling function.
-     * @param ruleData The mapping of rule IDs to rule storage sets.
-     * @param policy The policy structure containing the rules.
-     * @param callingFunction The function signature to match rules against.
-     * @return An array of applicable rule IDs.
-     */
-    function _loadApplicableRules(mapping(uint256 ruleId => RuleStorageSet) storage ruleData, Policy storage policy, bytes4 callingFunction) internal view returns(uint256[] memory){
-        // Load the applicable rule data from storage
-        uint256[] memory applicableRules = new uint256[](policy.callingFunctionsToRuleIds[callingFunction].length);
-        // Load the calling function data from storage
-        uint256[] storage storagePointer = policy.callingFunctionsToRuleIds[callingFunction];
-        for(uint256 i = 0; i < applicableRules.length; i++) {
-            if(ruleData[storagePointer[i]].set) {
-                applicableRules[i] = storagePointer[i];
-            }
-        }
-        return applicableRules;
-    }
+    // /**
+    //  * @notice Loads applicable rules for a given calling function.
+    //  * @param ruleData The mapping of rule IDs to rule storage sets.
+    //  * @param policy The policy structure containing the rules.
+    //  * @param callingFunction The function signature to match rules against.
+    //  * @return An array of applicable rule IDs.
+    //  */
+    // function _loadApplicableRules(mapping(uint256 ruleId => RuleStorageSet) storage ruleData, Policy storage policy, bytes4 callingFunction) internal view returns(uint256[] memory){
+    //     // Load the applicable rule data from storage
+    //     uint256[] memory applicableRules = new uint256[](policy.callingFunctionsToRuleIds[callingFunction].length);
+    //     // Load the calling function data from storage
+    //     uint256[] storage storagePointer = policy.callingFunctionsToRuleIds[callingFunction];
+    //     for(uint256 i = 0; i < applicableRules.length; i++) {
+    //         if(ruleData[storagePointer[i]].set) {
+    //             applicableRules[i] = storagePointer[i];
+    //         }
+    //     }
+    //     return applicableRules;
+    // }
     
     /**
      * @notice Evaluates rules and executes their effects based on the evaluation results.
-     * @param ruleData The mapping of rule IDs to rule storage sets.
-     * @param _policyId The ID of the policy being evaluated.
-     * @param applicableRules An array of applicable rule IDs.
+     * @param policy The policy structure containing the rules.
      * @param callingFunctionArgs The arguments for the calling function.
      * @return retVal True if all rules pass, false otherwise.
      */
-    function _evaluateRulesAndExecuteEffects(mapping(uint256 ruleId => RuleStorageSet) storage ruleData, uint256 _policyId, uint256[] memory applicableRules, bytes calldata callingFunctionArgs) internal returns (bool retVal) {
+    function _evaluateRulesAndExecuteEffects(Policy memory policy, bytes calldata callingFunctionArgs) internal returns (bool retVal) {
         retVal = true;
-        uint256 ruleCount = applicableRules.length;
+        uint256 ruleCount = policy.rules.length;
         for(uint256 i = 0; i < ruleCount; i++) { 
-            Rule storage rule = ruleData[applicableRules[i]].rule;
-            if(!_evaluateIndividualRule(rule, _policyId, callingFunctionArgs)) {
+            Rule memory rule = policy.rules[i];
+            if(!_evaluateIndividualRule(rule, policy, callingFunctionArgs)) {
                 retVal = false;
-                _doEffects(rule, _policyId, rule.negEffects, callingFunctionArgs);
+                _doEffects(rule, policy, rule.negEffects, callingFunctionArgs);
             } else{
-                _doEffects(rule, _policyId, rule.posEffects, callingFunctionArgs);
+                _doEffects(rule, policy, rule.posEffects, callingFunctionArgs);
             }
         }
     }
 
     /**
      * @dev evaluates an individual rules condition(s)
-     * @param _policyId Policy id being evaluated.
      * @param rule the rule structure containing the instruction set, with placeholders, to execute
+     * @param policy the policy structure containing the rules.
      * @param callingFunctionArgs the values to replace the placeholders in the instruction set with.
      * @return response the result of the rule condition evaluation 
      */
-    function _evaluateIndividualRule(Rule storage rule, uint256 _policyId, bytes calldata callingFunctionArgs) internal returns (bool response) {
-        (bytes[] memory ruleArgs, Placeholder[] memory placeholders) = _buildArguments(rule, _policyId, callingFunctionArgs, false);
-        response = _run(rule.instructionSet, placeholders, _policyId, ruleArgs);
+    function _evaluateIndividualRule(Rule memory rule, Policy memory policy, bytes calldata callingFunctionArgs) internal returns (bool response) {
+        (bytes[] memory ruleArgs, Placeholder[] memory placeholders) = _buildArguments(rule, policy, callingFunctionArgs, false);
+        response = _run(rule.instructionSet, placeholders, policy, ruleArgs);
     }
 
     /**
      * @dev Constructs the arguments required for building the rule's place holders.
-     * @param rule The storage reference to the Rule struct containing the rule's details.
-     * @param _policyId The unique identifier of the policy associated with the rule.
+     * @param rule the rule structure containing the rule's details.
+     * @param policy the policy structure containing the policy id
      * @param callingFunctionArgs The calldata containing the arguments for the calling function.
      * @param effect A boolean indicating whether the rule has an effect or not.
      * @return A tuple containing:
      *         - An array of bytes representing the constructed arguments.
      *         - An array of Placeholder structs used for argument substitution.
      */
-    function _buildArguments(Rule storage rule, uint256 _policyId, bytes calldata callingFunctionArgs, bool effect) internal returns (bytes[] memory, Placeholder[] memory) {
+    function _buildArguments(Rule memory rule, Policy memory policy, bytes calldata callingFunctionArgs, bool effect) internal returns (bytes[] memory, Placeholder[] memory) {
         Placeholder[] memory placeHolders;
         if(effect) {
             placeHolders = rule.effectPlaceHolders;
@@ -142,13 +146,13 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
             Placeholder memory placeholder = placeHolders[placeholderIndex];
             if(placeholder.foreignCall) {
-                    ForeignCallReturnValue memory retVal = _evaluateForeignCalls(_policyId, callingFunctionArgs, placeholder.typeSpecificIndex, retVals);
+                    ForeignCallReturnValue memory retVal = _evaluateForeignCalls(policy, callingFunctionArgs, placeholder.typeSpecificIndex, retVals);
                     // Set the placeholders value and type based on the value returned by the foreign call
                     retVals[placeholderIndex] = retVal.value;
                     placeHolders[placeholderIndex].pType = retVal.pType;
             } else if (placeholder.trackerValue) {
                 // Load the Tracker data from storage
-                Trackers memory tracker = lib.getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex];
+                Trackers memory tracker = policy.trackers[placeholder.typeSpecificIndex];
                 retVals[placeholderIndex] = tracker.trackerValue;
             } else {
                 // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
@@ -175,11 +179,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @dev Internal function to decode the arguments and do the comparisons.
      * @param prog An array of uint256 representing the program to be executed.
      * @param placeHolders An array of Placeholder structs used within the program.
-     * @param _policyId The ID of the policy associated with the program execution.
+     * @param policy the policy structure containing the policy id
      * @param arguments An array of bytes containing additional arguments for the program.
      * @return ans A boolean indicating the result of the program execution.
      */
-    function _run(uint256[] memory prog, Placeholder[] memory placeHolders, uint256 _policyId, bytes[] memory arguments) internal returns (bool ans) {
+    function _run(uint256[] memory prog, Placeholder[] memory placeHolders, Policy memory policy, bytes[] memory arguments) internal returns (bool ans) {
         uint256[90] memory mem;
         uint256 idx = 0;
         uint256 opi = 0;
@@ -217,9 +221,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 // If the Tracker Type == Place Holder, pull the data from the place holder, otherwise, pull it from Memory
                 TT tt = TT(prog[idx+3]);
                 if (tt == TT.MEMORY){
-                    _updateTrackerValue(_policyId, prog[idx + 1], mem[prog[idx+2]]);
+                    _updateTrackerValue(policy, prog[idx + 1], mem[prog[idx+2]]);
                 } else {
-                    _updateTrackerValue(_policyId, prog[idx + 1], arguments[prog[idx+2]]);
+                    _updateTrackerValue(policy, prog[idx + 1], arguments[prog[idx+2]]);
                 }
                 idx += 4;
             } else if (op == LC.NUM) { v = prog[idx+1]; idx += 2; }
@@ -246,13 +250,13 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
 
     /**
      * @dev This function updates the tracker value with the information provided
-     * @param _policyId Policy id being evaluated.
+     * @param policy the policy structure containing the policy id
      * @param _trackerId ID of the tracker to update.
      * @param _trackerValue Value to update within the tracker
      */
-    function _updateTrackerValue(uint256 _policyId, uint256 _trackerId, uint256 _trackerValue) internal{
+    function _updateTrackerValue(Policy memory policy, uint256 _trackerId, uint256 _trackerValue) internal{
         // retrieve the tracker
-        Trackers storage trk = lib.getTrackerStorage().trackers[_policyId][_trackerId];
+        Trackers memory trk = policy.trackers[_trackerId];
         if(trk.pType == PT.UINT) {
             trk.trackerValue = abi.encode(_trackerValue);
         } else if(trk.pType == PT.ADDR) {
@@ -261,19 +265,21 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             trk.trackerValue = abi.encode(ProcessorLib._ui2bool(_trackerValue));
         } else if(trk.pType == PT.BYTES) {
             trk.trackerValue = ProcessorLib._ui2bytes(_trackerValue);
-        } 
+        }
+        policy.trackers[_trackerId] = trk;
     }
 
     /**
      * @dev Internal function to update the value of a tracker associated with a specific policy.
-     * @param _policyId The ID of the policy to which the tracker belongs.
+     * @param policy the policy structure containing the policy id
      * @param _trackerId The ID of the tracker whose value is being updated.
      * @param _trackerValue The new value to be assigned to the tracker, encoded as bytes.
      */
-    function _updateTrackerValue(uint256 _policyId, uint256 _trackerId, bytes memory _trackerValue) internal{
+    function _updateTrackerValue(Policy memory policy, uint256 _trackerId, bytes memory _trackerValue) internal{
         // retrieve the tracker
-        Trackers storage trk = lib.getTrackerStorage().trackers[_policyId][_trackerId];
+        Trackers memory trk = policy.trackers[_trackerId];
         trk.trackerValue = _trackerValue;
+        policy.trackers[_trackerId] = trk;
     }
 
 
@@ -283,20 +289,20 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @dev This function processes and evaluates calls to external contracts or systems
      *      as part of the rules engine's logic. Ensure that the necessary validations
      *      and security checks are in place when interacting with foreign calls.
-     * @param _policyId Id of the policy.
+     * @param policy the policy structure containing the policy id
      * @param callingFunctionArgs representation of the calling function arguments
      * @param foreignCallIndex Index of the foreign call.
      * @param retVals array of return values from previous foreign calls, trackers, etc.
      * @return returnValue The output of the foreign call.
      */
     function _evaluateForeignCalls(
-        uint256 _policyId, 
+        Policy memory policy, 
         bytes calldata callingFunctionArgs, 
         uint256 foreignCallIndex,
         bytes[] memory retVals
     ) public returns(ForeignCallReturnValue memory returnValue) {
         // Load the Foreign Call data from storage
-        ForeignCall memory foreignCall = lib.getForeignCallStorage().foreignCalls[_policyId][foreignCallIndex];
+        ForeignCall memory foreignCall = policy.foreignCalls[foreignCallIndex];
         if (foreignCall.set) {
             return evaluateForeignCallForRule(foreignCall, callingFunctionArgs, retVals);
         }
@@ -403,11 +409,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     /**
      * @dev Internal function to process the effects of a rule.
      * @param rule The rule being processed, stored in the contract's storage.
-     * @param _policyId The ID of the policy associated with the rule.
+     * @param policy the policy structure containing the policy id
      * @param _effects An array of effects to be applied as part of the rule execution.
      * @param callingFunctionArgs Encoded calldata containing arguments for the calling function.
      */
-    function _doEffects(Rule storage rule, uint256 _policyId, Effect[] memory _effects, bytes calldata callingFunctionArgs) internal {
+    function _doEffects(Rule memory rule, Policy memory policy, Effect[] memory _effects, bytes calldata callingFunctionArgs) internal {
 
         // Load the Effect data from storage
         for(uint256 i = 0; i < _effects.length; i++) {
@@ -416,9 +422,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 if (effect.effectType == ET.REVERT) { 
                     _doRevert(effect.errorMessage);
                 } else if (effect.effectType == ET.EVENT) {
-                    _buildEvent(rule, _effects[i].dynamicParam, _policyId, _effects[i].text, _effects[i], callingFunctionArgs);
+                    _buildEvent(rule, _effects[i].dynamicParam, policy, _effects[i].text, _effects[i], callingFunctionArgs);
                 } else {
-                    _evaluateExpression(rule, _policyId, callingFunctionArgs, effect.instructionSet);
+                    _evaluateExpression(rule, policy, callingFunctionArgs, effect.instructionSet);
                 }
             }
         }
@@ -428,14 +434,14 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @dev Define event to be fired 
      * @param rule the rule struct event is associated to 
      * @param isDynamicParam static or dynamic event parameters 
-     * @param _policyId policy Id 
+     * @param policy the policy structure containing the policy id
      * @param _message Event Message String 
      * @param effectStruct effect struct 
      * @param callingFunctionArgs calling function arguments 
      */
-    function _buildEvent(Rule storage rule,
+    function _buildEvent(Rule memory rule,
         bool isDynamicParam, 
-        uint256 _policyId, 
+        Policy memory policy, 
         bytes32 _message, 
         Effect memory effectStruct, 
         bytes calldata callingFunctionArgs
@@ -443,65 +449,65 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         // determine if we need to dynamically build event key 
         if (isDynamicParam){
             // fire event by param type based on return value 
-            _fireDynamicEvent(rule, _policyId, _message, callingFunctionArgs);
+            _fireDynamicEvent(rule, policy, _message, callingFunctionArgs);
         } else {
-            _fireEvent(_policyId, _message, effectStruct);
+            _fireEvent(policy, _message, effectStruct);
         }
     }
 
     /**
      * @dev Fire dynamic Event  
      * @param rule the rule struct event is associated to 
-     * @param _policyId policy Id 
+     * @param policy the policy structure containing the policy id
      * @param _message Event Message String 
      * @param callingFunctionArgs calling function arguments 
      */
-    function _fireDynamicEvent(Rule storage rule, uint256 _policyId, bytes32 _message, bytes calldata callingFunctionArgs) internal {
+    function _fireDynamicEvent(Rule memory rule, Policy memory policy, bytes32 _message, bytes calldata callingFunctionArgs) internal {
         // Build the effect arguments struct for event parameters:  
-        (bytes[] memory effectArguments, Placeholder[] memory placeholders) = _buildArguments(rule, _policyId, callingFunctionArgs, true);
+        (bytes[] memory effectArguments, Placeholder[] memory placeholders) = _buildArguments(rule, policy, callingFunctionArgs, true);
         for(uint256 i = 0; i < effectArguments.length; i++) { 
             // loop through PT types and set eventParam 
             if (placeholders[i].pType == PT.UINT) {
                 uint256 uintParam = abi.decode(effectArguments[i], (uint)); 
-                emit RulesEngineEvent(_policyId, _message, uintParam);
+                emit RulesEngineEvent(policy.policyId, _message, uintParam);
             } else if (placeholders[i].pType == PT.ADDR) {
                 address addrParam = abi.decode(effectArguments[i], (address));
-                emit RulesEngineEvent(_policyId, _message, addrParam);
+                emit RulesEngineEvent(policy.policyId, _message, addrParam);
             } else if (placeholders[i].pType == PT.BOOL) {
                 bool boolParam = abi.decode(effectArguments[i], (bool));
-                emit RulesEngineEvent(_policyId, _message, boolParam);
+                emit RulesEngineEvent(policy.policyId, _message, boolParam);
             } else if (placeholders[i].pType == PT.STR) {
                 string memory textParam = abi.decode(effectArguments[i], (string));
-                emit RulesEngineEvent(_policyId, _message, textParam);
+                emit RulesEngineEvent(policy.policyId, _message, textParam);
             } else if (placeholders[i].pType == PT.BYTES) {
                 bytes32 bytesParam = abi.decode(effectArguments[i], (bytes32));
-                emit RulesEngineEvent(_policyId, _message, bytesParam);
+                emit RulesEngineEvent(policy.policyId, _message, bytesParam);
             }
         }
     }
 
     /**
      * @dev Internal function to trigger an event based on the provided policy ID, message, and effect structure.
-     * @param _policyId The unique identifier of the policy associated with the event.
+     * @param policy the policy structure containing the policy id
      * @param _message A bytes32 message that provides context or details about the event.
      * @param effectStruct A struct containing the effect data to be processed during the event.
      */
-    function _fireEvent(uint256 _policyId, bytes32 _message, Effect memory effectStruct) internal { 
+    function _fireEvent(Policy memory policy, bytes32 _message, Effect memory effectStruct) internal { 
         if (effectStruct.pType == PT.UINT) {
             uint256 uintParam = abi.decode(effectStruct.param, (uint));
-            emit RulesEngineEvent(_policyId, _message, uintParam);
+            emit RulesEngineEvent(policy.policyId, _message, uintParam);
         } else if (effectStruct.pType == PT.ADDR) {
             address addrParam = abi.decode(effectStruct.param, (address));
-            emit RulesEngineEvent(_policyId, _message, addrParam);
+            emit RulesEngineEvent(policy.policyId, _message, addrParam);
         } else if (effectStruct.pType == PT.BOOL) {
             bool boolParam = abi.decode(effectStruct.param, (bool));
-            emit RulesEngineEvent(_policyId, _message, boolParam);
+            emit RulesEngineEvent(policy.policyId, _message, boolParam);
         } else if (effectStruct.pType == PT.STR) {
             string memory textParam = abi.decode(effectStruct.param, (string));
-            emit RulesEngineEvent(_policyId, _message, textParam);
+            emit RulesEngineEvent(policy.policyId, _message, textParam);
         } else if (effectStruct.pType == PT.BYTES) {
             bytes32 bytesParam = abi.decode(effectStruct.param, (bytes32));
-            emit RulesEngineEvent(_policyId, _message, bytesParam);
+            emit RulesEngineEvent(policy.policyId, _message, bytesParam);
         }
     }
 
@@ -516,14 +522,14 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     /**
      * @dev Evaluate an effect expression
      * @param rule the rule structure containing the instruction set, with placeholders, to execute
-     * @param _policyId the policy id
+     * @param policy the policy structure containing the policy id
      * @param callingFunctionArgs arguments of the calling function
      * @param instructionSet instruction set 
      */
-    function _evaluateExpression(Rule storage rule, uint256 _policyId, bytes calldata callingFunctionArgs, uint256[] memory instructionSet) internal {
-        (bytes[] memory effectArguments, Placeholder[] memory placeholders) = _buildArguments(rule, _policyId, callingFunctionArgs, true);
+    function _evaluateExpression(Rule memory rule, Policy memory policy, bytes calldata callingFunctionArgs, uint256[] memory instructionSet) internal {
+        (bytes[] memory effectArguments, Placeholder[] memory placeholders) = _buildArguments(rule, policy, callingFunctionArgs, true);
         if(instructionSet.length > 1) {
-            _run(instructionSet, placeholders, _policyId, effectArguments);
+            _run(instructionSet, placeholders, policy, effectArguments);
         }
     }
 

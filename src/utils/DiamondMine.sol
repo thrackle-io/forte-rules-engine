@@ -103,14 +103,14 @@ contract DiamondMine is Script {
             })
         );
 
-        // Data
-        _ruleProcessorFacetCuts.push(
-            FacetCut({
-                facetAddress: address(new RulesEngineRuleFacet()),
-                action: FacetCutAction.Add,
-                functionSelectors: _createSelectorArray("RulesEngineRuleFacet")
-            })
-        );
+        // // Data
+        // _ruleProcessorFacetCuts.push(
+        //     FacetCut({
+        //         facetAddress: address(new RulesEngineRuleFacet()),
+        //         action: FacetCutAction.Add,
+        //         functionSelectors: _createSelectorArray("RulesEngineRuleFacet")
+        //     })
+        // );
 
         /// Build the diamond
         // Deploy the diamond.

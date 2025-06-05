@@ -90,7 +90,7 @@ contract RulesEngineCommon is DiamondMine, Test {
     address newUserContractAddress;
     address userContractExtraParamAddress;
 
-    //test modifiers 
+    // //test modifiers 
     modifier ifDeploymentTestsEnabled() {
         if (testDeployments) {
             _;
@@ -107,809 +107,809 @@ contract RulesEngineCommon is DiamondMine, Test {
         _;
     }
 
-    /// Set up functions
-    function setupRuleWithoutForeignCall()
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-    {
-        // Initial setup for what we'll need later
-        uint256[] memory policyIds = new uint256[](1);
-        // blank slate policy
-        policyIds[0] = _createBlankPolicy();
-        // Add the calling function to the policy
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        _addCallingFunctionToPolicy(policyIds[0]);
-        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-        // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
-        // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet(4);
-        // Build the calling function argument placeholder
-        rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+    // /// Set up functions
+    // function setupRuleWithoutForeignCall()
+    //     public
+    //     ifDeploymentTestsEnabled
+    //     endWithStopPrank
+    // {
+    //     // Initial setup for what we'll need later
+    //     uint256[] memory policyIds = new uint256[](1);
+    //     // blank slate policy
+    //     policyIds[0] = _createBlankPolicy();
+    //     // Add the calling function to the policy
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
+    //     _addCallingFunctionToPolicy(policyIds[0]);
+    //     // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule;
+    //     // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
+    //     // Build the instruction set for the rule (including placeholders)
+    //     rule.instructionSet = _createInstructionSet(4);
+    //     // Build the calling function argument placeholder
+    //     rule.placeHolders = new Placeholder[](1);
+    //     rule.placeHolders[0].pType = PT.UINT;
+    //     rule.placeHolders[0].typeSpecificIndex = 1;
+    //     // Save the rule
+    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0] = ruleId;
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);
         
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        // Apply the policy 
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     // Apply the policy 
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
         
-    }
+    // }
 
-    function setUpRuleSimple()
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        returns (uint256 policyId, uint256 ruleId)
-    {
-        // Initial setup for what we'll need later
-        uint256[] memory policyIds = new uint256[](1);
-        // blank slate policy
-        policyIds[0] = _createBlankPolicy();
-        // Add the calling function to the policy
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        _addCallingFunctionToPolicy(policyIds[0]);
-        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-        // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
-        // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet(4);
-        // Build the calling function argument placeholder
-        rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-        // Save the rule
-        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+    // function setUpRuleSimple()
+    //     public
+    //     ifDeploymentTestsEnabled
+    //     endWithStopPrank
+    //     returns (uint256 policyId, uint256 ruleId)
+    // {
+    //     // Initial setup for what we'll need later
+    //     uint256[] memory policyIds = new uint256[](1);
+    //     // blank slate policy
+    //     policyIds[0] = _createBlankPolicy();
+    //     // Add the calling function to the policy
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
+    //     _addCallingFunctionToPolicy(policyIds[0]);
+    //     // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule;
+    //     // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
+    //     // Build the instruction set for the rule (including placeholders)
+    //     rule.instructionSet = _createInstructionSet(4);
+    //     // Build the calling function argument placeholder
+    //     rule.placeHolders = new Placeholder[](1);
+    //     rule.placeHolders[0].pType = PT.UINT;
+    //     rule.placeHolders[0].typeSpecificIndex = 1;
+    //     // Save the rule
+    //     ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0] = ruleId;
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);
         
-        // Apply the policy 
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-        return (policyIds[0], ruleId);
-    }
+    //     // Apply the policy 
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    //     return (policyIds[0], ruleId);
+    // }
 
-    function setUpRuleSimpleGTEQL()
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        returns (uint256 policyId, uint256 ruleId)
-    {
-        // Initial setup for what we'll need later
-        uint256[] memory policyIds = new uint256[](1);
-        // blank slate policy
-        policyIds[0] = _createBlankPolicy();
-        // Add the calling function  to the policy
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        _addCallingFunctionToPolicy(policyIds[0]);
-        // Rule: amount >= 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-        // Instruction set: LC.PLH, 0, LC.GTEQL, 4, LC.GT, 0, 1
-        // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet("GTEQL", 4, LC.GTEQL);
+    // function setUpRuleSimpleGTEQL()
+    //     public
+    //     ifDeploymentTestsEnabled
+    //     endWithStopPrank
+    //     returns (uint256 policyId, uint256 ruleId)
+    // {
+    //     // Initial setup for what we'll need later
+    //     uint256[] memory policyIds = new uint256[](1);
+    //     // blank slate policy
+    //     policyIds[0] = _createBlankPolicy();
+    //     // Add the calling function  to the policy
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
+    //     _addCallingFunctionToPolicy(policyIds[0]);
+    //     // Rule: amount >= 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule;
+    //     // Instruction set: LC.PLH, 0, LC.GTEQL, 4, LC.GT, 0, 1
+    //     // Build the instruction set for the rule (including placeholders)
+    //     rule.instructionSet = _createInstructionSet("GTEQL", 4, LC.GTEQL);
         
-        // Build the calling function argument placeholder
-        rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-        // Save the rule
-        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+    //     // Build the calling function argument placeholder
+    //     rule.placeHolders = new Placeholder[](1);
+    //     rule.placeHolders[0].pType = PT.UINT;
+    //     rule.placeHolders[0].typeSpecificIndex = 1;
+    //     // Save the rule
+    //     ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0] = ruleId;
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);
         
-        // Apply the policy 
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-        return (policyIds[0], ruleId);
-    }
+    //     // Apply the policy 
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    //     return (policyIds[0], ruleId);
+    // }
 
-    function setUpRuleSimpleLTEQL()
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        returns (uint256 policyId, uint256 ruleId)
-    {
-        // Initial setup for what we'll need later
-        uint256[] memory policyIds = new uint256[](1);
-        // blank slate policy
-        policyIds[0] = _createBlankPolicy();
-        // Add the calling function to the policy
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        _addCallingFunctionToPolicy(policyIds[0]);
-        // Rule: amount <= 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-        // Instruction set: LC.PLH, 0, LC.LTEQL, 4, LC.GT, 0, 1
-        // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet("LTEQL", 4, LC.LTEQL);
+    // function setUpRuleSimpleLTEQL()
+    //     public
+    //     ifDeploymentTestsEnabled
+    //     endWithStopPrank
+    //     returns (uint256 policyId, uint256 ruleId)
+    // {
+    //     // Initial setup for what we'll need later
+    //     uint256[] memory policyIds = new uint256[](1);
+    //     // blank slate policy
+    //     policyIds[0] = _createBlankPolicy();
+    //     // Add the calling function to the policy
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
+    //     _addCallingFunctionToPolicy(policyIds[0]);
+    //     // Rule: amount <= 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule;
+    //     // Instruction set: LC.PLH, 0, LC.LTEQL, 4, LC.GT, 0, 1
+    //     // Build the instruction set for the rule (including placeholders)
+    //     rule.instructionSet = _createInstructionSet("LTEQL", 4, LC.LTEQL);
         
-        // Build the calling function argument placeholder
-        rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-        // Save the rule
-        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+    //     // Build the calling function argument placeholder
+    //     rule.placeHolders = new Placeholder[](1);
+    //     rule.placeHolders[0].pType = PT.UINT;
+    //     rule.placeHolders[0].typeSpecificIndex = 1;
+    //     // Save the rule
+    //     ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0] = ruleId;
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);
         
-        // Apply the policy 
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    //     // Apply the policy 
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
 
         
 
-        return (policyIds[0], ruleId);
-    }
+    //     return (policyIds[0], ruleId);
+    // }
 
-    function setupRuleWithStringComparison()
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        returns (uint256 ruleId)
-    {
-        uint256[] memory policyIds = new uint256[](1);
-        // blank slate policy
-        policyIds[0] = _createBlankPolicy();
-        // Rule: info == "Bad Info" -> revert -> updateInfo(address _to, string info) returns (bool)"
-        Rule memory rule;
-        // Instruction set: LC.PLH, 0, LC.NUM, *uint256 representation of Bad Info*, LC.EQ, 0, 1
-        // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
-        rule.instructionSet[1] = 0;
-        rule.instructionSet[2] = uint(LC.NUM);
-        rule.instructionSet[3] = uint256(keccak256(abi.encode("Bad Info")));
-        rule.instructionSet[4] = uint(LC.EQ);
-        rule.instructionSet[5] = 0;
-        rule.instructionSet[6] = 1;
+    // function setupRuleWithStringComparison()
+    //     public
+    //     ifDeploymentTestsEnabled
+    //     endWithStopPrank
+    //     returns (uint256 ruleId)
+    // {
+    //     uint256[] memory policyIds = new uint256[](1);
+    //     // blank slate policy
+    //     policyIds[0] = _createBlankPolicy();
+    //     // Rule: info == "Bad Info" -> revert -> updateInfo(address _to, string info) returns (bool)"
+    //     Rule memory rule;
+    //     // Instruction set: LC.PLH, 0, LC.NUM, *uint256 representation of Bad Info*, LC.EQ, 0, 1
+    //     // Build the instruction set for the rule (including placeholders)
+    //     rule.instructionSet = new uint256[](7);
+    //     rule.instructionSet[0] = uint(LC.PLH);
+    //     rule.instructionSet[1] = 0;
+    //     rule.instructionSet[2] = uint(LC.NUM);
+    //     rule.instructionSet[3] = uint256(keccak256(abi.encode("Bad Info")));
+    //     rule.instructionSet[4] = uint(LC.EQ);
+    //     rule.instructionSet[5] = 0;
+    //     rule.instructionSet[6] = 1;
 
-        rule.rawData.argumentTypes = new PT[](1);
-        rule.rawData.dataValues = new bytes[](1);
-        rule.rawData.instructionSetIndex = new uint256[](1);
-        rule.rawData.argumentTypes[0] = PT.STR;
-        rule.rawData.dataValues[0] = abi.encode("Bad Info");
-        rule.rawData.instructionSetIndex[0] = 3;
+    //     rule.rawData.argumentTypes = new PT[](1);
+    //     rule.rawData.dataValues = new bytes[](1);
+    //     rule.rawData.instructionSetIndex = new uint256[](1);
+    //     rule.rawData.argumentTypes[0] = PT.STR;
+    //     rule.rawData.dataValues[0] = abi.encode("Bad Info");
+    //     rule.rawData.instructionSetIndex[0] = 3;
 
-        // Build the calling function argument placeholder
-        rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.STR;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-        // Save the rule
-        ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyIds[0], 0, rule);
+    //     // Build the calling function argument placeholder
+    //     rule.placeHolders = new Placeholder[](1);
+    //     rule.placeHolders[0].pType = PT.STR;
+    //     rule.placeHolders[0].typeSpecificIndex = 1;
+    //     // Save the rule
+    //     ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyIds[0], 0, rule);
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.STR;
-        // Save the calling function
-        uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
-            .createCallingFunction(
-                policyIds[0],
-                bytes4(keccak256(bytes(callingFunction2))),
-                pTypes,
-                callingFunction2,
-                ""
-            );
-        // Save the Policy
-        callingFunctions.push(bytes4(keccak256(bytes(callingFunction2))));
-        callingFunctionIds.push(callingFunctionId);
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0]= ruleId;
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.STR;
+    //     // Save the calling function
+    //     uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
+    //         .createCallingFunction(
+    //             policyIds[0],
+    //             bytes4(keccak256(bytes(callingFunction2))),
+    //             pTypes,
+    //             callingFunction2,
+    //             ""
+    //         );
+    //     // Save the Policy
+    //     callingFunctions.push(bytes4(keccak256(bytes(callingFunction2))));
+    //     callingFunctionIds.push(callingFunctionId);
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0]= ruleId;
         
-        RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[0], callingFunctions, callingFunctionIds, ruleIds, PolicyType.CLOSED_POLICY); 
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);       
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-
-        return ruleId;
-    }
-
-    function setupRuleWithAddressComparison()
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        returns (uint256 ruleId)
-    {
-        uint256[] memory policyIds = new uint256[](1);
-        // blank slate policy
-        policyIds[0] = _createBlankPolicy();
-        // Rule: _to == 0x1234567 -> revert -> updateInfo(address _to, string info) returns (bool)"
-        Rule memory rule;
-        // Instruction set: LC.PLH, 0, LC.NUM, *uint256 representation of 0x1234567o*, LC.EQ, 0, 1
-        // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
-        rule.instructionSet[1] = 0;
-        rule.instructionSet[2] = uint(LC.NUM);
-        rule.instructionSet[3] = uint256(uint160(address(0x1234567)));
-        rule.instructionSet[4] = uint(LC.EQ);
-        rule.instructionSet[5] = 0;
-        rule.instructionSet[6] = 1;
-
-        rule.rawData.argumentTypes = new PT[](1);
-        rule.rawData.dataValues = new bytes[](1);
-        rule.rawData.instructionSetIndex = new uint256[](1);
-        rule.rawData.argumentTypes[0] = PT.ADDR;
-        rule.rawData.dataValues[0] = abi.encode(0x1234567);
-        rule.rawData.instructionSetIndex[0] = 3;
-
-        // Build the calling function argument placeholder
-        rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.ADDR;
-        rule.placeHolders[0].typeSpecificIndex = 0;
-        // Save the rule
-        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.STR;
-        // Save the calling function
-        uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
-            .createCallingFunction(
-                policyIds[0],
-                bytes4(keccak256(bytes(callingFunction2))),
-                pTypes,
-                callingFunction2,
-                ""
-            );
-        // Save the Policy
-        callingFunctions.push(bytes4(keccak256(bytes(callingFunction2))));
-        callingFunctionIds.push(callingFunctionId);
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0]= ruleId;
-        vm.stopPrank();
-        vm.startPrank(policyAdmin);
-        RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[0], callingFunctions, callingFunctionIds, ruleIds, PolicyType.CLOSED_POLICY);    
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);    
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-
-        return ruleId;
-    }
-
-    function setupEffectWithTrackerUpdateUint()
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        resetsGlobalVariables
-        returns (uint256 ruleId)
-    {
-        uint256[] memory policyIds = new uint256[](1);
-
-        policyIds[0] = _createBlankPolicy();
-
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-
-        _addCallingFunctionToPolicy(policyIds[0]);
-
-        // Rule: 1 == 1 -> TRU:someTracker += FC:simpleCheck(amount) -> transfer(address _to, uint256 amount) returns (bool)
-
-        Rule memory rule;
-        rule.posEffects = new Effect[](1);
-        rule.posEffects[0] = effectId_expression2;
-        rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.NUM);
-        rule.instructionSet[1] = 1;
-        rule.instructionSet[2] = uint(LC.NUM);
-        rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.EQ);
-        rule.instructionSet[5] = 0;
-        rule.instructionSet[6] = 1;
-
-        rule.effectPlaceHolders = new Placeholder[](2);
-        rule.effectPlaceHolders[0].pType = PT.ADDR;
-        rule.effectPlaceHolders[0].typeSpecificIndex = 2;
-        rule.effectPlaceHolders[1].pType = PT.ADDR;
-        rule.effectPlaceHolders[1].trackerValue = true;
-        rule.effectPlaceHolders[1].typeSpecificIndex = 1;
-
-        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-
-        //build tracker
-        Trackers memory tracker;
-        /// build the members of the struct:
-        tracker.pType = PT.UINT;
-        tracker.trackerValue = abi.encode(2);
-
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");      
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 1;
-
-        ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
-        fc.parameterTypes = fcArgs;
-        fc.foreignCallAddress = address(testContract);
-        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.returnType = PT.UINT;
-        fc.foreignCallIndex = 0;
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
-
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-        fc;  //added to silence warnings during testing revamp 
-        return policyIds[0];
-    }
-
-    function setupEffectWithTrackerUpdate(uint256 _policyId, Trackers memory tracker)
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        resetsGlobalVariables
-        returns (uint256 ruleId)
-    {
-        uint256[] memory policyIds = new uint256[](1);
-
-        policyIds[0] = _policyId;
-
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-
-        _addCallingFunctionToPolicy(policyIds[0]);
-
-        // Rule: 1 == 1 -> TRU:someTracker += FC:simpleCheck(amount) -> transfer(address _to, uint256 amount) returns (bool)
-
-        Rule memory rule;
-        rule.posEffects = new Effect[](1);
-        rule.posEffects[0] = effectId_expression2;
-        rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.NUM);
-        rule.instructionSet[1] = 1;
-        rule.instructionSet[2] = uint(LC.NUM);
-        rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.EQ);
-        rule.instructionSet[5] = 0;
-        rule.instructionSet[6] = 1;
-
-        rule.effectPlaceHolders = new Placeholder[](2);
-        rule.effectPlaceHolders[0].pType = PT.UINT;
-        rule.effectPlaceHolders[0].foreignCall = true;
-        rule.effectPlaceHolders[0].typeSpecificIndex = 1;
-        rule.effectPlaceHolders[1].pType = PT.UINT;
-        rule.effectPlaceHolders[1].trackerValue = true;
-        rule.effectPlaceHolders[1].typeSpecificIndex = 1;
-
-
-        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");      
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 1;
-
-        ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
-        fc.parameterTypes = fcArgs;
-        fc.foreignCallAddress = address(testContract);
-        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.returnType = PT.UINT;
-        fc.foreignCallIndex = 0;
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
-
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-        fc;  //added to silence warnings during testing revamp 
-        return policyIds[0];
-    }
-
-    function setupRuleWithForeignCall(
-        uint256 _amount,
-        ET _effectType,
-        bool isPositive
-    ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256 policyId) {
-        uint256[] memory policyIds = new uint256[](1);
-
-        policyIds[0] = _createBlankPolicy();
-
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-
-        _addCallingFunctionToPolicy(policyIds[0]);
-
-        // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-
-        // Build the foreign call placeholder
-        rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].foreignCall = true;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-
-        // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet(_amount);
-
-        rule = _setUpEffect(rule, _effectType, isPositive);
-
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 1;
-        ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
-        fc.parameterTypes = fcArgs;
-        fc.foreignCallAddress = address(testContract);
-        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.returnType = PT.UINT;
-        fc.foreignCallIndex = 0;
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-
-
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0]= ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);       
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-
-        return policyIds[0];
-    }
-
-    // Same as setupRuleWithForeignCall except that it contains a foreign call that is referenced by another foreign call that is then squared by the foreign call and then checked to see if it's greater than the original value
-    function setupRuleWithForeignCallWithSquaredFCValues(
-        ET _effectType,
-        bool isPositive
-    ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256 policyId) {
-        uint256[] memory policyIds = new uint256[](1);
-
-        policyIds[0] = _createBlankPolicy();
-
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-
-        _addCallingFunctionToPolicy(policyIds[0]);
-
-        // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-        // Build the foreign call placeholder
-        rule.placeHolders = new Placeholder[](2);
-        rule.placeHolders[0].foreignCall = true;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-        rule.placeHolders[1].foreignCall = true;
-        rule.placeHolders[1].typeSpecificIndex = 2;
-
-        // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet(1, 0); // is placeholder 1 > placeholder 0?
-
-        rule = _setUpEffect(rule, _effectType, isPositive);
-
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 1;
-        ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
-        fc.parameterTypes = fcArgs;
-        fc.foreignCallAddress = address(testContract);
-        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.returnType = PT.UINT;
-        fc.foreignCallIndex = 0;
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
-
-        ForeignCall memory fc2;
-        int8[] memory typeSpecificIndices2 = new int8[](1);
-        typeSpecificIndices2[0] = -1;
-        fc2.typeSpecificIndices = typeSpecificIndices2;
-        fc2.parameterTypes = fcArgs;
-        fc2.foreignCallAddress = address(testContract);
-        fc2.signature = bytes4(keccak256(bytes("square(uint256)")));
-        fc2.returnType = PT.UINT;
-        fc2.foreignCallIndex = 0;
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc2, "square(uint256)");
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-
-
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0]= ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);       
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-
-        return policyIds[0];
-    }
-
-    // Same as setupRuleWithForeignCall except that it contais a tracker value that is then squared by the foreign call and then checked to see if it's greater than the tracker value
-    function setupRuleWithForeignCallSquaringReferencedTrackerVals(
-        uint256 _amount,
-        ET _effectType,
-        bool isPositive
-    ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256 policyId) {
-        uint256[] memory policyIds = new uint256[](1);
-
-        policyIds[0] = _createBlankPolicy();
-
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-
-        _addCallingFunctionToPolicy(policyIds[0]);
-
-        // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-
-        // Build the foreign call placeholder
-        rule.placeHolders = new Placeholder[](2);
-        rule.placeHolders[0].trackerValue = true;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-        rule.placeHolders[1].foreignCall = true;
-        rule.placeHolders[1].typeSpecificIndex = 1;
-
-        // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet(1, 0); // FC placeholder > tracker placeholder  
-
-        rule = _setUpEffect(rule, _effectType, isPositive);
-
-        Trackers memory tracker;
-
-        /// build the members of the struct:
-        tracker.pType = PT.UINT;
-        tracker.trackerValue = abi.encode(_amount);
-        // Add the tracker
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
+    //     RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[0], callingFunctions, callingFunctionIds, ruleIds, PolicyType.CLOSED_POLICY); 
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);       
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+
+    //     return ruleId;
+    // }
+
+    // function setupRuleWithAddressComparison()
+    //     public
+    //     ifDeploymentTestsEnabled
+    //     endWithStopPrank
+    //     returns (uint256 ruleId)
+    // {
+    //     uint256[] memory policyIds = new uint256[](1);
+    //     // blank slate policy
+    //     policyIds[0] = _createBlankPolicy();
+    //     // Rule: _to == 0x1234567 -> revert -> updateInfo(address _to, string info) returns (bool)"
+    //     Rule memory rule;
+    //     // Instruction set: LC.PLH, 0, LC.NUM, *uint256 representation of 0x1234567o*, LC.EQ, 0, 1
+    //     // Build the instruction set for the rule (including placeholders)
+    //     rule.instructionSet = new uint256[](7);
+    //     rule.instructionSet[0] = uint(LC.PLH);
+    //     rule.instructionSet[1] = 0;
+    //     rule.instructionSet[2] = uint(LC.NUM);
+    //     rule.instructionSet[3] = uint256(uint160(address(0x1234567)));
+    //     rule.instructionSet[4] = uint(LC.EQ);
+    //     rule.instructionSet[5] = 0;
+    //     rule.instructionSet[6] = 1;
+
+    //     rule.rawData.argumentTypes = new PT[](1);
+    //     rule.rawData.dataValues = new bytes[](1);
+    //     rule.rawData.instructionSetIndex = new uint256[](1);
+    //     rule.rawData.argumentTypes[0] = PT.ADDR;
+    //     rule.rawData.dataValues[0] = abi.encode(0x1234567);
+    //     rule.rawData.instructionSetIndex[0] = 3;
+
+    //     // Build the calling function argument placeholder
+    //     rule.placeHolders = new Placeholder[](1);
+    //     rule.placeHolders[0].pType = PT.ADDR;
+    //     rule.placeHolders[0].typeSpecificIndex = 0;
+    //     // Save the rule
+    //     ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.STR;
+    //     // Save the calling function
+    //     uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
+    //         .createCallingFunction(
+    //             policyIds[0],
+    //             bytes4(keccak256(bytes(callingFunction2))),
+    //             pTypes,
+    //             callingFunction2,
+    //             ""
+    //         );
+    //     // Save the Policy
+    //     callingFunctions.push(bytes4(keccak256(bytes(callingFunction2))));
+    //     callingFunctionIds.push(callingFunctionId);
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0]= ruleId;
+    //     vm.stopPrank();
+    //     vm.startPrank(policyAdmin);
+    //     RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[0], callingFunctions, callingFunctionIds, ruleIds, PolicyType.CLOSED_POLICY);    
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);    
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+
+    //     return ruleId;
+    // }
+
+    // function setupEffectWithTrackerUpdateUint()
+    //     public
+    //     ifDeploymentTestsEnabled
+    //     endWithStopPrank
+    //     resetsGlobalVariables
+    //     returns (uint256 ruleId)
+    // {
+    //     uint256[] memory policyIds = new uint256[](1);
+
+    //     policyIds[0] = _createBlankPolicy();
+
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
+
+    //     _addCallingFunctionToPolicy(policyIds[0]);
+
+    //     // Rule: 1 == 1 -> TRU:someTracker += FC:simpleCheck(amount) -> transfer(address _to, uint256 amount) returns (bool)
+
+    //     Rule memory rule;
+    //     rule.posEffects = new Effect[](1);
+    //     rule.posEffects[0] = effectId_expression2;
+    //     rule.instructionSet = new uint256[](7);
+    //     rule.instructionSet[0] = uint(LC.NUM);
+    //     rule.instructionSet[1] = 1;
+    //     rule.instructionSet[2] = uint(LC.NUM);
+    //     rule.instructionSet[3] = 1;
+    //     rule.instructionSet[4] = uint(LC.EQ);
+    //     rule.instructionSet[5] = 0;
+    //     rule.instructionSet[6] = 1;
+
+    //     rule.effectPlaceHolders = new Placeholder[](2);
+    //     rule.effectPlaceHolders[0].pType = PT.ADDR;
+    //     rule.effectPlaceHolders[0].typeSpecificIndex = 2;
+    //     rule.effectPlaceHolders[1].pType = PT.ADDR;
+    //     rule.effectPlaceHolders[1].trackerValue = true;
+    //     rule.effectPlaceHolders[1].typeSpecificIndex = 1;
+
+    //     ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+
+    //     //build tracker
+    //     Trackers memory tracker;
+    //     /// build the members of the struct:
+    //     tracker.pType = PT.UINT;
+    //     tracker.trackerValue = abi.encode(2);
+
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0] = ruleId;
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);
+
+    //     RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");      
+    //     PT[] memory fcArgs = new PT[](1);
+    //     fcArgs[0] = PT.UINT;
+    //     int8[] memory typeSpecificIndices = new int8[](1);
+    //     typeSpecificIndices[0] = 1;
+
+    //     ForeignCall memory fc;
+    //     fc.typeSpecificIndices = typeSpecificIndices;
+    //     fc.parameterTypes = fcArgs;
+    //     fc.foreignCallAddress = address(testContract);
+    //     fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+    //     fc.returnType = PT.UINT;
+    //     fc.foreignCallIndex = 0;
+    //     RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
+
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    //     fc;  //added to silence warnings during testing revamp 
+    //     return policyIds[0];
+    // }
+
+    // function setupEffectWithTrackerUpdate(uint256 _policyId, Trackers memory tracker)
+    //     public
+    //     ifDeploymentTestsEnabled
+    //     endWithStopPrank
+    //     resetsGlobalVariables
+    //     returns (uint256 ruleId)
+    // {
+    //     uint256[] memory policyIds = new uint256[](1);
+
+    //     policyIds[0] = _policyId;
+
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
+
+    //     _addCallingFunctionToPolicy(policyIds[0]);
+
+    //     // Rule: 1 == 1 -> TRU:someTracker += FC:simpleCheck(amount) -> transfer(address _to, uint256 amount) returns (bool)
+
+    //     Rule memory rule;
+    //     rule.posEffects = new Effect[](1);
+    //     rule.posEffects[0] = effectId_expression2;
+    //     rule.instructionSet = new uint256[](7);
+    //     rule.instructionSet[0] = uint(LC.NUM);
+    //     rule.instructionSet[1] = 1;
+    //     rule.instructionSet[2] = uint(LC.NUM);
+    //     rule.instructionSet[3] = 1;
+    //     rule.instructionSet[4] = uint(LC.EQ);
+    //     rule.instructionSet[5] = 0;
+    //     rule.instructionSet[6] = 1;
+
+    //     rule.effectPlaceHolders = new Placeholder[](2);
+    //     rule.effectPlaceHolders[0].pType = PT.UINT;
+    //     rule.effectPlaceHolders[0].foreignCall = true;
+    //     rule.effectPlaceHolders[0].typeSpecificIndex = 1;
+    //     rule.effectPlaceHolders[1].pType = PT.UINT;
+    //     rule.effectPlaceHolders[1].trackerValue = true;
+    //     rule.effectPlaceHolders[1].typeSpecificIndex = 1;
+
+
+    //     ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0] = ruleId;
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);
+
+    //     RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");      
+    //     PT[] memory fcArgs = new PT[](1);
+    //     fcArgs[0] = PT.UINT;
+    //     int8[] memory typeSpecificIndices = new int8[](1);
+    //     typeSpecificIndices[0] = 1;
+
+    //     ForeignCall memory fc;
+    //     fc.typeSpecificIndices = typeSpecificIndices;
+    //     fc.parameterTypes = fcArgs;
+    //     fc.foreignCallAddress = address(testContract);
+    //     fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+    //     fc.returnType = PT.UINT;
+    //     fc.foreignCallIndex = 0;
+    //     RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
+
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    //     fc;  //added to silence warnings during testing revamp 
+    //     return policyIds[0];
+    // }
+
+    // function setupRuleWithForeignCall(
+    //     uint256 _amount,
+    //     ET _effectType,
+    //     bool isPositive
+    // ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256 policyId) {
+    //     uint256[] memory policyIds = new uint256[](1);
+
+    //     policyIds[0] = _createBlankPolicy();
+
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
+
+    //     _addCallingFunctionToPolicy(policyIds[0]);
+
+    //     // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule;
+
+    //     // Build the foreign call placeholder
+    //     rule.placeHolders = new Placeholder[](1);
+    //     rule.placeHolders[0].foreignCall = true;
+    //     rule.placeHolders[0].typeSpecificIndex = 1;
+
+    //     // Build the instruction set for the rule (including placeholders)
+    //     rule.instructionSet = _createInstructionSet(_amount);
+
+    //     rule = _setUpEffect(rule, _effectType, isPositive);
+
+    //     PT[] memory fcArgs = new PT[](1);
+    //     fcArgs[0] = PT.UINT;
+    //     int8[] memory typeSpecificIndices = new int8[](1);
+    //     typeSpecificIndices[0] = 1;
+    //     ForeignCall memory fc;
+    //     fc.typeSpecificIndices = typeSpecificIndices;
+    //     fc.parameterTypes = fcArgs;
+    //     fc.foreignCallAddress = address(testContract);
+    //     fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+    //     fc.returnType = PT.UINT;
+    //     fc.foreignCallIndex = 0;
+    //     RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
+    //     // Save the rule
+    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+
+
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0]= ruleId;
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);       
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+
+    //     return policyIds[0];
+    // }
+
+    // // Same as setupRuleWithForeignCall except that it contains a foreign call that is referenced by another foreign call that is then squared by the foreign call and then checked to see if it's greater than the original value
+    // function setupRuleWithForeignCallWithSquaredFCValues(
+    //     ET _effectType,
+    //     bool isPositive
+    // ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256 policyId) {
+    //     uint256[] memory policyIds = new uint256[](1);
+
+    //     policyIds[0] = _createBlankPolicy();
+
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
+
+    //     _addCallingFunctionToPolicy(policyIds[0]);
+
+    //     // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule;
+    //     // Build the foreign call placeholder
+    //     rule.placeHolders = new Placeholder[](2);
+    //     rule.placeHolders[0].foreignCall = true;
+    //     rule.placeHolders[0].typeSpecificIndex = 1;
+    //     rule.placeHolders[1].foreignCall = true;
+    //     rule.placeHolders[1].typeSpecificIndex = 2;
+
+    //     // Build the instruction set for the rule (including placeholders)
+    //     rule.instructionSet = _createInstructionSet(1, 0); // is placeholder 1 > placeholder 0?
+
+    //     rule = _setUpEffect(rule, _effectType, isPositive);
+
+    //     PT[] memory fcArgs = new PT[](1);
+    //     fcArgs[0] = PT.UINT;
+    //     int8[] memory typeSpecificIndices = new int8[](1);
+    //     typeSpecificIndices[0] = 1;
+    //     ForeignCall memory fc;
+    //     fc.typeSpecificIndices = typeSpecificIndices;
+    //     fc.parameterTypes = fcArgs;
+    //     fc.foreignCallAddress = address(testContract);
+    //     fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+    //     fc.returnType = PT.UINT;
+    //     fc.foreignCallIndex = 0;
+    //     RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
+
+    //     ForeignCall memory fc2;
+    //     int8[] memory typeSpecificIndices2 = new int8[](1);
+    //     typeSpecificIndices2[0] = -1;
+    //     fc2.typeSpecificIndices = typeSpecificIndices2;
+    //     fc2.parameterTypes = fcArgs;
+    //     fc2.foreignCallAddress = address(testContract);
+    //     fc2.signature = bytes4(keccak256(bytes("square(uint256)")));
+    //     fc2.returnType = PT.UINT;
+    //     fc2.foreignCallIndex = 0;
+    //     RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc2, "square(uint256)");
+    //     // Save the rule
+    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+
+
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0]= ruleId;
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);       
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+
+    //     return policyIds[0];
+    // }
+
+    // // Same as setupRuleWithForeignCall except that it contais a tracker value that is then squared by the foreign call and then checked to see if it's greater than the tracker value
+    // function setupRuleWithForeignCallSquaringReferencedTrackerVals(
+    //     uint256 _amount,
+    //     ET _effectType,
+    //     bool isPositive
+    // ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256 policyId) {
+    //     uint256[] memory policyIds = new uint256[](1);
+
+    //     policyIds[0] = _createBlankPolicy();
+
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
+
+    //     _addCallingFunctionToPolicy(policyIds[0]);
+
+    //     // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule;
+
+    //     // Build the foreign call placeholder
+    //     rule.placeHolders = new Placeholder[](2);
+    //     rule.placeHolders[0].trackerValue = true;
+    //     rule.placeHolders[0].typeSpecificIndex = 1;
+    //     rule.placeHolders[1].foreignCall = true;
+    //     rule.placeHolders[1].typeSpecificIndex = 1;
+
+    //     // Build the instruction set for the rule (including placeholders)
+    //     rule.instructionSet = _createInstructionSet(1, 0); // FC placeholder > tracker placeholder  
+
+    //     rule = _setUpEffect(rule, _effectType, isPositive);
+
+    //     Trackers memory tracker;
+
+    //     /// build the members of the struct:
+    //     tracker.pType = PT.UINT;
+    //     tracker.trackerValue = abi.encode(_amount);
+    //     // Add the tracker
+    //     RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
         
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
-        ForeignCall memory fc;
-        int8[] memory typeSpecificIndices2 = new int8[](1);
-        typeSpecificIndices2[0] = -1;
-        fc.typeSpecificIndices = typeSpecificIndices2;
-        fc.parameterTypes = fcArgs;
-        fc.foreignCallAddress = address(testContract);
-        fc.signature = bytes4(keccak256(bytes("square(uint256)")));
-        fc.returnType = PT.UINT;
-        fc.foreignCallIndex = 0;
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "square(uint256)");
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+    //     PT[] memory fcArgs = new PT[](1);
+    //     fcArgs[0] = PT.UINT;
+    //     ForeignCall memory fc;
+    //     int8[] memory typeSpecificIndices2 = new int8[](1);
+    //     typeSpecificIndices2[0] = -1;
+    //     fc.typeSpecificIndices = typeSpecificIndices2;
+    //     fc.parameterTypes = fcArgs;
+    //     fc.foreignCallAddress = address(testContract);
+    //     fc.signature = bytes4(keccak256(bytes("square(uint256)")));
+    //     fc.returnType = PT.UINT;
+    //     fc.foreignCallIndex = 0;
+    //     RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "square(uint256)");
+    //     // Save the rule
+    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
 
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0]= ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);       
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0]= ruleId;
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);       
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
 
-        return policyIds[0];
+    //     return policyIds[0];
 
-    }
+    // }
 
-    function _setUpEffect(
-        Rule memory rule,
-        ET _effectType,
-        bool isPositive
-    ) public view returns (Rule memory _rule) {
-        if (isPositive) {
-            rule.posEffects = new Effect[](1);
-            if (_effectType == ET.REVERT) {
-                rule.posEffects[0] = effectId_revert;
-            }
-            if (_effectType == ET.EVENT) {
-                rule.posEffects[0] = effectId_event;
-            }
-        } else {
-            rule.negEffects = new Effect[](1);
-            if (_effectType == ET.REVERT) {
-                rule.negEffects[0] = effectId_revert;
-            }
-            if (_effectType == ET.EVENT) {
-                rule.negEffects[0] = effectId_event;
-            }
-        }
-        return rule;
-    }
+    // function _setUpEffect(
+    //     Rule memory rule,
+    //     ET _effectType,
+    //     bool isPositive
+    // ) public view returns (Rule memory _rule) {
+    //     if (isPositive) {
+    //         rule.posEffects = new Effect[](1);
+    //         if (_effectType == ET.REVERT) {
+    //             rule.posEffects[0] = effectId_revert;
+    //         }
+    //         if (_effectType == ET.EVENT) {
+    //             rule.posEffects[0] = effectId_event;
+    //         }
+    //     } else {
+    //         rule.negEffects = new Effect[](1);
+    //         if (_effectType == ET.REVERT) {
+    //             rule.negEffects[0] = effectId_revert;
+    //         }
+    //         if (_effectType == ET.EVENT) {
+    //             rule.negEffects[0] = effectId_event;
+    //         }
+    //     }
+    //     return rule;
+    // }
 
-    function _setupRuleWithRevert(address userContractMinTransferAddress)
-        public
-        ifDeploymentTestsEnabled
-        resetsGlobalVariables {
-        uint256[] memory policyIds = new uint256[](1);
+    // function _setupRuleWithRevert(address userContractMinTransferAddress)
+    //     public
+    //     ifDeploymentTestsEnabled
+    //     resetsGlobalVariables {
+    //     uint256[] memory policyIds = new uint256[](1);
 
-        policyIds[0] = _createBlankPolicyOpen();
+    //     policyIds[0] = _createBlankPolicyOpen();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
 
-        _addCallingFunctionToPolicy(policyIds[0]);
+    //     _addCallingFunctionToPolicy(policyIds[0]);
 
-        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        // Rule memory rule = _createGTRule(policyIds[0], 4);
-        Rule memory rule;
-        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
-        rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-        // Add a negative/positive effects
-        rule.negEffects = new Effect[](1);
-        rule.posEffects = new Effect[](1);
+    //     // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+    //     // Rule memory rule = _createGTRule(policyIds[0], 4);
+    //     Rule memory rule;
+    //     // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+    //     rule.placeHolders = new Placeholder[](1);
+    //     rule.placeHolders[0].pType = PT.UINT;
+    //     rule.placeHolders[0].typeSpecificIndex = 1;
+    //     // Add a negative/positive effects
+    //     rule.negEffects = new Effect[](1);
+    //     rule.posEffects = new Effect[](1);
 
-        rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
-        rule.instructionSet[1] = 0;
-        rule.instructionSet[2] = uint(LC.NUM);
-        rule.instructionSet[3] = 4;
-        rule.instructionSet[4] = uint(LC.GT); // register 2
-        rule.instructionSet[5] = 0;
-        rule.instructionSet[6] = 1;
-        rule.posEffects[0] = effectId_revert;
+    //     rule.instructionSet = new uint256[](7);
+    //     rule.instructionSet[0] = uint(LC.PLH);
+    //     rule.instructionSet[1] = 0;
+    //     rule.instructionSet[2] = uint(LC.NUM);
+    //     rule.instructionSet[3] = 4;
+    //     rule.instructionSet[4] = uint(LC.GT); // register 2
+    //     rule.instructionSet[5] = 0;
+    //     rule.instructionSet[6] = 1;
+    //     rule.posEffects[0] = effectId_revert;
         
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+    //     // Save the rule
+    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractMinTransferAddress, policyIds);
-    }
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0] = ruleId;
+    //     _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractMinTransferAddress, policyIds);
+    // }
 
-    function _setupRuleWithPosEvent()
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        resetsGlobalVariables
-    {
-        uint256[] memory policyIds = new uint256[](1);
-        policyIds[0] = _createBlankPolicy();
+    // function _setupRuleWithPosEvent()
+    //     public
+    //     ifDeploymentTestsEnabled
+    //     endWithStopPrank
+    //     resetsGlobalVariables
+    // {
+    //     uint256[] memory policyIds = new uint256[](1);
+    //     policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
 
-        _addCallingFunctionToPolicy(policyIds[0]);
+    //     _addCallingFunctionToPolicy(policyIds[0]);
 
-        // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule = _createGTRule(4);
-        rule.posEffects[0] = effectId_event;
+    //     // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule = _createGTRule(4);
+    //     rule.posEffects[0] = effectId_event;
 
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+    //     // Save the rule
+    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-    }
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0] = ruleId;
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    // }
 
-    function _setupRuleWithPosEventParams(bytes memory param, PT pType) 
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        resetsGlobalVariables
-    {
+    // function _setupRuleWithPosEventParams(bytes memory param, PT pType) 
+    //     public
+    //     ifDeploymentTestsEnabled
+    //     endWithStopPrank
+    //     resetsGlobalVariables
+    // {
 
-        uint256[] memory policyIds = new uint256[](1);
-        policyIds[0] = _createBlankPolicy();
+    //     uint256[] memory policyIds = new uint256[](1);
+    //     policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
 
-        _addCallingFunctionToPolicy(policyIds[0]);
+    //     _addCallingFunctionToPolicy(policyIds[0]);
 
-        // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule = _createGTRuleWithCustomEventParams(4, param, pType);
-        rule.posEffects[0] = effectId_event;
+    //     // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule = _createGTRuleWithCustomEventParams(4, param, pType);
+    //     rule.posEffects[0] = effectId_event;
 
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+    //     // Save the rule
+    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-    }
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0] = ruleId;
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    // }
 
-    function _setupRuleWithPosEventDynamicParamsFromCallingFunctionParams(PT pType) 
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        resetsGlobalVariables
-    {
+    // function _setupRuleWithPosEventDynamicParamsFromCallingFunctionParams(PT pType) 
+    //     public
+    //     ifDeploymentTestsEnabled
+    //     endWithStopPrank
+    //     resetsGlobalVariables
+    // {
 
-        uint256[] memory policyIds = new uint256[](1);
-        policyIds[0] = _createBlankPolicy();
+    //     uint256[] memory policyIds = new uint256[](1);
+    //     policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
 
-        _addCallingFunctionToPolicy(policyIds[0]);
-        Rule memory rule;
-        // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
-        if(pType == PT.ADDR){
-            rule = _createGTRuleWithDynamicEventParamsAddress(4);
-            rule.posEffects[0] = effectId_event;
-        } else{
-            rule = _createGTRuleWithDynamicEventParams(4);
-            rule.posEffects[0] = effectId_event;
-        } 
+    //     _addCallingFunctionToPolicy(policyIds[0]);
+    //     Rule memory rule;
+    //     // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
+    //     if(pType == PT.ADDR){
+    //         rule = _createGTRuleWithDynamicEventParamsAddress(4);
+    //         rule.posEffects[0] = effectId_event;
+    //     } else{
+    //         rule = _createGTRuleWithDynamicEventParams(4);
+    //         rule.posEffects[0] = effectId_event;
+    //     } 
         
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+    //     // Save the rule
+    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-    }
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0] = ruleId;
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    // }
 
-    function _setupMinTransferWithPosEvent(
-        uint256 threshold,
-        address contractAddress
-    ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables {
-        uint256[] memory policyIds = new uint256[](1);
-        policyIds[0] = _createBlankPolicy();
+    // function _setupMinTransferWithPosEvent(
+    //     uint256 threshold,
+    //     address contractAddress
+    // ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables {
+    //     uint256[] memory policyIds = new uint256[](1);
+    //     policyIds[0] = _createBlankPolicy();
 
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
 
-        _addCallingFunctionToPolicy(policyIds[0]);
+    //     _addCallingFunctionToPolicy(policyIds[0]);
 
-        // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule = _createGTRule(threshold);
-        rule.posEffects[0] = effectId_event;
+    //     // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule = _createGTRule(threshold);
+    //     rule.posEffects[0] = effectId_event;
 
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+    //     // Save the rule
+    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        if (ruleIds.length == 0) ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(address(contractAddress), policyIds);
-    }
+    //     if (ruleIds.length == 0) ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0] = ruleId;
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(address(contractAddress), policyIds);
+    // }
 
     function _resetGlobalVariables() public {
         delete callingFunctions;
@@ -917,1165 +917,1165 @@ contract RulesEngineCommon is DiamondMine, Test {
         delete ruleIds;
     }
 
-    function _setupPolicyWithMultipleRulesWithPosEvents()
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        resetsGlobalVariables
-    {
-        uint256[] memory policyIds = new uint256[](1);
-
-        policyIds[0] = _createBlankPolicy();
-
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-
-        _addCallingFunctionToPolicy(policyIds[0]);
-
-        // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
-        // Rule 1: GT 4
-        Rule memory rule = _createGTRule(4);
-        rule.posEffects[0] = effectId_event;
-
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-
-        ruleIds.push(new uint256[](4));
-        ruleIds[0][0] = ruleId;
-
-        // Rule 2: GT 5
-        rule = _createGTRule(5);
-        rule.posEffects[0] = effectId_event2;
-
-        // Save the rule
-        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-
-        // // Save the fKureIds.push(callingFunctionId);
-        ruleIds[0][1] = ruleId;
-
-        // Rule 3: GT 6
-        rule = _createGTRule(6);
-        rule.posEffects[0] = effectId_event;
-
-        // Save the rule
-        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-
-        // // Save the fKureIds.push(callingFunctionId);
-        ruleIds[0][2] = ruleId;
-
-        // Rule 4: GT 7
-        rule = _createGTRule(7);
-        rule.posEffects[0] = effectId_event2;
-
-        // Save the rule
-        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-
-        // // Save the fKureIds.push(callingFunctionId);
-        ruleIds[0][3] = ruleId;
-
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-    }
-
-    function _setupRuleWith2PosEvent()
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        resetsGlobalVariables
-    {
-        uint256[] memory policyIds = new uint256[](1);
-
-        policyIds[0] = _createBlankPolicy();
-
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-
-        _addCallingFunctionToPolicy(policyIds[0]);
-
-        // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule = _createGTRule(4);
-        rule.posEffects = new Effect[](2);
-        rule.posEffects[0] = effectId_event;
-        rule.posEffects[1] = effectId_event2;
-
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-    }
-
-    // set up a rule with a uint256 tracker value for testing
-    function setupRuleWithTracker(
-        uint256 trackerValue
-    )
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        resetsGlobalVariables
-        returns (uint256 policyId)
-    {
-        uint256[] memory policyIds = new uint256[](1);
-
-        policyIds[0] = _createBlankPolicy();
-
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-
-        _addCallingFunctionToPolicy(policyIds[0]);
-
-        // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-
-        // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
-        rule.instructionSet = _createInstructionSet(0, 1);
-
-        rule.placeHolders = new Placeholder[](2);
-        rule.placeHolders[0].pType = PT.UINT;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-        rule.placeHolders[1].pType = PT.UINT;
-        rule.placeHolders[1].trackerValue = true;
-        rule.placeHolders[1].typeSpecificIndex = 1;
-        // Add a negative/positive effects
-        rule.negEffects = new Effect[](1);
-        rule.posEffects = new Effect[](1);
-        rule.negEffects[0] = effectId_revert;
-        rule.posEffects[0] = effectId_event;
-
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-        // Build the tracker
-        Trackers memory tracker;
-
-        /// build the members of the struct:
-        tracker.pType = PT.UINT;
-        tracker.trackerValue = abi.encode(trackerValue);
-        // Add the tracker
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
-
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-        return policyIds[0];
-    }
-
-    function setupRuleWithTracker(
-        uint256 _policyId, Trackers memory tracker
-    )
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        resetsGlobalVariables
-        returns (uint256 policyId)
-    {
-        uint256[] memory policyIds = new uint256[](1);
-
-        policyIds[0] = _policyId;
-
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.ADDR;
-
-        _addCallingFunctionToPolicy(policyIds[0]);
-
-        // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-
-        // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
-        rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.NUM);
-        rule.instructionSet[1] = 1;
-        rule.instructionSet[2] = uint(LC.NUM);
-        rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.EQ);
-        rule.instructionSet[5] = 0;
-        rule.instructionSet[6] = 1;
-
-        rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR;
-        rule.placeHolders[0].typeSpecificIndex = 0;
-        rule.placeHolders[1].pType = PT.UINT;
-        rule.placeHolders[1].typeSpecificIndex = 1;
-        rule.placeHolders[2].pType = PT.BYTES;
-        rule.placeHolders[2].typeSpecificIndex = 2;
-
-        rule.effectPlaceHolders = new Placeholder[](1);
-        rule.effectPlaceHolders[0].pType = PT.BYTES;
-        rule.effectPlaceHolders[0].typeSpecificIndex = 2;
-        // Add a negative/positive effects
-        rule.negEffects = new Effect[](1);
-        rule.posEffects = new Effect[](1);
-        rule.negEffects[0] = effectId_revert;
-        // rule.posEffects[0] = _createEffectExpressionTrackerUpdateParameter();
-        rule.posEffects[0] = effectId_event;
-
-        // Add the tracker
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-        return policyIds[0];
-    }
-
-    function setupRuleWithTracker2(
-        uint256 _policyId, Trackers memory tracker
-    )
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        resetsGlobalVariables
-        returns (uint256 policyId)
-    {
-        uint256[] memory policyIds = new uint256[](1);
-
-        policyIds[0] = _policyId;
-
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.BYTES;
-
-        _addCallingFunctionToPolicyWithString(policyIds[0]);
-
-        // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-
-        // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
-        rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.NUM);
-        rule.instructionSet[1] = 1;
-        rule.instructionSet[2] = uint(LC.NUM);
-        rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.EQ);
-        rule.instructionSet[5] = 0;
-        rule.instructionSet[6] = 1;
-
-        rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR;
-        rule.placeHolders[0].typeSpecificIndex = 0;
-        rule.placeHolders[1].pType = PT.UINT;
-        rule.placeHolders[1].typeSpecificIndex = 1;
-        rule.placeHolders[2].pType = PT.BYTES;
-        rule.placeHolders[2].typeSpecificIndex = 2;
-
-        rule.effectPlaceHolders = new Placeholder[](1);
-        rule.effectPlaceHolders[0].pType = PT.BYTES;
-        rule.effectPlaceHolders[0].typeSpecificIndex = 2;
-        // Add a negative/positive effects
-        rule.negEffects = new Effect[](1);
-        rule.posEffects = new Effect[](1);
-        rule.negEffects[0] = effectId_revert;
-        rule.posEffects[0] = _createEffectExpressionTrackerUpdateParameterPlaceHolder();
-        // rule.posEffects[0] = effectId_event;
-
-        // Add the tracker
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-        return policyIds[0];
-    }
-
-    function setupRuleWithTrackerAddr(
-        uint256 _policyId, Trackers memory tracker
-    )
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        resetsGlobalVariables
-        returns (uint256 policyId)
-    {
-        uint256[] memory policyIds = new uint256[](1);
-
-        policyIds[0] = _policyId;
-
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.ADDR;
-
-        _addCallingFunctionToPolicyWithString(policyIds[0]);
-
-        // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-
-        // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
-        rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.NUM);
-        rule.instructionSet[1] = 1;
-        rule.instructionSet[2] = uint(LC.NUM);
-        rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.EQ);
-        rule.instructionSet[5] = 0;
-        rule.instructionSet[6] = 1;
-
-        rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR;
-        rule.placeHolders[0].typeSpecificIndex = 0;
-        rule.placeHolders[1].pType = PT.UINT;
-        rule.placeHolders[1].typeSpecificIndex = 1;
-        rule.placeHolders[2].pType = PT.ADDR;
-        rule.placeHolders[2].typeSpecificIndex = 2;
-
-        rule.effectPlaceHolders = new Placeholder[](1);
-        rule.effectPlaceHolders[0].pType = PT.ADDR;
-        rule.effectPlaceHolders[0].typeSpecificIndex = 2;
-        // Add a negative/positive effects
-        rule.negEffects = new Effect[](1);
-        rule.posEffects = new Effect[](1);
-        rule.negEffects[0] = effectId_revert;
-        rule.posEffects[0] = _createEffectExpressionTrackerUpdateParameterPlaceHolder();
-
-        // Add the tracker
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-        return policyIds[0];
-    }
-
-    function setupRuleWithTrackerBool(
-        uint256 _policyId, Trackers memory tracker
-    )
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        resetsGlobalVariables
-        returns (uint256 policyId)
-    {
-        uint256[] memory policyIds = new uint256[](1);
-
-        policyIds[0] = _policyId;
-
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.BOOL;
-
-        _addCallingFunctionToPolicyWithString(policyIds[0]);
-
-        // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-
-        // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
-        rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.NUM);
-        rule.instructionSet[1] = 1;
-        rule.instructionSet[2] = uint(LC.NUM);
-        rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.EQ);
-        rule.instructionSet[5] = 0;
-        rule.instructionSet[6] = 1;
-
-        rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR;
-        rule.placeHolders[0].typeSpecificIndex = 0;
-        rule.placeHolders[1].pType = PT.UINT;
-        rule.placeHolders[1].typeSpecificIndex = 1;
-        rule.placeHolders[2].pType = PT.BOOL;
-        rule.placeHolders[2].typeSpecificIndex = 2;
-
-        rule.effectPlaceHolders = new Placeholder[](1);
-        rule.effectPlaceHolders[0].pType = PT.ADDR;
-        rule.effectPlaceHolders[0].typeSpecificIndex = 2;
-        // Add a negative/positive effects
-        rule.negEffects = new Effect[](1);
-        rule.posEffects = new Effect[](1);
-        rule.negEffects[0] = effectId_revert;
-        rule.posEffects[0] = _createEffectExpressionTrackerUpdateParameterPlaceHolder();
-
-        // Add the tracker
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-        return policyIds[0];
-    }
-
-    function setupRuleWithTrackerUint(
-        uint256 _policyId, Trackers memory tracker
-    )
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-        resetsGlobalVariables
-        returns (uint256 policyId)
-    {
-        uint256[] memory policyIds = new uint256[](1);
-
-        policyIds[0] = _policyId;
-
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.UINT;
-
-        _addCallingFunctionToPolicyWithString(policyIds[0]);
-
-        // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-
-        // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
-        rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.NUM);
-        rule.instructionSet[1] = 1;
-        rule.instructionSet[2] = uint(LC.NUM);
-        rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.EQ);
-        rule.instructionSet[5] = 0;
-        rule.instructionSet[6] = 1;
-
-        rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR;
-        rule.placeHolders[0].typeSpecificIndex = 0;
-        rule.placeHolders[1].pType = PT.UINT;
-        rule.placeHolders[1].typeSpecificIndex = 1;
-        rule.placeHolders[2].pType = PT.UINT;
-        rule.placeHolders[2].typeSpecificIndex = 2;
-
-        rule.effectPlaceHolders = new Placeholder[](1);
-        rule.effectPlaceHolders[0].pType = PT.UINT;
-        rule.effectPlaceHolders[0].typeSpecificIndex = 2;
-        // Add a negative/positive effects
-        rule.negEffects = new Effect[](1);
-        rule.posEffects = new Effect[](1);
-        rule.negEffects[0] = effectId_revert;
-        rule.posEffects[0] = _createEffectExpressionTrackerUpdateParameterPlaceHolder();
-
-        // Add the tracker
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-        return policyIds[0];
-    }
-
-
-    /// Test helper functions
-    function _createBlankPolicy() internal returns (uint256) {
-        CallingFunctionStorageSet[] memory functioncallingFunctions = new CallingFunctionStorageSet[](0); 
-        Rule[] memory rules = new Rule[](0); 
-        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(functioncallingFunctions, rules, PolicyType.CLOSED_POLICY);
-        RulesEngineComponentFacet(address(red)).addClosedPolicySubscriber(policyId, callingContractAdmin); 
-        return policyId;
-    }
-
-    function _createBlankPolicyOpen() internal returns (uint256) {
-        CallingFunctionStorageSet[] memory functioncallingFunctions = new CallingFunctionStorageSet[](0); 
-        Rule[] memory rules = new Rule[](0); 
-        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(functioncallingFunctions, rules, PolicyType.OPEN_POLICY);
-        return policyId;
-    }
-
-    function _createBlankPolicyWithAdminRoleString()
-        internal
-        returns (uint256)
-    {
-        CallingFunctionStorageSet[] memory functioncallingFunctions = new CallingFunctionStorageSet[](0); 
-        Rule[] memory rules = new Rule[](0); 
-        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(functioncallingFunctions, rules, PolicyType.CLOSED_POLICY);
-        return policyId;
-    }
-
-    // internal rule builder
-    function _createGTRule(uint256 _amount) public returns (Rule memory) {
-        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-        // Set up some effects.
-        _setupEffectProcessor();
-        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
-        rule.instructionSet = rule.instructionSet = _createInstructionSet(
-            _amount
-        );
-        rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-        // Add a negative/positive effects
-        rule.negEffects = new Effect[](1);
-        rule.posEffects = new Effect[](1);
-        return rule;
-    }
-
-    function _createGTRuleWithCustomEventParams(uint256 _amount, bytes memory param, PT paramType) public returns (Rule memory) {
-        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-        // Set up custom event param effect.
-        effectId_event = _createCustomEffectEvent(param, paramType);
-        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
-        rule.instructionSet = rule.instructionSet = _createInstructionSet(
-            _amount
-        );
-        rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-        // Add a negative/positive effects
-        rule.negEffects = new Effect[](1);
-        rule.posEffects = new Effect[](1);
-        return rule;
-    }
-
-    function _createGTRuleWithDynamicEventParams(uint256 _amount) public returns (Rule memory) {
-        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-        // Set up custom event param effect.
-        effectId_event = _createEffectEventDynamicParams();
-        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
-        rule.instructionSet = rule.instructionSet = _createInstructionSet(
-            _amount
-        );
-        rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-
-        rule.effectPlaceHolders = new Placeholder[](1);
-        rule.effectPlaceHolders[0].pType = PT.UINT;
-        rule.effectPlaceHolders[0].typeSpecificIndex = 1;
-        // Add a negative/positive effects
-        rule.negEffects = new Effect[](1);
-        rule.posEffects = new Effect[](1);
-        return rule;
-    }
-
-    function _createGTRuleWithDynamicEventParamsAddress(uint256 _amount) public returns (Rule memory) {
-        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-        // Set up custom event param effect.
-        effectId_event = _createEffectEventDynamicParamsAddress();
-        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
-        rule.instructionSet = rule.instructionSet = _createInstructionSet(
-            _amount
-        );
-        rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-
-        rule.effectPlaceHolders = new Placeholder[](1);
-        rule.effectPlaceHolders[0].pType = PT.ADDR;
-        rule.effectPlaceHolders[0].typeSpecificIndex = 0;
-        // Add a negative/positive effects
-        rule.negEffects = new Effect[](1);
-        rule.posEffects = new Effect[](1);
-        return rule;
-    }
-
-    function _createLTRule() public returns (Rule memory) {
-        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-        // Set up some effects.
-        _setupEffectProcessor();
-        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
-        rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.NUM);
-        rule.instructionSet[1] = 0;
-        rule.instructionSet[2] = uint(LC.NUM);
-        rule.instructionSet[3] = 2;
-        rule.instructionSet[4] = uint(LC.LT);
-        rule.instructionSet[5] = 0;
-        rule.instructionSet[6] = 1;
-        rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].pType = PT.UINT;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-        // Add a negative/positive effects
-        rule.negEffects = new Effect[](1);
-        rule.posEffects = new Effect[](1);
-        return rule;
-    }
-
-
-    function _addCallingFunctionToPolicy(uint256 policyId) internal returns (uint256) {
-        vm.stopPrank();
-        vm.startPrank(policyAdmin);
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        // Save the calling function
-        uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
-            .createCallingFunction(
-                policyId, 
-                bytes4(bytes4(keccak256(bytes(callingFunction)))), 
-                pTypes,
-                callingFunction,
-                ""    
-            );
-        // Save the Policy
-        callingFunctions.push(bytes4(keccak256(bytes(callingFunction))));
-        callingFunctionIds.push(callingFunctionId);
-        uint256[][] memory blankRuleIds = new uint256[][](0);
-        RulesEnginePolicyFacet(address(red)).updatePolicy(
-            policyId,
-            callingFunctions,
-            callingFunctionIds,
-            blankRuleIds,
-            PolicyType.CLOSED_POLICY
-        );
-        return callingFunctionId;
-    }
-
-    function _addCallingFunctionToPolicyWithString(uint256 policyId) internal returns (uint256) {
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        pTypes[2] = PT.BYTES;
-        // Save the calling function
-        uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
-            .createCallingFunction(
-                policyId, 
-                bytes4(bytes4(keccak256(bytes(callingFunction)))), 
-                pTypes,
-                callingFunction,
-                ""    
-            );
-        // Save the Policy
-        callingFunctions.push(bytes4(keccak256(bytes(callingFunction))));
-        callingFunctionIds.push(callingFunctionId);
-        uint256[][] memory blankRuleIds = new uint256[][](0);
-        vm.stopPrank();
-        vm.startPrank(policyAdmin);
-        RulesEnginePolicyFacet(address(red)).updatePolicy(
-            policyId,
-            callingFunctions,
-            callingFunctionIds,
-            blankRuleIds,
-            PolicyType.CLOSED_POLICY
-        );
-        return callingFunctionId;
-    }
-
-    function _addCallingFunctionToPolicy(
-        uint256 policyId,
-        bytes4 _callingFunction,
-        PT[] memory pTypes,
-        string memory functionName
-    ) internal returns (uint256) {
-        // Save the calling function
-        uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
-            .createCallingFunction(
-                policyId, 
-                bytes4(_callingFunction), 
-                pTypes, 
-                functionName,
-                "");
-        // Save the Policy
-        callingFunctions.push(_callingFunction);
-        callingFunctionIds.push(callingFunctionId);
-        uint256[][] memory blankRuleIds = new uint256[][](0);
-        vm.stopPrank();
-        vm.startPrank(policyAdmin);
-        RulesEnginePolicyFacet(address(red)).updatePolicy(
-            policyId,
-            callingFunctions,
-            callingFunctionIds,
-            blankRuleIds,
-            PolicyType.CLOSED_POLICY
-        );
-        return callingFunctionId;
-    }
-
-    function _addCallingFunctionToPolicyOpen(
-        uint256 policyId,
-        bytes4 _callingFunction,
-        PT[] memory pTypes, 
-        string memory functionName
-    ) internal returns (uint256) {
-        // Save the calling function
-        uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
-            .createCallingFunction(
-                policyId, 
-                bytes4(_callingFunction), 
-                pTypes, 
-                functionName,
-                "");
-        // Save the Policy
-        callingFunctions.push(_callingFunction);
-        callingFunctionIds.push(callingFunctionId);
-        uint256[][] memory blankRuleIds = new uint256[][](0);
-        vm.stopPrank();
-        vm.startPrank(policyAdmin);
-        RulesEnginePolicyFacet(address(red)).updatePolicy(
-            policyId,
-            callingFunctions,
-            callingFunctionIds,
-            blankRuleIds,
-            PolicyType.OPEN_POLICY
-        );
-        return callingFunctionId;
-    }
+    // function _setupPolicyWithMultipleRulesWithPosEvents()
+    //     public
+    //     ifDeploymentTestsEnabled
+    //     endWithStopPrank
+    //     resetsGlobalVariables
+    // {
+    //     uint256[] memory policyIds = new uint256[](1);
+
+    //     policyIds[0] = _createBlankPolicy();
+
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
+
+    //     _addCallingFunctionToPolicy(policyIds[0]);
+
+    //     // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
+    //     // Rule 1: GT 4
+    //     Rule memory rule = _createGTRule(4);
+    //     rule.posEffects[0] = effectId_event;
+
+    //     // Save the rule
+    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+
+    //     ruleIds.push(new uint256[](4));
+    //     ruleIds[0][0] = ruleId;
+
+    //     // Rule 2: GT 5
+    //     rule = _createGTRule(5);
+    //     rule.posEffects[0] = effectId_event2;
+
+    //     // Save the rule
+    //     ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+
+    //     // // Save the fKureIds.push(callingFunctionId);
+    //     ruleIds[0][1] = ruleId;
+
+    //     // Rule 3: GT 6
+    //     rule = _createGTRule(6);
+    //     rule.posEffects[0] = effectId_event;
+
+    //     // Save the rule
+    //     ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+
+    //     // // Save the fKureIds.push(callingFunctionId);
+    //     ruleIds[0][2] = ruleId;
+
+    //     // Rule 4: GT 7
+    //     rule = _createGTRule(7);
+    //     rule.posEffects[0] = effectId_event2;
+
+    //     // Save the rule
+    //     ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+
+    //     // // Save the fKureIds.push(callingFunctionId);
+    //     ruleIds[0][3] = ruleId;
+
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    // }
+
+    // function _setupRuleWith2PosEvent()
+    //     public
+    //     ifDeploymentTestsEnabled
+    //     endWithStopPrank
+    //     resetsGlobalVariables
+    // {
+    //     uint256[] memory policyIds = new uint256[](1);
+
+    //     policyIds[0] = _createBlankPolicy();
+
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
+
+    //     _addCallingFunctionToPolicy(policyIds[0]);
+
+    //     // Rule: amount > 4 -> event -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule = _createGTRule(4);
+    //     rule.posEffects = new Effect[](2);
+    //     rule.posEffects[0] = effectId_event;
+    //     rule.posEffects[1] = effectId_event2;
+
+    //     // Save the rule
+    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0] = ruleId;
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    // }
+
+    // // set up a rule with a uint256 tracker value for testing
+    // function setupRuleWithTracker(
+    //     uint256 trackerValue
+    // )
+    //     public
+    //     ifDeploymentTestsEnabled
+    //     endWithStopPrank
+    //     resetsGlobalVariables
+    //     returns (uint256 policyId)
+    // {
+    //     uint256[] memory policyIds = new uint256[](1);
+
+    //     policyIds[0] = _createBlankPolicy();
+
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
+
+    //     _addCallingFunctionToPolicy(policyIds[0]);
+
+    //     // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule;
+
+    //     // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
+    //     rule.instructionSet = _createInstructionSet(0, 1);
+
+    //     rule.placeHolders = new Placeholder[](2);
+    //     rule.placeHolders[0].pType = PT.UINT;
+    //     rule.placeHolders[0].typeSpecificIndex = 1;
+    //     rule.placeHolders[1].pType = PT.UINT;
+    //     rule.placeHolders[1].trackerValue = true;
+    //     rule.placeHolders[1].typeSpecificIndex = 1;
+    //     // Add a negative/positive effects
+    //     rule.negEffects = new Effect[](1);
+    //     rule.posEffects = new Effect[](1);
+    //     rule.negEffects[0] = effectId_revert;
+    //     rule.posEffects[0] = effectId_event;
+
+    //     // Save the rule
+    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+    //     // Build the tracker
+    //     Trackers memory tracker;
+
+    //     /// build the members of the struct:
+    //     tracker.pType = PT.UINT;
+    //     tracker.trackerValue = abi.encode(trackerValue);
+    //     // Add the tracker
+    //     RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
+
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0] = ruleId;
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);
+
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    //     return policyIds[0];
+    // }
+
+    // function setupRuleWithTracker(
+    //     uint256 _policyId, Trackers memory tracker
+    // )
+    //     public
+    //     ifDeploymentTestsEnabled
+    //     endWithStopPrank
+    //     resetsGlobalVariables
+    //     returns (uint256 policyId)
+    // {
+    //     uint256[] memory policyIds = new uint256[](1);
+
+    //     policyIds[0] = _policyId;
+
+    //     PT[] memory pTypes = new PT[](3);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
+    //     pTypes[2] = PT.ADDR;
+
+    //     _addCallingFunctionToPolicy(policyIds[0]);
+
+    //     // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule;
+
+    //     // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
+    //     rule.instructionSet = new uint256[](7);
+    //     rule.instructionSet[0] = uint(LC.NUM);
+    //     rule.instructionSet[1] = 1;
+    //     rule.instructionSet[2] = uint(LC.NUM);
+    //     rule.instructionSet[3] = 1;
+    //     rule.instructionSet[4] = uint(LC.EQ);
+    //     rule.instructionSet[5] = 0;
+    //     rule.instructionSet[6] = 1;
+
+    //     rule.placeHolders = new Placeholder[](3);
+    //     rule.placeHolders[0].pType = PT.ADDR;
+    //     rule.placeHolders[0].typeSpecificIndex = 0;
+    //     rule.placeHolders[1].pType = PT.UINT;
+    //     rule.placeHolders[1].typeSpecificIndex = 1;
+    //     rule.placeHolders[2].pType = PT.BYTES;
+    //     rule.placeHolders[2].typeSpecificIndex = 2;
+
+    //     rule.effectPlaceHolders = new Placeholder[](1);
+    //     rule.effectPlaceHolders[0].pType = PT.BYTES;
+    //     rule.effectPlaceHolders[0].typeSpecificIndex = 2;
+    //     // Add a negative/positive effects
+    //     rule.negEffects = new Effect[](1);
+    //     rule.posEffects = new Effect[](1);
+    //     rule.negEffects[0] = effectId_revert;
+    //     // rule.posEffects[0] = _createEffectExpressionTrackerUpdateParameter();
+    //     rule.posEffects[0] = effectId_event;
+
+    //     // Add the tracker
+    //     RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
+    //     // Save the rule
+    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0] = ruleId;
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);
+
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    //     return policyIds[0];
+    // }
+
+    // function setupRuleWithTracker2(
+    //     uint256 _policyId, Trackers memory tracker
+    // )
+    //     public
+    //     ifDeploymentTestsEnabled
+    //     endWithStopPrank
+    //     resetsGlobalVariables
+    //     returns (uint256 policyId)
+    // {
+    //     uint256[] memory policyIds = new uint256[](1);
+
+    //     policyIds[0] = _policyId;
+
+    //     PT[] memory pTypes = new PT[](3);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
+    //     pTypes[2] = PT.BYTES;
+
+    //     _addCallingFunctionToPolicyWithString(policyIds[0]);
+
+    //     // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule;
+
+    //     // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
+    //     rule.instructionSet = new uint256[](7);
+    //     rule.instructionSet[0] = uint(LC.NUM);
+    //     rule.instructionSet[1] = 1;
+    //     rule.instructionSet[2] = uint(LC.NUM);
+    //     rule.instructionSet[3] = 1;
+    //     rule.instructionSet[4] = uint(LC.EQ);
+    //     rule.instructionSet[5] = 0;
+    //     rule.instructionSet[6] = 1;
+
+    //     rule.placeHolders = new Placeholder[](3);
+    //     rule.placeHolders[0].pType = PT.ADDR;
+    //     rule.placeHolders[0].typeSpecificIndex = 0;
+    //     rule.placeHolders[1].pType = PT.UINT;
+    //     rule.placeHolders[1].typeSpecificIndex = 1;
+    //     rule.placeHolders[2].pType = PT.BYTES;
+    //     rule.placeHolders[2].typeSpecificIndex = 2;
+
+    //     rule.effectPlaceHolders = new Placeholder[](1);
+    //     rule.effectPlaceHolders[0].pType = PT.BYTES;
+    //     rule.effectPlaceHolders[0].typeSpecificIndex = 2;
+    //     // Add a negative/positive effects
+    //     rule.negEffects = new Effect[](1);
+    //     rule.posEffects = new Effect[](1);
+    //     rule.negEffects[0] = effectId_revert;
+    //     rule.posEffects[0] = _createEffectExpressionTrackerUpdateParameterPlaceHolder();
+    //     // rule.posEffects[0] = effectId_event;
+
+    //     // Add the tracker
+    //     RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
+    //     // Save the rule
+    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0] = ruleId;
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);
+
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    //     return policyIds[0];
+    // }
+
+    // function setupRuleWithTrackerAddr(
+    //     uint256 _policyId, Trackers memory tracker
+    // )
+    //     public
+    //     ifDeploymentTestsEnabled
+    //     endWithStopPrank
+    //     resetsGlobalVariables
+    //     returns (uint256 policyId)
+    // {
+    //     uint256[] memory policyIds = new uint256[](1);
+
+    //     policyIds[0] = _policyId;
+
+    //     PT[] memory pTypes = new PT[](3);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
+    //     pTypes[2] = PT.ADDR;
+
+    //     _addCallingFunctionToPolicyWithString(policyIds[0]);
+
+    //     // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule;
+
+    //     // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
+    //     rule.instructionSet = new uint256[](7);
+    //     rule.instructionSet[0] = uint(LC.NUM);
+    //     rule.instructionSet[1] = 1;
+    //     rule.instructionSet[2] = uint(LC.NUM);
+    //     rule.instructionSet[3] = 1;
+    //     rule.instructionSet[4] = uint(LC.EQ);
+    //     rule.instructionSet[5] = 0;
+    //     rule.instructionSet[6] = 1;
+
+    //     rule.placeHolders = new Placeholder[](3);
+    //     rule.placeHolders[0].pType = PT.ADDR;
+    //     rule.placeHolders[0].typeSpecificIndex = 0;
+    //     rule.placeHolders[1].pType = PT.UINT;
+    //     rule.placeHolders[1].typeSpecificIndex = 1;
+    //     rule.placeHolders[2].pType = PT.ADDR;
+    //     rule.placeHolders[2].typeSpecificIndex = 2;
+
+    //     rule.effectPlaceHolders = new Placeholder[](1);
+    //     rule.effectPlaceHolders[0].pType = PT.ADDR;
+    //     rule.effectPlaceHolders[0].typeSpecificIndex = 2;
+    //     // Add a negative/positive effects
+    //     rule.negEffects = new Effect[](1);
+    //     rule.posEffects = new Effect[](1);
+    //     rule.negEffects[0] = effectId_revert;
+    //     rule.posEffects[0] = _createEffectExpressionTrackerUpdateParameterPlaceHolder();
+
+    //     // Add the tracker
+    //     RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
+    //     // Save the rule
+    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0] = ruleId;
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);
+
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    //     return policyIds[0];
+    // }
+
+    // function setupRuleWithTrackerBool(
+    //     uint256 _policyId, Trackers memory tracker
+    // )
+    //     public
+    //     ifDeploymentTestsEnabled
+    //     endWithStopPrank
+    //     resetsGlobalVariables
+    //     returns (uint256 policyId)
+    // {
+    //     uint256[] memory policyIds = new uint256[](1);
+
+    //     policyIds[0] = _policyId;
+
+    //     PT[] memory pTypes = new PT[](3);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
+    //     pTypes[2] = PT.BOOL;
+
+    //     _addCallingFunctionToPolicyWithString(policyIds[0]);
+
+    //     // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule;
+
+    //     // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
+    //     rule.instructionSet = new uint256[](7);
+    //     rule.instructionSet[0] = uint(LC.NUM);
+    //     rule.instructionSet[1] = 1;
+    //     rule.instructionSet[2] = uint(LC.NUM);
+    //     rule.instructionSet[3] = 1;
+    //     rule.instructionSet[4] = uint(LC.EQ);
+    //     rule.instructionSet[5] = 0;
+    //     rule.instructionSet[6] = 1;
+
+    //     rule.placeHolders = new Placeholder[](3);
+    //     rule.placeHolders[0].pType = PT.ADDR;
+    //     rule.placeHolders[0].typeSpecificIndex = 0;
+    //     rule.placeHolders[1].pType = PT.UINT;
+    //     rule.placeHolders[1].typeSpecificIndex = 1;
+    //     rule.placeHolders[2].pType = PT.BOOL;
+    //     rule.placeHolders[2].typeSpecificIndex = 2;
+
+    //     rule.effectPlaceHolders = new Placeholder[](1);
+    //     rule.effectPlaceHolders[0].pType = PT.ADDR;
+    //     rule.effectPlaceHolders[0].typeSpecificIndex = 2;
+    //     // Add a negative/positive effects
+    //     rule.negEffects = new Effect[](1);
+    //     rule.posEffects = new Effect[](1);
+    //     rule.negEffects[0] = effectId_revert;
+    //     rule.posEffects[0] = _createEffectExpressionTrackerUpdateParameterPlaceHolder();
+
+    //     // Add the tracker
+    //     RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
+    //     // Save the rule
+    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0] = ruleId;
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);
+
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    //     return policyIds[0];
+    // }
+
+    // function setupRuleWithTrackerUint(
+    //     uint256 _policyId, Trackers memory tracker
+    // )
+    //     public
+    //     ifDeploymentTestsEnabled
+    //     endWithStopPrank
+    //     resetsGlobalVariables
+    //     returns (uint256 policyId)
+    // {
+    //     uint256[] memory policyIds = new uint256[](1);
+
+    //     policyIds[0] = _policyId;
+
+    //     PT[] memory pTypes = new PT[](3);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
+    //     pTypes[2] = PT.UINT;
+
+    //     _addCallingFunctionToPolicyWithString(policyIds[0]);
+
+    //     // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule;
+
+    //     // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
+    //     rule.instructionSet = new uint256[](7);
+    //     rule.instructionSet[0] = uint(LC.NUM);
+    //     rule.instructionSet[1] = 1;
+    //     rule.instructionSet[2] = uint(LC.NUM);
+    //     rule.instructionSet[3] = 1;
+    //     rule.instructionSet[4] = uint(LC.EQ);
+    //     rule.instructionSet[5] = 0;
+    //     rule.instructionSet[6] = 1;
+
+    //     rule.placeHolders = new Placeholder[](3);
+    //     rule.placeHolders[0].pType = PT.ADDR;
+    //     rule.placeHolders[0].typeSpecificIndex = 0;
+    //     rule.placeHolders[1].pType = PT.UINT;
+    //     rule.placeHolders[1].typeSpecificIndex = 1;
+    //     rule.placeHolders[2].pType = PT.UINT;
+    //     rule.placeHolders[2].typeSpecificIndex = 2;
+
+    //     rule.effectPlaceHolders = new Placeholder[](1);
+    //     rule.effectPlaceHolders[0].pType = PT.UINT;
+    //     rule.effectPlaceHolders[0].typeSpecificIndex = 2;
+    //     // Add a negative/positive effects
+    //     rule.negEffects = new Effect[](1);
+    //     rule.posEffects = new Effect[](1);
+    //     rule.negEffects[0] = effectId_revert;
+    //     rule.posEffects[0] = _createEffectExpressionTrackerUpdateParameterPlaceHolder();
+
+    //     // Add the tracker
+    //     RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
+    //     // Save the rule
+    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0] = ruleId;
+    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);
+
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    //     return policyIds[0];
+    // }
+
+
+    // /// Test helper functions
+    // function _createBlankPolicy() internal returns (uint256) {
+    //     CallingFunctionStorageSet[] memory functioncallingFunctions = new CallingFunctionStorageSet[](0); 
+    //     Rule[] memory rules = new Rule[](0); 
+    //     uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(functioncallingFunctions, rules, PolicyType.CLOSED_POLICY);
+    //     RulesEngineComponentFacet(address(red)).addClosedPolicySubscriber(policyId, callingContractAdmin); 
+    //     return policyId;
+    // }
+
+    // function _createBlankPolicyOpen() internal returns (uint256) {
+    //     CallingFunctionStorageSet[] memory functioncallingFunctions = new CallingFunctionStorageSet[](0); 
+    //     Rule[] memory rules = new Rule[](0); 
+    //     uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(functioncallingFunctions, rules, PolicyType.OPEN_POLICY);
+    //     return policyId;
+    // }
+
+    // function _createBlankPolicyWithAdminRoleString()
+    //     internal
+    //     returns (uint256)
+    // {
+    //     CallingFunctionStorageSet[] memory functioncallingFunctions = new CallingFunctionStorageSet[](0); 
+    //     Rule[] memory rules = new Rule[](0); 
+    //     uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(functioncallingFunctions, rules, PolicyType.CLOSED_POLICY);
+    //     return policyId;
+    // }
+
+    // // internal rule builder
+    // function _createGTRule(uint256 _amount) public returns (Rule memory) {
+    //     // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule;
+    //     // Set up some effects.
+    //     _setupEffectProcessor();
+    //     // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+    //     rule.instructionSet = rule.instructionSet = _createInstructionSet(
+    //         _amount
+    //     );
+    //     rule.placeHolders = new Placeholder[](1);
+    //     rule.placeHolders[0].pType = PT.UINT;
+    //     rule.placeHolders[0].typeSpecificIndex = 1;
+    //     // Add a negative/positive effects
+    //     rule.negEffects = new Effect[](1);
+    //     rule.posEffects = new Effect[](1);
+    //     return rule;
+    // }
+
+    // function _createGTRuleWithCustomEventParams(uint256 _amount, bytes memory param, PT paramType) public returns (Rule memory) {
+    //     // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule;
+    //     // Set up custom event param effect.
+    //     effectId_event = _createCustomEffectEvent(param, paramType);
+    //     // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+    //     rule.instructionSet = rule.instructionSet = _createInstructionSet(
+    //         _amount
+    //     );
+    //     rule.placeHolders = new Placeholder[](1);
+    //     rule.placeHolders[0].pType = PT.UINT;
+    //     rule.placeHolders[0].typeSpecificIndex = 1;
+    //     // Add a negative/positive effects
+    //     rule.negEffects = new Effect[](1);
+    //     rule.posEffects = new Effect[](1);
+    //     return rule;
+    // }
+
+    // function _createGTRuleWithDynamicEventParams(uint256 _amount) public returns (Rule memory) {
+    //     // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule;
+    //     // Set up custom event param effect.
+    //     effectId_event = _createEffectEventDynamicParams();
+    //     // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+    //     rule.instructionSet = rule.instructionSet = _createInstructionSet(
+    //         _amount
+    //     );
+    //     rule.placeHolders = new Placeholder[](1);
+    //     rule.placeHolders[0].pType = PT.UINT;
+    //     rule.placeHolders[0].typeSpecificIndex = 1;
+
+    //     rule.effectPlaceHolders = new Placeholder[](1);
+    //     rule.effectPlaceHolders[0].pType = PT.UINT;
+    //     rule.effectPlaceHolders[0].typeSpecificIndex = 1;
+    //     // Add a negative/positive effects
+    //     rule.negEffects = new Effect[](1);
+    //     rule.posEffects = new Effect[](1);
+    //     return rule;
+    // }
+
+    // function _createGTRuleWithDynamicEventParamsAddress(uint256 _amount) public returns (Rule memory) {
+    //     // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule;
+    //     // Set up custom event param effect.
+    //     effectId_event = _createEffectEventDynamicParamsAddress();
+    //     // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+    //     rule.instructionSet = rule.instructionSet = _createInstructionSet(
+    //         _amount
+    //     );
+    //     rule.placeHolders = new Placeholder[](1);
+    //     rule.placeHolders[0].pType = PT.UINT;
+    //     rule.placeHolders[0].typeSpecificIndex = 1;
+
+    //     rule.effectPlaceHolders = new Placeholder[](1);
+    //     rule.effectPlaceHolders[0].pType = PT.ADDR;
+    //     rule.effectPlaceHolders[0].typeSpecificIndex = 0;
+    //     // Add a negative/positive effects
+    //     rule.negEffects = new Effect[](1);
+    //     rule.posEffects = new Effect[](1);
+    //     return rule;
+    // }
+
+    // function _createLTRule() public returns (Rule memory) {
+    //     // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+    //     Rule memory rule;
+    //     // Set up some effects.
+    //     _setupEffectProcessor();
+    //     // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+    //     rule.instructionSet = new uint256[](7);
+    //     rule.instructionSet[0] = uint(LC.NUM);
+    //     rule.instructionSet[1] = 0;
+    //     rule.instructionSet[2] = uint(LC.NUM);
+    //     rule.instructionSet[3] = 2;
+    //     rule.instructionSet[4] = uint(LC.LT);
+    //     rule.instructionSet[5] = 0;
+    //     rule.instructionSet[6] = 1;
+    //     rule.placeHolders = new Placeholder[](1);
+    //     rule.placeHolders[0].pType = PT.UINT;
+    //     rule.placeHolders[0].typeSpecificIndex = 1;
+    //     // Add a negative/positive effects
+    //     rule.negEffects = new Effect[](1);
+    //     rule.posEffects = new Effect[](1);
+    //     return rule;
+    // }
+
+
+    // function _addCallingFunctionToPolicy(uint256 policyId) internal returns (uint256) {
+    //     vm.stopPrank();
+    //     vm.startPrank(policyAdmin);
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
+    //     // Save the calling function
+    //     uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
+    //         .createCallingFunction(
+    //             policyId, 
+    //             bytes4(bytes4(keccak256(bytes(callingFunction)))), 
+    //             pTypes,
+    //             callingFunction,
+    //             ""    
+    //         );
+    //     // Save the Policy
+    //     callingFunctions.push(bytes4(keccak256(bytes(callingFunction))));
+    //     callingFunctionIds.push(callingFunctionId);
+    //     uint256[][] memory blankRuleIds = new uint256[][](0);
+    //     RulesEnginePolicyFacet(address(red)).updatePolicy(
+    //         policyId,
+    //         callingFunctions,
+    //         callingFunctionIds,
+    //         blankRuleIds,
+    //         PolicyType.CLOSED_POLICY
+    //     );
+    //     return callingFunctionId;
+    // }
+
+    // function _addCallingFunctionToPolicyWithString(uint256 policyId) internal returns (uint256) {
+    //     PT[] memory pTypes = new PT[](3);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
+    //     pTypes[2] = PT.BYTES;
+    //     // Save the calling function
+    //     uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
+    //         .createCallingFunction(
+    //             policyId, 
+    //             bytes4(bytes4(keccak256(bytes(callingFunction)))), 
+    //             pTypes,
+    //             callingFunction,
+    //             ""    
+    //         );
+    //     // Save the Policy
+    //     callingFunctions.push(bytes4(keccak256(bytes(callingFunction))));
+    //     callingFunctionIds.push(callingFunctionId);
+    //     uint256[][] memory blankRuleIds = new uint256[][](0);
+    //     vm.stopPrank();
+    //     vm.startPrank(policyAdmin);
+    //     RulesEnginePolicyFacet(address(red)).updatePolicy(
+    //         policyId,
+    //         callingFunctions,
+    //         callingFunctionIds,
+    //         blankRuleIds,
+    //         PolicyType.CLOSED_POLICY
+    //     );
+    //     return callingFunctionId;
+    // }
+
+    // function _addCallingFunctionToPolicy(
+    //     uint256 policyId,
+    //     bytes4 _callingFunction,
+    //     PT[] memory pTypes,
+    //     string memory functionName
+    // ) internal returns (uint256) {
+    //     // Save the calling function
+    //     uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
+    //         .createCallingFunction(
+    //             policyId, 
+    //             bytes4(_callingFunction), 
+    //             pTypes, 
+    //             functionName,
+    //             "");
+    //     // Save the Policy
+    //     callingFunctions.push(_callingFunction);
+    //     callingFunctionIds.push(callingFunctionId);
+    //     uint256[][] memory blankRuleIds = new uint256[][](0);
+    //     vm.stopPrank();
+    //     vm.startPrank(policyAdmin);
+    //     RulesEnginePolicyFacet(address(red)).updatePolicy(
+    //         policyId,
+    //         callingFunctions,
+    //         callingFunctionIds,
+    //         blankRuleIds,
+    //         PolicyType.CLOSED_POLICY
+    //     );
+    //     return callingFunctionId;
+    // }
+
+    // function _addCallingFunctionToPolicyOpen(
+    //     uint256 policyId,
+    //     bytes4 _callingFunction,
+    //     PT[] memory pTypes, 
+    //     string memory functionName
+    // ) internal returns (uint256) {
+    //     // Save the calling function
+    //     uint256 callingFunctionId = RulesEngineComponentFacet(address(red))
+    //         .createCallingFunction(
+    //             policyId, 
+    //             bytes4(_callingFunction), 
+    //             pTypes, 
+    //             functionName,
+    //             "");
+    //     // Save the Policy
+    //     callingFunctions.push(_callingFunction);
+    //     callingFunctionIds.push(callingFunctionId);
+    //     uint256[][] memory blankRuleIds = new uint256[][](0);
+    //     vm.stopPrank();
+    //     vm.startPrank(policyAdmin);
+    //     RulesEnginePolicyFacet(address(red)).updatePolicy(
+    //         policyId,
+    //         callingFunctions,
+    //         callingFunctionIds,
+    //         blankRuleIds,
+    //         PolicyType.OPEN_POLICY
+    //     );
+    //     return callingFunctionId;
+    // }
     
 
-    function _addRuleIdsToPolicy(
-        uint256 policyId,
-        uint256[][] memory _ruleIds
-    ) internal {
-        vm.stopPrank();
-        vm.startPrank(policyAdmin);
-        RulesEnginePolicyFacet(address(red)).updatePolicy(
-            policyId,
-            callingFunctions,
-            callingFunctionIds,
-            _ruleIds,
-            PolicyType.CLOSED_POLICY
-        );
-    }
+    // function _addRuleIdsToPolicy(
+    //     uint256 policyId,
+    //     uint256[][] memory _ruleIds
+    // ) internal {
+    //     vm.stopPrank();
+    //     vm.startPrank(policyAdmin);
+    //     RulesEnginePolicyFacet(address(red)).updatePolicy(
+    //         policyId,
+    //         callingFunctions,
+    //         callingFunctionIds,
+    //         _ruleIds,
+    //         PolicyType.CLOSED_POLICY
+    //     );
+    // }
 
-    function _addRuleIdsToPolicyOpen(
-        uint256 policyId,
-        uint256[][] memory _ruleIds
-    ) internal {
-        vm.stopPrank();
-        vm.startPrank(policyAdmin);
-        RulesEnginePolicyFacet(address(red)).updatePolicy(
-            policyId,
-            callingFunctions,
-            callingFunctionIds,
-            _ruleIds,
-            PolicyType.OPEN_POLICY
-        );
-    }
+    // function _addRuleIdsToPolicyOpen(
+    //     uint256 policyId,
+    //     uint256[][] memory _ruleIds
+    // ) internal {
+    //     vm.stopPrank();
+    //     vm.startPrank(policyAdmin);
+    //     RulesEnginePolicyFacet(address(red)).updatePolicy(
+    //         policyId,
+    //         callingFunctions,
+    //         callingFunctionIds,
+    //         _ruleIds,
+    //         PolicyType.OPEN_POLICY
+    //     );
+    // }
 
-    function _setupEffectProcessor() public {
-        _createAllEffects();
-    }
+    // function _setupEffectProcessor() public {
+    //     _createAllEffects();
+    // }
 
-    function _createAllEffects() public {
-        effectId_event = _createEffectEvent(event_text); // effectId = 1
-        effectId_revert = _createEffectRevert(revert_text); // effectId = 2
-        effectId_event2 = _createEffectEvent(event_text2); // effectId = 3
-        effectId_revert2 = _createEffectRevert(revert_text2); // effectId = 4
-        effectId_expression = _createEffectExpression(); // effectId = 5;
-        effectId_expression2 = _createEffectExpressionTrackerUpdate(); // effectId = 6;
-        effectId_expression3 = _createEffectExpressionTrackerUpdateParameterMemory(); // effectId = 7;
-        effectId_expression4 = _createEffectExpressionTrackerUpdateParameterPlaceHolder(); // effectId = 8;
-    }
+    // function _createAllEffects() public {
+    //     effectId_event = _createEffectEvent(event_text); // effectId = 1
+    //     effectId_revert = _createEffectRevert(revert_text); // effectId = 2
+    //     effectId_event2 = _createEffectEvent(event_text2); // effectId = 3
+    //     effectId_revert2 = _createEffectRevert(revert_text2); // effectId = 4
+    //     effectId_expression = _createEffectExpression(); // effectId = 5;
+    //     effectId_expression2 = _createEffectExpressionTrackerUpdate(); // effectId = 6;
+    //     effectId_expression3 = _createEffectExpressionTrackerUpdateParameterMemory(); // effectId = 7;
+    //     effectId_expression4 = _createEffectExpressionTrackerUpdateParameterPlaceHolder(); // effectId = 8;
+    // }
 
-    function _createEffectEvent(string memory _text) public pure returns(Effect memory){
-        uint256[] memory emptyArray = new uint256[](1); 
-        // Create a event effect
-        return
-            Effect({
-                valid: true,
-                dynamicParam:false,
-                effectType: ET.EVENT,
-                pType: PT.STR,
-                param: abi.encode(_text),
-                text: EVENTTEXT,
-                errorMessage: _text,
-                instructionSet: emptyArray
-            });
-    }
+    // function _createEffectEvent(string memory _text) public pure returns(Effect memory){
+    //     uint256[] memory emptyArray = new uint256[](1); 
+    //     // Create a event effect
+    //     return
+    //         Effect({
+    //             valid: true,
+    //             dynamicParam:false,
+    //             effectType: ET.EVENT,
+    //             pType: PT.STR,
+    //             param: abi.encode(_text),
+    //             text: EVENTTEXT,
+    //             errorMessage: _text,
+    //             instructionSet: emptyArray
+    //         });
+    // }
 
-    function _createCustomEffectEvent(bytes memory param, PT paramType) public pure returns(Effect memory){
-        uint256[] memory emptyArray = new uint256[](1); 
-        bytes memory encodedParam; 
-        if (paramType == PT.UINT) {
-            encodedParam = abi.encode(abi.decode(param, (uint)));  
-        } else if (paramType == PT.ADDR) {
-            encodedParam = abi.encode(abi.decode(param, (address)));
-        } else if (paramType == PT.BOOL) {
-            encodedParam = abi.encode(abi.decode(param, (bool)));
-        } else if (paramType == PT.STR) {
-            encodedParam = abi.encode(abi.decode(param, (string)));
-        } else if (paramType == PT.BYTES) {
-            encodedParam = abi.encode(abi.decode(param, (bytes32)));
-        }
-        // Create a event effect
-        return
-            Effect({
-                valid: true,
-                dynamicParam:false,
-                effectType: ET.EVENT,
-                pType: paramType,
-                param: encodedParam,
-                text: EVENTTEXT,
-                errorMessage: event_text,
-                instructionSet: emptyArray
-            });
-    }
+    // function _createCustomEffectEvent(bytes memory param, PT paramType) public pure returns(Effect memory){
+    //     uint256[] memory emptyArray = new uint256[](1); 
+    //     bytes memory encodedParam; 
+    //     if (paramType == PT.UINT) {
+    //         encodedParam = abi.encode(abi.decode(param, (uint)));  
+    //     } else if (paramType == PT.ADDR) {
+    //         encodedParam = abi.encode(abi.decode(param, (address)));
+    //     } else if (paramType == PT.BOOL) {
+    //         encodedParam = abi.encode(abi.decode(param, (bool)));
+    //     } else if (paramType == PT.STR) {
+    //         encodedParam = abi.encode(abi.decode(param, (string)));
+    //     } else if (paramType == PT.BYTES) {
+    //         encodedParam = abi.encode(abi.decode(param, (bytes32)));
+    //     }
+    //     // Create a event effect
+    //     return
+    //         Effect({
+    //             valid: true,
+    //             dynamicParam:false,
+    //             effectType: ET.EVENT,
+    //             pType: paramType,
+    //             param: encodedParam,
+    //             text: EVENTTEXT,
+    //             errorMessage: event_text,
+    //             instructionSet: emptyArray
+    //         });
+    // }
 
-    function _createEffectEventDynamicParams() public pure returns(Effect memory){
-        Effect memory effect;
-        effect.valid = true;
-        effect.dynamicParam = true;
-        effect.effectType = ET.EVENT;
-        effect.text = EVENTTEXT;
-        effect.instructionSet = new uint256[](4);
-        // Foreign Call Placeholder
-        effect.instructionSet[0] = uint(LC.NUM);
-        effect.instructionSet[1] = 0;
-        // // Tracker Placeholder
-        effect.instructionSet[2] = uint(LC.NUM);
-        effect.instructionSet[3] = 1;
+    // function _createEffectEventDynamicParams() public pure returns(Effect memory){
+    //     Effect memory effect;
+    //     effect.valid = true;
+    //     effect.dynamicParam = true;
+    //     effect.effectType = ET.EVENT;
+    //     effect.text = EVENTTEXT;
+    //     effect.instructionSet = new uint256[](4);
+    //     // Foreign Call Placeholder
+    //     effect.instructionSet[0] = uint(LC.NUM);
+    //     effect.instructionSet[1] = 0;
+    //     // // Tracker Placeholder
+    //     effect.instructionSet[2] = uint(LC.NUM);
+    //     effect.instructionSet[3] = 1;
 
-        return effect;
-    }
+    //     return effect;
+    // }
 
-    function _createEffectEventDynamicParamsAddress() public pure returns(Effect memory){
-        Effect memory effect;
-        effect.valid = true;
-        effect.dynamicParam = true;
-        effect.effectType = ET.EVENT;
-        effect.text = EVENTTEXT;
-        effect.instructionSet = new uint256[](4);
-        // Foreign Call Placeholder
-        effect.instructionSet[0] = uint(LC.NUM);
-        effect.instructionSet[1] = 1;
-        // // Tracker Placeholder
-        effect.instructionSet[2] = uint(LC.NUM);
-        effect.instructionSet[3] = 1;
+    // function _createEffectEventDynamicParamsAddress() public pure returns(Effect memory){
+    //     Effect memory effect;
+    //     effect.valid = true;
+    //     effect.dynamicParam = true;
+    //     effect.effectType = ET.EVENT;
+    //     effect.text = EVENTTEXT;
+    //     effect.instructionSet = new uint256[](4);
+    //     // Foreign Call Placeholder
+    //     effect.instructionSet[0] = uint(LC.NUM);
+    //     effect.instructionSet[1] = 1;
+    //     // // Tracker Placeholder
+    //     effect.instructionSet[2] = uint(LC.NUM);
+    //     effect.instructionSet[3] = 1;
 
-        return effect;
-    }
+    //     return effect;
+    // }
 
-    function _createEffectRevert(string memory _text) public pure returns(Effect memory) {
-        uint256[] memory emptyArray = new uint256[](1); 
-        // Create a revert effect
-        return
-            Effect({
-                valid: true,
-                dynamicParam:false,
-                effectType: ET.REVERT,
-                pType: PT.STR,
-                param: abi.encode(_text),
-                text: EVENTTEXT,
-                errorMessage: revert_text,
-                instructionSet: emptyArray
-            });
-    }
+    // function _createEffectRevert(string memory _text) public pure returns(Effect memory) {
+    //     uint256[] memory emptyArray = new uint256[](1); 
+    //     // Create a revert effect
+    //     return
+    //         Effect({
+    //             valid: true,
+    //             dynamicParam:false,
+    //             effectType: ET.REVERT,
+    //             pType: PT.STR,
+    //             param: abi.encode(_text),
+    //             text: EVENTTEXT,
+    //             errorMessage: revert_text,
+    //             instructionSet: emptyArray
+    //         });
+    // }
 
-    function _createEffectExpression() public pure returns(Effect memory) {
-        Effect memory effect;
+    // function _createEffectExpression() public pure returns(Effect memory) {
+    //     Effect memory effect;
 
-        effect.valid = true;
-        effect.effectType = ET.EXPRESSION;
-        effect.text = "";
-        effect.instructionSet = new uint256[](1);
+    //     effect.valid = true;
+    //     effect.effectType = ET.EXPRESSION;
+    //     effect.text = "";
+    //     effect.instructionSet = new uint256[](1);
 
-        return effect;
-    }
+    //     return effect;
+    // }
 
-    function _createEffectExpressionTrackerUpdate() public pure returns(Effect memory) {
-        // Effect: TRU:someTracker += FC:simpleCheck(amount)
-        Effect memory effect;
-        effect.valid = true;
-        effect.effectType = ET.EXPRESSION;
-        effect.text = "";
-        effect.instructionSet = new uint256[](10);
-        // Foreign Call Placeholder
-        effect.instructionSet[0] = uint(LC.PLH);
-        effect.instructionSet[1] = 0;
-        // Tracker Placeholder
-        effect.instructionSet[2] = uint(LC.PLH);
-        effect.instructionSet[3] = 1;
-        effect.instructionSet[4] = uint(LC.ADD);
-        effect.instructionSet[5] = 0;
-        effect.instructionSet[6] = 1;
-        effect.instructionSet[7] = uint(LC.TRU);
-        effect.instructionSet[8] = 1;
-        effect.instructionSet[9] = 2;
+    // function _createEffectExpressionTrackerUpdate() public pure returns(Effect memory) {
+    //     // Effect: TRU:someTracker += FC:simpleCheck(amount)
+    //     Effect memory effect;
+    //     effect.valid = true;
+    //     effect.effectType = ET.EXPRESSION;
+    //     effect.text = "";
+    //     effect.instructionSet = new uint256[](10);
+    //     // Foreign Call Placeholder
+    //     effect.instructionSet[0] = uint(LC.PLH);
+    //     effect.instructionSet[1] = 0;
+    //     // Tracker Placeholder
+    //     effect.instructionSet[2] = uint(LC.PLH);
+    //     effect.instructionSet[3] = 1;
+    //     effect.instructionSet[4] = uint(LC.ADD);
+    //     effect.instructionSet[5] = 0;
+    //     effect.instructionSet[6] = 1;
+    //     effect.instructionSet[7] = uint(LC.TRU);
+    //     effect.instructionSet[8] = 1;
+    //     effect.instructionSet[9] = 2;
 
-        return effect;
-    }
+    //     return effect;
+    // }
 
-    function _createEffectExpressionTrackerUpdateParameterPlaceHolder() public pure returns(Effect memory) {
-        // Effect: TRU:someTracker = parameter 3
-        Effect memory effect;
-        effect.valid = true;
-        effect.effectType = ET.EXPRESSION;
-        effect.text = "";
-        effect.instructionSet = new uint256[](6);
-        // Foreign Call Placeholder
-        effect.instructionSet[0] = uint(LC.PLH);
-        effect.instructionSet[1] = 0;
-        // Tracker Placeholder
-        effect.instructionSet[2] = uint(LC.TRU);
-        effect.instructionSet[3] = 1;
-        effect.instructionSet[4] = 0;
-        effect.instructionSet[5] = uint(TT.PLACE_HOLDER);
+    // function _createEffectExpressionTrackerUpdateParameterPlaceHolder() public pure returns(Effect memory) {
+    //     // Effect: TRU:someTracker = parameter 3
+    //     Effect memory effect;
+    //     effect.valid = true;
+    //     effect.effectType = ET.EXPRESSION;
+    //     effect.text = "";
+    //     effect.instructionSet = new uint256[](6);
+    //     // Foreign Call Placeholder
+    //     effect.instructionSet[0] = uint(LC.PLH);
+    //     effect.instructionSet[1] = 0;
+    //     // Tracker Placeholder
+    //     effect.instructionSet[2] = uint(LC.TRU);
+    //     effect.instructionSet[3] = 1;
+    //     effect.instructionSet[4] = 0;
+    //     effect.instructionSet[5] = uint(TT.PLACE_HOLDER);
 
-        return effect;
-    }
+    //     return effect;
+    // }
 
-    function _createEffectExpressionTrackerUpdateParameterMemory() public pure returns(Effect memory) {
-        // Effect: TRU:someTracker = parameter 3
-        Effect memory effect;
-        effect.valid = true;
-        effect.effectType = ET.EXPRESSION;
-        effect.text = "";
-        effect.instructionSet = new uint256[](6);
-        // Tracker Placeholder
-        effect.instructionSet[0] = uint(LC.TRU);
-        effect.instructionSet[1] = 1;
-        effect.instructionSet[2] = 0;
-        effect.instructionSet[3] = uint(TT.MEMORY);
+    // function _createEffectExpressionTrackerUpdateParameterMemory() public pure returns(Effect memory) {
+    //     // Effect: TRU:someTracker = parameter 3
+    //     Effect memory effect;
+    //     effect.valid = true;
+    //     effect.effectType = ET.EXPRESSION;
+    //     effect.text = "";
+    //     effect.instructionSet = new uint256[](6);
+    //     // Tracker Placeholder
+    //     effect.instructionSet[0] = uint(LC.TRU);
+    //     effect.instructionSet[1] = 1;
+    //     effect.instructionSet[2] = 0;
+    //     effect.instructionSet[3] = uint(TT.MEMORY);
 
-        return effect;
-    }
+    //     return effect;
+    // }
 
-    // internal instruction set builder: overload as needed
-    function _createInstructionSet()
-        public
-        pure
-        returns (uint256[] memory instructionSet)
-    {
-        instructionSet = new uint256[](7);
-        instructionSet[0] = uint(LC.NUM);
-        instructionSet[1] = 0;
-        instructionSet[2] = uint(LC.NUM);
-        instructionSet[3] = 1;
-        instructionSet[4] = uint(LC.GT);
-        instructionSet[5] = 0;
-        instructionSet[6] = 1;
-    }
+    // // internal instruction set builder: overload as needed
+    // function _createInstructionSet()
+    //     public
+    //     pure
+    //     returns (uint256[] memory instructionSet)
+    // {
+    //     instructionSet = new uint256[](7);
+    //     instructionSet[0] = uint(LC.NUM);
+    //     instructionSet[1] = 0;
+    //     instructionSet[2] = uint(LC.NUM);
+    //     instructionSet[3] = 1;
+    //     instructionSet[4] = uint(LC.GT);
+    //     instructionSet[5] = 0;
+    //     instructionSet[6] = 1;
+    // }
 
-    function _createInstructionSet(
-        uint256 plh1
-    ) public pure returns (uint256[] memory instructionSet) {
-        instructionSet = new uint256[](7);
-        instructionSet[0] = uint(LC.PLH);
-        instructionSet[1] = 0;
-        instructionSet[2] = uint(LC.NUM);
-        instructionSet[3] = plh1;
-        instructionSet[4] = uint(LC.GT);
-        instructionSet[5] = 0;
-        instructionSet[6] = 1;
-    }
+    // function _createInstructionSet(
+    //     uint256 plh1
+    // ) public pure returns (uint256[] memory instructionSet) {
+    //     instructionSet = new uint256[](7);
+    //     instructionSet[0] = uint(LC.PLH);
+    //     instructionSet[1] = 0;
+    //     instructionSet[2] = uint(LC.NUM);
+    //     instructionSet[3] = plh1;
+    //     instructionSet[4] = uint(LC.GT);
+    //     instructionSet[5] = 0;
+    //     instructionSet[6] = 1;
+    // }
 
-    function _createInstructionSet(
-        string memory testString, // string added to identify this overloaded function vs the two uint256 param version 
-        uint256 plh1,
-        LC plcType
-    ) public pure returns (uint256[] memory instructionSet) {
-        instructionSet = new uint256[](7);
-        instructionSet[0] = uint(LC.PLH);
-        instructionSet[1] = 0;
-        instructionSet[2] = uint(LC.NUM);
-        instructionSet[3] = plh1;
-        instructionSet[4] = uint(plcType);
-        instructionSet[5] = 0;
-        instructionSet[6] = 1;
-        console.log("testString: %s", testString);
-    }
+    // function _createInstructionSet(
+    //     string memory testString, // string added to identify this overloaded function vs the two uint256 param version 
+    //     uint256 plh1,
+    //     LC plcType
+    // ) public pure returns (uint256[] memory instructionSet) {
+    //     instructionSet = new uint256[](7);
+    //     instructionSet[0] = uint(LC.PLH);
+    //     instructionSet[1] = 0;
+    //     instructionSet[2] = uint(LC.NUM);
+    //     instructionSet[3] = plh1;
+    //     instructionSet[4] = uint(plcType);
+    //     instructionSet[5] = 0;
+    //     instructionSet[6] = 1;
+    //     console.log("testString: %s", testString);
+    // }
 
-    function _createInstructionSet(
-        uint256 plh1,
-        uint256 plh2
-    ) public pure returns (uint256[] memory instructionSet) {
-        instructionSet = new uint256[](7);
-        instructionSet[0] = uint(LC.PLH);
-        instructionSet[1] = plh1;
-        instructionSet[2] = uint(LC.PLH);
-        instructionSet[3] = plh2;
-        instructionSet[4] = uint(LC.GT);
-        instructionSet[5] = 0;
-        instructionSet[6] = 1;
-    }
+    // function _createInstructionSet(
+    //     uint256 plh1,
+    //     uint256 plh2
+    // ) public pure returns (uint256[] memory instructionSet) {
+    //     instructionSet = new uint256[](7);
+    //     instructionSet[0] = uint(LC.PLH);
+    //     instructionSet[1] = plh1;
+    //     instructionSet[2] = uint(LC.PLH);
+    //     instructionSet[3] = plh2;
+    //     instructionSet[4] = uint(LC.GT);
+    //     instructionSet[5] = 0;
+    //     instructionSet[6] = 1;
+    // }
 
-    function _setup_checkRule_ForeignCall_Positive(uint256 _transferValue) public ifDeploymentTestsEnabled endWithStopPrank returns(uint256 _policyId) {
+    // function _setup_checkRule_ForeignCall_Positive(uint256 _transferValue) public ifDeploymentTestsEnabled endWithStopPrank returns(uint256 _policyId) {
        
-        uint256[] memory policyIds = new uint256[](1);
-        policyIds[0] = _createBlankPolicyOpen();
-        PT[] memory pTypes = new PT[](2);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.UINT;
-        _addCallingFunctionToPolicy(policyIds[0]);
-        // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
-        Rule memory rule;
-        // Build the foreign call placeholder
-        rule.placeHolders = new Placeholder[](1); 
-        rule.placeHolders[0].foreignCall = true;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-        // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet(_transferValue);
-        rule.negEffects = new Effect[](1);
-        rule.negEffects[0] = effectId_revert;
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+    //     uint256[] memory policyIds = new uint256[](1);
+    //     policyIds[0] = _createBlankPolicyOpen();
+    //     PT[] memory pTypes = new PT[](2);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.UINT;
+    //     _addCallingFunctionToPolicy(policyIds[0]);
+    //     // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
+    //     Rule memory rule;
+    //     // Build the foreign call placeholder
+    //     rule.placeHolders = new Placeholder[](1); 
+    //     rule.placeHolders[0].foreignCall = true;
+    //     rule.placeHolders[0].typeSpecificIndex = 1;
+    //     // Build the instruction set for the rule (including placeholders)
+    //     rule.instructionSet = _createInstructionSet(_transferValue);
+    //     rule.negEffects = new Effect[](1);
+    //     rule.negEffects[0] = effectId_revert;
+    //     // Save the rule
+    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 1;
-        ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
-        fc.parameterTypes = fcArgs;
-        fc.foreignCallAddress = address(testContract);
-        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.returnType = PT.UINT;
-        fc.foreignCallIndex = 0;
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0]= ruleId;
-        _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);      
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-        return policyIds[0];
-    }
+    //     PT[] memory fcArgs = new PT[](1);
+    //     fcArgs[0] = PT.UINT;
+    //     int8[] memory typeSpecificIndices = new int8[](1);
+    //     typeSpecificIndices[0] = 1;
+    //     ForeignCall memory fc;
+    //     fc.typeSpecificIndices = typeSpecificIndices;
+    //     fc.parameterTypes = fcArgs;
+    //     fc.foreignCallAddress = address(testContract);
+    //     fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+    //     fc.returnType = PT.UINT;
+    //     fc.foreignCallIndex = 0;
+    //     RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0]= ruleId;
+    //     _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);      
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    //     return policyIds[0];
+    // }
 
-    function _setup_checkRule_TransferFrom_ForeignCall_Positive(uint256 _transferValue) public ifDeploymentTestsEnabled endWithStopPrank {
+    // function _setup_checkRule_TransferFrom_ForeignCall_Positive(uint256 _transferValue) public ifDeploymentTestsEnabled endWithStopPrank {
        
-        uint256[] memory policyIds = new uint256[](1);
-        policyIds[0] = _createBlankPolicyOpen();
-        PT[] memory pTypes = new PT[](3);
-        pTypes[0] = PT.ADDR;
-        pTypes[1] = PT.ADDR;
-        pTypes[2] = PT.UINT;
-        _addCallingFunctionToPolicy(policyIds[0]);
-        // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
-        Rule memory rule;
-        // Build the foreign call placeholder
-        rule.placeHolders = new Placeholder[](1); 
-        rule.placeHolders[0].foreignCall = true;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-        // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet(_transferValue);
-        rule.negEffects = new Effect[](1);
-        rule.negEffects[0] = effectId_revert;
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+    //     uint256[] memory policyIds = new uint256[](1);
+    //     policyIds[0] = _createBlankPolicyOpen();
+    //     PT[] memory pTypes = new PT[](3);
+    //     pTypes[0] = PT.ADDR;
+    //     pTypes[1] = PT.ADDR;
+    //     pTypes[2] = PT.UINT;
+    //     _addCallingFunctionToPolicy(policyIds[0]);
+    //     // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
+    //     Rule memory rule;
+    //     // Build the foreign call placeholder
+    //     rule.placeHolders = new Placeholder[](1); 
+    //     rule.placeHolders[0].foreignCall = true;
+    //     rule.placeHolders[0].typeSpecificIndex = 1;
+    //     // Build the instruction set for the rule (including placeholders)
+    //     rule.instructionSet = _createInstructionSet(_transferValue);
+    //     rule.negEffects = new Effect[](1);
+    //     rule.negEffects[0] = effectId_revert;
+    //     // Save the rule
+    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 2;
-        ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
-        fc.parameterTypes = fcArgs;
-        fc.foreignCallAddress = address(testContract);
-        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.returnType = PT.UINT;
-        fc.foreignCallIndex = 0;
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0]= ruleId;
-        _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);   
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);    
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-    }
+    //     PT[] memory fcArgs = new PT[](1);
+    //     fcArgs[0] = PT.UINT;
+    //     int8[] memory typeSpecificIndices = new int8[](1);
+    //     typeSpecificIndices[0] = 2;
+    //     ForeignCall memory fc;
+    //     fc.typeSpecificIndices = typeSpecificIndices;
+    //     fc.parameterTypes = fcArgs;
+    //     fc.foreignCallAddress = address(testContract);
+    //     fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+    //     fc.returnType = PT.UINT;
+    //     fc.foreignCallIndex = 0;
+    //     RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0]= ruleId;
+    //     _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);   
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);    
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    // }
 
-    function _setup_checkRule_ForeignCall_Negative(uint256 _transferValue)  public ifDeploymentTestsEnabled endWithStopPrank {
-        uint256[] memory policyIds = new uint256[](1);
-        policyIds[0] = _createBlankPolicy();
+    // function _setup_checkRule_ForeignCall_Negative(uint256 _transferValue)  public ifDeploymentTestsEnabled endWithStopPrank {
+    //     uint256[] memory policyIds = new uint256[](1);
+    //     policyIds[0] = _createBlankPolicy();
         
-        _addCallingFunctionToPolicy(policyIds[0]);
-        // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
-        Rule memory rule;
-        // Build the foreign call placeholder
-        rule.placeHolders = new Placeholder[](1); 
-        rule.placeHolders[0].foreignCall = true;
-        rule.placeHolders[0].typeSpecificIndex = 1;
-        // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet(_transferValue);
-        rule.negEffects = new Effect[](1);
-        rule.negEffects[0] = effectId_revert;
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+    //     _addCallingFunctionToPolicy(policyIds[0]);
+    //     // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
+    //     Rule memory rule;
+    //     // Build the foreign call placeholder
+    //     rule.placeHolders = new Placeholder[](1); 
+    //     rule.placeHolders[0].foreignCall = true;
+    //     rule.placeHolders[0].typeSpecificIndex = 1;
+    //     // Build the instruction set for the rule (including placeholders)
+    //     rule.instructionSet = _createInstructionSet(_transferValue);
+    //     rule.negEffects = new Effect[](1);
+    //     rule.negEffects[0] = effectId_revert;
+    //     // Save the rule
+    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        PT[] memory fcArgs = new PT[](1);
-        fcArgs[0] = PT.UINT;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 1;
-        ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
-        fc.parameterTypes = fcArgs;
-        fc.foreignCallAddress = address(testContract);
-        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.returnType = PT.UINT;
+    //     PT[] memory fcArgs = new PT[](1);
+    //     fcArgs[0] = PT.UINT;
+    //     int8[] memory typeSpecificIndices = new int8[](1);
+    //     typeSpecificIndices[0] = 1;
+    //     ForeignCall memory fc;
+    //     fc.typeSpecificIndices = typeSpecificIndices;
+    //     fc.parameterTypes = fcArgs;
+    //     fc.foreignCallAddress = address(testContract);
+    //     fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+    //     fc.returnType = PT.UINT;
 
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0]= ruleId;
-        _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);    
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);   
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-    }
+    //     RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
+    //     ruleIds.push(new uint256[](1));
+    //     ruleIds[0][0]= ruleId;
+    //     _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);    
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);   
+    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    // }
 
-    function _setUpForeignCallSimple(uint256 _policyId) public ifDeploymentTestsEnabled  returns(ForeignCall memory foreignCall) {
-        ForeignCall memory fc;
-        fc.foreignCallAddress = address(testContract);
-        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.parameterTypes = new PT[](1);
-        fc.parameterTypes[0] = PT.UINT;
-        fc.typeSpecificIndices = new int8[](1);
-        fc.typeSpecificIndices[0] = 1;
-        fc.returnType = PT.UINT;
-        fc.foreignCallIndex = 0;
-        RulesEngineComponentFacet(address(red)).createForeignCall(_policyId, fc, "simpleCheck(uint256)");
-        return fc; 
-    }
+    // function _setUpForeignCallSimple(uint256 _policyId) public ifDeploymentTestsEnabled  returns(ForeignCall memory foreignCall) {
+    //     ForeignCall memory fc;
+    //     fc.foreignCallAddress = address(testContract);
+    //     fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+    //     fc.parameterTypes = new PT[](1);
+    //     fc.parameterTypes[0] = PT.UINT;
+    //     fc.typeSpecificIndices = new int8[](1);
+    //     fc.typeSpecificIndices[0] = 1;
+    //     fc.returnType = PT.UINT;
+    //     fc.foreignCallIndex = 0;
+    //     RulesEngineComponentFacet(address(red)).createForeignCall(_policyId, fc, "simpleCheck(uint256)");
+    //     return fc; 
+    // }
 
-    function _setUpForeignCallSimpleReturnID(uint256 _policyId) public ifDeploymentTestsEnabled  returns(ForeignCall memory foreignCall, uint256 fcId) {
-        ForeignCall memory fc;
-        fc.foreignCallAddress = address(testContract);
-        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.parameterTypes = new PT[](1);
-        fc.parameterTypes[0] = PT.UINT;
-        fc.typeSpecificIndices = new int8[](1);
-        fc.typeSpecificIndices[0] = 1;
-        fc.returnType = PT.UINT;
-        fc.foreignCallIndex = 0;
-        uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(_policyId, fc, "simpleCheck(uint256)");
-        return (fc, foreignCallId); 
-    }
+    // function _setUpForeignCallSimpleReturnID(uint256 _policyId) public ifDeploymentTestsEnabled  returns(ForeignCall memory foreignCall, uint256 fcId) {
+    //     ForeignCall memory fc;
+    //     fc.foreignCallAddress = address(testContract);
+    //     fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+    //     fc.parameterTypes = new PT[](1);
+    //     fc.parameterTypes[0] = PT.UINT;
+    //     fc.typeSpecificIndices = new int8[](1);
+    //     fc.typeSpecificIndices[0] = 1;
+    //     fc.returnType = PT.UINT;
+    //     fc.foreignCallIndex = 0;
+    //     uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(_policyId, fc, "simpleCheck(uint256)");
+    //     return (fc, foreignCallId); 
+    // }
 
-    function _switchCallingContractAdminRole(address newAdmin, address userContract) public ifDeploymentTestsEnabled {
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEngineAdminRolesFacet(address(red)).proposeNewCallingContractAdmin(newAdmin, userContract); 
+    // function _switchCallingContractAdminRole(address newAdmin, address userContract) public ifDeploymentTestsEnabled {
+    //     vm.stopPrank();
+    //     vm.startPrank(callingContractAdmin);
+    //     RulesEngineAdminRolesFacet(address(red)).proposeNewCallingContractAdmin(newAdmin, userContract); 
 
-        vm.stopPrank();
-        vm.startPrank(newAdmin);
-        RulesEngineAdminRolesFacet(address(red)).confirmNewCallingContractAdmin(userContract);
+    //     vm.stopPrank();
+    //     vm.startPrank(newAdmin);
+    //     RulesEngineAdminRolesFacet(address(red)).confirmNewCallingContractAdmin(userContract);
 
-    }
+    // }
 }

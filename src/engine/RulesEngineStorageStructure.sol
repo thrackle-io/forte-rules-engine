@@ -290,6 +290,7 @@ struct PolicyStorageSet {
 }
 
 struct Policy {
+    uint256 policyId;
     // Foreign Calls
     ForeignCall[] foreignCalls;
     // Trackers
@@ -302,7 +303,7 @@ struct Policy {
     PolicyType policyType;
     // Cemented status
     bool cemented;
-    mapping(address => bool) closedPolicySubscribers;
+    // mapping(address => bool) closedPolicySubscribers;
 }
 
 /// Policy Association Storage Structures
