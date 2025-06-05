@@ -193,7 +193,7 @@ struct Trackers {
     // Whether the tracker has been set
     bool set;
     // Define what type of tracker
-    PT pType;
+    ParamTypes pType;
     bool mapped; // if true, the tracker is using top level mapping: mappedTrackerValues
     bytes trackerKey; // used for mapped trackers, this is the key to the mapping
     // tracker types arrays

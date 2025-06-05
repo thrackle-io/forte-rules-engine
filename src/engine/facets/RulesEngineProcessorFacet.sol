@@ -40,283 +40,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     }
 
     /**
-     * @notice Checks a specific policy for compliance.
-     * @param _policyId The ID of the policy to check.
-     * @param _contractAddress The address of the contract being evaluated.
-     * @param arguments Function arguments for the policy evaluation.
-     * @return retVal True if the policy passes, false otherwise.
-     */
-    function _checkPolicy(uint256 _policyId, address _contractAddress, bytes calldata arguments) internal returns (bool retVal) {
-        _contractAddress; // added to remove wanring. TODO remove this once msg.sender testing is complete 
-        // Load the policy data from storage   
-        PolicyStorageSet storage policyStorageSet = lib.getPolicyStorage().policyStorageSets[_policyId];
-        mapping(uint256 ruleId => RuleStorageSet) storage ruleData = lib.getRuleStorage().ruleStorageSets[_policyId]; 
-        // Retrieve placeHolder[] for specific rule to be evaluated and translate function signature argument array 
-        // to rule specific argument array
-        // note that arguments is being sliced, first 4 bytes are the function signature being passed (:4) and the rest (4:) 
-        // are all the arguments associated for the rule to be invoked. This saves on further calculations so that we don't need to factor in the signature.
-        retVal = _evaluateRulesAndExecuteEffects(ruleData ,_policyId, _loadApplicableRules(ruleData, policyStorageSet.policy, bytes4(arguments[:4])), arguments[4:]); 
-    }
-
-    /**
-     * @notice Loads applicable rules for a given calling function.
-     * @param ruleData The mapping of rule IDs to rule storage sets.
-     * @param policy The policy structure containing the rules.
-     * @param callingFunction The function signature to match rules against.
-     * @return An array of applicable rule IDs.
-     */
-    function _loadApplicableRules(mapping(uint256 ruleId => RuleStorageSet) storage ruleData, Policy storage policy, bytes4 callingFunction) internal view returns(uint256[] memory){
-        // Load the applicable rule data from storage
-        uint256[] memory applicableRules = new uint256[](policy.callingFunctionsToRuleIds[callingFunction].length);
-        // Load the calling function data from storage
-        uint256[] storage storagePointer = policy.callingFunctionsToRuleIds[callingFunction];
-        for(uint256 i = 0; i < applicableRules.length; i++) {
-            if(ruleData[storagePointer[i]].set) {
-                applicableRules[i] = storagePointer[i];
-            }
-        }
-        return applicableRules;
-    }
-    
-    /**
-     * @notice Evaluates rules and executes their effects based on the evaluation results.
-     * @param ruleData The mapping of rule IDs to rule storage sets.
-     * @param _policyId The ID of the policy being evaluated.
-     * @param applicableRules An array of applicable rule IDs.
-     * @param callingFunctionArgs The arguments for the calling function.
-     * @return retVal True if all rules pass, false otherwise.
-     */
-    function _evaluateRulesAndExecuteEffects(mapping(uint256 ruleId => RuleStorageSet) storage ruleData, uint256 _policyId, uint256[] memory applicableRules, bytes calldata callingFunctionArgs) internal returns (bool retVal) {
-        retVal = true;
-        uint256 ruleCount = applicableRules.length;
-        for(uint256 i = 0; i < ruleCount; i++) { 
-            Rule storage rule = ruleData[applicableRules[i]].rule;
-            if(!_evaluateIndividualRule(rule, _policyId, callingFunctionArgs)) {
-                retVal = false;
-                _doEffects(rule, _policyId, rule.negEffects, callingFunctionArgs);
-            } else{
-                _doEffects(rule, _policyId, rule.posEffects, callingFunctionArgs);
-            }
-        }
-    }
-
-    /**
-     * @dev evaluates an individual rules condition(s)
-     * @param _policyId Policy id being evaluated.
-     * @param rule the rule structure containing the instruction set, with placeholders, to execute
-     * @param callingFunctionArgs the values to replace the placeholders in the instruction set with.
-     * @return response the result of the rule condition evaluation 
-     */
-    function _evaluateIndividualRule(Rule storage rule, uint256 _policyId, bytes calldata callingFunctionArgs) internal returns (bool response) {
-        (bytes[] memory ruleArgs, Placeholder[] memory placeholders) = _buildArguments(rule, _policyId, callingFunctionArgs, false);
-        response = _run(rule.instructionSet, placeholders, _policyId, ruleArgs);
-    }
-
-    /**
-     * @dev Constructs the arguments required for building the rule's place holders.
-     * @param rule The storage reference to the Rule struct containing the rule's details.
-     * @param _policyId The unique identifier of the policy associated with the rule.
-     * @param callingFunctionArgs The calldata containing the arguments for the calling function.
-     * @param effect A boolean indicating whether the rule has an effect or not.
-     * @return A tuple containing:
-     *         - An array of bytes representing the constructed arguments.
-     *         - An array of Placeholder structs used for argument substitution.
-     */
-    function _buildArguments(Rule storage rule, uint256 _policyId, bytes calldata callingFunctionArgs, bool effect) internal returns (bytes[] memory, Placeholder[] memory) {
-        Placeholder[] memory placeHolders;
-        if(effect) {
-            placeHolders = rule.effectPlaceHolders;
-        } else {
-            placeHolders = rule.placeHolders;
-        }       
-        bytes[] memory retVals = new bytes[](placeHolders.length);
-        for(uint256 placeholderIndex = 0; placeholderIndex < placeHolders.length; placeholderIndex++) {
-            // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
-            Placeholder memory placeholder = placeHolders[placeholderIndex];
-            if(placeholder.foreignCall) {
-                    ForeignCallReturnValue memory retVal = _evaluateForeignCalls(_policyId, callingFunctionArgs, placeholder.typeSpecificIndex, retVals);
-                    // Set the placeholders value and type based on the value returned by the foreign call
-                    retVals[placeholderIndex] = retVal.value;
-                    placeHolders[placeholderIndex].pType = retVal.pType;
-            } else if (placeholder.trackerValue) {
-                // Load the Tracker data from storage
-                Trackers memory tracker = lib.getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex];
-                retVals[placeholderIndex] = tracker.trackerValue;
-                if (tracker.mapped) {
-                    // if the tracker is a mapped tracker, retrieve the value from the key stored in the tracker 
-                    bytes memory mappedTrackerValue = lib.getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][tracker.trackerKey];
-                    retVals[placeholderIndex] = mappedTrackerValue;
-                } 
-                
-            } else {
-                // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
-                if(placeholder.pType == PT.STR || placeholder.pType == PT.BYTES) {
-                    retVals[placeholderIndex] = _getDynamicVariableFromCalldata(callingFunctionArgs, placeholder.typeSpecificIndex);
-                } else if (placeholder.pType == PT.STATIC_TYPE_ARRAY || placeholder.pType == PT.DYNAMIC_TYPE_ARRAY) {
-                    // if the placeholder represents an array, determine the length and set lenth as placeholder value in ruleArgs 
-                    bytes32 value = bytes32(callingFunctionArgs[placeholder.typeSpecificIndex * 32: (placeholder.typeSpecificIndex + 1) * 32]);
-                    retVals[placeholderIndex] = abi.encode(uint256(bytes32(callingFunctionArgs[uint(value):uint(value) + 32])));
-                } else {
-                    // since this is not a dynamic value, we can safely assume that it is only 1 word, therefore we multiply
-                    // the typeSpecificIndex by 32 to get the correct position in the callingFunctionArgs array
-                    // and then add 1 and multiply by 32 to get the correct 32 byte word to get the value
-                    retVals[placeholderIndex] = callingFunctionArgs[
-                        placeholder.typeSpecificIndex * 32: (placeholder.typeSpecificIndex + 1) * 32
-                    ];
-                }
-            }
-        }
-        return (retVals, placeHolders);
-    }
-
-    /**
-     * @dev Internal function to decode the arguments and do the comparisons.
-     * @param prog An array of uint256 representing the program to be executed.
-     * @param placeHolders An array of Placeholder structs used within the program.
-     * @param _policyId The ID of the policy associated with the program execution.
-     * @param arguments An array of bytes containing additional arguments for the program.
-     * @return ans A boolean indicating the result of the program execution.
-     */
-    function _run(uint256[] memory prog, Placeholder[] memory placeHolders, uint256 _policyId, bytes[] memory arguments) internal returns (bool ans) {
-        uint256[90] memory mem;
-        uint256 idx = 0;
-        uint256 opi = 0;
-        while (idx < prog.length) {
-            uint256 v = 0;
-            LC op = LC(prog[idx]);
-            if(op == LC.PLH) {
-                // Placeholder format is: get the index of the argument in the array. For example, PLH 0 is the first argument in the arguments array and its type and value
-                uint256 pli = prog[idx+1];
-                PT typ = placeHolders[pli].pType;
-                if(typ == PT.UINT) {
-                    v = abi.decode(arguments[pli], (uint256)); idx += 2;
-                } else if(typ == PT.ADDR) {
-                    // Convert address to uint256 for direct comparison using == and != operations
-                    v = uint256(uint160(address(abi.decode(arguments[pli], (address))))); idx += 2;
-                } else if(typ == PT.STR) {
-                    // Convert string to uint256 for direct comparison using == and != operations
-                    v = uint256(keccak256(abi.encode(abi.decode(arguments[pli], (string))))); idx += 2;
-                } else if(typ == PT.BOOL) {
-                    // Convert bool to uint256 for direct comparison using == and != operations
-                    v = uint256(ProcessorLib._bool2ui((abi.decode(arguments[pli], (bool))))); idx += 2;
-                } else if(typ == PT.BYTES) {
-                    // Convert bytes to uint256 for direct comparison using == and != operations
-                    v = uint256(keccak256(abi.encode(abi.decode(arguments[pli], (bytes))))); idx += 2;
-                } else if(typ == PT.STATIC_TYPE_ARRAY || typ == PT.DYNAMIC_TYPE_ARRAY) {
-                    // length of array for direct comparison using == and != operations
-                    v = abi.decode(arguments[pli], (uint256)); idx += 2;
-                } else if (typ == PT.VOID) {
-                    // v = 0; but already set to 0 above no need to do anything
-                    idx += 2;
-                }
-            } else if(op == LC.TRU) {
-                // update the tracker value
-                // If the Tracker Type == Place Holder, pull the data from the place holder, otherwise, pull it from Memory
-                TT tt = TT(prog[idx+3]);
-                if (tt == TT.MEMORY){
-                    _updateTrackerValue(_policyId, prog[idx + 1], mem[prog[idx+2]]);
-                } else {
-                    _updateTrackerValue(_policyId, prog[idx + 1], arguments[prog[idx+2]]);
-                }
-                idx += 4;
-            } else if (op == LC.NUM) { v = prog[idx+1]; idx += 2; }
-            else if (op == LC.ADD) { v = mem[prog[idx+1]] + mem[prog[idx+2]]; idx += 3; }
-            else if (op == LC.SUB) { v = mem[prog[idx+1]] - mem[prog[idx+2]]; idx += 3; }
-            else if (op == LC.MUL) { v = mem[prog[idx+1]] * mem[prog[idx+2]]; idx += 3; }
-            else if (op == LC.DIV) { v = mem[prog[idx+1]] / mem[prog[idx+2]]; idx += 3; }
-            else if (op == LC.ASSIGN) { v = mem[prog[idx+2]]; idx += 3; }
-            else if (op == LC.LT) { v = ProcessorLib._bool2ui(mem[prog[idx+1]] < mem[prog[idx+2]]); idx += 3; }
-            else if (op == LC.GT) { v = ProcessorLib._bool2ui(mem[prog[idx+1]] > mem[prog[idx+2]]); idx += 3; }
-            else if (op == LC.EQ) { v = ProcessorLib._bool2ui(mem[prog[idx+1]] == mem[prog[idx+2]]); idx += 3; }
-            else if (op == LC.NOTEQ) { v = ProcessorLib._bool2ui(mem[prog[idx+1]] != mem[prog[idx+2]]); idx += 3; }
-            else if (op == LC.GTEQL) { v = ProcessorLib._bool2ui(mem[prog[idx+1]] >= mem[prog[idx+2]]); idx += 3; }
-            else if (op == LC.LTEQL) { v = ProcessorLib._bool2ui(mem[prog[idx+1]] <= mem[prog[idx+2]]); idx += 3; }
-            else if (op == LC.AND) { v = ProcessorLib._bool2ui(ProcessorLib._ui2bool(mem[prog[idx+1]]) && ProcessorLib._ui2bool(mem[prog[idx+2]])); idx += 3; }
-            else if (op == LC.OR ) { v = ProcessorLib._bool2ui(ProcessorLib._ui2bool(mem[prog[idx+1]]) || ProcessorLib._ui2bool(mem[prog[idx+2]])); idx += 3; }
-            else if (op == LC.NOT) { v = ProcessorLib._bool2ui(! ProcessorLib._ui2bool(mem[prog[idx+1]])); idx += 2; }
-            else { revert("Illegal instruction"); }
-            mem[opi] = v;
-            opi += 1;
-        }
-        return ProcessorLib._ui2bool(mem[opi - 1]);
-    }
-
-    /**
-     * @dev This function updates the tracker value with the information provided
-     * @param _policyId Policy id being evaluated.
-     * @param _trackerId ID of the tracker to update.
-     * @param _trackerValue Value to update within the tracker
-     */
-    function _updateTrackerValue(uint256 _policyId, uint256 _trackerId, uint256 _trackerValue) internal{
-        // retrieve the tracker
-        Trackers storage trk = lib.getTrackerStorage().trackers[_policyId][_trackerId];
-        if (trk.mapped) {
-            _updateMappedTrackerValue(_policyId, _trackerId, _trackerValue);
-        } else if(trk.pType == PT.UINT) {
-            trk.trackerValue = abi.encode(_trackerValue);
-        } else if(trk.pType == PT.ADDR) {
-            trk.trackerValue = abi.encode(ProcessorLib._ui2addr(_trackerValue));
-        } else if(trk.pType == PT.BOOL) {
-            trk.trackerValue = abi.encode(ProcessorLib._ui2bool(_trackerValue));
-        } else if(trk.pType == PT.BYTES) {
-            trk.trackerValue = ProcessorLib._ui2bytes(_trackerValue);
-        } 
-    }
-
-    /**
-     * @dev Internal function to update the value of a tracker associated with a specific policy.
-     * @param _policyId The ID of the policy to which the tracker belongs.
-     * @param _trackerId The ID of the tracker whose value is being updated.
-     * @param _trackerValue The new value to be assigned to the tracker, encoded as bytes.
-     */
-    function _updateTrackerValue(uint256 _policyId, uint256 _trackerId, bytes memory _trackerValue) internal{
-        // retrieve the tracker
-        Trackers storage trk = lib.getTrackerStorage().trackers[_policyId][_trackerId];
-        trk.trackerValue = _trackerValue;
-        if (trk.mapped) {
-            _updateMappedTrackerValue(_policyId, _trackerId, _trackerValue);
-        }
-    }
-
-    /**
-     * @dev This function updates the tracker value with the information provided for a mapped tracker 
-     * @param _policyId Policy id being evaluated.
-     * @param _trackerId ID of the tracker to update.
-     * @param _trackerValue Value to update within the tracker
-     */
-    function _updateMappedTrackerValue(uint256 _policyId, uint256 _trackerId, uint256 _trackerValue) internal {
-        // retrieve the tracker
-        Trackers storage trk = lib.getTrackerStorage().trackers[_policyId][_trackerId];
-        // store the updated value to the tracker mapping 
-        bytes memory encodedValue;
-        if (trk.pType == PT.UINT) {
-            encodedValue = abi.encode(_trackerValue);
-        } else if (trk.pType == PT.ADDR) {
-            encodedValue = abi.encode(ProcessorLib._ui2addr(_trackerValue));
-        } else if (trk.pType == PT.BOOL) {
-            encodedValue = abi.encode(ProcessorLib._ui2bool(_trackerValue));
-        } else if (trk.pType == PT.BYTES) {
-            encodedValue = ProcessorLib._ui2bytes(_trackerValue);
-        }
-        lib.getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][trk.trackerKey] = encodedValue;
-    }
-
-    /**
-     * @dev Internal function to update the value of a mapped tracker associated with a specific policy.
-     * @param _policyId The ID of the policy to which the tracker belongs.
-     * @param _trackerId The ID of the tracker whose value is being updated.
-     * @param _trackerValue The new value to be assigned to the tracker, encoded as bytes.
-     */
-    function _updateMappedTrackerValue(uint256 _policyId, uint256 _trackerId, bytes memory _trackerValue) internal{
-        // retrieve the tracker
-        Trackers storage trk = lib.getTrackerStorage().trackers[_policyId][_trackerId];
-        // store the tracker  value to the tracker mapping
-        lib.getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][trk.trackerKey] = _trackerValue;
-    }
-
-
-    
-    /**
      * @notice Evaluates foreign calls within the rules engine processor.
      * @dev This function processes and evaluates calls to external contracts or systems
      *      as part of the rules engine's logic. Ensure that the necessary validations
@@ -519,6 +242,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 // Load the Tracker data from storage
                 Trackers memory tracker = lib._getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex];
                 retVals[placeholderIndex] = tracker.trackerValue;
+                if (tracker.mapped) {
+                    // if the tracker is a mapped tracker, retrieve the value from the key stored in the tracker 
+                    bytes memory mappedTrackerValue = lib._getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][tracker.trackerKey];
+                    retVals[placeholderIndex] = mappedTrackerValue;
+                }
             } else {
                 // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
                 if(placeholder.pType == ParamTypes.STR || placeholder.pType == ParamTypes.BYTES) {
@@ -622,7 +350,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     function _updateTrackerValue(uint256 _policyId, uint256 _trackerId, uint256 _trackerValue) internal{
         // retrieve the tracker
         Trackers storage trk = lib._getTrackerStorage().trackers[_policyId][_trackerId];
-        if(trk.pType == ParamTypes.UINT) {
+        if (trk.mapped) {
+            _updateMappedTrackerValue(_policyId, _trackerId, _trackerValue);
+        } else if(trk.pType == ParamTypes.UINT) {
             trk.trackerValue = abi.encode(_trackerValue);
         } else if(trk.pType == ParamTypes.ADDR) {
             trk.trackerValue = abi.encode(ProcessorLib._uintToAddr(_trackerValue));
@@ -643,6 +373,45 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         // retrieve the tracker
         Trackers storage trk = lib._getTrackerStorage().trackers[_policyId][_trackerId];
         trk.trackerValue = _trackerValue;
+        if (trk.mapped) {
+            _updateMappedTrackerValue(_policyId, _trackerId, _trackerValue);
+        }
+    }
+
+    /**
+     * @dev This function updates the tracker value with the information provided for a mapped tracker 
+     * @param _policyId Policy id being evaluated.
+     * @param _trackerId ID of the tracker to update.
+     * @param _trackerValue Value to update within the tracker
+     */
+    function _updateMappedTrackerValue(uint256 _policyId, uint256 _trackerId, uint256 _trackerValue) internal {
+        // retrieve the tracker
+        Trackers storage trk = lib._getTrackerStorage().trackers[_policyId][_trackerId];
+        // store the updated value to the tracker mapping 
+        bytes memory encodedValue;
+        if (trk.pType == ParamTypes.UINT) {
+            encodedValue = abi.encode(_trackerValue);
+        } else if (trk.pType == ParamTypes.ADDR) {
+            encodedValue = abi.encode(ProcessorLib._uintToAddr(_trackerValue));
+        } else if (trk.pType == ParamTypes.BOOL) {
+            encodedValue = abi.encode(ProcessorLib._uintToBool(_trackerValue));
+        } else if (trk.pType == ParamTypes.BYTES) {
+            encodedValue = ProcessorLib._uintToBytes(_trackerValue);
+        }
+        lib._getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][trk.trackerKey] = encodedValue;
+    }
+
+    /**
+     * @dev Internal function to update the value of a mapped tracker associated with a specific policy.
+     * @param _policyId The ID of the policy to which the tracker belongs.
+     * @param _trackerId The ID of the tracker whose value is being updated.
+     * @param _trackerValue The new value to be assigned to the tracker, encoded as bytes.
+     */
+    function _updateMappedTrackerValue(uint256 _policyId, uint256 _trackerId, bytes memory _trackerValue) internal{
+        // retrieve the tracker
+        Trackers storage trk = lib._getTrackerStorage().trackers[_policyId][_trackerId];
+        // store the tracker  value to the tracker mapping
+        lib._getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][trk.trackerKey] = _trackerValue;
     }
 
     /**

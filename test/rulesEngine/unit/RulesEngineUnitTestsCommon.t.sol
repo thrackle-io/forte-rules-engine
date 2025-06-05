@@ -3243,7 +3243,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         uint256 policyId = _createBlankPolicy();
         /// create tracker struct 
         Trackers memory tracker;
-        tracker.pType = PT.UINT; 
+        tracker.pType = ParamTypes.UINT; 
 
         /// create tracker key arrays 
         bytes[] memory trackerKeys = new bytes[](2);
@@ -3267,7 +3267,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
             trackerKeys, 
             trackerValues, 
             trackerNames, 
-            PT.UINT, // pType for the mapped tracker
+            ParamTypes.UINT, // pType for the mapped tracker
             1 // key to use in the rule
         );
         // validate tracker 
@@ -3278,6 +3278,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(value, abi.encode(1000000000)); 
 
         assertEq(returnedTracker.trackerKey, abi.encode(1));
+
+        assertEq(trackerIndex, 2);
 
         /// validate tracker is checked as conditional 
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000);
@@ -3290,7 +3292,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         uint256 policyId = _createBlankPolicy();
         /// create tracker struct 
         Trackers memory tracker;
-        tracker.pType = PT.UINT; 
+        tracker.pType = ParamTypes.UINT; 
 
         /// create tracker key arrays 
         bytes[] memory trackerKeys = new bytes[](2);
@@ -3314,7 +3316,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
             trackerKeys, 
             trackerValues, 
             trackerNames, 
-            PT.UINT, // pType for the mapped tracker
+            ParamTypes.UINT, // pType for the mapped tracker
             1 // key to use in the rule
         );
         // validate tracker 
@@ -3325,6 +3327,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(value, abi.encode(1000000000)); 
 
         assertEq(returnedTracker.trackerKey, abi.encode(1));
+
+        assertEq(trackerIndex, 2);
 
         /// validate tracker is checked as conditional 
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 2000000000);
@@ -3338,7 +3342,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         uint256 policyId = _createBlankPolicy();
         /// create tracker struct 
         Trackers memory tracker;
-        tracker.pType = PT.UINT; 
+        tracker.pType = ParamTypes.UINT; 
 
         /// create tracker key arrays 
         bytes[] memory trackerKeys = new bytes[](2);
@@ -3362,8 +3366,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
             trackerKeys, 
             trackerValues, 
             trackerNames, 
-            PT.UINT, // pType for the mapped tracker
-            1 // key to use in the rule
+            ParamTypes.UINT // pType for the mapped tracker
         );
         
          // validate tracker 
@@ -3374,6 +3377,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(value, abi.encode(1000000000)); 
 
         assertEq(returnedTracker.trackerKey, abi.encode(1));
+
+        assertEq(trackerIndex, 2);
 
         /// validate tracker is checked as conditional 
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, 100);
@@ -3390,7 +3395,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         uint256 policyId = _createBlankPolicy();
         /// create tracker struct 
         Trackers memory tracker;
-        tracker.pType = PT.UINT; 
+        tracker.pType = ParamTypes.UINT; 
 
         /// create tracker key arrays 
         bytes[] memory trackerKeys = new bytes[](2);
@@ -3414,8 +3419,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
             trackerKeys, 
             trackerValues, 
             trackerNames, 
-            PT.UINT, // pType for the mapped tracker
-            1 // key to use in the rule
+            ParamTypes.UINT // pType for the mapped tracker
         );
         
          // validate tracker 
@@ -3426,6 +3430,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(value, abi.encode(1000000000)); 
 
         assertEq(returnedTracker.trackerKey, abi.encode(1));
+
+        assertEq(trackerIndex, 2);
 
         /// validate tracker is checked as conditional 
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, 100);

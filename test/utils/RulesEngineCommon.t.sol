@@ -124,7 +124,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         _addCallingFunctionToPolicy(policyIds[0]);
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
-        // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, 4, LogicalOp.GT, 0, 1
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(4);
         // Build the calling function argument placeholder
@@ -162,7 +162,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         _addCallingFunctionToPolicy(policyIds[0]);
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
-        // Instruction set: LC.PLH, 0, LC.NUM, 4, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, 4, LogicalOp.GT, 0, 1
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(4);
         // Build the calling function argument placeholder
@@ -200,7 +200,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         _addCallingFunctionToPolicy(policyIds[0]);
         // Rule: amount >= 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
-        // Instruction set: LC.PLH, 0, LC.GTEQL, 4, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.GTEQL, 4, LogicalOp.GT, 0, 1
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet("GTEQL", 4, LogicalOp.GTEQL);
         
@@ -239,7 +239,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         _addCallingFunctionToPolicy(policyIds[0]);
         // Rule: amount <= 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
-        // Instruction set: LC.PLH, 0, LC.LTEQL, 4, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.LTEQL, 4, LogicalOp.GT, 0, 1
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet("LTEQL", 4, LogicalOp.LTEQL);
         
@@ -757,7 +757,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         // Rule memory rule = _createGTRule(policyIds[0], 4);
         Rule memory rule;
-        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, _amount, LogicalOp.GT, 0, 1
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
@@ -1036,7 +1036,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
 
-        // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.PLH, 1, LogicalOp.GT, 0, 1
         rule.instructionSet = _createInstructionSet(0, 1);
 
         rule.placeHolders = new Placeholder[](2);
@@ -1405,7 +1405,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         bytes[] memory trackerKeys,
         bytes[] memory trackerValues,
         string[] memory trackerNames,
-        PT trackerKeyType,
+        ParamTypes trackerKeyType,
         uint128 trackerIndexToTest
     )
         public
@@ -1424,27 +1424,27 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
 
-        // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.EQ, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.PLH, 1, LogicalOp.EQ, 0, 1
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
         rule.instructionSet[1] = 0;
-        rule.instructionSet[2] = uint(LC.PLH);
+        rule.instructionSet[2] = uint(LogicalOp.PLH);
         rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
         rule.placeHolders = new Placeholder[](2);
 
         rule.placeHolders = new Placeholder[](2);
-        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = trackerKeyType;
         rule.placeHolders[1].trackerValue = true;
         rule.placeHolders[1].typeSpecificIndex = trackerIndexToTest;
 
         rule.effectPlaceHolders = new Placeholder[](1);
-        rule.effectPlaceHolders[0].pType = PT.BYTES;
+        rule.effectPlaceHolders[0].pType = ParamTypes.BYTES;
         rule.effectPlaceHolders[0].typeSpecificIndex = 2;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
@@ -1474,8 +1474,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         bytes[] memory trackerKeys,
         bytes[] memory trackerValues,
         string[] memory trackerNames,
-        PT trackerKeyType,
-        uint128 trackerIndexToTest
+        ParamTypes trackerKeyType
     )
         public
         ifDeploymentTestsEnabled
@@ -1492,24 +1491,24 @@ contract RulesEngineCommon is DiamondMine, Test {
         Rule memory rule;
 
         rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LC.NUM);
+        rule.instructionSet[0] = uint(LogicalOp.NUM);
         rule.instructionSet[1] = 1;
-        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
         rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LC.EQ);
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
         rule.instructionSet[5] = 0;
         rule.instructionSet[6] = 1;
 
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = PT.ADDR;
+        rule.placeHolders[0].pType = ParamTypes.ADDR;
         rule.placeHolders[0].typeSpecificIndex = 0;
-        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1;
-        rule.placeHolders[2].pType = PT.UINT;
+        rule.placeHolders[2].pType = ParamTypes.UINT;
         rule.placeHolders[2].typeSpecificIndex = 2;
 
         rule.effectPlaceHolders = new Placeholder[](1);
-        rule.effectPlaceHolders[0].pType = PT.UINT;
+        rule.effectPlaceHolders[0].pType = trackerKeyType;
         rule.effectPlaceHolders[0].typeSpecificIndex = 2;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
@@ -1565,7 +1564,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         Rule memory rule;
         // Set up some effects.
         _setupEffectProcessor();
-        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, _amount, LogicalOp.GT, 0, 1
         rule.instructionSet = rule.instructionSet = _createInstructionSet(
             _amount
         );
@@ -1583,7 +1582,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         Rule memory rule;
         // Set up custom event param effect.
         effectId_event = _createCustomEffectEvent(param, paramType);
-        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, _amount, LogicalOp.GT, 0, 1
         rule.instructionSet = rule.instructionSet = _createInstructionSet(
             _amount
         );
@@ -1601,7 +1600,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         Rule memory rule;
         // Set up custom event param effect.
         effectId_event = _createEffectEventDynamicParams();
-        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, _amount, LogicalOp.GT, 0, 1
         rule.instructionSet = rule.instructionSet = _createInstructionSet(
             _amount
         );
@@ -1623,7 +1622,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         Rule memory rule;
         // Set up custom event param effect.
         effectId_event = _createEffectEventDynamicParamsAddress();
-        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, _amount, LogicalOp.GT, 0, 1
         rule.instructionSet = rule.instructionSet = _createInstructionSet(
             _amount
         );
@@ -2218,11 +2217,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         bytes[] memory trackerKeys,
         bytes[] memory trackerValues,
         string[] memory trackerNames
-    ) public ifDeploymentTestsEnabled endWithStopPrank returns (uint256, uint256[] memory){
+    ) public ifDeploymentTestsEnabled endWithStopPrank returns (uint256 trackerIndex, uint256[] memory trackerIDs){
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _policyId;
         // Add the tracker
-        (uint256 trackerIndex, uint256[] memory trackerIDs) = RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, trackerNames, trackerKeys, trackerValues);
+        (trackerIndex, trackerIDs) = RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, trackerNames, trackerKeys, trackerValues);
 
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);

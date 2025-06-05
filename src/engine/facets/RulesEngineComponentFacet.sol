@@ -182,8 +182,8 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     /**
      * @notice Adds a tracker to the tracker storage mapping.
      * @dev Creates a new tracker and associates it with the specified policy ID.
-     * @param _policyId The policy ID the tracker is associated with.
-     * @param _tracker The tracker to add.
+     * @param policyId The policy ID the tracker is associated with.
+     * @param tracker The tracker to add.
      * @param trackerName Name of the tracker
      * @return trackerIndex The index of the created tracker.
      */
@@ -221,11 +221,11 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         bytes[] calldata trackerValues
     ) external returns (uint256, uint256[] memory) {
         notPolicyAdminOnly(_policyId, msg.sender);
-        notCemented(_policyId);
+        _notCemented(_policyId);
         if (trackerKeys.length == 0 || trackerValues.length == 0) revert ("Tracker keys and values cannot be empty");
         if (trackerNames.length != trackerKeys.length) revert("Tracker names and keys must have the same length");
         if (trackerKeys.length != trackerValues.length) revert("Tracker keys and values must have the same length");
-        uint256 trackerIndex = lib.getTrackerStorage().trackerIndexCounter[_policyId];
+        uint256 trackerIndex = lib._getTrackerStorage().trackerIndexCounter[_policyId];
          uint256[] memory createdTrackers = new uint256[](trackerKeys.length);
         for (uint256 i = 0; i < trackerKeys.length; i++) {
             // Step 1: Increment tracker index
@@ -247,20 +247,8 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param _policyId The policy ID the tracker is associated with.
      */
     function _incrementTrackerIndex(uint256 _policyId) private returns (uint256) {
-        TrackerS storage data = lib.getTrackerStorage();
+        TrackerStorage storage data = lib._getTrackerStorage();
         return ++data.trackerIndexCounter[_policyId];
-    }
-
-    /**
-     * @dev Helper function to store tracker data
-     * @param _policyId The policy ID the tracker is associated with.
-     * @param _trackerIndex The index of the tracker to store 
-     * @param _tracker The tracker to store.
-     */
-    function deleteTracker(uint256 policyId, uint256 trackerIndex) external policyAdminOnly(policyId, msg.sender) {
-        _notCemented(policyId);
-        delete lib._getTrackerStorage().trackers[policyId][trackerIndex];
-        emit TrackerDeleted(policyId, trackerIndex); 
     }
 
     /**
@@ -278,7 +266,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         bytes calldata trackerKey,
         bytes calldata trackerValue
     ) private {
-        TrackerS storage data = lib.getTrackerStorage();
+        TrackerStorage storage data = lib._getTrackerStorage();
         _storeTrackerMapping(data, _policyId, _trackerIndex,  _tracker, trackerKey, trackerValue);
     }
 
@@ -293,83 +281,10 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         uint256 _trackerIndex,
         string calldata trackerName
     ) private {
-        lib.getTrackerMetadataStorage().trackerMetadata[_policyId][_trackerIndex] = trackerName;
+        lib._getTrackerMetadataStorage().trackerMetadata[_policyId][_trackerIndex] = trackerName;
         // Event emission moved here to avoid stack too deep errors
         // Emit event
         emit TrackerCreated(_policyId, _trackerIndex);
-    }
-
-    /**
-     * @notice retrieves the tracker metadata
-     * @param policyId The policy ID the tracker is associated with.
-     * @param trackerId The identifier for the tracker
-     * @return trMeta the metadata for the tracker
-     */
-    function getTrackerMetadata(
-        uint256 policyId,
-        uint256 trackerId
-    ) public view returns (string memory trMeta) {
-        return lib._getTrackerMetadataStorage().trackerMetadata[policyId][trackerId];
-    }
-
-    /**
-     * @notice Retrieves a tracker from the tracker storage mapping.
-     * @param policyId The policy ID the tracker is associated with.
-     * @param index The index of the tracker to retrieve.
-     * @return tracker The tracker data.
-     */
-    function getTracker(
-        uint256 policyId,
-        uint256 index
-    ) public view returns (Trackers memory tracker) {
-        // Load the Tracker data from storage
-        TrackerStorage storage data = lib._getTrackerStorage();
-        // return trackers for contract address at speficic index
-        return data.trackers[policyId][index];
-    }
-
-    /**
-     * @notice Updates an existing tracker in the tracker storage mapping.
-     * @dev Modifies the tracker associated with the specified policy ID and tracker index.
-     * @param _policyId The policy ID the tracker is associated with.
-     * @param _trackerIndex The index of the tracker to update.
-     * @param _tracker The updated tracker data.
-     * @param trackerKey The keys for the tracker mapping.
-     * @param trackerValue The values for the tracker mapping.
-     */
-    function updateTracker(
-        uint256 _policyId,
-        uint256 _trackerIndex,
-        Trackers calldata _tracker,
-        bytes calldata trackerKey,
-        bytes calldata trackerValue
-    ) external policyAdminOnly(_policyId, msg.sender) {
-        // Load the Tracker data from storage
-        TrackerS storage data = lib.getTrackerStorage();
-        _storeTrackerMapping(data, _policyId, _trackerIndex, _tracker, trackerKey, trackerValue);
-        emit TrackerUpdated(_policyId, _trackerIndex); 
-    }
-
-    /**
-     * @notice Updates an existing tracker in the tracker storage mapping.
-     * @dev Modifies the tracker associated with the specified policy ID and tracker index.
-     * @param _policyId The policy ID the tracker is associated with.
-     * @param _trackerIndex The index of the tracker to update.
-     * @param _tracker The updated tracker data.
-     * @param trackerKey The keys for the tracker mapping.
-     * @param trackerValue The values for the tracker mapping.
-     */
-    function updateTracker(
-        uint256 _policyId,
-        uint256 _trackerIndex,
-        Trackers calldata _tracker,
-        bytes calldata trackerKey,
-        bytes calldata trackerValue
-    ) external policyAdminOnly(_policyId, msg.sender) {
-        // Load the Tracker data from storage
-        TrackerS storage data = lib.getTrackerStorage();
-        _storeTrackerMapping(data, _policyId, _trackerIndex, _tracker, trackerKey, trackerValue);
-        emit TrackerUpdated(_policyId, _trackerIndex); 
     }
 
     /**
@@ -398,7 +313,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param trackerValue The values for the tracker mapping.
      */
     function _storeTrackerMapping(
-        TrackerS storage _data, 
+        TrackerStorage storage _data, 
         uint256 _policyId, 
         uint256 _trackerIndex, 
         Trackers memory _tracker, 
@@ -415,15 +330,6 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     }
 
     /**
-     * @dev Helper function to increment tracker index
-     * @param _policyId The policy ID the tracker is associated with.
-     */
-    function _incrementTrackerIndex(uint256 _policyId) private returns (uint256) {
-        TrackerStorage storage data = lib._getTrackerStorage();
-        return ++data.trackerIndexCounter[_policyId];
-    }
-
-    /**
      * @dev Helper function to store tracker data
      * @param _policyId The policy ID the tracker is associated with.
      * @param _trackerIndex The index of the tracker to store 
@@ -437,18 +343,122 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         _storeTracker(data, _policyId, _trackerIndex, _tracker);
     }
 
-   /**
-     * @notice Deletes a tracker from the tracker storage mapping.
-     * @param _policyId The policy ID the tracker is associated with.
-     * @param _trackerIndex The index of the tracker
-     * @param _trackerName Name of the tracker 
+    /**
+     * @notice retrieves the tracker metadata
+     * @param policyId The policy ID the tracker is associated with.
+     * @param trackerId The identifier for the tracker
+     * @return trMeta the metadata for the tracker
      */
-    function _storeTrackerMetadata(
+    function getTrackerMetadata(
+        uint256 policyId,
+        uint256 trackerId
+    ) public view returns (string memory trMeta) {
+        return lib._getTrackerMetadataStorage().trackerMetadata[policyId][trackerId];
+    }
+
+    /**
+     * @notice Retrieves all trackers associated with a specific policy ID.
+     * @param policyId The policy ID the trackers are associated with.
+     * @return trackers An array of tracker data.
+     */
+    function getAllTrackers(uint256 policyId) external view returns (Trackers[] memory) {
+        // Load the Tracker data from storage
+        TrackerStorage storage data = lib._getTrackerStorage();
+        // return trackers for contract address at speficic index
+        uint256 trackerCount = data.trackerIndexCounter[policyId];
+        Trackers[] memory trackers = new Trackers[](trackerCount);
+        uint256 j = 0;
+        for (uint256 i = 1; i <= trackerCount; i++) {
+            if (data.trackers[policyId][i].set) {
+                trackers[j] = data.trackers[policyId][i];
+                j++;
+            }
+        }
+        return trackers;
+    }
+
+    /**
+     * @notice Retrieves a tracker from the tracker storage mapping.
+     * @param policyId The policy ID the tracker is associated with.
+     * @param index The index of the tracker to retrieve.
+     * @return tracker The tracker data.
+     */
+    function getTracker(
+        uint256 policyId,
+        uint256 index
+    ) public view returns (Trackers memory tracker) {
+        // Load the Tracker data from storage
+        TrackerStorage storage data = lib._getTrackerStorage();
+        // return trackers for contract address at speficic index
+        return data.trackers[policyId][index];
+    }
+
+    /**
+     * @notice Retrieves a tracker from the tracker storage mapping.
+     * @param policyId The policy ID the tracker is associated with.
+     * @param index The index of the tracker to retrieve.
+     * @return tracker The tracker data.
+     */
+    function getMappedTrackerValue(
+        uint256 policyId,
+        uint256 index,
+        bytes calldata trackerKey
+    ) public view returns (bytes memory) {
+        // Load the Tracker data from storage
+        TrackerStorage storage data = lib._getTrackerStorage();
+        // return trackers for contract address at speficic index
+        return data.mappedTrackerValues[policyId][index][trackerKey];
+    }
+
+    /**
+     * @notice Updates an existing tracker in the tracker storage mapping.
+     * @dev Modifies the tracker associated with the specified policy ID and tracker index.
+     * @param policyId The policy ID the tracker is associated with.
+     * @param trackerIndex The index of the tracker to update.
+     * @param tracker The updated tracker data.
+     */
+    function updateTracker(
+        uint256 policyId,
+        uint256 trackerIndex,
+        Trackers calldata tracker
+    ) external policyAdminOnly(policyId, msg.sender) {
+        // Load the Tracker data from storage
+        TrackerStorage storage data = lib._getTrackerStorage();
+        _storeTracker(data, policyId, trackerIndex, tracker);
+        emit TrackerUpdated(policyId, trackerIndex); 
+    }
+
+    /**
+     * @notice Updates an existing tracker in the tracker storage mapping.
+     * @dev Modifies the tracker associated with the specified policy ID and tracker index.
+     * @param _policyId The policy ID the tracker is associated with.
+     * @param _trackerIndex The index of the tracker to update.
+     * @param _tracker The updated tracker data.
+     * @param trackerKey The keys for the tracker mapping.
+     * @param trackerValue The values for the tracker mapping.
+     */
+    function updateTracker(
         uint256 _policyId,
         uint256 _trackerIndex,
-        string calldata _trackerName
-    ) private {
-        lib._getTrackerMetadataStorage().trackerMetadata[_policyId][_trackerIndex] = _trackerName;
+        Trackers calldata _tracker,
+        bytes calldata trackerKey,
+        bytes calldata trackerValue
+    ) external policyAdminOnly(_policyId, msg.sender) {
+        // Load the Tracker data from storage
+        TrackerStorage storage data = lib._getTrackerStorage();
+        _storeTrackerMapping(data, _policyId, _trackerIndex, _tracker, trackerKey, trackerValue);
+        emit TrackerUpdated(_policyId, _trackerIndex); 
+    }
+
+    /**
+     * @dev Helper function to store tracker data
+     * @param policyId The policy ID the tracker is associated with.
+     * @param trackerIndex The index of the tracker to store 
+     */
+    function deleteTracker(uint256 policyId, uint256 trackerIndex) external policyAdminOnly(policyId, msg.sender) {
+        _notCemented(policyId);
+        delete lib._getTrackerStorage().trackers[policyId][trackerIndex];
+        emit TrackerDeleted(policyId, trackerIndex); 
     }
 
     /**
@@ -458,28 +468,12 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param _trackerKeys The keys of the tracker to delete.
      */
     function deleteTracker(uint256 _policyId, uint256 _trackerIndex, bytes[] calldata _trackerKeys) external policyAdminOnly(_policyId, msg.sender) {
-        notCemented(_policyId);
+        _notCemented (_policyId);
         for (uint256 i = 0; i < _trackerKeys.length; i++) {
             // delete the tracker mapping values
-            delete lib.getTrackerStorage().mappedTrackerValues[_policyId][_trackerIndex][_trackerKeys[i]];
+            delete lib._getTrackerStorage().mappedTrackerValues[_policyId][_trackerIndex][_trackerKeys[i]];
         }
-        delete lib.getTrackerStorage().trackers[_policyId][_trackerIndex];
-        emit TrackerDeleted(_policyId, _trackerIndex); 
-    }
-
-    /**
-     * @notice Deletes a tracker from the tracker storage mapping.
-     * @param _policyId The policy ID the tracker is associated with.
-     * @param _trackerIndex The index of the tracker to delete.
-     * @param _trackerKeys The keys of the tracker to delete.
-     */
-    function deleteTracker(uint256 _policyId, uint256 _trackerIndex, bytes[] calldata _trackerKeys) external policyAdminOnly(_policyId, msg.sender) {
-        notCemented(_policyId);
-        for (uint256 i = 0; i < _trackerKeys.length; i++) {
-            // delete the tracker mapping values
-            delete lib.getTrackerStorage().mappedTrackerValues[_policyId][_trackerIndex][_trackerKeys[i]];
-        }
-        delete lib.getTrackerStorage().trackers[_policyId][_trackerIndex];
+        delete lib._getTrackerStorage().trackers[_policyId][_trackerIndex];
         emit TrackerDeleted(_policyId, _trackerIndex); 
     }
 
@@ -742,7 +736,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
 
     function notPolicyAdminOnly(uint256 _policyId, address _address) internal {   
         // 0x901cee11 = isPolicyAdmin(uint256,address)   
-        (bool success, bytes memory res) = callAnotherFacet(0x901cee11, abi.encodeWithSignature("isPolicyAdmin(uint256,address)", _policyId, _address));   
+        (bool success, bytes memory res) = _callAnotherFacet(0x901cee11, abi.encodeWithSignature("isPolicyAdmin(uint256,address)", _policyId, _address));   
         bool returnBool;
         if (success) {
             if (res.length >= 4) {
