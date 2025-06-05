@@ -36,6 +36,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
     ExampleERC20 userContractMTplusEvent;
     ExampleERC20 userContractMTplusEventDynamic;
 
+    ExampleERC20 userContractManyPolicies;
     ExampleERC20 userContractPause;
     ExampleERC20 userContractOracleFlex;
     ExampleERC20 userContractMinMaxBalance;
@@ -117,6 +118,15 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         vm.startPrank(policyAdmin);
         setupRulesWithForeignCallPlusMinTransferAndMaxTransfer(address(testContract2), ET.REVERT, true);
 
+        // Many Policies
+        userContractManyPolicies = new ExampleERC20("Token Name", "SYMB");
+        userContractManyPolicies.mint(USER_ADDRESS, 1_000_000 * ATTO);
+        userContractManyPolicies.setRulesEngineAddress(address(red));
+        userContractManyPolicies.setCallingContractAdmin(callingContractAdmin);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
+        setUpRuleWithManyPolicies();
+
         // // Pause Rule  
         // userContractPause = new ExampleERC20("Token Name", "SYMB");
         // userContractPause.mint(USER_ADDRESS, 1_000_000 * ATTO);
@@ -191,6 +201,11 @@ contract GasReports is GasHelpers, RulesEngineCommon {
     function testGasExampleMinTransferMany() public endWithStopPrank() {
         vm.startPrank(USER_ADDRESS);
         _exampleContractGasReport(5, address(userContractManyChecksMin), "Using REv2 min transfer 20 iterations"); 
+    }
+
+    function testGasExampleManyPolicies() public endWithStopPrank() {
+        vm.startPrank(USER_ADDRESS);
+        _exampleContractGasReport(3, address(userContractManyPolicies), "Using REv2 Many Policies"); 
     }
 
     // function _testGasExampleMinTransferWithSetEventParams() public endWithStopPrank() {
@@ -846,6 +861,12 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         policy.rules = new Rule[](1);
         policy.rules[0] = rule;
         RulesEngineProcessorFacet(address(red)).writePolicyContract(address(userContractManyChecksMin), bytes4(keccak256(bytes("transfer(address,uint256)"))), policy);
+    }
+
+    function setUpRuleWithManyPolicies() public {
+        for (uint256 i = 0; i < 12; i++) {
+            _setupRuleWithRevert(address(userContractManyPolicies));
+        }
     }
 
 //     function _setupRuleWithEventParamsMinTransfer(bytes memory param, PT pType) 
