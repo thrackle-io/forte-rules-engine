@@ -715,76 +715,78 @@ contract RulesEngineCommon is DiamondMine, Test {
 
     // }
 
-    // function _setUpEffect(
-    //     Rule memory rule,
-    //     ET _effectType,
-    //     bool isPositive
-    // ) public view returns (Rule memory _rule) {
-    //     if (isPositive) {
-    //         rule.posEffects = new Effect[](1);
-    //         if (_effectType == ET.REVERT) {
-    //             rule.posEffects[0] = effectId_revert;
-    //         }
-    //         if (_effectType == ET.EVENT) {
-    //             rule.posEffects[0] = effectId_event;
-    //         }
-    //     } else {
-    //         rule.negEffects = new Effect[](1);
-    //         if (_effectType == ET.REVERT) {
-    //             rule.negEffects[0] = effectId_revert;
-    //         }
-    //         if (_effectType == ET.EVENT) {
-    //             rule.negEffects[0] = effectId_event;
-    //         }
-    //     }
-    //     return rule;
-    // }
+    function _setUpEffect(
+        Rule memory rule,
+        ET _effectType,
+        bool isPositive
+    ) public view returns (Rule memory _rule) {
+        if (isPositive) {
+            rule.posEffects = new Effect[](1);
+            if (_effectType == ET.REVERT) {
+                rule.posEffects[0] = effectId_revert;
+            }
+            if (_effectType == ET.EVENT) {
+                rule.posEffects[0] = effectId_event;
+            }
+        } else {
+            rule.negEffects = new Effect[](1);
+            if (_effectType == ET.REVERT) {
+                rule.negEffects[0] = effectId_revert;
+            }
+            if (_effectType == ET.EVENT) {
+                rule.negEffects[0] = effectId_event;
+            }
+        }
+        return rule;
+    }
 
-    // function _setupRuleWithRevert(address userContractMinTransferAddress)
-    //     public
-    //     ifDeploymentTestsEnabled
-    //     resetsGlobalVariables {
-    //     uint256[] memory policyIds = new uint256[](1);
+    function _setupRuleWithRevert(address userContractMinTransferAddress)
+        public
+        ifDeploymentTestsEnabled
+        resetsGlobalVariables {
+        // uint256[] memory policyIds = new uint256[](1);
 
-    //     policyIds[0] = _createBlankPolicyOpen();
+        // policyIds[0] = _createBlankPolicyOpen();
+        Policy memory policy;
+        PT[] memory pTypes = new PT[](1);
+        pTypes[0] = PT.UINT;
+        policy.parameterTypes = pTypes;
 
-    //     PT[] memory pTypes = new PT[](2);
-    //     pTypes[0] = PT.ADDR;
-    //     pTypes[1] = PT.UINT;
+        //_addCallingFunctionToPolicy(policyIds[0]);
 
-    //     _addCallingFunctionToPolicy(policyIds[0]);
+        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        // Rule memory rule = _createGTRule(policyIds[0], 4);
+        Rule memory rule;
+        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        // Add a negative/positive effects
+        rule.negEffects = new Effect[](1);
+        rule.posEffects = new Effect[](1);
 
-    //     // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-    //     // Rule memory rule = _createGTRule(policyIds[0], 4);
-    //     Rule memory rule;
-    //     // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
-    //     rule.placeHolders = new Placeholder[](1);
-    //     rule.placeHolders[0].pType = PT.UINT;
-    //     rule.placeHolders[0].typeSpecificIndex = 1;
-    //     // Add a negative/positive effects
-    //     rule.negEffects = new Effect[](1);
-    //     rule.posEffects = new Effect[](1);
+        rule.instructionSet = new uint256[](7);
+        rule.instructionSet[0] = uint(LC.PLH);
+        rule.instructionSet[1] = 0;
+        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[3] = 4;
+        rule.instructionSet[4] = uint(LC.GT); // register 2
+        rule.instructionSet[5] = 0;
+        rule.instructionSet[6] = 1;
+        rule.posEffects[0] = effectId_revert;
+        policy.rules = new Rule[](1);
+        policy.rules[0] = rule;
+        // // Save the rule
+        // uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-    //     rule.instructionSet = new uint256[](7);
-    //     rule.instructionSet[0] = uint(LC.PLH);
-    //     rule.instructionSet[1] = 0;
-    //     rule.instructionSet[2] = uint(LC.NUM);
-    //     rule.instructionSet[3] = 4;
-    //     rule.instructionSet[4] = uint(LC.GT); // register 2
-    //     rule.instructionSet[5] = 0;
-    //     rule.instructionSet[6] = 1;
-    //     rule.posEffects[0] = effectId_revert;
-        
-    //     // Save the rule
-    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-
-    //     ruleIds.push(new uint256[](1));
-    //     ruleIds[0][0] = ruleId;
-    //     _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
-    //     vm.stopPrank();
-    //     vm.startPrank(callingContractAdmin);
-    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractMinTransferAddress, policyIds);
-    // }
+        // ruleIds.push(new uint256[](1));
+        // ruleIds[0][0] = ruleId;
+        // _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
+        // vm.stopPrank();
+        // vm.startPrank(callingContractAdmin);
+        RulesEngineProcessorFacet(address(red)).writePolicyContract(userContractMinTransferAddress, bytes4(keccak256(bytes("transfer(address,uint256)"))), policy);
+        // RulesEnginePolicyFacet(address(red)).applyPolicy(userContractMinTransferAddress, policyIds);
+    }
 
     // function _setupRuleWithPosEvent()
     //     public
@@ -1427,23 +1429,23 @@ contract RulesEngineCommon is DiamondMine, Test {
     // }
 
     // // internal rule builder
-    // function _createGTRule(uint256 _amount) public returns (Rule memory) {
-    //     // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-    //     Rule memory rule;
-    //     // Set up some effects.
-    //     _setupEffectProcessor();
-    //     // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
-    //     rule.instructionSet = rule.instructionSet = _createInstructionSet(
-    //         _amount
-    //     );
-    //     rule.placeHolders = new Placeholder[](1);
-    //     rule.placeHolders[0].pType = PT.UINT;
-    //     rule.placeHolders[0].typeSpecificIndex = 1;
-    //     // Add a negative/positive effects
-    //     rule.negEffects = new Effect[](1);
-    //     rule.posEffects = new Effect[](1);
-    //     return rule;
-    // }
+    function _createGTRule(uint256 _amount) public returns (Rule memory) {
+        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        Rule memory rule;
+        // Set up some effects.
+        _setupEffectProcessor();
+        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+        rule.instructionSet = rule.instructionSet = _createInstructionSet(
+            _amount
+        );
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        // Add a negative/positive effects
+        rule.negEffects = new Effect[](1);
+        rule.posEffects = new Effect[](1);
+        return rule;
+    }
 
     // function _createGTRuleWithCustomEventParams(uint256 _amount, bytes memory param, PT paramType) public returns (Rule memory) {
     //     // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
@@ -1507,28 +1509,28 @@ contract RulesEngineCommon is DiamondMine, Test {
     //     return rule;
     // }
 
-    // function _createLTRule() public returns (Rule memory) {
-    //     // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-    //     Rule memory rule;
-    //     // Set up some effects.
-    //     _setupEffectProcessor();
-    //     // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
-    //     rule.instructionSet = new uint256[](7);
-    //     rule.instructionSet[0] = uint(LC.NUM);
-    //     rule.instructionSet[1] = 0;
-    //     rule.instructionSet[2] = uint(LC.NUM);
-    //     rule.instructionSet[3] = 2;
-    //     rule.instructionSet[4] = uint(LC.LT);
-    //     rule.instructionSet[5] = 0;
-    //     rule.instructionSet[6] = 1;
-    //     rule.placeHolders = new Placeholder[](1);
-    //     rule.placeHolders[0].pType = PT.UINT;
-    //     rule.placeHolders[0].typeSpecificIndex = 1;
-    //     // Add a negative/positive effects
-    //     rule.negEffects = new Effect[](1);
-    //     rule.posEffects = new Effect[](1);
-    //     return rule;
-    // }
+    function _createLTRule() public returns (Rule memory) {
+        // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        Rule memory rule;
+        // Set up some effects.
+        _setupEffectProcessor();
+        // Instruction set: LC.PLH, 0, LC.NUM, _amount, LC.GT, 0, 1
+        rule.instructionSet = new uint256[](7);
+        rule.instructionSet[0] = uint(LC.NUM);
+        rule.instructionSet[1] = 0;
+        rule.instructionSet[2] = uint(LC.NUM);
+        rule.instructionSet[3] = 2;
+        rule.instructionSet[4] = uint(LC.LT);
+        rule.instructionSet[5] = 0;
+        rule.instructionSet[6] = 1;
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        // Add a negative/positive effects
+        rule.negEffects = new Effect[](1);
+        rule.posEffects = new Effect[](1);
+        return rule;
+    }
 
 
     // function _addCallingFunctionToPolicy(uint256 policyId) internal returns (uint256) {
@@ -1681,242 +1683,242 @@ contract RulesEngineCommon is DiamondMine, Test {
     //     );
     // }
 
-    // function _setupEffectProcessor() public {
-    //     _createAllEffects();
-    // }
+    function _setupEffectProcessor() public {
+        _createAllEffects();
+    }
 
-    // function _createAllEffects() public {
-    //     effectId_event = _createEffectEvent(event_text); // effectId = 1
-    //     effectId_revert = _createEffectRevert(revert_text); // effectId = 2
-    //     effectId_event2 = _createEffectEvent(event_text2); // effectId = 3
-    //     effectId_revert2 = _createEffectRevert(revert_text2); // effectId = 4
-    //     effectId_expression = _createEffectExpression(); // effectId = 5;
-    //     effectId_expression2 = _createEffectExpressionTrackerUpdate(); // effectId = 6;
-    //     effectId_expression3 = _createEffectExpressionTrackerUpdateParameterMemory(); // effectId = 7;
-    //     effectId_expression4 = _createEffectExpressionTrackerUpdateParameterPlaceHolder(); // effectId = 8;
-    // }
+    function _createAllEffects() public {
+        effectId_event = _createEffectEvent(event_text); // effectId = 1
+        effectId_revert = _createEffectRevert(revert_text); // effectId = 2
+        effectId_event2 = _createEffectEvent(event_text2); // effectId = 3
+        effectId_revert2 = _createEffectRevert(revert_text2); // effectId = 4
+        effectId_expression = _createEffectExpression(); // effectId = 5;
+        effectId_expression2 = _createEffectExpressionTrackerUpdate(); // effectId = 6;
+        effectId_expression3 = _createEffectExpressionTrackerUpdateParameterMemory(); // effectId = 7;
+        effectId_expression4 = _createEffectExpressionTrackerUpdateParameterPlaceHolder(); // effectId = 8;
+    }
 
-    // function _createEffectEvent(string memory _text) public pure returns(Effect memory){
-    //     uint256[] memory emptyArray = new uint256[](1); 
-    //     // Create a event effect
-    //     return
-    //         Effect({
-    //             valid: true,
-    //             dynamicParam:false,
-    //             effectType: ET.EVENT,
-    //             pType: PT.STR,
-    //             param: abi.encode(_text),
-    //             text: EVENTTEXT,
-    //             errorMessage: _text,
-    //             instructionSet: emptyArray
-    //         });
-    // }
+    function _createEffectEvent(string memory _text) public pure returns(Effect memory){
+        uint256[] memory emptyArray = new uint256[](1); 
+        // Create a event effect
+        return
+            Effect({
+                valid: true,
+                dynamicParam:false,
+                effectType: ET.EVENT,
+                pType: PT.STR,
+                param: abi.encode(_text),
+                text: EVENTTEXT,
+                errorMessage: _text,
+                instructionSet: emptyArray
+            });
+    }
 
-    // function _createCustomEffectEvent(bytes memory param, PT paramType) public pure returns(Effect memory){
-    //     uint256[] memory emptyArray = new uint256[](1); 
-    //     bytes memory encodedParam; 
-    //     if (paramType == PT.UINT) {
-    //         encodedParam = abi.encode(abi.decode(param, (uint)));  
-    //     } else if (paramType == PT.ADDR) {
-    //         encodedParam = abi.encode(abi.decode(param, (address)));
-    //     } else if (paramType == PT.BOOL) {
-    //         encodedParam = abi.encode(abi.decode(param, (bool)));
-    //     } else if (paramType == PT.STR) {
-    //         encodedParam = abi.encode(abi.decode(param, (string)));
-    //     } else if (paramType == PT.BYTES) {
-    //         encodedParam = abi.encode(abi.decode(param, (bytes32)));
-    //     }
-    //     // Create a event effect
-    //     return
-    //         Effect({
-    //             valid: true,
-    //             dynamicParam:false,
-    //             effectType: ET.EVENT,
-    //             pType: paramType,
-    //             param: encodedParam,
-    //             text: EVENTTEXT,
-    //             errorMessage: event_text,
-    //             instructionSet: emptyArray
-    //         });
-    // }
+    function _createCustomEffectEvent(bytes memory param, PT paramType) public pure returns(Effect memory){
+        uint256[] memory emptyArray = new uint256[](1); 
+        bytes memory encodedParam; 
+        if (paramType == PT.UINT) {
+            encodedParam = abi.encode(abi.decode(param, (uint)));  
+        } else if (paramType == PT.ADDR) {
+            encodedParam = abi.encode(abi.decode(param, (address)));
+        } else if (paramType == PT.BOOL) {
+            encodedParam = abi.encode(abi.decode(param, (bool)));
+        } else if (paramType == PT.STR) {
+            encodedParam = abi.encode(abi.decode(param, (string)));
+        } else if (paramType == PT.BYTES) {
+            encodedParam = abi.encode(abi.decode(param, (bytes32)));
+        }
+        // Create a event effect
+        return
+            Effect({
+                valid: true,
+                dynamicParam:false,
+                effectType: ET.EVENT,
+                pType: paramType,
+                param: encodedParam,
+                text: EVENTTEXT,
+                errorMessage: event_text,
+                instructionSet: emptyArray
+            });
+    }
 
-    // function _createEffectEventDynamicParams() public pure returns(Effect memory){
-    //     Effect memory effect;
-    //     effect.valid = true;
-    //     effect.dynamicParam = true;
-    //     effect.effectType = ET.EVENT;
-    //     effect.text = EVENTTEXT;
-    //     effect.instructionSet = new uint256[](4);
-    //     // Foreign Call Placeholder
-    //     effect.instructionSet[0] = uint(LC.NUM);
-    //     effect.instructionSet[1] = 0;
-    //     // // Tracker Placeholder
-    //     effect.instructionSet[2] = uint(LC.NUM);
-    //     effect.instructionSet[3] = 1;
+    function _createEffectEventDynamicParams() public pure returns(Effect memory){
+        Effect memory effect;
+        effect.valid = true;
+        effect.dynamicParam = true;
+        effect.effectType = ET.EVENT;
+        effect.text = EVENTTEXT;
+        effect.instructionSet = new uint256[](4);
+        // Foreign Call Placeholder
+        effect.instructionSet[0] = uint(LC.NUM);
+        effect.instructionSet[1] = 0;
+        // // Tracker Placeholder
+        effect.instructionSet[2] = uint(LC.NUM);
+        effect.instructionSet[3] = 1;
 
-    //     return effect;
-    // }
+        return effect;
+    }
 
-    // function _createEffectEventDynamicParamsAddress() public pure returns(Effect memory){
-    //     Effect memory effect;
-    //     effect.valid = true;
-    //     effect.dynamicParam = true;
-    //     effect.effectType = ET.EVENT;
-    //     effect.text = EVENTTEXT;
-    //     effect.instructionSet = new uint256[](4);
-    //     // Foreign Call Placeholder
-    //     effect.instructionSet[0] = uint(LC.NUM);
-    //     effect.instructionSet[1] = 1;
-    //     // // Tracker Placeholder
-    //     effect.instructionSet[2] = uint(LC.NUM);
-    //     effect.instructionSet[3] = 1;
+    function _createEffectEventDynamicParamsAddress() public pure returns(Effect memory){
+        Effect memory effect;
+        effect.valid = true;
+        effect.dynamicParam = true;
+        effect.effectType = ET.EVENT;
+        effect.text = EVENTTEXT;
+        effect.instructionSet = new uint256[](4);
+        // Foreign Call Placeholder
+        effect.instructionSet[0] = uint(LC.NUM);
+        effect.instructionSet[1] = 1;
+        // // Tracker Placeholder
+        effect.instructionSet[2] = uint(LC.NUM);
+        effect.instructionSet[3] = 1;
 
-    //     return effect;
-    // }
+        return effect;
+    }
 
-    // function _createEffectRevert(string memory _text) public pure returns(Effect memory) {
-    //     uint256[] memory emptyArray = new uint256[](1); 
-    //     // Create a revert effect
-    //     return
-    //         Effect({
-    //             valid: true,
-    //             dynamicParam:false,
-    //             effectType: ET.REVERT,
-    //             pType: PT.STR,
-    //             param: abi.encode(_text),
-    //             text: EVENTTEXT,
-    //             errorMessage: revert_text,
-    //             instructionSet: emptyArray
-    //         });
-    // }
+    function _createEffectRevert(string memory _text) public pure returns(Effect memory) {
+        uint256[] memory emptyArray = new uint256[](1); 
+        // Create a revert effect
+        return
+            Effect({
+                valid: true,
+                dynamicParam:false,
+                effectType: ET.REVERT,
+                pType: PT.STR,
+                param: abi.encode(_text),
+                text: EVENTTEXT,
+                errorMessage: revert_text,
+                instructionSet: emptyArray
+            });
+    }
 
-    // function _createEffectExpression() public pure returns(Effect memory) {
-    //     Effect memory effect;
+    function _createEffectExpression() public pure returns(Effect memory) {
+        Effect memory effect;
 
-    //     effect.valid = true;
-    //     effect.effectType = ET.EXPRESSION;
-    //     effect.text = "";
-    //     effect.instructionSet = new uint256[](1);
+        effect.valid = true;
+        effect.effectType = ET.EXPRESSION;
+        effect.text = "";
+        effect.instructionSet = new uint256[](1);
 
-    //     return effect;
-    // }
+        return effect;
+    }
 
-    // function _createEffectExpressionTrackerUpdate() public pure returns(Effect memory) {
-    //     // Effect: TRU:someTracker += FC:simpleCheck(amount)
-    //     Effect memory effect;
-    //     effect.valid = true;
-    //     effect.effectType = ET.EXPRESSION;
-    //     effect.text = "";
-    //     effect.instructionSet = new uint256[](10);
-    //     // Foreign Call Placeholder
-    //     effect.instructionSet[0] = uint(LC.PLH);
-    //     effect.instructionSet[1] = 0;
-    //     // Tracker Placeholder
-    //     effect.instructionSet[2] = uint(LC.PLH);
-    //     effect.instructionSet[3] = 1;
-    //     effect.instructionSet[4] = uint(LC.ADD);
-    //     effect.instructionSet[5] = 0;
-    //     effect.instructionSet[6] = 1;
-    //     effect.instructionSet[7] = uint(LC.TRU);
-    //     effect.instructionSet[8] = 1;
-    //     effect.instructionSet[9] = 2;
+    function _createEffectExpressionTrackerUpdate() public pure returns(Effect memory) {
+        // Effect: TRU:someTracker += FC:simpleCheck(amount)
+        Effect memory effect;
+        effect.valid = true;
+        effect.effectType = ET.EXPRESSION;
+        effect.text = "";
+        effect.instructionSet = new uint256[](10);
+        // Foreign Call Placeholder
+        effect.instructionSet[0] = uint(LC.PLH);
+        effect.instructionSet[1] = 0;
+        // Tracker Placeholder
+        effect.instructionSet[2] = uint(LC.PLH);
+        effect.instructionSet[3] = 1;
+        effect.instructionSet[4] = uint(LC.ADD);
+        effect.instructionSet[5] = 0;
+        effect.instructionSet[6] = 1;
+        effect.instructionSet[7] = uint(LC.TRU);
+        effect.instructionSet[8] = 1;
+        effect.instructionSet[9] = 2;
 
-    //     return effect;
-    // }
+        return effect;
+    }
 
-    // function _createEffectExpressionTrackerUpdateParameterPlaceHolder() public pure returns(Effect memory) {
-    //     // Effect: TRU:someTracker = parameter 3
-    //     Effect memory effect;
-    //     effect.valid = true;
-    //     effect.effectType = ET.EXPRESSION;
-    //     effect.text = "";
-    //     effect.instructionSet = new uint256[](6);
-    //     // Foreign Call Placeholder
-    //     effect.instructionSet[0] = uint(LC.PLH);
-    //     effect.instructionSet[1] = 0;
-    //     // Tracker Placeholder
-    //     effect.instructionSet[2] = uint(LC.TRU);
-    //     effect.instructionSet[3] = 1;
-    //     effect.instructionSet[4] = 0;
-    //     effect.instructionSet[5] = uint(TT.PLACE_HOLDER);
+    function _createEffectExpressionTrackerUpdateParameterPlaceHolder() public pure returns(Effect memory) {
+        // Effect: TRU:someTracker = parameter 3
+        Effect memory effect;
+        effect.valid = true;
+        effect.effectType = ET.EXPRESSION;
+        effect.text = "";
+        effect.instructionSet = new uint256[](6);
+        // Foreign Call Placeholder
+        effect.instructionSet[0] = uint(LC.PLH);
+        effect.instructionSet[1] = 0;
+        // Tracker Placeholder
+        effect.instructionSet[2] = uint(LC.TRU);
+        effect.instructionSet[3] = 1;
+        effect.instructionSet[4] = 0;
+        effect.instructionSet[5] = uint(TT.PLACE_HOLDER);
 
-    //     return effect;
-    // }
+        return effect;
+    }
 
-    // function _createEffectExpressionTrackerUpdateParameterMemory() public pure returns(Effect memory) {
-    //     // Effect: TRU:someTracker = parameter 3
-    //     Effect memory effect;
-    //     effect.valid = true;
-    //     effect.effectType = ET.EXPRESSION;
-    //     effect.text = "";
-    //     effect.instructionSet = new uint256[](6);
-    //     // Tracker Placeholder
-    //     effect.instructionSet[0] = uint(LC.TRU);
-    //     effect.instructionSet[1] = 1;
-    //     effect.instructionSet[2] = 0;
-    //     effect.instructionSet[3] = uint(TT.MEMORY);
+    function _createEffectExpressionTrackerUpdateParameterMemory() public pure returns(Effect memory) {
+        // Effect: TRU:someTracker = parameter 3
+        Effect memory effect;
+        effect.valid = true;
+        effect.effectType = ET.EXPRESSION;
+        effect.text = "";
+        effect.instructionSet = new uint256[](6);
+        // Tracker Placeholder
+        effect.instructionSet[0] = uint(LC.TRU);
+        effect.instructionSet[1] = 1;
+        effect.instructionSet[2] = 0;
+        effect.instructionSet[3] = uint(TT.MEMORY);
 
-    //     return effect;
-    // }
+        return effect;
+    }
 
-    // // internal instruction set builder: overload as needed
-    // function _createInstructionSet()
-    //     public
-    //     pure
-    //     returns (uint256[] memory instructionSet)
-    // {
-    //     instructionSet = new uint256[](7);
-    //     instructionSet[0] = uint(LC.NUM);
-    //     instructionSet[1] = 0;
-    //     instructionSet[2] = uint(LC.NUM);
-    //     instructionSet[3] = 1;
-    //     instructionSet[4] = uint(LC.GT);
-    //     instructionSet[5] = 0;
-    //     instructionSet[6] = 1;
-    // }
+    // internal instruction set builder: overload as needed
+    function _createInstructionSet()
+        public
+        pure
+        returns (uint256[] memory instructionSet)
+    {
+        instructionSet = new uint256[](7);
+        instructionSet[0] = uint(LC.NUM);
+        instructionSet[1] = 0;
+        instructionSet[2] = uint(LC.NUM);
+        instructionSet[3] = 1;
+        instructionSet[4] = uint(LC.GT);
+        instructionSet[5] = 0;
+        instructionSet[6] = 1;
+    }
 
-    // function _createInstructionSet(
-    //     uint256 plh1
-    // ) public pure returns (uint256[] memory instructionSet) {
-    //     instructionSet = new uint256[](7);
-    //     instructionSet[0] = uint(LC.PLH);
-    //     instructionSet[1] = 0;
-    //     instructionSet[2] = uint(LC.NUM);
-    //     instructionSet[3] = plh1;
-    //     instructionSet[4] = uint(LC.GT);
-    //     instructionSet[5] = 0;
-    //     instructionSet[6] = 1;
-    // }
+    function _createInstructionSet(
+        uint256 plh1
+    ) public pure returns (uint256[] memory instructionSet) {
+        instructionSet = new uint256[](7);
+        instructionSet[0] = uint(LC.PLH);
+        instructionSet[1] = 0;
+        instructionSet[2] = uint(LC.NUM);
+        instructionSet[3] = plh1;
+        instructionSet[4] = uint(LC.GT);
+        instructionSet[5] = 0;
+        instructionSet[6] = 1;
+    }
 
-    // function _createInstructionSet(
-    //     string memory testString, // string added to identify this overloaded function vs the two uint256 param version 
-    //     uint256 plh1,
-    //     LC plcType
-    // ) public pure returns (uint256[] memory instructionSet) {
-    //     instructionSet = new uint256[](7);
-    //     instructionSet[0] = uint(LC.PLH);
-    //     instructionSet[1] = 0;
-    //     instructionSet[2] = uint(LC.NUM);
-    //     instructionSet[3] = plh1;
-    //     instructionSet[4] = uint(plcType);
-    //     instructionSet[5] = 0;
-    //     instructionSet[6] = 1;
-    //     console.log("testString: %s", testString);
-    // }
+    function _createInstructionSet(
+        string memory testString, // string added to identify this overloaded function vs the two uint256 param version 
+        uint256 plh1,
+        LC plcType
+    ) public pure returns (uint256[] memory instructionSet) {
+        instructionSet = new uint256[](7);
+        instructionSet[0] = uint(LC.PLH);
+        instructionSet[1] = 0;
+        instructionSet[2] = uint(LC.NUM);
+        instructionSet[3] = plh1;
+        instructionSet[4] = uint(plcType);
+        instructionSet[5] = 0;
+        instructionSet[6] = 1;
+        console.log("testString: %s", testString);
+    }
 
-    // function _createInstructionSet(
-    //     uint256 plh1,
-    //     uint256 plh2
-    // ) public pure returns (uint256[] memory instructionSet) {
-    //     instructionSet = new uint256[](7);
-    //     instructionSet[0] = uint(LC.PLH);
-    //     instructionSet[1] = plh1;
-    //     instructionSet[2] = uint(LC.PLH);
-    //     instructionSet[3] = plh2;
-    //     instructionSet[4] = uint(LC.GT);
-    //     instructionSet[5] = 0;
-    //     instructionSet[6] = 1;
-    // }
+    function _createInstructionSet(
+        uint256 plh1,
+        uint256 plh2
+    ) public pure returns (uint256[] memory instructionSet) {
+        instructionSet = new uint256[](7);
+        instructionSet[0] = uint(LC.PLH);
+        instructionSet[1] = plh1;
+        instructionSet[2] = uint(LC.PLH);
+        instructionSet[3] = plh2;
+        instructionSet[4] = uint(LC.GT);
+        instructionSet[5] = 0;
+        instructionSet[6] = 1;
+    }
 
     // function _setup_checkRule_ForeignCall_Positive(uint256 _transferValue) public ifDeploymentTestsEnabled endWithStopPrank returns(uint256 _policyId) {
        

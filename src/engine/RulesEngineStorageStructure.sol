@@ -297,10 +297,12 @@ struct Policy {
     Trackers[] trackers;
     // calling function signature to ruleIds
     Rule[] rules;
-    // Array to hold the calling functions signatures for iterating
-    bytes4[] callingFunctions;
+    // // Array to hold the calling functions signatures for iterating
+    // bytes4[] callingFunctions;
     // Policy type to determine if policy is open or closed
     PolicyType policyType;
+    // Parameter types for the calling function
+    PT[] parameterTypes;
     // Cemented status
     bool cemented;
     // mapping(address => bool) closedPolicySubscribers;

@@ -68,22 +68,22 @@ contract DiamondMine is Script {
         );
 
         // Data
-        _ruleProcessorFacetCuts.push(
-            FacetCut({
-                facetAddress: address(new RulesEnginePolicyFacet()),
-                action: FacetCutAction.Add,
-                functionSelectors: _createSelectorArray("RulesEnginePolicyFacet")
-            })
-        );
+        // _ruleProcessorFacetCuts.push(
+        //     FacetCut({
+        //         facetAddress: address(new RulesEnginePolicyFacet()),
+        //         action: FacetCutAction.Add,
+        //         functionSelectors: _createSelectorArray("RulesEnginePolicyFacet")
+        //     })
+        // );
 
         // Data
-        _ruleProcessorFacetCuts.push(
-            FacetCut({
-                facetAddress: address(new RulesEngineComponentFacet()),
-                action: FacetCutAction.Add,
-                functionSelectors: _createSelectorArray("RulesEngineComponentFacet")
-            })
-        );
+        // _ruleProcessorFacetCuts.push(
+        //     FacetCut({
+        //         facetAddress: address(new RulesEngineComponentFacet()),
+        //         action: FacetCutAction.Add,
+        //         functionSelectors: _createSelectorArray("RulesEngineComponentFacet")
+        //     })
+        // );
 
         // Data
         _ruleProcessorFacetCuts.push(

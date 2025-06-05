@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import "src/engine/facets/FacetCommonImports.sol";
 import {RulesEngineProcessorLib as ProcessorLib} from "src/engine/facets/RulesEngineProcessorLib.sol";
 import {SSTORE2} from "solady/src/utils/SSTORE2.sol";
+import "forge-std/src/console.sol";
 /**
  * @title Rules Engine Processor Facet
  * @dev This contract serves as the core processor for evaluating rules and executing effects in the Rules Engine.
@@ -18,13 +19,13 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     // Rule Evaluation Functions
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
     mapping(address callingContract => uint256 policyIdCounter) public policyIdCounter;
-    mapping(address callingContract => uint256[] policyIds) public callingContractToPolicyIds;
+    mapping(address callingContract => mapping(bytes4 callingFunction => uint256[] policyIds)) public callingContractToPolicyIds;
     mapping(address callingContract => mapping(uint256 policyId => address policyContract)) public policyContractToPolicyId;
     mapping(address callingContract => mapping(uint256 policyId => Trackers[])) public trackerStorage;
 
-    function writePolicyContract(address callingContract, Policy memory policy) external {
+    function writePolicyContract(address callingContract, bytes4 callingFunction, Policy memory policy) external {
         uint256 counter = policyIdCounter[callingContract]++;
-        callingContractToPolicyIds[callingContract].push(counter);
+        callingContractToPolicyIds[callingContract][callingFunction].push(counter);
         policy.policyId = counter;
         policyContractToPolicyId[callingContract][counter] = SSTORE2.write(abi.encode(policy));
         policyIdCounter[callingContract] = counter;
@@ -44,7 +45,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         retVal = 1; 
         // Load the calling function data from storage
         //Policy storage data = abi.decode(SSTORE2.read(policyContractToPolicyId[policyId]), (Policy));
-        uint256[] memory policyIds = callingContractToPolicyIds[contractAddress];
+        uint256[] memory policyIds = callingContractToPolicyIds[contractAddress][bytes4(arguments[:4])];
         // loop through all the active policies
         for(uint256 policyIdx = 0; policyIdx < policyIds.length; policyIdx++) {
             if(!_checkPolicy(policyIds[policyIdx], contractAddress, arguments)) {
@@ -146,10 +147,10 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
             Placeholder memory placeholder = placeHolders[placeholderIndex];
             if(placeholder.foreignCall) {
-                    ForeignCallReturnValue memory retVal = _evaluateForeignCalls(policy, callingFunctionArgs, placeholder.typeSpecificIndex, retVals);
-                    // Set the placeholders value and type based on the value returned by the foreign call
-                    retVals[placeholderIndex] = retVal.value;
-                    placeHolders[placeholderIndex].pType = retVal.pType;
+                ForeignCallReturnValue memory retVal = _evaluateForeignCalls(policy, callingFunctionArgs, placeholder.typeSpecificIndex, retVals);
+                // Set the placeholders value and type based on the value returned by the foreign call
+                retVals[placeholderIndex] = retVal.value;
+                placeHolders[placeholderIndex].pType = retVal.pType;
             } else if (placeholder.trackerValue) {
                 // Load the Tracker data from storage
                 Trackers memory tracker = policy.trackers[placeholder.typeSpecificIndex];
@@ -303,9 +304,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     ) public returns(ForeignCallReturnValue memory returnValue) {
         // Load the Foreign Call data from storage
         ForeignCall memory foreignCall = policy.foreignCalls[foreignCallIndex];
-        if (foreignCall.set) {
-            return evaluateForeignCallForRule(foreignCall, callingFunctionArgs, retVals);
-        }
+
+        return evaluateForeignCallForRule(foreignCall, callingFunctionArgs, retVals);
+        
     }
 
     /**
@@ -392,7 +393,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         bytes memory callData = bytes.concat(encodedCall, dynamicData);
         // Place the foreign call
         (bool response, bytes memory data) = fc.foreignCallAddress.call(callData);
-    
 
         // Verify that the foreign call was successful
         if(response) {
