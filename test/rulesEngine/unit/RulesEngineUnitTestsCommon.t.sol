@@ -98,7 +98,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         vm.startPrank(policyAdmin);
         setUpRuleSimple();
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 5);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
     }
 
@@ -163,7 +163,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         setupRuleWithForeignCall(4, EffectTypes.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), transferValue);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
     }
 
@@ -177,8 +177,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         transferValue = 10;
         setupRuleWithForeignCall(ruleValue, EffectTypes.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), transferValue);
+        vm.startPrank(address(userContract));
         vm.expectRevert(abi.encodePacked(revert_text));
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     function testRulesEngine_Unit_checkRule_ForeignCall_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
@@ -210,7 +211,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         setupRuleWithForeignCallSquaringReferencedTrackerVals(8, EffectTypes.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 3);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
     }
 
@@ -221,8 +222,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         setupRuleWithForeignCallSquaringReferencedTrackerVals(0, EffectTypes.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 3);
+        vm.startPrank(address(userContract));
         vm.expectRevert(abi.encodePacked(revert_text));
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     function testRulesEngine_Unit_createRule_ForeignCall_ForeignCallReferenced_Positive()
@@ -232,7 +234,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         setupRuleWithForeignCallWithSquaredFCValues(EffectTypes.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 3);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
     }
 
@@ -244,8 +246,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         setupRuleWithForeignCallWithSquaredFCValues(EffectTypes.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 0);
+        vm.startPrank(address(userContract));
         vm.expectRevert(abi.encodePacked(revert_text));
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     function testRulesEngine_Unit_CheckPolicies_Explicit_StringComparison_Positive()
@@ -255,7 +258,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         setupRuleWithStringComparison();
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction2))), address(0x7654321), "Bad Info");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
     }
 
@@ -266,7 +269,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         setupRuleWithStringComparison();
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction2))), address(0x7654321), "test");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        vm.startPrank(address(userContract));
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 0);
     }
 
@@ -292,7 +296,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         setupRuleWithAddressComparison();
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction2))), address(0x1234567), "test");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
     }
 
@@ -303,7 +307,8 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         setupRuleWithAddressComparison();
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction2))), address(0x7654321), "test");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        vm.startPrank(address(userContract));
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 0);
     }
 
@@ -329,7 +334,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         setupRuleWithForeignCall(4, EffectTypes.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 5);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
     }
 
@@ -340,9 +345,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     {
         setupRuleWithForeignCall(4, EffectTypes.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 5);
+        vm.startPrank(address(userContract));
         // The Foreign call will be placed during the effect for the single rule in this policy.
         // The value being set in the foreign contract is then polled to verify that it has been udpated.
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(testContract.getInternalValue(), 5);
     }
 
@@ -363,9 +369,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         setupRuleWithTrackerAddr(policyId, tracker);
 
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 5, address(0x7654321));
+        vm.startPrank(address(userContract));
         // The tracker will be updated during the effect for the single rule in this policy.
         // It will have the result of the third parameter
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         tracker = RulesEngineComponentFacet(address(red)).getTracker(policyId, 1);
         assertEq(tracker.trackerValue, abi.encode(0x7654321));
     }
@@ -386,9 +393,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         setupRuleWithTrackerBool(policyId, tracker);
 
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 5, bool(true));
+        vm.startPrank(address(userContract));
         // The tracker will be updated during the effect for the single rule in this policy.
         // It will have the result of the third parameter
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         tracker = RulesEngineComponentFacet(address(red)).getTracker(policyId, 1);
         assertEq(tracker.trackerValue, abi.encode(bool(true)));
     }
@@ -409,9 +417,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         setupRuleWithTrackerUint(policyId, tracker);
 
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 5, 99);
+        vm.startPrank(address(userContract));
         // The tracker will be updated during the effect for the single rule in this policy.
         // It will have the result of the third parameter
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         tracker = RulesEngineComponentFacet(address(red)).getTracker(policyId, 1);
         assertEq(tracker.trackerValue, abi.encode(uint256(99)));
     }
@@ -432,9 +441,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         setupRuleWithTracker2(policyId, tracker);
 
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 5, bytes("post"));
+        vm.startPrank(address(userContract));
         // The tracker will be updated during the effect for the single rule in this policy.
         // It will have the result of the third parameter
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         tracker = RulesEngineComponentFacet(address(red)).getTracker(policyId, 1);
         bytes memory comparison = abi.encode("post");
         assertEq(tracker.trackerValue, comparison);
@@ -456,9 +466,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         setupRuleWithTracker2(policyId, tracker);
 
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 5, "post");
+        vm.startPrank(address(userContract));
         // The tracker will be updated during the effect for the single rule in this policy.
         // It will have the result of the third parameter
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         tracker = RulesEngineComponentFacet(address(red)).getTracker(policyId, 1);
         bytes memory comparison = abi.encode("post");
         assertEq(tracker.trackerValue, comparison);
@@ -470,9 +481,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         endWithStopPrank
     {
         setupRuleWithForeignCall(4, EffectTypes.REVERT, false);
+        vm.startPrank(address(userContract));
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 3);
         vm.expectRevert(abi.encodePacked(revert_text));
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     /// Ensure that rule with a negative effect revert applied, that passes, will revert
@@ -671,7 +683,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), transferValue);
 
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
     }
 
@@ -684,9 +696,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         transferValue = 10;
 
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), transferValue);
-
+        vm.startPrank(address(userContract));
         vm.expectRevert(abi.encodePacked(revert_text));
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     function testRulesEngine_Unit_GetTrackerValue()
@@ -2011,13 +2023,11 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
     ///////////////////////////// Event Emission Tests 
     function testRulesEngine_Unit_CreatePolicyEvent() public ifDeploymentTestsEnabled endWithStopPrank {
-        CallingFunctionStorageSet[] memory functioncallingFunctions = new CallingFunctionStorageSet[](0); 
-        Rule[] memory rules = new Rule[](0); 
         uint256 policyId = 1;
         vm.expectEmit(true, false, false, false);
         emit PolicyCreated(policyId); 
         emit PolicyAdminRoleGranted(policyAdmin, policyId);
-        RulesEnginePolicyFacet(address(red)).createPolicy(functioncallingFunctions, rules, PolicyType.CLOSED_POLICY);
+        RulesEnginePolicyFacet(address(red)).createPolicy(PolicyType.CLOSED_POLICY);
     }
 
     function testRulesEngine_Unit_UpdatePolicy_Event() public ifDeploymentTestsEnabled endWithStopPrank {
@@ -2674,7 +2684,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         RulesEnginePolicyFacet(address(red)).applyPolicy(encodingContractAddress, policyIds);
         // test rule processing 
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunctionWithBytes))), address(0x7654321), 99, TEST);
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(encodingContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
 
         bool response = encodingContract.transferWithBytes(address(0x1234567), 99, TEST);
         assertTrue(response); 
@@ -3236,12 +3246,19 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
     }
 
-    // function test_GrantCallingContractRole() public {
-    //     vm.startPrank(address(0x1337));
-    //     // vm.expectRevert("Only Calling Contract Can Create Admin");
-    //     RulesEngineAdminRolesFacet(address(red)).grantCallingContractRole(address(0x1337), callingContractAdmin);
-    //     // RulesEngineAdminRolesFacet(address(red)).proposeNewCallingContractAdmin(address(0x1337), callingContractAdmin);
-    // }
+    function test_initialize_onlyOnce_negative() public ifDeploymentTestsEnabled{
+        vm.expectRevert("Already initialized");
+        RulesEngineInitialFacet(address(red)).initialize(
+            address(this)
+        );
+        
+    }
+
+    function test_GrantCallingContractRole() public ifDeploymentTestsEnabled{
+        vm.startPrank(address(0x1337));
+        vm.expectRevert("Only Calling Contract Can Create Admin");
+        RulesEngineAdminRolesFacet(address(red)).grantCallingContractRole(address(0x1337), callingContractAdmin);
+    }
 
 
 }

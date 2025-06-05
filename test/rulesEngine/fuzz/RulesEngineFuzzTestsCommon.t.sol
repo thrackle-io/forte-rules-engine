@@ -46,13 +46,13 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         vm.startPrank(callingContractAdmin);    
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly 
-
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), transferValue);
         if (ruleValue < transferValue) {
-            response = RulesEngineProcessorFacet(address(red)).checkPolicies(userContractAddress, arguments);
+            response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
             assertEq(response, 1);
         } else if (ruleValue > transferValue){ 
-            response = RulesEngineProcessorFacet(address(red)).checkPolicies(userContractAddress, arguments);
+            response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
             assertFalse(response == 1);
         }
     }
@@ -62,8 +62,6 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
         testAddressArray.push(newPolicyAdmin);
 
         vm.startPrank(policyAdmin); 
-        CallingFunctionStorageSet[] memory callingFunctions = new CallingFunctionStorageSet[](0); 
-        Rule[] memory rules = new Rule[](0);
         uint256 policyID = _createBlankPolicy();
 
         address sender = testAddressArray[addrIndex % testAddressArray.length];
@@ -75,7 +73,7 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
             vm.stopPrank();
             vm.startPrank(newPolicyAdmin); 
             RulesEngineAdminRolesFacet(address(red)).confirmNewPolicyAdmin(policyID);
-            RulesEnginePolicyFacet(address(red)).createPolicy(callingFunctions, rules, PolicyType.CLOSED_POLICY);
+            RulesEnginePolicyFacet(address(red)).createPolicy(PolicyType.CLOSED_POLICY);
         } else {
             vm.expectRevert("Not Policy Admin");
             RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID);

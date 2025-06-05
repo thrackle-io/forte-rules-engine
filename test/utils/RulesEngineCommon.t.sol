@@ -1402,17 +1402,13 @@ contract RulesEngineCommon is DiamondMine, Test {
 
     /// Test helper functions
     function _createBlankPolicy() internal returns (uint256) {
-        CallingFunctionStorageSet[] memory functioncallingFunctions = new CallingFunctionStorageSet[](0); 
-        Rule[] memory rules = new Rule[](0); 
-        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(functioncallingFunctions, rules, PolicyType.CLOSED_POLICY);
+        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(PolicyType.CLOSED_POLICY);
         RulesEngineComponentFacet(address(red)).addClosedPolicySubscriber(policyId, callingContractAdmin); 
         return policyId;
     }
 
     function _createBlankPolicyOpen() internal returns (uint256) {
-        CallingFunctionStorageSet[] memory functioncallingFunctions = new CallingFunctionStorageSet[](0); 
-        Rule[] memory rules = new Rule[](0); 
-        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(functioncallingFunctions, rules, PolicyType.OPEN_POLICY);
+        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(PolicyType.OPEN_POLICY);
         return policyId;
     }
 
@@ -1420,9 +1416,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         internal
         returns (uint256)
     {
-        CallingFunctionStorageSet[] memory functioncallingFunctions = new CallingFunctionStorageSet[](0); 
-        Rule[] memory rules = new Rule[](0); 
-        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(functioncallingFunctions, rules, PolicyType.CLOSED_POLICY);
+        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(PolicyType.CLOSED_POLICY);
         return policyId;
     }
 

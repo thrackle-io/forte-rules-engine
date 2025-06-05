@@ -153,6 +153,7 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
     function grantCallingContractRole(address _callingContract, address _account) public nonReentrant returns (bytes32) {
         if (_account == address(0)) revert(ZERO_ADDRESS);  
         if(msg.sender != _callingContract) revert(ONLY_CALLING_CONTRACT);
+        if(_callingContract.code.length == 0) revert(ONLY_CALLING_CONTRACT);
         // Create Admin Role for Calling Contract Role: concat the calling contract address and adminRole key together and keccak them. Cast to bytes32 for Admin Role identifier 
         bytes32 adminRoleId = _generateCallingContractAdminRoleId(_callingContract, CALLING_CONTRACT_ADMIN); 
         if (hasRole(adminRoleId, _account)) revert(CALLING_CONTRACT_ADMIN_ROLE_ALREADY_GRANTED);

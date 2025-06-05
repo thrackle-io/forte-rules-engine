@@ -198,15 +198,10 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     /**
      * @notice Creates a new policy and assigns a policy admin.
      * @dev Generates a policy ID and initializes the policy with the specified type.
-     * @param callingFunctions The calling functions associated with the policy.
-     * @param rules The rules associated with the policy.
      * @param policyType The type of the policy (CLOSED_POLICY or OPEN_POLICY).
      * @return uint256 The generated policy ID.
      */
-    function createPolicy(
-        CallingFunctionStorageSet[] calldata callingFunctions, 
-        Rule[] calldata rules,
-        PolicyType policyType
+    function createPolicy(PolicyType policyType
     ) external returns(uint256) {
         // retrieve Policy Storage 
         PolicyStorage storage data = lib._getPolicyStorage();
@@ -220,12 +215,6 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         data.policyStorageSets[policyId].policy.policyType = policyType;
         //This function is called as an external call intentionally. This allows for proper gating on the generatePolicyAdminRole fn to only be callable by the RulesEngine address. 
         RulesEngineAdminRolesFacet(address(this)).generatePolicyAdminRole(policyId, address(msg.sender));
-        //TODO remove this when create policy is atomic 
-        // Temporarily disabling _storePolicyData
-        // return _storePolicyData(policyId, _callingFunctions, _rules);
-        
-        callingFunctions;
-        rules;
         emit PolicyCreated(policyId);
         return policyId;
     }

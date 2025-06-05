@@ -44,7 +44,7 @@ abstract contract RulesEngineClient {
      */
     function _invokeRulesEngine(bytes memory _encoded) internal returns (uint256 _retval) {
         if (rulesEngineAddress != address(0)) {
-            return IRulesEngine(rulesEngineAddress).checkPolicies(address(this), _encoded);
+            return IRulesEngine(rulesEngineAddress).checkPolicies(_encoded);
         }
     }
 }
