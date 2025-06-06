@@ -281,7 +281,8 @@ struct PolicyStorage {
 // Policy Type enum to determine if policy is open or closed
 enum PolicyType {
     CLOSED_POLICY,
-    OPEN_POLICY
+    OPEN_POLICY,
+    DISABLED_POLICY
 }
 
 // Policy storage with set

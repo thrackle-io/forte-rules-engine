@@ -174,7 +174,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         // to rule specific argument array
         // note that arguments is being sliced, first 4 bytes are the function signature being passed (:4) and the rest (4:) 
         // are all the arguments associated for the rule to be invoked. This saves on further calculations so that we don't need to factor in the signature.
-        retVal = _evaluateRulesAndExecuteEffects(ruleData ,_policyId, _loadApplicableRules(ruleData, policyStorageSet.policy, bytes4(_arguments[:4])), _arguments[4:]);
+        if(policyStorageSet.policy.policyType == PolicyType.DISABLED_POLICY) return true; else {
+            retVal = _evaluateRulesAndExecuteEffects(ruleData ,_policyId, _loadApplicableRules(ruleData, policyStorageSet.policy, bytes4(_arguments[:4])), _arguments[4:]);
+        }
     }
     
     /**
