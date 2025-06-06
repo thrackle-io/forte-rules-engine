@@ -120,15 +120,15 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         pTypes[1] = ParamTypes.UINT;
         pTypes[2] = ParamTypes.ADDR;
         // Expect revert while rule is enabled
-        _setupRuleWithRevertMint(ERC20_MINT_SIGNATURE, pTypes);
+        uint256 _policyId = _setupRuleWithRevertMint(ERC20_MINT_SIGNATURE, pTypes);
         vm.startPrank(USER_ADDRESS);
         vm.expectRevert(abi.encodePacked(revert_text)); 
         userContract.mint(USER_ADDRESS, 3);
 
         // Disable the policy and expect it to go through
         vm.startPrank(policyAdmin);
-        RulesEnginePolicyFacet(address(red)).disablePolicy(1);
-        assertTrue(RulesEnginePolicyFacet(address(red)).isDisabledPolicy(1));
+        RulesEnginePolicyFacet(address(red)).disablePolicy(_policyId);
+        assertTrue(RulesEnginePolicyFacet(address(red)).isDisabledPolicy(_policyId));
         vm.startPrank(USER_ADDRESS);
         userContract.mint(USER_ADDRESS, 3);
     }
@@ -159,7 +159,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
-    function _setupRuleWithRevertMint(string memory _callingFunction, ParamTypes[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
+    function _setupRuleWithRevertMint(string memory _callingFunction, ParamTypes[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256){
         uint256[] memory policyIds = new uint256[](1);
         
         policyIds[0] = _createBlankPolicyOpen();
@@ -184,6 +184,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        return policyIds[0];
     }
 
     function _createGTRuleTransferFrom(uint256 _amount) public returns(Rule memory){

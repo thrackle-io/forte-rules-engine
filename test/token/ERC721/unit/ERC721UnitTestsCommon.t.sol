@@ -96,15 +96,15 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         pTypes[2] = ParamTypes.UINT;
         pTypes[3] = ParamTypes.ADDR;
         // Expect revert while rule is enabled
-        _setupRuleWithRevertTransferFrom(ERC721_TRANSFERFROM_SIGNATURE, pTypes);
+        uint256 _policyId = _setupRuleWithRevertTransferFrom(ERC721_TRANSFERFROM_SIGNATURE, pTypes);
         vm.startPrank(USER_ADDRESS);
         vm.expectRevert(abi.encodePacked(revert_text)); 
         userContract.transferFrom(USER_ADDRESS, USER_ADDRESS_2, 0);
 
         // Disable the policy and expect it to go through
         vm.startPrank(policyAdmin);
-        RulesEnginePolicyFacet(address(red)).disablePolicy(1);
-        assertTrue(RulesEnginePolicyFacet(address(red)).isDisabledPolicy(1));
+        RulesEnginePolicyFacet(address(red)).disablePolicy(_policyId);
+        assertTrue(RulesEnginePolicyFacet(address(red)).isDisabledPolicy(_policyId));
         vm.startPrank(USER_ADDRESS);
         userContract.transferFrom(USER_ADDRESS, USER_ADDRESS_2, 0);
     }
@@ -162,7 +162,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
-    function _setupRuleWithRevertTransferFrom(string memory _callingFunction, ParamTypes[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
+    function _setupRuleWithRevertTransferFrom(string memory _callingFunction, ParamTypes[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256){
         // if the address equals the mint to address, then emit event, else revert
         uint256[] memory policyIds = new uint256[](1);
         
@@ -187,6 +187,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        return policyIds[0];
     }
 
     function _createEQRuleSafeMint(address _address) public returns(Rule memory){

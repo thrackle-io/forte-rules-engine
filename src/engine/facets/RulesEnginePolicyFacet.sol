@@ -81,7 +81,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
 
     /**
      * @notice Marks a policy as disabled.
-     * @dev A policy will not be checked againt if it is in a disabled state.
+     * @dev A policy will not be checked against if it is in a disabled state.
      * @param policyId The ID of the policy to disable.
      */
     function disablePolicy(uint256 policyId) external policyAdminOnly(policyId, msg.sender) {
