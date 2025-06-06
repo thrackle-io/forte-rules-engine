@@ -37,6 +37,7 @@ event PolicyUnapplied(uint256[] policyIds, address indexed callingContract);
 event PolicyRemoved(uint256 indexed removedPolicyId, address indexed callingContract);
 event PolicySubsciberAdded(uint256 indexed policyId, address indexed subscriber);
 event PolicySubsciberRemoved(uint256 indexed policyId, address indexed subscriber);
+event PolicyDisabled(uint256 indexed policyId);
 
 /// Calling Function Events 
 event CallingFunctionCreated(uint256 indexed policyId, uint256 indexed callingFunctionId);

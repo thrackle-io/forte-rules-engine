@@ -79,6 +79,17 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     }
 
     /**
+     * @notice Marks a policy as disabled.
+     * @dev A policy will not be checked against if it is in a disabled state.
+     * @param policyId The ID of the policy to disable.
+     */
+    function disablePolicy(uint256 policyId) external policyAdminOnly(policyId, msg.sender) {
+        StorageLib._notCemented(policyId);
+        _processPolicyTypeChange(policyId, PolicyType.DISABLED_POLICY);        
+        emit PolicyDisabled(policyId);
+    }
+
+    /**
      * @notice Deletes a policy from storage.
      * @dev Removes the policy and all associated rules, trackers, and foreign calls. Ensures the policy is not cemented.
      * @param policyId The ID of the policy to delete.
@@ -237,6 +248,15 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      */
     function isClosedPolicy(uint256 policyId) external view returns (bool) {
         return (lib._getPolicyStorage().policyStorageSets[policyId].policy.policyType == PolicyType.CLOSED_POLICY);
+    }
+
+    /**
+     * @notice Checks if a policy is disabled.
+     * @param policyId The ID of the policy to check.
+     * @return bool True if the policy is disabled, false otherwise.
+     */
+    function isDisabledPolicy(uint256 policyId) external view returns (bool) {
+        return (lib._getPolicyStorage().policyStorageSets[policyId].policy.policyType == PolicyType.DISABLED_POLICY);
     }
 
     /**
