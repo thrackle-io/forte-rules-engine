@@ -1437,8 +1437,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.instructionSet[6] = 1;
 
         rule.placeHolders = new Placeholder[](2);
-
-        rule.placeHolders = new Placeholder[](2);
         rule.placeHolders[0].pType = ruleParamType;
         rule.placeHolders[0].typeSpecificIndex = typeSpecificIndex;
         rule.placeHolders[1].pType = trackerKeyType;
@@ -2425,25 +2423,5 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEngineAdminRolesFacet(address(red)).confirmNewCallingContractAdmin(userContract);
 
     }
-
-    // function _createMappedTracker(
-    //     uint256 _policyId, 
-    //     Trackers memory tracker, 
-    //     bytes[] memory trackerKeys,
-    //     bytes[] memory trackerValues,
-    //     ParamTypes trackerKeyType,
-    //     string memory trackerName
-    // ) public ifDeploymentTestsEnabled endWithStopPrank returns (uint256 trackerIndex){
-    //     uint256[] memory policyIds = new uint256[](1);
-    //     policyIds[0] = _policyId;
-    //     // Add the tracker
-    //     trackerIndex = RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, trackerName, trackerKeys, trackerValues, trackerKeyType);
-
-    //     vm.stopPrank();
-    //     vm.startPrank(callingContractAdmin);
-    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-    //     return trackerIndex;
-    // }
-
 
 }
