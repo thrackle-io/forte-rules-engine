@@ -9,6 +9,7 @@ import "src/engine/facets/FacetCommonImports.sol";
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 contract RulesEngineInitialFacet is FacetCommonImports{
+    bool private initialized;
 
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
     // Initialization
@@ -19,7 +20,7 @@ contract RulesEngineInitialFacet is FacetCommonImports{
      * @dev This function sets the initial owner of the diamond and ensures the contract is only initialized once.
      * @param owner The initial owner of the diamond.
      */
-    function initialize(address owner) external {
+    function initialize(address owner) external onlyOnce {
         InitializedStorage storage init = lib._initializedStorage();
         if(init.initialized) revert ("AlreadyInitialized");
         _callAnotherFacet(0xf2fde38b, abi.encodeWithSignature("transferOwnership(address)", owner));
@@ -78,5 +79,16 @@ contract RulesEngineInitialFacet is FacetCommonImports{
                 break;
             }
         }
+    }
+
+    /**
+     * @notice Ensures that the function it modifies can only be executed once.
+     * @dev This modifier checks if the contract has already been initialized and prevents re-initialization.
+     *      If the contract is already initialized, it reverts with "Already initialized".
+     */
+    modifier onlyOnce() {
+        require(!initialized, "Already initialized");
+        _;
+        initialized = true;
     }
 }

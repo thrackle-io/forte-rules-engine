@@ -21,19 +21,18 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     /**
      * @notice Evaluates the conditions associated with all applicable rules and returns the result.
      * @dev Primary entry point for policy checks.
-     * @param contractAddress The address of the rules-enabled contract, used to pull the applicable rules.
      * @param arguments Function arguments, including the function signature and the arguments to be passed to the function.
      * @return retVal 1 if all rules pass, 0 if any rule fails.
      * TODO: refine the parameters to this function. contractAddress is not necessary as it's the message caller
      */
-    function checkPolicies(address contractAddress, bytes calldata arguments) public returns (uint256 retVal) {  
-        retVal = 1; 
+    function checkPolicies(bytes calldata arguments) public returns (uint256 retVal) {  
+        retVal = 1;
         // Load the calling function data from storage
         PolicyAssociationStorage storage data = lib._getPolicyAssociationStorage();
-        uint256[] memory policyIds = data.contractPolicyIdMap[contractAddress];
+        uint256[] memory policyIds = data.contractPolicyIdMap[msg.sender];
         // loop through all the active policies
         for(uint256 policyIdx = 0; policyIdx < policyIds.length; policyIdx++) {
-            if(!_checkPolicy(policyIds[policyIdx], contractAddress, arguments)) {
+            if(!_checkPolicy(policyIds[policyIdx], msg.sender, arguments)) {
                 retVal = 0;
             }
         }

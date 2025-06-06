@@ -1,5 +1,5 @@
 /// SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
 import "src/engine/facets/AdminRoles.sol";
@@ -41,7 +41,6 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
      * @return bytes32 The generated admin role identifier.
      */
     function generatePolicyAdminRole(uint256 policyId, address account) public nonReentrant returns (bytes32) {
-        if (account == address(0)) revert(ZERO_ADDRESS);  
         if(msg.sender != address(this)) revert(RULES_ENGINE_ONLY);
         // Create Admin Role for Policy: concat the policyId and adminRole key together and keccak them. Cast to bytes32 for Admin Role identifier 
         bytes32 adminRoleId = _generatePolicyAdminRoleId(policyId, POLICY_ADMIN);  
@@ -154,6 +153,7 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
     function grantCallingContractRole(address _callingContract, address _account) public nonReentrant returns (bytes32) {
         if (_account == address(0)) revert(ZERO_ADDRESS);  
         if(msg.sender != _callingContract) revert(ONLY_CALLING_CONTRACT);
+        if(_callingContract.code.length == 0) revert(ONLY_CALLING_CONTRACT);
         // Create Admin Role for Calling Contract Role: concat the calling contract address and adminRole key together and keccak them. Cast to bytes32 for Admin Role identifier 
         bytes32 adminRoleId = _generateCallingContractAdminRoleId(_callingContract, CALLING_CONTRACT_ADMIN); 
         if (hasRole(adminRoleId, _account)) revert(CALLING_CONTRACT_ADMIN_ROLE_ALREADY_GRANTED);
@@ -223,10 +223,10 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
      * @param callingContractAddress address of the calling contract.
      */
     function confirmNewCallingContractAdmin(address callingContractAddress) public { 
-        address oldPolicyAdmin = getRoleMember(_generateCallingContractAdminRoleId(callingContractAddress, CALLING_CONTRACT_ADMIN), 0);
+        address oldCallingContractAdmin = getRoleMember(_generateCallingContractAdminRoleId(callingContractAddress, CALLING_CONTRACT_ADMIN), 0);
         if (!hasRole(_generateCallingContractAdminRoleId(callingContractAddress, PROPOSED_CALLING_CONTRACT_ADMIN), msg.sender)) revert(NOT_PROPOSED_CALLING_CONTRACT_ADMIN); 
         _revokeRole(_generateCallingContractAdminRoleId(callingContractAddress, PROPOSED_CALLING_CONTRACT_ADMIN), msg.sender);
-        _revokeRole(_generateCallingContractAdminRoleId(callingContractAddress, CALLING_CONTRACT_ADMIN), oldPolicyAdmin);
+        _revokeRole(_generateCallingContractAdminRoleId(callingContractAddress, CALLING_CONTRACT_ADMIN), oldCallingContractAdmin);
         _grantRole(_generateCallingContractAdminRoleId(callingContractAddress, CALLING_CONTRACT_ADMIN), msg.sender); 
         emit CallingContractAdminRoleConfirmed(callingContractAddress, msg.sender);  
     }

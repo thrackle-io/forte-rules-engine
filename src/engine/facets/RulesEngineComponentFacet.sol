@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
-import "src/engine/facets/RulesEngineAdminRolesFacet.sol";
 
 /**
  * @title Rules Engine Component Facet

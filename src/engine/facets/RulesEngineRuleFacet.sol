@@ -112,8 +112,6 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      * @return ruleId The stored rule ID.
      */
     function _storeRule(RuleStorage storage _data, uint256 _policyId, uint256 _ruleId, Rule calldata _rule) internal returns (uint256) {
-        // TODO: Add validations for rule
-        
         // Validate that the policy exists
         if(!lib._getPolicyStorage().policyStorageSets[_policyId].set) revert ("Invalid PolicyId");
 
