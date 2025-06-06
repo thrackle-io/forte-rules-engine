@@ -201,8 +201,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      * @param policyType The type of the policy (CLOSED_POLICY or OPEN_POLICY).
      * @return uint256 The generated policy ID.
      */
-    function createPolicy(PolicyType policyType
-    ) external returns(uint256) {
+    function createPolicy(PolicyType policyType) external returns(uint256) {
         // retrieve Policy Storage 
         PolicyStorage storage data = lib._getPolicyStorage();
         uint256 policyId = data.policyId; 
