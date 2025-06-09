@@ -371,7 +371,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             trk.trackerValue = abi.encode(ProcessorLib._uintToBool(_trackerValue));
         } else if(trk.pType == ParamTypes.BYTES) {
             trk.trackerValue = ProcessorLib._uintToBytes(_trackerValue);
-        } 
+        } else {
+            revert("Invalid tracker type for updates");
+        }
     }
 
     /**
@@ -406,9 +408,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             encodedKey = abi.encode(ProcessorLib._uintToAddr(_mappedTrackerKey));
         } else if (trk.trackerKeyType == ParamTypes.BOOL) {
             encodedKey = abi.encode(ProcessorLib._uintToBool(_mappedTrackerKey));
-        } else if (trk.trackerKeyType == ParamTypes.BYTES) {
+        } else if (trk.trackerKeyType == ParamTypes.BYTES || trk.trackerKeyType == ParamTypes.STR) {
             encodedKey = ProcessorLib._uintToBytes(_mappedTrackerKey);
-        }
+        } 
 
         if (trk.pType == ParamTypes.UINT) {
             encodedValue = abi.encode(_trackerValue);
@@ -440,8 +442,10 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             encodedKey = abi.encode(ProcessorLib._uintToAddr(_mappedTrackerKey));
         } else if (trk.trackerKeyType == ParamTypes.BOOL) {
             encodedKey = abi.encode(ProcessorLib._uintToBool(_mappedTrackerKey));
-        } else if (trk.trackerKeyType == ParamTypes.BYTES) {
+        } else if (trk.trackerKeyType == ParamTypes.BYTES || trk.trackerKeyType == ParamTypes.STR) {
             encodedKey = ProcessorLib._uintToBytes(_mappedTrackerKey);
+        } else {
+            revert("Invalid tracker key type for updates");
         }
         // store the tracker  value to the tracker mapping
         lib._getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][encodedKey] = _trackerValue;

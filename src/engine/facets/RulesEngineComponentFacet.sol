@@ -29,7 +29,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         uint256 _policyId, 
         ForeignCall calldata _foreignCall, string calldata foreignCallName
     ) external returns (uint256) {
-        _notPolicyAdminOnly(_policyId, msg.sender);
+        _policyAdminOnly(_policyId, msg.sender);
         _notCemented(_policyId);
         if (_foreignCall.foreignCallAddress == address(0)) revert(ZERO_ADDRESS);
 
@@ -54,7 +54,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @return fc The updated foreign call structure.
      */
     function updateForeignCall(uint256 policyId, uint256 foreignCallId, ForeignCall calldata foreignCall) external returns (ForeignCall memory fc) {
-        _notPolicyAdminOnly(policyId, msg.sender);
+        _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
         fc = foreignCall;
         if (fc.foreignCallAddress == address(0)) revert(ZERO_ADDRESS);
@@ -70,7 +70,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param foreignCallId The ID of the foreign call to delete.
      */
     function deleteForeignCall(uint256 policyId, uint256 foreignCallId) external {
-        _notPolicyAdminOnly(policyId, msg.sender);
+        _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
         delete lib._getForeignCallStorage().foreignCalls[policyId][foreignCallId];
         emit ForeignCallDeleted(policyId, foreignCallId);
@@ -194,8 +194,9 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         Trackers calldata tracker,
         string calldata trackerName
     ) external returns (uint256) {
-        _notPolicyAdminOnly(policyId, msg.sender);
+        _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
+        _validateTrackerType(tracker);
         // Step 1: Increment tracker index
         uint256 trackerIndex = _incrementTrackerIndex(policyId);
         // Step 2: Store tracker data without mapping
@@ -223,8 +224,9 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         bytes[] calldata trackerKeys,
         bytes[] calldata trackerValues
     ) external returns (uint256) {
-        _notPolicyAdminOnly(policyId, msg.sender);
+        _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
+        _validateTrackerType(tracker);
         if (trackerKeys.length == 0 || trackerValues.length == 0) revert ("Tracker keys and values cannot be empty");
         if (trackerKeys.length != trackerValues.length) revert("Tracker keys and values must have the same length");
         uint256 trackerIndex = lib._getTrackerStorage().trackerIndexCounter[policyId];
@@ -238,6 +240,25 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         // return the final tracker index and the created tracker array
         return trackerIndex;
 
+    }
+
+    function _validateTrackerType(Trackers calldata _tracker) internal pure {
+        // Ensure tracker value pType is a valid type
+        require(_tracker.pType == ParamTypes.STR || 
+                _tracker.pType == ParamTypes.UINT || 
+                _tracker.pType == ParamTypes.BOOL ||
+                _tracker.pType == ParamTypes.BYTES ||
+                _tracker.pType == ParamTypes.ADDR,
+                "Invalid tracker type");
+        // Ensure the tracker key is of a valid type 
+        if (_tracker.mapped) {
+            require(_tracker.trackerKeyType == ParamTypes.STR || 
+                    _tracker.trackerKeyType == ParamTypes.UINT || 
+                    _tracker.trackerKeyType == ParamTypes.BOOL ||
+                    _tracker.trackerKeyType == ParamTypes.BYTES ||
+                    _tracker.trackerKeyType == ParamTypes.ADDR,
+                    "Invalid tracker key type");
+        }
     }
 
     /**
@@ -419,7 +440,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         uint256 trackerIndex,
         Trackers calldata tracker
     ) external {
-        _notPolicyAdminOnly(policyId, msg.sender);
+        _policyAdminOnly(policyId, msg.sender);
         // Load the Tracker data from storage
         TrackerStorage storage data = lib._getTrackerStorage();
         _storeTracker(data, policyId, trackerIndex, tracker);
@@ -442,7 +463,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         bytes calldata _trackerKey,
         bytes calldata _trackerValue
     ) external  {
-        _notPolicyAdminOnly(_policyId, msg.sender);
+        _policyAdminOnly(_policyId, msg.sender);
         // Load the Tracker data from storage
         TrackerStorage storage data = lib._getTrackerStorage();
         _storeTrackerMapping(data, _policyId, _trackerIndex, _tracker, _trackerKey, _trackerValue);
@@ -456,7 +477,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param trackerIndex The index of the tracker to store 
      */
     function deleteTracker(uint256 policyId, uint256 trackerIndex) external  {
-        _notPolicyAdminOnly(policyId, msg.sender);
+        _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
         delete lib._getTrackerStorage().trackers[policyId][trackerIndex];
         emit TrackerDeleted(policyId, trackerIndex); 
@@ -483,7 +504,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         string memory callingFunctionName,
         string memory encodedValues
     ) external returns (uint256) {
-        _notPolicyAdminOnly(policyId, msg.sender);
+        _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
         // Step 1: Increment function ID
         uint256 functionId = _incrementFunctionId(policyId);
@@ -515,7 +536,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         bytes4 functionSignature,
         ParamTypes[] memory pTypes
     ) external  returns (uint256) {
-        _notPolicyAdminOnly(policyId, msg.sender);
+        _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
         // Load the calling function data from storage
         CallingFunctionStruct storage data = lib._getCallingFunctionStorage();
@@ -542,7 +563,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param callingFunctionId The ID of the calling function to delete.
      */
     function deleteCallingFunction(uint256 policyId, uint256 callingFunctionId) external {
-        _notPolicyAdminOnly(policyId, msg.sender);
+        _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
         // retrieve policy from storage 
         PolicyStorageSet storage data = lib._getPolicyStorage().policyStorageSets[policyId];
@@ -681,7 +702,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param subscriber The address to add to the policy subscription.
      */
     function addClosedPolicySubscriber(uint256 policyId, address subscriber) external {
-        _notPolicyAdminOnly(policyId, msg.sender);
+        _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
         if (subscriber == address(0)) revert(ZERO_ADDRESS); 
         lib._getPolicyStorage().policyStorageSets[policyId].policy.closedPolicySubscribers[subscriber] = true;
@@ -695,7 +716,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param subscriber The address to remove from the policy subscription.
      */
     function removeClosedPolicySubscriber(uint256 policyId, address subscriber) external  {
-        _notPolicyAdminOnly(policyId, msg.sender);
+        _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
         if (subscriber == address(0)) revert(ZERO_ADDRESS);
         delete lib._getPolicyStorage().policyStorageSets[policyId].policy.closedPolicySubscribers[subscriber];
@@ -724,7 +745,12 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         if(lib._getPolicyStorage().policyStorageSets[_policyId].policy.cemented) revert ("Not allowed for cemented policy");
     }
 
-    function _notPolicyAdminOnly(uint256 _policyId, address _address) internal {   
+    /**
+     * @notice Checks that the caller is a policy admin 
+     * @param _policyId The ID of the policy.
+     * @param _address The address to check for policy admin status.
+     */
+    function _policyAdminOnly(uint256 _policyId, address _address) internal {   
         // 0x901cee11 = isPolicyAdmin(uint256,address)   
         (bool success, bytes memory res) = _callAnotherFacet(0x901cee11, abi.encodeWithSignature("isPolicyAdmin(uint256,address)", _policyId, _address));   
         bool returnBool;
