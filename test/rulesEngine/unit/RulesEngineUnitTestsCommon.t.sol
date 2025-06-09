@@ -3293,8 +3293,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
 
     }
@@ -3341,9 +3342,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 2000000000);
         vm.expectRevert(abi.encodePacked(revert_text));
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     /// uint to address 
@@ -3389,8 +3391,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
 
     }
@@ -3437,9 +3440,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x1234567), 2000000000);
         vm.expectRevert(abi.encodePacked(revert_text));
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     /// address to uint 
@@ -3485,9 +3489,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         // address to uint mapped tracker (is the amount to allowed for address)
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
 
     }
@@ -3534,9 +3539,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x1234567), 2000000000);
         vm.expectRevert(abi.encodePacked(revert_text));
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     /// address to Address  
@@ -3582,9 +3588,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         // address to Address mapped tracker (Tracked addresses can only transfer to address(0x7654321)); 
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
 
     }
@@ -3632,9 +3639,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         /// validate tracker is checked as conditional 
         // address to Address mapped tracker (Tracked addresses can only transfer to address(0x7654321)); 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x1234567), 2000000000);
         vm.expectRevert(abi.encodePacked(revert_text));
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     // Uint to Bool 
@@ -3680,9 +3688,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x1234567), 2000000000, false);
         vm.expectRevert(abi.encodePacked(revert_text));
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     /// uint to bool 
@@ -3728,8 +3737,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1, true);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
     }
 
@@ -3776,9 +3786,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x1234567), 2000000000, false);
         vm.expectRevert(abi.encodePacked(revert_text));
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     /// bool to uint 
@@ -3823,8 +3834,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(value, abi.encode(true)); 
         assertEq(trackerIndex, 1);
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1, true);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
     }
 
@@ -3871,9 +3883,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x1234567), 2000000000, false);
         vm.expectRevert(abi.encodePacked(revert_text));
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     /// Address to Bool 
@@ -3918,8 +3931,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(value, abi.encode(true)); 
         assertEq(trackerIndex, 1);
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1, true);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
     }
 
@@ -3966,9 +3980,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x1234567), 2000000000, false);
         vm.expectRevert(abi.encodePacked(revert_text));
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     /// Bool To Address
@@ -4013,8 +4028,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(value, abi.encode(true)); 
         assertEq(trackerIndex, 1);
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1, true);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
     }
 
@@ -4061,9 +4077,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x1234567), 2000000000, "trackerValue2");
         vm.expectRevert(abi.encodePacked(revert_text));
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     /// Address to String 
@@ -4108,8 +4125,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(value, abi.encode("trackerValue1")); 
         assertEq(trackerIndex, 1);
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1, "trackerValue1");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
     }
 
@@ -4157,9 +4175,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x1234567), 2000000000, "trackerValue2");
         vm.expectRevert(abi.encodePacked(revert_text));
-        RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     /// Address to String 
@@ -4204,8 +4223,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(value, abi.encode(address(0x7654321))); 
         assertEq(trackerIndex, 1);
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1, string("trackerValue1"));
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
     }
 
@@ -4251,8 +4271,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, 100);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
 
         // check that the tracker was updated from the effect
@@ -4298,8 +4319,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, 100);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
 
         // check that the tracker was updated from the effect
@@ -4346,8 +4368,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, address(0x7654321));
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
 
         // check that the tracker was updated from the effect
@@ -4393,8 +4416,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, address(0x7654321));
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
 
         // check that the tracker was updated from the effect
@@ -4441,8 +4465,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, 20000);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
 
         // check that the tracker was updated from the effect
@@ -4488,8 +4513,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, 20000);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
 
         // check that the tracker was updated from the effect
@@ -4537,8 +4563,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, address(0x7777));
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
 
         // check that the tracker was updated from the effect
@@ -4583,8 +4610,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, address(0x7777));
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
 
         // check that the tracker was updated from the effect
@@ -4631,8 +4659,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, true);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
 
         // check that the tracker was updated from the effect
@@ -4678,8 +4707,9 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(trackerIndex, 1);
 
         /// validate tracker is checked as conditional 
+        vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, true);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(address(userContract), arguments);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
 
         // check that the tracker was updated from the effect
