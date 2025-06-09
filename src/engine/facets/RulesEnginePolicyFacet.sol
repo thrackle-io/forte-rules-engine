@@ -348,4 +348,13 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         } 
         data.policyType = _policyType;
     }
+
+    /**
+     * @notice Checks if a policy is cemented.
+     * @param _policyId The ID of the policy to check.
+     * @return bool True if the policy is cemented, false otherwise.
+     */
+    function isCementedPolicy(uint256 _policyId) external view returns (bool) {
+        return lib._getPolicyStorage().policyStorageSets[_policyId].policy.cemented;
+    }
 }
