@@ -40,7 +40,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
     ExampleERC20 userContractPause;
     ExampleERC20 userContractOracleFlex;
     ExampleERC20 userContractMinMaxBalance;
-
+    ExampleERC20 userContractWithTracker;
     //-------------------------------------------------------------------------------------
 
     function setUp() public {
@@ -127,6 +127,15 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         vm.startPrank(policyAdmin);
         setUpRuleWithManyPolicies();
 
+        // With Tracker
+        userContractWithTracker = new ExampleERC20("Token Name", "SYMB");
+        userContractWithTracker.mint(USER_ADDRESS, 1_000_000 * ATTO);
+        userContractWithTracker.setRulesEngineAddress(address(red));
+        userContractWithTracker.setCallingContractAdmin(callingContractAdmin);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
+        setupRuleWithTracker(address(userContractWithTracker), 10);
+
         // // Pause Rule  
         // userContractPause = new ExampleERC20("Token Name", "SYMB");
         // userContractPause.mint(USER_ADDRESS, 1_000_000 * ATTO);
@@ -206,6 +215,11 @@ contract GasReports is GasHelpers, RulesEngineCommon {
     function testGasExampleManyPolicies() public endWithStopPrank() {
         vm.startPrank(USER_ADDRESS);
         _exampleContractGasReport(3, address(userContractManyPolicies), "Using REv2 Many Policies"); 
+    }
+
+    function testGasExampleWithTracker() public endWithStopPrank() {
+        vm.startPrank(USER_ADDRESS);
+        _exampleContractGasReport(11, address(userContractWithTracker), "Using REv2 Tracker Policies"); 
     }
 
     // function _testGasExampleMinTransferWithSetEventParams() public endWithStopPrank() {

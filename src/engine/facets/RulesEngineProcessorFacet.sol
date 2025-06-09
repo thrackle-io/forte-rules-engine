@@ -153,7 +153,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 placeHolders[placeholderIndex].pType = retVal.pType;
             } else if (placeholder.trackerValue) {
                 // Load the Tracker data from storage
-                Trackers memory tracker = policy.trackers[placeholder.typeSpecificIndex];
+                Trackers memory tracker = trackerStorage[msg.sender][policy.policyId][placeholder.typeSpecificIndex];
                 retVals[placeholderIndex] = tracker.trackerValue;
             } else {
                 // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
@@ -257,7 +257,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      */
     function _updateTrackerValue(Policy memory policy, uint256 _trackerId, uint256 _trackerValue) internal{
         // retrieve the tracker
-        Trackers memory trk = policy.trackers[_trackerId];
+        Trackers memory trk = trackerStorage[msg.sender][policy.policyId][_trackerId];
         if(trk.pType == PT.UINT) {
             trk.trackerValue = abi.encode(_trackerValue);
         } else if(trk.pType == PT.ADDR) {
@@ -267,7 +267,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         } else if(trk.pType == PT.BYTES) {
             trk.trackerValue = ProcessorLib._ui2bytes(_trackerValue);
         }
-        policy.trackers[_trackerId] = trk;
+        trackerStorage[msg.sender][policy.policyId][_trackerId] = trk;
     }
 
     /**
@@ -278,9 +278,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      */
     function _updateTrackerValue(Policy memory policy, uint256 _trackerId, bytes memory _trackerValue) internal{
         // retrieve the tracker
-        Trackers memory trk = policy.trackers[_trackerId];
+        Trackers memory trk = trackerStorage[msg.sender][policy.policyId][_trackerId];
         trk.trackerValue = _trackerValue;
-        policy.trackers[_trackerId] = trk;
+        trackerStorage[msg.sender][policy.policyId][_trackerId] = trk;
     }
 
 

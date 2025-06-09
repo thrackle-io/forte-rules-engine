@@ -1016,63 +1016,60 @@ contract RulesEngineCommon is DiamondMine, Test {
     // }
 
     // // set up a rule with a uint256 tracker value for testing
-    // function setupRuleWithTracker(
-    //     uint256 trackerValue
-    // )
-    //     public
-    //     ifDeploymentTestsEnabled
-    //     endWithStopPrank
-    //     resetsGlobalVariables
-    //     returns (uint256 policyId)
-    // {
-    //     uint256[] memory policyIds = new uint256[](1);
+    function setupRuleWithTracker(
+        address userContractWithTracker,
+        uint256 trackerValue
+    )
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+        resetsGlobalVariables
+        returns (uint256 policyId)
+    {
+        Policy memory policy;
 
-    //     policyIds[0] = _createBlankPolicy();
+        PT[] memory pTypes = new PT[](2);
+        pTypes[0] = PT.ADDR;
+        pTypes[1] = PT.UINT;
 
-    //     PT[] memory pTypes = new PT[](2);
-    //     pTypes[0] = PT.ADDR;
-    //     pTypes[1] = PT.UINT;
+        policy.parameterTypes = pTypes;
 
-    //     _addCallingFunctionToPolicy(policyIds[0]);
+        // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        Rule memory rule;
 
-    //     // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-    //     Rule memory rule;
+        // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
+        rule.instructionSet = _createInstructionSet(0, 1);
 
-    //     // Instruction set: LC.PLH, 0, LC.PLH, 1, LC.GT, 0, 1
-    //     rule.instructionSet = _createInstructionSet(0, 1);
+        rule.placeHolders = new Placeholder[](2);
+        rule.placeHolders[0].pType = PT.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.placeHolders[1].pType = PT.UINT;
+        rule.placeHolders[1].trackerValue = true;
+        rule.placeHolders[1].typeSpecificIndex = 0;
+        // Add a negative/positive effects
+        rule.negEffects = new Effect[](1);
+        rule.posEffects = new Effect[](1);
+        rule.negEffects[0] = effectId_revert;
+        rule.posEffects[0] = effectId_event;
 
-    //     rule.placeHolders = new Placeholder[](2);
-    //     rule.placeHolders[0].pType = PT.UINT;
-    //     rule.placeHolders[0].typeSpecificIndex = 1;
-    //     rule.placeHolders[1].pType = PT.UINT;
-    //     rule.placeHolders[1].trackerValue = true;
-    //     rule.placeHolders[1].typeSpecificIndex = 1;
-    //     // Add a negative/positive effects
-    //     rule.negEffects = new Effect[](1);
-    //     rule.posEffects = new Effect[](1);
-    //     rule.negEffects[0] = effectId_revert;
-    //     rule.posEffects[0] = effectId_event;
+        // Save the rule
+        policy.rules = new Rule[](1);
+        policy.rules[0] = rule;
+        // Build the tracker
+        Trackers memory tracker;
 
-    //     // Save the rule
-    //     uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-    //     // Build the tracker
-    //     Trackers memory tracker;
+        /// build the members of the struct:
+        tracker.pType = PT.UINT;
+        tracker.trackerValue = abi.encode(trackerValue);
+        // Add the tracker
+        policy.trackers = new Trackers[](1);
+        policy.trackers[0] = tracker;
 
-    //     /// build the members of the struct:
-    //     tracker.pType = PT.UINT;
-    //     tracker.trackerValue = abi.encode(trackerValue);
-    //     // Add the tracker
-    //     RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
-
-    //     ruleIds.push(new uint256[](1));
-    //     ruleIds[0][0] = ruleId;
-    //     _addRuleIdsToPolicy(policyIds[0], ruleIds);
-
-    //     vm.stopPrank();
-    //     vm.startPrank(callingContractAdmin);
-    //     RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-    //     return policyIds[0];
-    // }
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        RulesEngineProcessorFacet(address(red)).writePolicyContract(userContractWithTracker, bytes4(keccak256("transfer(address,uint256)")), policy);
+        return policy.policyId;
+    }
 
     // function setupRuleWithTracker(
     //     uint256 _policyId, Trackers memory tracker
