@@ -13,6 +13,21 @@ import {RulesEngineProcessorLib as ProcessorLib} from "src/engine/facets/RulesEn
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 contract RulesEngineProcessorFacet is FacetCommonImports{
+
+    // Constants for bit flags and masks
+    uint8 constant FLAG_FOREIGN_CALL = 0x01;   // 00000001
+    uint8 constant FLAG_TRACKER_VALUE = 0x02;  // 00000010
+    uint8 constant MASK_GLOBAL_VAR = 0x1C;     // 00011100
+    uint8 constant SHIFT_GLOBAL_VAR = 2;
+
+    // Global variable type constants
+    uint8 constant GLOBAL_NONE = 0;
+    uint8 constant GLOBAL_MSG_SENDER = 1;
+    uint8 constant GLOBAL_BLOCK_TIMESTAMP = 2;
+    uint8 constant GLOBAL_MSG_DATA = 3;
+    uint8 constant GLOBAL_BLOCK_NUMBER = 4;
+    uint8 constant GLOBAL_TX_ORIGIN = 5;
+
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
     // Rule Evaluation Functions
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -209,6 +224,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         response = _run(_rule.instructionSet, placeholders, _policyId, ruleArgs);
     }
 
+    // Get the global variable type from placeholder
+    function _getGlobalVarType(Placeholder memory _p) internal pure returns (uint8) {
+        return (_p.flags & MASK_GLOBAL_VAR) >> SHIFT_GLOBAL_VAR;
+    }
+
     /**
      * @dev Constructs the arguments required for building the rule's place holders.
      * @param _rule The storage reference to the Rule struct containing the rule's details.
@@ -230,12 +250,53 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         for(uint256 placeholderIndex = 0; placeholderIndex < placeHolders.length; placeholderIndex++) {
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
             Placeholder memory placeholder = placeHolders[placeholderIndex];
-            if(placeholder.foreignCall) {
+            // Use assembly to extract all flags at once
+            bool isTrackerValue;
+            bool isForeignCall;
+            uint8 globalVarType;
+        
+            assembly {
+                // Calculate the memory offset of flags field in the Placeholder struct
+                // - pType (enum/uint8, takes 32 bytes in memory)
+                // - typeSpecificIndex (uint128, takes 32 bytes in memory)
+                // - flags (uint8, located at offset 64 bytes)
+                let flags := and(mload(add(placeholder, 0x40)), 0xFF)  // 0x40 = 64 bytes, mask to get only the uint8
+                // Define bit masks for flags                          // 0xFF = 11111111 in binary, to isolate the first byte
+
+                // Check if foreign call bit is set (bit 0)
+                isForeignCall := iszero(iszero(and(flags, FLAG_FOREIGN_CALL)))
+    
+                // Check if tracker bit is set (bit 1)
+                isTrackerValue := iszero(iszero(and(flags, FLAG_TRACKER_VALUE)))
+    
+                // Extract global var type (bits 2-4)
+                globalVarType := shr(SHIFT_GLOBAL_VAR, and(flags, MASK_GLOBAL_VAR))
+            }
+
+            if(globalVarType != GLOBAL_NONE) {
+                // Handle global variables
+                if (globalVarType == GLOBAL_MSG_SENDER) {
+                    retVals[placeholderIndex] = abi.encode(msg.sender);
+                    placeHolders[placeholderIndex].pType = ParamTypes.ADDR;
+                } else if (globalVarType == GLOBAL_BLOCK_TIMESTAMP) {
+                    retVals[placeholderIndex] = abi.encode(block.timestamp);
+                    placeHolders[placeholderIndex].pType = ParamTypes.UINT;
+                } else if (globalVarType == GLOBAL_MSG_DATA) {
+                    retVals[placeholderIndex] = abi.encode(msg.data);
+                    placeHolders[placeholderIndex].pType = ParamTypes.BYTES;
+                } else if (globalVarType == GLOBAL_BLOCK_NUMBER) {
+                    retVals[placeholderIndex] = abi.encode(block.number);
+                    placeHolders[placeholderIndex].pType = ParamTypes.UINT;
+                } else if (globalVarType == GLOBAL_TX_ORIGIN) {
+                    retVals[placeholderIndex] = abi.encode(tx.origin);
+                    placeHolders[placeholderIndex].pType = ParamTypes.ADDR;
+                }
+            } else if(isForeignCall) {
                     ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, _callingFunctionArgs, placeholder.typeSpecificIndex, retVals);
                     // Set the placeholders value and type based on the value returned by the foreign call
                     retVals[placeholderIndex] = retVal.value;
                     placeHolders[placeholderIndex].pType = retVal.pType;
-            } else if (placeholder.trackerValue) {
+            } else if (isTrackerValue) {
                 // Load the Tracker data from storage
                 Trackers memory tracker = lib._getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex];
                 retVals[placeholderIndex] = tracker.trackerValue;
