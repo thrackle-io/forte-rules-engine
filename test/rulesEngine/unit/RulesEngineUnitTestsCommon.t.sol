@@ -8,6 +8,7 @@ import "src/example/ExampleUserOwnableContract.sol";
 import "src/example/ExampleUserAccessControl.sol";
 import "src/engine/facets/RulesEngineComponentFacet.sol";
 import "src/example/ExampleERC20.sol";
+import "src/engine/facets/RulesEngineProcessorFacet.sol";
 
 abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
@@ -16,6 +17,21 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
     ExampleUserContractExtraParams userContract2;
     ExampleUserContractEncoding encodingContract; 
     ExampleERC20 exampleERC20; 
+
+    bytes internal testArgs;
+
+    /*uint8 constant FLAG_FOREIGN_CALL = 0x01;
+    uint8 constant FLAG_TRACKER_VALUE = 0x02;
+    uint8 constant SHIFT_GLOBAL_VAR = 2;
+    uint8 constant MASK_GLOBAL_VAR = 0x1C;*/
+
+    // Global variable type constants
+    uint8 constant GLOBAL_NONE = 0;
+    uint8 constant GLOBAL_MSG_SENDER = 1;
+    uint8 constant GLOBAL_BLOCK_TIMESTAMP = 2;
+    uint8 constant GLOBAL_MSG_DATA = 3;
+    uint8 constant GLOBAL_BLOCK_NUMBER = 4;
+    uint8 constant GLOBAL_TX_ORIGIN = 5;
     
     /// TestRulesEngine: 
     // Test attempt to add a policy with no calling functions saved.
@@ -4731,5 +4747,89 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         RulesEngineAdminRolesFacet(address(red)).grantCallingContractRole(address(0x1337), callingContractAdmin);
     }
 
+    function testRulesEngine_Unit_GlobalVariable_BlockTimestamp() public ifDeploymentTestsEnabled resetsGlobalVariables {
+        // Create policy
+        vm.startPrank(policyAdmin);
+        uint256 policyId = _createBlankPolicy();
+    
+        // Create rule that checks if block.timestamp > 1000
+        Rule memory rule;
+    
+        // Set up instruction set: 
+        // Register 0: global block.timestamp
+        // Register 1: constant (1000)
+        // Register 2: check if r0 > r1
+        rule.instructionSet = new uint256[](7);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
+        rule.instructionSet[1] = 0;         // r0: placeholder 0 (global block.timestamp)
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
+        rule.instructionSet[3] = 1000;      // r1: constant 1000
+        rule.instructionSet[4] = uint(LogicalOp.GT);
+        rule.instructionSet[5] = 0;         // block.timestamp
+        rule.instructionSet[6] = 1;         // constant 1000
+    
+        // Create placeholders - first one for global block.timestamp
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = ParamTypes.UINT;
+        // Set the flag to indicate this is a global variable (GLOBAL_BLOCK_TIMESTAMP = 2)
+        // Flag bits are shifted by 2 (SHIFT_GLOBAL_VAR = 2)
+        rule.placeHolders[0].flags = uint8(GLOBAL_BLOCK_TIMESTAMP << SHIFT_GLOBAL_VAR);
+    
+        // Add effects - rule fails if timestamp <= 1000
+        rule.negEffects = new Effect[](1);
+        rule.negEffects[0] = effectId_revert;
+        rule.posEffects = new Effect[](1);
+        rule.posEffects[0] = effectId_event;
+    
+        // Save the rule
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyId, rule);
+    
+        // Set up calling function
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
+            policyId, 
+            bytes4(keccak256(bytes(callingFunction))), 
+            pTypes,
+            callingFunction,
+            ""
+        );
+    
+        // Update policy
+        callingFunctions.push(bytes4(keccak256(bytes(callingFunction))));
+        callingFunctionIds.push(callingFunctionId);
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0] = ruleId;
+        RulesEnginePolicyFacet(address(red)).updatePolicy(
+            policyId,
+            callingFunctions,
+            callingFunctionIds,
+            ruleIds,
+            PolicyType.CLOSED_POLICY
+        );
 
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = policyId;
+    
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    
+        // Test scenario 1: block.timestamp < 1000 (rule should fail)
+        vm.warp(900);
+        vm.startPrank(userContractAddress);
+        bytes memory arguments = abi.encodeWithSelector(
+            bytes4(keccak256(bytes(callingFunction))), 
+            address(0x7654321), 
+            5
+        );
+        vm.expectRevert(abi.encodePacked(revert_text));
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+    
+        // Test scenario 2: block.timestamp > 1000 (rule should pass)
+        vm.warp(1100);
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        assertEq(response, 1);
+    }
 }

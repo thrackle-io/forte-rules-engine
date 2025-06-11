@@ -14,12 +14,6 @@ import {RulesEngineProcessorLib as ProcessorLib} from "src/engine/facets/RulesEn
  */
 contract RulesEngineProcessorFacet is FacetCommonImports{
 
-    // Constants for bit flags and masks
-    /*uint8 constant FLAG_FOREIGN_CALL = 0x01;   // 00000001
-    uint8 constant FLAG_TRACKER_VALUE = 0x02;  // 00000010
-    uint8 constant MASK_GLOBAL_VAR = 0x1C;     // 00011100
-    uint8 constant SHIFT_GLOBAL_VAR = 2;*/
-
     // Global variable type constants
     uint8 constant GLOBAL_NONE = 0;
     uint8 constant GLOBAL_MSG_SENDER = 1;
@@ -248,76 +242,14 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             
             // Extract flags using helper function
             (bool isTrackerValue, bool isForeignCall, uint8 globalVarType) = _extractFlags(placeholder);
-        
-            /*assembly {
-                // Calculate the memory offset of flags field in the Placeholder struct
-                // - pType (enum/uint8, takes 32 bytes in memory)
-                // - typeSpecificIndex (uint128, takes 32 bytes in memory)
-                // - flags (uint8, located at offset 64 bytes)
-                let flags := and(mload(add(placeholder, 0x40)), 0xFF)  // 0x40 = 64 bytes, mask to get only the uint8
-                // Define bit masks for flags                          // 0xFF = 11111111 in binary, to isolate the first byte
-
-                // Check if foreign call bit is set (bit 0)
-                isForeignCall := iszero(iszero(and(flags, FLAG_FOREIGN_CALL)))
-    
-                // Check if tracker bit is set (bit 1)
-                isTrackerValue := iszero(iszero(and(flags, FLAG_TRACKER_VALUE)))
-    
-                // Extract global var type (bits 2-4)
-                globalVarType := shr(SHIFT_GLOBAL_VAR, and(flags, MASK_GLOBAL_VAR))
-            }*/
 
             if(globalVarType != GLOBAL_NONE) {
-                retVals[placeholderIndex] = _handleGlobalVar(globalVarType, placeHolders, placeholderIndex);
-                // Handle global variables
-                /*if (globalVarType == GLOBAL_MSG_SENDER) {
-                    retVals[placeholderIndex] = abi.encode(msg.sender);
-                    placeHolders[placeholderIndex].pType = ParamTypes.ADDR;
-                } else if (globalVarType == GLOBAL_BLOCK_TIMESTAMP) {
-                    retVals[placeholderIndex] = abi.encode(block.timestamp);
-                    placeHolders[placeholderIndex].pType = ParamTypes.UINT;
-                } else if (globalVarType == GLOBAL_MSG_DATA) {
-                    retVals[placeholderIndex] = abi.encode(msg.data);
-                    placeHolders[placeholderIndex].pType = ParamTypes.BYTES;
-                } else if (globalVarType == GLOBAL_BLOCK_NUMBER) {
-                    retVals[placeholderIndex] = abi.encode(block.number);
-                    placeHolders[placeholderIndex].pType = ParamTypes.UINT;
-                } else if (globalVarType == GLOBAL_TX_ORIGIN) {
-                    retVals[placeholderIndex] = abi.encode(tx.origin);
-                    placeHolders[placeholderIndex].pType = ParamTypes.ADDR;
-                }*/
+                (retVals[placeholderIndex], placeHolders[placeholderIndex].pType) = _handleGlobalVar(globalVarType, placeHolders, placeholderIndex);
             } else if(isForeignCall) {
                 (retVals[placeholderIndex], placeHolders[placeholderIndex].pType) = _handleForeignCall(_policyId, _callingFunctionArgs, placeholder.typeSpecificIndex, retVals);
-                    /*ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, _callingFunctionArgs, placeholder.typeSpecificIndex, retVals);
-                    // Set the placeholders value and type based on the value returned by the foreign call
-                    retVals[placeholderIndex] = retVal.value;
-                    placeHolders[placeholderIndex].pType = retVal.pType;*/
             } else if (isTrackerValue) {
-                // Load the Tracker data from storage
-                /*Trackers memory tracker = lib._getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex];
-                retVals[placeholderIndex] = tracker.trackerValue;
-                if (tracker.mapped) {
-                    // if the tracker is a mapped tracker, retrieve the value from the key stored in the tracker 
-                    bytes memory mappedTrackerValue = lib._getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][placeholder.mappedTrackerKey];
-                    retVals[placeholderIndex] = mappedTrackerValue;
-                }*/
                 retVals[placeholderIndex] = _handleTrackerValue(_policyId, placeholder);
             } else {
-                // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
-                /*if(placeholder.pType == ParamTypes.STR || placeholder.pType == ParamTypes.BYTES) {
-                    retVals[placeholderIndex] = _getDynamicVariableFromCalldata(_callingFunctionArgs, placeholder.typeSpecificIndex);
-                } else if (placeholder.pType == ParamTypes.STATIC_TYPE_ARRAY || placeholder.pType == ParamTypes.DYNAMIC_TYPE_ARRAY) {
-                    // if the placeholder represents an array, determine the length and set lenth as placeholder value in ruleArgs 
-                    bytes32 value = bytes32(_callingFunctionArgs[placeholder.typeSpecificIndex * 32: (placeholder.typeSpecificIndex + 1) * 32]);
-                    retVals[placeholderIndex] = abi.encode(uint256(bytes32(_callingFunctionArgs[uint(value):uint(value) + 32])));
-                } else {
-                    // since this is not a dynamic value, we can safely assume that it is only 1 word, therefore we multiply
-                    // the typeSpecificIndex by 32 to get the correct position in the callingFunctionArgs array
-                    // and then add 1 and multiply by 32 to get the correct 32 byte word to get the value
-                    retVals[placeholderIndex] = _callingFunctionArgs[
-                        placeholder.typeSpecificIndex * 32: (placeholder.typeSpecificIndex + 1) * 32
-                    ];
-                }*/
                 retVals[placeholderIndex] = _handleRegularParameter(_callingFunctionArgs, placeholder);
             }
         }
@@ -340,8 +272,19 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             uint256 v = 0;
             LogicalOp op = LogicalOp(_prog[idx]);
             if(op == LogicalOp.PLH) {
+
                 // Placeholder format is: get the index of the argument in the array. For example, PLH 0 is the first argument in the arguments array and its type and value
                 uint256 pli = _prog[idx+1];
+
+                uint8 globalVarType;
+                // Extract flags to check if this is a global variable
+                (,, globalVarType) = _extractFlags(_placeHolders[pli]);
+            
+                // If this is a global variable, refresh its value
+                if(globalVarType != GLOBAL_NONE) {
+                    (_arguments[pli], _placeHolders[pli].pType) = _handleGlobalVar(globalVarType, _placeHolders, pli);
+                }
+
                 ParamTypes typ = _placeHolders[pli].pType;
                 if(typ == ParamTypes.UINT) {
                     v = abi.decode(_arguments[pli], (uint256)); idx += 2;
@@ -550,24 +493,26 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         uint8 globalVarType, 
         Placeholder[] memory placeHolders, 
         uint256 placeholderIndex
-    ) internal view returns (bytes memory) {
+    ) internal view returns (bytes memory, ParamTypes pType) {
         if (globalVarType == GLOBAL_MSG_SENDER) {
-            placeHolders[placeholderIndex].pType = ParamTypes.ADDR;
-            return abi.encode(msg.sender);
+            //placeHolders[placeholderIndex].pType = ParamTypes.ADDR;
+            return (abi.encode(msg.sender), ParamTypes.ADDR);
         } else if (globalVarType == GLOBAL_BLOCK_TIMESTAMP) {
-            placeHolders[placeholderIndex].pType = ParamTypes.UINT;
-            return abi.encode(block.timestamp);
+            //placeHolders[placeholderIndex].pType = ParamTypes.UINT;
+            return (abi.encode(block.timestamp), ParamTypes.UINT);
         } else if (globalVarType == GLOBAL_MSG_DATA) {
-            placeHolders[placeholderIndex].pType = ParamTypes.BYTES;
-            return abi.encode(msg.data);
+            //placeHolders[placeholderIndex].pType = ParamTypes.BYTES;
+            return (abi.encode(msg.data), ParamTypes.BYTES);
         } else if (globalVarType == GLOBAL_BLOCK_NUMBER) {
-            placeHolders[placeholderIndex].pType = ParamTypes.UINT;
-            return abi.encode(block.number);
+            //placeHolders[placeholderIndex].pType = ParamTypes.UINT;
+            return(abi.encode(block.number), ParamTypes.UINT);
         } else if (globalVarType == GLOBAL_TX_ORIGIN) {
-            placeHolders[placeholderIndex].pType = ParamTypes.ADDR;
-            return abi.encode(tx.origin);
+            //placeHolders[placeholderIndex].pType = ParamTypes.ADDR;
+            return (abi.encode(tx.origin), ParamTypes.ADDR);
         }
-        return "";
+        else {
+            revert("Invalid global variable type");
+        }
     }
 
     function _handleForeignCall(

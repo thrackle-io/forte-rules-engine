@@ -82,22 +82,18 @@ contract FacetUtils{
         uint8 globalVarType
     ) {
         assembly {
-        // Load the flags byte from memory (offset 0x60 from placeholder pointer)
-        let flags := and(mload(add(placeholder, 0x60)), 0xFF)
+            // Load the flags byte from memory (offset 0x60 from placeholder pointer)
+            let flags := and(mload(add(placeholder, 0x60)), 0xFF)
         
-        // Check if foreign call bit is set (bit 0)
-        isForeignCall := iszero(iszero(and(flags, 0x01)))  // FLAG_FOREIGN_CALL = 0x01
+            // Check if foreign call bit is set (bit 0)
+            isForeignCall := iszero(iszero(and(flags, 0x01)))  // FLAG_FOREIGN_CALL = 0x01
         
-        // Check if tracker bit is set (bit 1)
-        isTrackerValue := iszero(iszero(and(flags, 0x02)))  // FLAG_TRACKER_VALUE = 0x02
+            // Check if tracker bit is set (bit 1)
+            isTrackerValue := iszero(iszero(and(flags, 0x02)))  // FLAG_TRACKER_VALUE = 0x02
         
-        // Extract global var type (bits 2-4)
-        // First AND with mask 0x1C (00011100), then shift right by 2 bits
-        globalVarType := shr(2, and(flags, 0x1C))  // MASK_GLOBAL_VAR = 0x1C, SHIFT_GLOBAL_VAR = 2
-    }
-        /*uint8 flags = placeholder.flags;
-        isForeignCall = (flags & FLAG_FOREIGN_CALL) != 0;
-        isTrackerValue = (flags & FLAG_TRACKER_VALUE) != 0;
-        globalVarType = (flags & MASK_GLOBAL_VAR) >> SHIFT_GLOBAL_VAR;*/
+            // Extract global var type (bits 2-4)
+            // First AND with mask 0x1C (00011100), then shift right by 2 bits
+            globalVarType := shr(2, and(flags, 0x1C))  // MASK_GLOBAL_VAR = 0x1C, SHIFT_GLOBAL_VAR = 2
+        }
     }
 }
