@@ -302,10 +302,10 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
                     RuleStorageSet memory ruleStore = lib._getRuleStorage().ruleStorageSets[_policyId][_ruleIds[i][j]];
                     if(!ruleStore.set) revert(INVALID_RULE);
                     for (uint256 k = 0; k < ruleStore.rule.placeHolders.length; k++) {
-                        if(ruleStore.rule.placeHolders[k].foreignCall) {
+                        if(FacetUtils._isForeignCall(ruleStore.rule.placeHolders[k])) {
                             // get the foreign call using the type specific index which will be interpreted as a foreign call index since it has foreignCall bool set
                             require(StorageLib._isForeignCallSet(_policyId, ruleStore.rule.placeHolders[k].typeSpecificIndex), FOREIGN_CALL_NOT_SET);
-                        } else if (ruleStore.rule.placeHolders[k].trackerValue) {
+                        } else if (FacetUtils._isTrackerValue(ruleStore.rule.placeHolders[k])) {
                             require(StorageLib._isTrackerSet(_policyId, ruleStore.rule.placeHolders[k].typeSpecificIndex), TRACKER_NOT_SET);
                         }
 

@@ -730,7 +730,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         rule.placeHolders[1].pType = ParamTypes.UINT;
-        rule.placeHolders[1].foreignCall = true;
+        rule.placeHolders[1].flags = FLAG_FOREIGN_CALL;
         rule.placeHolders[1].typeSpecificIndex = 1;
 
         uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyIds[0], 0, rule);
@@ -760,7 +760,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         rule.placeHolders[1].pType = ParamTypes.UINT;
-        rule.placeHolders[1].trackerValue = true;
+        rule.placeHolders[1].flags = FLAG_TRACKER_VALUE;
         rule.placeHolders[1].typeSpecificIndex = 1;
 
         uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyIds[0], 0, rule);
@@ -1890,7 +1890,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         rule.placeHolders[1].pType = ParamTypes.UINT;
-        rule.placeHolders[1].trackerValue = true;
+        rule.placeHolders[1].flags = FLAG_TRACKER_VALUE;
         rule.placeHolders[1].typeSpecificIndex = 1;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
@@ -2501,7 +2501,7 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         rule.placeHolders[1].typeSpecificIndex = 1; // amount 
         rule.placeHolders[2].pType = ParamTypes.ADDR;
         rule.placeHolders[2].typeSpecificIndex = 2; // additional address param 
-        rule.placeHolders[2].foreignCall = true;
+        rule.placeHolders[2].flags = FLAG_FOREIGN_CALL; 
         rule.placeHolders[2].typeSpecificIndex = uint128(foreignCallId);
 
         // Add a negative/positive effects
@@ -3201,10 +3201,10 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
         rule.placeHolders = new Placeholder[](3);
         rule.placeHolders[0].pType = ParamTypes.UINT;
-        rule.placeHolders[0].trackerValue = true;
+        rule.placeHolders[0].flags = FLAG_TRACKER_VALUE;
         rule.placeHolders[0].typeSpecificIndex = 1;
         rule.placeHolders[1].pType = ParamTypes.UINT;
-        rule.placeHolders[1].trackerValue = true;
+        rule.placeHolders[1].flags = FLAG_TRACKER_VALUE;
         rule.placeHolders[1].typeSpecificIndex = 2;
         rule.placeHolders[2].pType = ParamTypes.UINT;
         rule.placeHolders[2].typeSpecificIndex = 5;

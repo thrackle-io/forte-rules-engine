@@ -15,10 +15,10 @@ import {RulesEngineProcessorLib as ProcessorLib} from "src/engine/facets/RulesEn
 contract RulesEngineProcessorFacet is FacetCommonImports{
 
     // Constants for bit flags and masks
-    uint8 constant FLAG_FOREIGN_CALL = 0x01;   // 00000001
+    /*uint8 constant FLAG_FOREIGN_CALL = 0x01;   // 00000001
     uint8 constant FLAG_TRACKER_VALUE = 0x02;  // 00000010
     uint8 constant MASK_GLOBAL_VAR = 0x1C;     // 00011100
-    uint8 constant SHIFT_GLOBAL_VAR = 2;
+    uint8 constant SHIFT_GLOBAL_VAR = 2;*/
 
     // Global variable type constants
     uint8 constant GLOBAL_NONE = 0;
@@ -224,11 +224,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         response = _run(_rule.instructionSet, placeholders, _policyId, ruleArgs);
     }
 
-    // Get the global variable type from placeholder
-    function _getGlobalVarType(Placeholder memory _p) internal pure returns (uint8) {
-        return (_p.flags & MASK_GLOBAL_VAR) >> SHIFT_GLOBAL_VAR;
-    }
-
     /**
      * @dev Constructs the arguments required for building the rule's place holders.
      * @param _rule The storage reference to the Rule struct containing the rule's details.
@@ -250,12 +245,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         for(uint256 placeholderIndex = 0; placeholderIndex < placeHolders.length; placeholderIndex++) {
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
             Placeholder memory placeholder = placeHolders[placeholderIndex];
-            // Use assembly to extract all flags at once
-            bool isTrackerValue;
-            bool isForeignCall;
-            uint8 globalVarType;
+            
+            // Extract flags using helper function
+            (bool isTrackerValue, bool isForeignCall, uint8 globalVarType) = _extractFlags(placeholder);
         
-            assembly {
+            /*assembly {
                 // Calculate the memory offset of flags field in the Placeholder struct
                 // - pType (enum/uint8, takes 32 bytes in memory)
                 // - typeSpecificIndex (uint128, takes 32 bytes in memory)
@@ -271,11 +265,12 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     
                 // Extract global var type (bits 2-4)
                 globalVarType := shr(SHIFT_GLOBAL_VAR, and(flags, MASK_GLOBAL_VAR))
-            }
+            }*/
 
             if(globalVarType != GLOBAL_NONE) {
+                retVals[placeholderIndex] = _handleGlobalVar(globalVarType, placeHolders, placeholderIndex);
                 // Handle global variables
-                if (globalVarType == GLOBAL_MSG_SENDER) {
+                /*if (globalVarType == GLOBAL_MSG_SENDER) {
                     retVals[placeholderIndex] = abi.encode(msg.sender);
                     placeHolders[placeholderIndex].pType = ParamTypes.ADDR;
                 } else if (globalVarType == GLOBAL_BLOCK_TIMESTAMP) {
@@ -290,24 +285,26 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 } else if (globalVarType == GLOBAL_TX_ORIGIN) {
                     retVals[placeholderIndex] = abi.encode(tx.origin);
                     placeHolders[placeholderIndex].pType = ParamTypes.ADDR;
-                }
+                }*/
             } else if(isForeignCall) {
-                    ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, _callingFunctionArgs, placeholder.typeSpecificIndex, retVals);
+                (retVals[placeholderIndex], placeHolders[placeholderIndex].pType) = _handleForeignCall(_policyId, _callingFunctionArgs, placeholder.typeSpecificIndex, retVals);
+                    /*ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, _callingFunctionArgs, placeholder.typeSpecificIndex, retVals);
                     // Set the placeholders value and type based on the value returned by the foreign call
                     retVals[placeholderIndex] = retVal.value;
-                    placeHolders[placeholderIndex].pType = retVal.pType;
+                    placeHolders[placeholderIndex].pType = retVal.pType;*/
             } else if (isTrackerValue) {
                 // Load the Tracker data from storage
-                Trackers memory tracker = lib._getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex];
+                /*Trackers memory tracker = lib._getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex];
                 retVals[placeholderIndex] = tracker.trackerValue;
                 if (tracker.mapped) {
                     // if the tracker is a mapped tracker, retrieve the value from the key stored in the tracker 
                     bytes memory mappedTrackerValue = lib._getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][placeholder.mappedTrackerKey];
                     retVals[placeholderIndex] = mappedTrackerValue;
-                }
+                }*/
+                retVals[placeholderIndex] = _handleTrackerValue(_policyId, placeholder);
             } else {
                 // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
-                if(placeholder.pType == ParamTypes.STR || placeholder.pType == ParamTypes.BYTES) {
+                /*if(placeholder.pType == ParamTypes.STR || placeholder.pType == ParamTypes.BYTES) {
                     retVals[placeholderIndex] = _getDynamicVariableFromCalldata(_callingFunctionArgs, placeholder.typeSpecificIndex);
                 } else if (placeholder.pType == ParamTypes.STATIC_TYPE_ARRAY || placeholder.pType == ParamTypes.DYNAMIC_TYPE_ARRAY) {
                     // if the placeholder represents an array, determine the length and set lenth as placeholder value in ruleArgs 
@@ -320,7 +317,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                     retVals[placeholderIndex] = _callingFunctionArgs[
                         placeholder.typeSpecificIndex * 32: (placeholder.typeSpecificIndex + 1) * 32
                     ];
-                }
+                }*/
+                retVals[placeholderIndex] = _handleRegularParameter(_callingFunctionArgs, placeholder);
             }
         }
         return (retVals, placeHolders);
@@ -546,6 +544,59 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             default { result := _value }
         }
         return result;
+    }
+
+    function _handleGlobalVar(
+        uint8 globalVarType, 
+        Placeholder[] memory placeHolders, 
+        uint256 placeholderIndex
+    ) internal view returns (bytes memory) {
+        if (globalVarType == GLOBAL_MSG_SENDER) {
+            placeHolders[placeholderIndex].pType = ParamTypes.ADDR;
+            return abi.encode(msg.sender);
+        } else if (globalVarType == GLOBAL_BLOCK_TIMESTAMP) {
+            placeHolders[placeholderIndex].pType = ParamTypes.UINT;
+            return abi.encode(block.timestamp);
+        } else if (globalVarType == GLOBAL_MSG_DATA) {
+            placeHolders[placeholderIndex].pType = ParamTypes.BYTES;
+            return abi.encode(msg.data);
+        } else if (globalVarType == GLOBAL_BLOCK_NUMBER) {
+            placeHolders[placeholderIndex].pType = ParamTypes.UINT;
+            return abi.encode(block.number);
+        } else if (globalVarType == GLOBAL_TX_ORIGIN) {
+            placeHolders[placeholderIndex].pType = ParamTypes.ADDR;
+            return abi.encode(tx.origin);
+        }
+        return "";
+    }
+
+    function _handleForeignCall(
+        uint256 _policyId, 
+        bytes calldata _callingFunctionArgs, 
+        uint256 typeSpecificIndex, 
+        bytes[] memory retVals
+        ) internal returns (bytes memory value, ParamTypes pType) {
+        ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, _callingFunctionArgs, typeSpecificIndex, retVals);
+        return (retVal.value, retVal.pType);
+    }
+
+    function _handleTrackerValue(uint256 _policyId, Placeholder memory placeholder) internal view returns (bytes memory) {
+        Trackers memory tracker = lib._getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex];
+        if (tracker.mapped) {
+            return lib._getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][placeholder.mappedTrackerKey];
+        }
+        return tracker.trackerValue;
+    }
+
+    function _handleRegularParameter(bytes calldata _callingFunctionArgs, Placeholder memory placeholder) internal pure returns (bytes memory) {
+        if(placeholder.pType == ParamTypes.STR || placeholder.pType == ParamTypes.BYTES) {
+            return _getDynamicVariableFromCalldata(_callingFunctionArgs, placeholder.typeSpecificIndex);
+        } else if (placeholder.pType == ParamTypes.STATIC_TYPE_ARRAY || placeholder.pType == ParamTypes.DYNAMIC_TYPE_ARRAY) {
+            bytes32 value = bytes32(_callingFunctionArgs[placeholder.typeSpecificIndex * 32: (placeholder.typeSpecificIndex + 1) * 32]);
+            return abi.encode(uint256(bytes32(_callingFunctionArgs[uint(value):uint(value) + 32])));
+        } else {
+            return _callingFunctionArgs[placeholder.typeSpecificIndex * 32: (placeholder.typeSpecificIndex + 1) * 32];
+        }
     }
 
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
