@@ -1608,6 +1608,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertFalse(RulesEnginePolicyFacet(address(red)).isClosedPolicy(policyId));
     }
 
+    function testRulesEngine_Unit_DisablePolicy_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        assertFalse(RulesEnginePolicyFacet(address(red)).isDisabledPolicy(policyId));
+        RulesEnginePolicyFacet(address(red)).disablePolicy(policyId);
+        assertTrue(RulesEnginePolicyFacet(address(red)).isDisabledPolicy(policyId));
+    }
+
     function testRulesEngine_Unit_ApplyPolicy_OpenPolicy_NotSubscriber() public ifDeploymentTestsEnabled endWithStopPrank {
         
         uint256 policyId = _createBlankPolicy();
@@ -1653,6 +1660,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
         vm.expectRevert("Not allowed for cemented policy");
         RulesEnginePolicyFacet(address(red)).deletePolicy(policyId);
+    }
+
+    function testRulesEngine_Unit_DisablePolicy_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEnginePolicyFacet(address(red)).disablePolicy(policyId);
     }
 
     function testRulesEngine_Unit_ApplyPolicy_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
@@ -2088,6 +2102,13 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         vm.expectEmit(true, false, false, false);
         emit PolicyClosed(policyId); 
         RulesEnginePolicyFacet(address(red)).closePolicy(policyId);
+    }
+
+    function testRulesEngine_Unit_DisablePolicy_Event() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        vm.expectEmit(true, false, false, false);
+        emit PolicyDisabled(policyId); 
+        RulesEnginePolicyFacet(address(red)).disablePolicy(policyId);
     }
 
     function testRulesEngine_Unit_ClosedPolicySubscriber_AddRemove_Events() public ifDeploymentTestsEnabled endWithStopPrank {

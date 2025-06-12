@@ -114,6 +114,25 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         userContract.mint(USER_ADDRESS, 5);
     }
 
+    function testERC20_Unit_Disabled_Policy() public ifDeploymentTestsEnabled endWithStopPrank {
+        ParamTypes[] memory pTypes = new ParamTypes[](3);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.ADDR;
+        // Expect revert while rule is enabled
+        uint256 _policyId = _setupRuleWithRevertMint(ERC20_MINT_SIGNATURE, pTypes);
+        vm.startPrank(USER_ADDRESS);
+        vm.expectRevert(abi.encodePacked(revert_text)); 
+        userContract.mint(USER_ADDRESS, 3);
+
+        // Disable the policy and expect it to go through
+        vm.startPrank(policyAdmin);
+        RulesEnginePolicyFacet(address(red)).disablePolicy(_policyId);
+        assertTrue(RulesEnginePolicyFacet(address(red)).isDisabledPolicy(_policyId));
+        vm.startPrank(USER_ADDRESS);
+        userContract.mint(USER_ADDRESS, 3);
+    }
+
     function _setupRuleWithRevertTransferFrom(string memory _callingFunction, ParamTypes[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
         uint256[] memory policyIds = new uint256[](1);
         
@@ -140,7 +159,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
-    function _setupRuleWithRevertMint(string memory _callingFunction, ParamTypes[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
+    function _setupRuleWithRevertMint(string memory _callingFunction, ParamTypes[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256){
         uint256[] memory policyIds = new uint256[](1);
         
         policyIds[0] = _createBlankPolicyOpen();
@@ -165,6 +184,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        return policyIds[0];
     }
 
     function _createGTRuleTransferFrom(uint256 _amount) public returns(Rule memory){
