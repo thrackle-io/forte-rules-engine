@@ -495,19 +495,14 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         uint256 placeholderIndex
     ) internal view returns (bytes memory, ParamTypes pType) {
         if (globalVarType == GLOBAL_MSG_SENDER) {
-            //placeHolders[placeholderIndex].pType = ParamTypes.ADDR;
             return (abi.encode(msg.sender), ParamTypes.ADDR);
         } else if (globalVarType == GLOBAL_BLOCK_TIMESTAMP) {
-            //placeHolders[placeholderIndex].pType = ParamTypes.UINT;
             return (abi.encode(block.timestamp), ParamTypes.UINT);
         } else if (globalVarType == GLOBAL_MSG_DATA) {
-            //placeHolders[placeholderIndex].pType = ParamTypes.BYTES;
             return (abi.encode(msg.data), ParamTypes.BYTES);
         } else if (globalVarType == GLOBAL_BLOCK_NUMBER) {
-            //placeHolders[placeholderIndex].pType = ParamTypes.UINT;
             return(abi.encode(block.number), ParamTypes.UINT);
         } else if (globalVarType == GLOBAL_TX_ORIGIN) {
-            //placeHolders[placeholderIndex].pType = ParamTypes.ADDR;
             return (abi.encode(tx.origin), ParamTypes.ADDR);
         }
         else {
