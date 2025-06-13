@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
 import {RulesEngineProcessorLib as ProcessorLib} from "src/engine/facets/RulesEngineProcessorLib.sol";
+import "dependencies/forge-std-1.9.7/src/console2.sol";
 
 /**
  * @title Rules Engine Processor Facet
@@ -22,6 +23,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     uint8 constant GLOBAL_BLOCK_NUMBER = 4;
     uint8 constant GLOBAL_TX_ORIGIN = 5;
 
+    event log_bytes(bytes data, string message);
+
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
     // Rule Evaluation Functions
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -39,6 +42,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         PolicyAssociationStorage storage data = lib._getPolicyAssociationStorage();
         uint256[] memory policyIds = data.contractPolicyIdMap[msg.sender];
         // loop through all the active policies
+        console2.log("Number of policies to check:", policyIds.length);
         for(uint256 policyIdx = 0; policyIdx < policyIds.length; policyIdx++) {
             if(!_checkPolicy(policyIds[policyIdx], msg.sender, arguments)) {
                 retVal = 0;
@@ -80,6 +84,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         // First, calculate total size needed and positions of dynamic data
         bytes memory encodedCall = bytes.concat(bytes4(fc.signature));
         bytes memory dynamicData;
+        console2.log("eval foreign call for rule 1");
 
         uint256 lengthToAppend = 0;
         // First pass: calculate sizes
@@ -90,6 +95,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             bytes32 value;
             if (fc.typeSpecificIndices[i] < 0) {
                 typeSpecificIndex = _getAbsoluteAssembly(fc.typeSpecificIndices[i]) - 1; // -1 because retVals is 0 indexed
+        console2.log("eval foreign call for rule 2");
+
                 isRetVal = true;
                 value = bytes32(retVals[typeSpecificIndex]);
                 if (argType == ParamTypes.STR || argType == ParamTypes.BYTES) {
@@ -111,21 +118,34 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 }
             } else {
                 typeSpecificIndex = _getAbsoluteAssembly(fc.typeSpecificIndices[i]);
+        console2.log("eval foreign call for rule 3");
+
                 value = bytes32(functionArguments[typeSpecificIndex * 32: (typeSpecificIndex + 1) * 32]);
+                console2.log("eval foreign call for rule 3.1");
                 if (argType == ParamTypes.STR || argType == ParamTypes.BYTES) {
+                    console2.log("eval foreign call for rule 3.2");
                     // Add offset to head
                     uint256 dynamicOffset = 32 * (fc.parameterTypes.length) + lengthToAppend;
+                    console2.log("eval foreign call for rule 3.3");
                     encodedCall = bytes.concat(encodedCall, bytes32(dynamicOffset));
+                    console2.log("eval foreign call for rule 3.4");
+        
+
                     // Get the dynamic data
                     uint256 length = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
+                    console2.log("eval foreign call for rule 3.5");
                     uint256 words = 32 + ((length / 32) + 1) * 32;
+                    console2.log("eval foreign call for rule 3.6");
                     bytes memory dynamicValue = functionArguments[uint(value):uint(value) + words];
+                    console2.log("eval foreign call for rule 3.7");
                     // Add length and data (data is already padded to 32 bytes)
                     dynamicData = bytes.concat(
                         dynamicData,
                         dynamicValue      // data (already padded)
                     );
+                    console2.log("eval foreign call for rule 3.8");
                     lengthToAppend += words;  // 32 for length + 32 for padded data
+                    console2.log("eval foreign call for rule 3.9");
                 } else if (argType == ParamTypes.STATIC_TYPE_ARRAY) {
                     // encode the static offset
                     encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
@@ -144,16 +164,24 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                     lengthToAppend += 32;
                     dynamicData = bytes.concat(dynamicData, abi.encode(length));
                     (dynamicData, lengthToAppend) = _getDynamicValueArrayData(functionArguments, dynamicData, length, lengthToAppend, uint(value));
+        console2.log("eval foreign call for rule 4");
+
                 }
                 else {
                     encodedCall = bytes.concat(encodedCall, value);
+        console2.log("eval foreign call for rule 5");
+
                 }
             }
         }
 
         bytes memory callData = bytes.concat(encodedCall, dynamicData);
+        console2.log("eval foreign call for rule 6");
+
         // Place the foreign call
         (bool response, bytes memory data) = fc.foreignCallAddress.call(callData);
+        console2.log("eval foreign call for rule 7");
+
     
 
         // Verify that the foreign call was successful
@@ -162,6 +190,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             retVal.pType = fc.returnType;
             retVal.value = data;
         }
+        console2.log("eval foreign call for rule end");
+
     }
 
     /**
@@ -174,14 +204,18 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     function _checkPolicy(uint256 _policyId, address _contractAddress, bytes calldata _arguments) internal returns (bool retVal) {
         _contractAddress; // added to remove wanring. TODO remove this once msg.sender testing is complete 
         // Load the policy data from storage   
+        console2.log("Check Policies _checkPolicies 1");
         PolicyStorageSet storage policyStorageSet = lib._getPolicyStorage().policyStorageSets[_policyId];
+        console2.log("Check Policies _checkPolicies 2");
         mapping(uint256 ruleId => RuleStorageSet) storage ruleData = lib._getRuleStorage().ruleStorageSets[_policyId];
+        console2.log("Check Policies _checkPolicies 3");
 
         // Retrieve placeHolder[] for specific rule to be evaluated and translate function signature argument array 
         // to rule specific argument array
         // note that arguments is being sliced, first 4 bytes are the function signature being passed (:4) and the rest (4:) 
         // are all the arguments associated for the rule to be invoked. This saves on further calculations so that we don't need to factor in the signature.
         retVal = _evaluateRulesAndExecuteEffects(ruleData ,_policyId, _loadApplicableRules(ruleData, policyStorageSet.policy, bytes4(_arguments[:4])), _arguments[4:]);
+        console2.log("Check Policies _checkPolicies 4");
     }
     
     /**
@@ -193,17 +227,30 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @return _retVal True if all rules pass, false otherwise.
      */
     function _evaluateRulesAndExecuteEffects(mapping(uint256 ruleId => RuleStorageSet) storage _ruleData, uint256 _policyId, uint256[] memory _applicableRules, bytes calldata _callingFunctionArgs) internal returns (bool _retVal) {
+        console2.log("evaluate 1");
         _retVal = true;
         uint256 ruleCount = _applicableRules.length;
         for(uint256 i = 0; i < ruleCount; i++) { 
             Rule storage rule = _ruleData[_applicableRules[i]].rule;
+                console2.log("evaluate 2");
+
             if(!_evaluateIndividualRule(rule, _policyId, _callingFunctionArgs)) {
+        console2.log("evaluate 2.5");
+
                 _retVal = false;
                 _doEffects(rule, _policyId, rule.negEffects, _callingFunctionArgs);
+        console2.log("evaluate 3");
+
             } else{
+        console2.log("evaluate 3.5");
+
                 _doEffects(rule, _policyId, rule.posEffects, _callingFunctionArgs);
+        console2.log("evaluate 4");
+
             }
         }
+        console2.log("evaluate 5");
+
     }
 
     /**
@@ -214,8 +261,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @return response the result of the rule condition evaluation 
      */
     function _evaluateIndividualRule(Rule storage _rule, uint256 _policyId, bytes calldata _callingFunctionArgs) internal returns (bool response) {
+        console2.log("evaluate rule 1");
         (bytes[] memory ruleArgs, Placeholder[] memory placeholders) = _buildArguments(_rule, _policyId, _callingFunctionArgs, false);
+        console2.log("evaluate rule 2");
         response = _run(_rule.instructionSet, placeholders, _policyId, ruleArgs);
+        console2.log("evaluate rule 3");
     }
 
     /**
@@ -229,12 +279,19 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      *         - An array of Placeholder structs used for argument substitution.
      */
     function _buildArguments(Rule storage _rule, uint256 _policyId, bytes calldata _callingFunctionArgs, bool _effect) internal returns (bytes[] memory, Placeholder[] memory) {
+        console2.log("args 1");
         Placeholder[] memory placeHolders;
         if(_effect) {
             placeHolders = _rule.effectPlaceHolders;
         } else {
             placeHolders = _rule.placeHolders;
         }       
+        console2.log("args 2");
+        
+        for (uint i = 0; i < _rule.instructionSet.length; i++) {
+            console2.log(_rule.instructionSet[i], "Instruction Set Value");
+        }
+
         bytes[] memory retVals = new bytes[](placeHolders.length);
         for(uint256 placeholderIndex = 0; placeholderIndex < placeHolders.length; placeholderIndex++) {
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
@@ -244,15 +301,28 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             (bool isTrackerValue, bool isForeignCall, uint8 globalVarType) = _extractFlags(placeholder);
 
             if(globalVarType != GLOBAL_NONE) {
+        console2.log("args 3");
+
+                console2.log("Global variable type in _buildArguments");
                 (retVals[placeholderIndex], placeHolders[placeholderIndex].pType) = _handleGlobalVar(globalVarType, placeHolders, placeholderIndex);
+        console2.log("args 4");
+
             } else if(isForeignCall) {
                 (retVals[placeholderIndex], placeHolders[placeholderIndex].pType) = _handleForeignCall(_policyId, _callingFunctionArgs, placeholder.typeSpecificIndex, retVals);
+        console2.log("args 5");
+
             } else if (isTrackerValue) {
                 retVals[placeholderIndex] = _handleTrackerValue(_policyId, placeholder);
+        console2.log("args 6");
+
             } else {
                 retVals[placeholderIndex] = _handleRegularParameter(_callingFunctionArgs, placeholder);
+        console2.log("args 7");
+
             }
         }
+        console2.log("args 8");
+
         return (retVals, placeHolders);
     }
 
@@ -268,22 +338,49 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         uint256[90] memory mem;
         uint256 idx = 0;
         uint256 opi = 0;
+        for (uint256 i = 0; i < _prog.length; i++) {
+            console2.log(_prog[i]);
+        }
+        console2.log("_prog length", _prog.length);
         while (idx < _prog.length) {
             uint256 v = 0;
+            console2.log("_run 1");
+            
             LogicalOp op = LogicalOp(_prog[idx]);
+            console2.log("_run 2");
+
+            console2.log("Opcode:", uint256(op));
+            console2.log("placeholder opcode value:", uint256(op));
+
             if(op == LogicalOp.PLH) {
+            console2.log("_run 3");
+
 
                 // Placeholder format is: get the index of the argument in the array. For example, PLH 0 is the first argument in the arguments array and its type and value
                 uint256 pli = _prog[idx+1];
 
                 uint8 globalVarType;
+                
+                {
+                    bool isTrackerValue;
+                    bool isForeignCall;
+                    (isTrackerValue, isForeignCall, globalVarType) = _extractFlags(_placeHolders[pli]);
+                    console2.log("Flags check:", _placeHolders[pli].flags);
+                    console2.log("Global var type:", globalVarType);
+                    console2.log("Is tracker:", isTrackerValue);
+                    console2.log("Is foreign call:", isForeignCall);
+                }
+
+                
                 // Extract flags to check if this is a global variable
-                (,, globalVarType) = _extractFlags(_placeHolders[pli]);
+                //(,, globalVarType) = _extractFlags(_placeHolders[pli]);
+                
             
                 // If this is a global variable, refresh its value
-                if(globalVarType != GLOBAL_NONE) {
+                /*if(globalVarType != GLOBAL_NONE) {
+                    console2.log("Global variable type in _run");
                     (_arguments[pli], _placeHolders[pli].pType) = _handleGlobalVar(globalVarType, _placeHolders, pli);
-                }
+                }*/
 
                 ParamTypes typ = _placeHolders[pli].pType;
                 if(typ == ParamTypes.UINT) {
@@ -298,8 +395,17 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                     // Convert bool to uint256 for direct comparison using == and != operations
                     v = uint256(ProcessorLib._boolToUint((abi.decode(_arguments[pli], (bool))))); idx += 2;
                 } else if(typ == ParamTypes.BYTES) {
+                    /*if(globalVarType == GLOBAL_MSG_DATA) {
+                        v = uint256(keccak256(msg.data));
+                    } else {
+                        v = uint256(keccak256(_arguments[pli]));
+                    }*/
+                    //idx += 2;
                     // Convert bytes to uint256 for direct comparison using == and != operations
-                    v = uint256(keccak256(abi.encode(abi.decode(_arguments[pli], (bytes))))); idx += 2;
+                    //v = uint256(keccak256(abi.encode(abi.decode(_arguments[pli], (bytes))))); idx += 2;
+                    //v = uint256(keccak256(abi.decode(_arguments[pli], (bytes)))); idx += 2;
+                    v = uint256(keccak256(_arguments[pli])); idx += 2;
+                    emit log_bytes(ProcessorLib._uintToBytes(v), "V value inside of _run function for bytes");
                 } else if(typ == ParamTypes.STATIC_TYPE_ARRAY || typ == ParamTypes.DYNAMIC_TYPE_ARRAY) {
                     // length of array for direct comparison using == and != operations
                     v = abi.decode(_arguments[pli], (uint256)); idx += 2;
@@ -493,12 +599,18 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         uint8 globalVarType, 
         Placeholder[] memory placeHolders, 
         uint256 placeholderIndex
-    ) internal view returns (bytes memory, ParamTypes pType) {
+    ) internal returns (bytes memory, ParamTypes pType) {
         if (globalVarType == GLOBAL_MSG_SENDER) {
             return (abi.encode(msg.sender), ParamTypes.ADDR);
         } else if (globalVarType == GLOBAL_BLOCK_TIMESTAMP) {
             return (abi.encode(block.timestamp), ParamTypes.UINT);
         } else if (globalVarType == GLOBAL_MSG_DATA) {
+            emit log_bytes(msg.data, "msg.data inside of _handleGlobalVar function");
+            console2.log("msg.data inside of _handleGlobalVar function");
+            console2.logBytes(msg.data);
+            console2.log("msg.data encoded inside of _handleGlobalVar function");
+            console2.logBytes(abi.encode(msg.data));
+            emit log_bytes(abi.encode(msg.data), "msg.data encoded inside of _handleGlobalVar function");
             return (abi.encode(msg.data), ParamTypes.BYTES);
         } else if (globalVarType == GLOBAL_BLOCK_NUMBER) {
             return(abi.encode(block.number), ParamTypes.UINT);

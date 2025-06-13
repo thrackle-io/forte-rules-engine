@@ -5007,214 +5007,310 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
         assertEq(response, 1);
     }
 
-    function testRulesEngine_Unit_GlobalVariable_MsgData() public ifDeploymentTestsEnabled resetsGlobalVariables {
-    // Create policy
-    vm.startPrank(policyAdmin);
-    uint256 policyId = _createBlankPolicy();
-    
-    // Define the transfer function we'll be testing
-    bytes4 transferSelector = bytes4(keccak256("transfer(address,uint256)"));
-    address specificAddress = address(0x1234567890123456789012345678901234567890);
-    uint256 specificAmount = 100;
-    
-    // Create the exact bytes calldata we want to match
-    bytes memory expectedCalldata = abi.encodeWithSelector(transferSelector, specificAddress, specificAmount);
-    
-    // Create rule that uses GLOBAL_MSG_DATA
-    Rule memory rule;
-    
-    // Setup instruction set that checks bytes matching for msg.data
-    rule.instructionSet = new uint256[](7);
-    rule.instructionSet[0] = uint(LogicalOp.PLH);  // Load msg.data into register 0
-    rule.instructionSet[1] = 0;                    
-    rule.instructionSet[2] = uint(LogicalOp.NUM);  // Load expected value into register 1
-    rule.instructionSet[3] = 0;                    // This will be filled with a value representing expectedCalldata
-    rule.instructionSet[4] = uint(LogicalOp.EQ);   // Compare registers
-    rule.instructionSet[5] = 0;                    
-    rule.instructionSet[6] = 1;                    
+    function testRulesEngine_Unit_GlobalVariable_TxOrigin() public ifDeploymentTestsEnabled resetsGlobalVariables {
+        // Create policy
+        vm.startPrank(policyAdmin);
+        uint256 policyId = _createBlankPolicy();
 
-    // Create placeholder for msg.data
-    rule.placeHolders = new Placeholder[](1);
-    rule.placeHolders[0].pType = ParamTypes.BYTES;
-    rule.placeHolders[0].flags = uint8(GLOBAL_MSG_DATA << SHIFT_GLOBAL_VAR); // Using msg.data global variable
+        // Create rule that checks if tx.origin == expectedAddress
+        address expectedAddress = address(0x1337);
+        Rule memory rule;
 
-    // Store raw data for comparison - CRITICAL: This must match exactly how msg.data is processed internally
-    rule.rawData.argumentTypes = new ParamTypes[](1);
-    rule.rawData.dataValues = new bytes[](1);
-    rule.rawData.instructionSetIndex = new uint256[](1);
-    rule.rawData.argumentTypes[0] = ParamTypes.BYTES;
-    
-    // Important: The engine likely hashes bytes values, so when comparing bytes, we need to hash consistently
-    // The value being stored here is the keccak256 hash of the abi.encode of our expected calldata
-    rule.rawData.dataValues[0] = expectedCalldata; // Store the direct bytes without extra encoding
-    rule.rawData.instructionSetIndex[0] = 3;
+        rule.instructionSet = new uint256[](7);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
+        rule.instructionSet[1] = 0;                                  // r0: placeholder 0 (global tx.origin)
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
+        rule.instructionSet[3] = uint256(uint160(expectedAddress));  // r1: expected address
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
+        rule.instructionSet[5] = 0;                                  // tx.origin
+        rule.instructionSet[6] = 1;                                  // expected address
 
-    // Add effects
-    rule.negEffects = new Effect[](1);
-    rule.negEffects[0] = effectId_revert;
-    rule.posEffects = new Effect[](1);
-    rule.posEffects[0] = effectId_event;
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = ParamTypes.ADDR;
+        rule.placeHolders[0].flags = uint8(GLOBAL_TX_ORIGIN << SHIFT_GLOBAL_VAR);
 
-    uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyId, rule);
+        rule.negEffects = new Effect[](1);
+        rule.negEffects[0] = effectId_revert;
+        rule.posEffects = new Effect[](1);
+        rule.posEffects[0] = effectId_event;
 
-    // Set up calling function
-    ParamTypes[] memory pTypes = new ParamTypes[](2);
-    pTypes[0] = ParamTypes.ADDR;
-    pTypes[1] = ParamTypes.UINT;
-    uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
-        policyId, 
-        transferSelector,
-        pTypes,
-        "transfer(address,uint256)",
-        ""
-    );
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyId, rule);
 
-    // Update policy
-    callingFunctions.push(transferSelector);
-    callingFunctionIds.push(callingFunctionId);
-    ruleIds.push(new uint256[](1));
-    ruleIds[0][0] = ruleId;
-    RulesEnginePolicyFacet(address(red)).updatePolicy(
-        policyId,
-        callingFunctions,
-        callingFunctionIds,
-        ruleIds,
-        PolicyType.CLOSED_POLICY
-    );
+        // Set up calling function
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
+            policyId, 
+            bytes4(keccak256(bytes(callingFunction))), 
+            pTypes,
+            callingFunction,
+            ""
+        );
 
-    // Apply policy to userContract
-    uint256[] memory policyIds = new uint256[](1);
-    policyIds[0] = policyId;
-    
-    vm.stopPrank();
-    vm.startPrank(callingContractAdmin);
-    RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-    
-    // === Test execution ===
-    vm.stopPrank();
-    vm.startPrank(userContractAddress);
-    
-    // Test 1: Call with matching msg.data - should pass. THIS NEEDS TO BE ABI.ENCODED ASA THE IMPLEMENTATION IN THE PROCESSOR FACET
-    uint256 result = RulesEngineProcessorFacet(address(red)).checkPolicies(abi.encode(expectedCalldata));
-    assertEq(result, 1, "Check with matching msg.data should pass");
-    
-    // Test 2: Call with different msg.data - should fail
-    bytes memory differentCalldata = abi.encodeWithSelector(transferSelector, address(0x9876), uint256(200));
-    vm.expectRevert(abi.encodePacked(revert_text));
-    RulesEngineProcessorFacet(address(red)).checkPolicies(differentCalldata);
+        // Update policy
+        callingFunctions.push(bytes4(keccak256(bytes(callingFunction))));
+        callingFunctionIds.push(callingFunctionId);
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0] = ruleId;
+        RulesEnginePolicyFacet(address(red)).updatePolicy(
+            policyId,
+            callingFunctions,
+            callingFunctionIds,
+            ruleIds,
+            PolicyType.CLOSED_POLICY
+        );
+
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = policyId;
+
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+
+        // Call from incorrect tx.origin - should fail
+        vm.stopPrank();
+        vm.startPrank(userContractAddress, address(0x9999));  // Second parameter is tx.origin
+        bytes memory arguments = abi.encodeWithSelector(
+            bytes4(keccak256(bytes(callingFunction))), 
+            address(0x7654321), 
+            5
+        );
+        vm.expectRevert(abi.encodePacked(revert_text));
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+
+        // Call from correct tx.origin - should pass
+        vm.stopPrank();
+        vm.startPrank(userContractAddress, expectedAddress);  // Second parameter is tx.origin
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        assertEq(response, 1);
+    }
+
+    function testRulesEngine_Unit_GlobalVariable_MsgData_Match() public ifDeploymentTestsEnabled resetsGlobalVariables {
+    uint256 policyId;
+    uint256 ruleId;
+    uint256 callingFunctionId;
+
+    {
+        vm.startPrank(policyAdmin);
+        policyId = _createBlankPolicy();
+
+        // Prepare known calldata and hash
+        bytes4 selector = bytes4(keccak256("transfer(address,uint256)"));
+        address testAddr = address(0x1234);
+        uint256 testAmount = 1;
+        bytes memory knownCalldata = abi.encodeWithSelector(selector, testAddr, testAmount);
+
+        // Compute the actual msg.data as seen by the rules engine (outer call)
+        bytes4 checkPoliciesSelector = bytes4(keccak256("checkPolicies(bytes)"));
+        bytes memory engineMsgData = abi.encodeWithSelector(checkPoliciesSelector, knownCalldata);
+        uint256 knownHash = uint256(keccak256(engineMsgData));
+
+        
+        {
+            Rule memory rule;
+            rule.instructionSet = new uint256[](7);
+            rule.instructionSet[0] = uint(LogicalOp.PLH);
+            rule.instructionSet[1] = 0;
+            rule.instructionSet[2] = uint(LogicalOp.NUM);
+            rule.instructionSet[3] = knownHash;
+            rule.instructionSet[4] = uint(LogicalOp.EQ);
+            rule.instructionSet[5] = 0;
+            rule.instructionSet[6] = 1;
+
+            rule.placeHolders = new Placeholder[](1);
+            rule.placeHolders[0].pType = ParamTypes.BYTES;
+            rule.placeHolders[0].flags = uint8(GLOBAL_MSG_DATA << SHIFT_GLOBAL_VAR);
+
+            rule.negEffects = new Effect[](1);
+            rule.negEffects[0] = effectId_revert;
+            rule.posEffects = new Effect[](1);
+            rule.posEffects[0] = effectId_event;
+
+            ruleId = RulesEngineRuleFacet(address(red)).createRule(policyId, rule);
+        }
+
+        
+        {
+            ParamTypes[] memory pTypes = new ParamTypes[](2);
+            pTypes[0] = ParamTypes.ADDR;
+            pTypes[1] = ParamTypes.UINT;
+            callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
+                policyId,
+                selector,
+                pTypes,
+                "transfer(address,uint256)",
+                ""
+            );
+        }
+
+        
+        {
+            bytes4[] memory selectors = new bytes4[](1);
+            selectors[0] = selector;
+            uint256[] memory functionIds = new uint256[](1);
+            functionIds[0] = callingFunctionId;
+            uint256[][] memory ruleIdsArr = new uint256[][](1);
+            ruleIdsArr[0] = new uint256[](1);
+            ruleIdsArr[0][0] = ruleId;
+            RulesEnginePolicyFacet(address(red)).updatePolicy(
+                policyId,
+                selectors,
+                functionIds,
+                ruleIdsArr,
+                PolicyType.CLOSED_POLICY
+            );
+        }
+
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = policyId;
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        vm.stopPrank();
+
+       
+        vm.startPrank(userContractAddress);
+        bytes memory arguments = knownCalldata;
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        assertEq(response, 1, "Rule using msg.data should pass if calldata matches known pattern");
+        vm.stopPrank();
+
+        
+        vm.startPrank(userContractAddress);
+        bytes memory differentCalldata = abi.encodeWithSelector(selector, address(0x5678), 2);
+        vm.expectRevert(abi.encodePacked(revert_text));
+        RulesEngineProcessorFacet(address(red)).checkPolicies(differentCalldata);
+        vm.stopPrank();
+    }
 }
-    /*function testRulesEngine_Unit_GlobalVariable_MsgData() public ifDeploymentTestsEnabled resetsGlobalVariables {
-    // Create policy
-    vm.startPrank(policyAdmin);
-    uint256 policyId = _createBlankPolicy();
-    
-    // Define the function selector we'll be testing
-    bytes4 selector = bytes4(keccak256("transfer(address,uint256)"));
-    
-    // Create rule that checks msg.data
-    Rule memory rule;
-    
-    // Setup instruction set
-    rule.instructionSet = new uint256[](7);
-    rule.instructionSet[0] = uint(LogicalOp.PLH);  // Load msg.data into register 0
-    rule.instructionSet[1] = 0;                    
-    rule.instructionSet[2] = uint(LogicalOp.PLH);  // Load a placeholder parameter into register 1
-    rule.instructionSet[3] = 1;                    
-    rule.instructionSet[4] = uint(LogicalOp.EQ);   // Compare registers
-    rule.instructionSet[5] = 0;                    
-    rule.instructionSet[6] = 1;                    
 
-    // Create placeholders - first for msg.data, second for our expected data
-    rule.placeHolders = new Placeholder[](2);
-    
-    // First placeholder: GLOBAL_MSG_DATA
-    rule.placeHolders[0].pType = ParamTypes.BYTES;
-    rule.placeHolders[0].flags = uint8(GLOBAL_MSG_DATA << SHIFT_GLOBAL_VAR);
-    
-    // Second placeholder: Expected calldata parameter
-    rule.placeHolders[1].pType = ParamTypes.BYTES;
-    rule.placeHolders[1].typeSpecificIndex = 0; // We'll pass this as the first param to checkPolicies
-    
-    // Add effects
-    rule.negEffects = new Effect[](1);
-    rule.negEffects[0] = effectId_revert;
-    rule.posEffects = new Effect[](1);
-    rule.posEffects[0] = effectId_event;
 
-    uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyId, rule);
+// **************************************************************************************************
 
-    // Set up calling function for checkPolicies
-    ParamTypes[] memory pTypes = new ParamTypes[](1);
-    pTypes[0] = ParamTypes.BYTES;
-    
-    bytes4 checkPoliciesSelector = bytes4(keccak256("checkPolicies(bytes)"));
-    uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
-        policyId, 
-        checkPoliciesSelector,
-        pTypes,
-        "checkPolicies(bytes)",
-        ""
-    );
+    function testRulesEngine_Unit_ForeignCall_Bytes() public ifDeploymentTestsEnabled resetsGlobalVariables {
+        uint256 policyId;
+        uint256 ruleId;
+        uint256 callingFunctionId;
 
-    // Update policy
-    callingFunctions.push(checkPoliciesSelector);
-    callingFunctionIds.push(callingFunctionId);
-    ruleIds.push(new uint256[](1));
-    ruleIds[0][0] = ruleId;
-    RulesEnginePolicyFacet(address(red)).updatePolicy(
-        policyId,
-        callingFunctions,
-        callingFunctionIds,
-        ruleIds,
-        PolicyType.CLOSED_POLICY
-    );
+        {
+            vm.startPrank(policyAdmin);
 
-    // Apply policy to the RulesEngine itself
-    uint256[] memory policyIds = new uint256[](1);
-    policyIds[0] = policyId;
-    
-    vm.stopPrank();
-    vm.startPrank(callingContractAdmin);
-    RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-    
-    // Create the specific calldata we want to match
-    bytes memory exactMsgData = abi.encodeWithSelector(
-        selector,
-        address(0x1234567890123456789012345678901234567890),
-        uint256(100)
-    );
-    
-    // PASSING CASE
-    vm.stopPrank();
-    vm.startPrank(address(0x1234));
-    
-    // Expected msg.data for checkPolicies will be:
-    // function selector (checkPolicies) + ABI-encoded exactMsgData
-    // Since we pass exactMsgData to checkPolicies, our rule will compare:
-    // 1. msg.data (checkPolicies call with exactMsgData parameter)
-    // 2. The exactMsgData parameter itself
-    // This should correctly fail since they're different
-    
-    // For passing case, we need to encode what the actual msg.data will be
-    bytes memory expectedMsgData = abi.encodeWithSelector(checkPoliciesSelector, exactMsgData);
+            policyId = _createBlankPolicy();
 
-    // Now call checkPolicies with expectedMsgData as parameter
-    // Since our rule compares msg.data with the parameter,
-    // this should PASS because msg.data will equal expectedMsgData
-    uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(expectedMsgData);
-    assertEq(response, 1, "Call with matching msg.data should pass");
-    
-    // FAILING CASE
-    // Now call with different data - should fail the rule
-    bytes memory differentMsgData = abi.encodeWithSelector(
-        selector,
-        address(0x9876543210987654321098765432109876543210),
-        uint256(200)
-    );
-    
-    vm.expectRevert(abi.encodePacked(revert_text));
-    RulesEngineProcessorFacet(address(red)).checkPolicies(differentMsgData);
-}*/
+            address foreignCallTarget = userContractAddress;
+            bytes4 setMsgDataSelector = ExampleUserContract.setMsgData.selector;
 
-    
+            uint256 foreignCallId;
+            {
+                ParamTypes[] memory fcParamTypes = new ParamTypes[](1);
+                fcParamTypes[0] = ParamTypes.BYTES;
+                int8[] memory fcTypeSpecificIndices = new int8[](1);
+                fcTypeSpecificIndices[0] = 0;
+                ForeignCall memory fc;
+                fc.foreignCallAddress = foreignCallTarget;
+                fc.signature = setMsgDataSelector;
+                fc.returnType = ParamTypes.BOOL;
+                fc.parameterTypes = fcParamTypes;
+                fc.typeSpecificIndices = fcTypeSpecificIndices;
+                foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyId, fc, "setMsgData(bytes)");
+            }
+
+            // Effect for the foreign call
+            Effect memory effect;
+            effect.valid = true;
+            effect.dynamicParam = false;
+            effect.effectType = EffectTypes.EXPRESSION;
+            effect.pType = ParamTypes.VOID;
+            effect.param = abi.encodePacked(foreignCallId);
+            effect.text = "";
+            effect.errorMessage = "";
+            effect.instructionSet = new uint256[](0);
+
+            Rule memory rule;
+            rule.instructionSet = new uint256[](2);
+            rule.instructionSet[0] = uint(LogicalOp.PLH);
+            rule.instructionSet[1] = 1;
+
+            rule.placeHolders = new Placeholder[](2);
+            // Placeholder 0: msg.data
+            rule.placeHolders[0].pType = ParamTypes.BYTES;
+            rule.placeHolders[0].typeSpecificIndex = 2;
+            //rule.placeHolders[0].flags = uint8(GLOBAL_MSG_DATA << SHIFT_GLOBAL_VAR);
+
+            // Placeholder 1: foreign call
+            rule.placeHolders[1].pType = ParamTypes.BOOL;
+            rule.placeHolders[1].typeSpecificIndex = uint128(foreignCallId);
+            rule.placeHolders[1].flags = uint8(FLAG_FOREIGN_CALL);
+
+        
+            rule.effectPlaceHolders = new Placeholder[](1);
+            rule.effectPlaceHolders[0].pType = ParamTypes.BYTES;
+            rule.effectPlaceHolders[0].typeSpecificIndex = 0; 
+            rule.effectPlaceHolders[0].flags = 0;
+
+            rule.negEffects = new Effect[](1);
+            rule.negEffects[0] = effectId_revert;
+            rule.posEffects = new Effect[](1);
+            rule.posEffects[0] = effectId_event;
+
+            ruleId = RulesEngineRuleFacet(address(red)).createRule(policyId, rule);
+
+            {
+                bytes4 transferSelector = ExampleUserContract.transferFrom.selector;
+                ParamTypes[] memory pTypes = new ParamTypes[](3);
+                pTypes[0] = ParamTypes.ADDR;
+                pTypes[1] = ParamTypes.UINT;
+                pTypes[2] = ParamTypes.BYTES;
+                callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
+                    policyId,
+                    transferSelector,
+                    pTypes,
+                    "transferFrom(address,uint256,bytes)",
+                    ""
+                );
+
+                bytes4[] memory selectors = new bytes4[](1);
+                selectors[0] = transferSelector;
+                uint256[] memory functionIds = new uint256[](1);
+                functionIds[0] = callingFunctionId;
+                uint256[][] memory ruleIdsArr = new uint256[][](1);
+                ruleIdsArr[0] = new uint256[](1);
+                ruleIdsArr[0][0] = ruleId;
+                RulesEnginePolicyFacet(address(red)).updatePolicy(
+                    policyId,
+                    selectors,
+                    functionIds,
+                    ruleIdsArr,
+                    PolicyType.CLOSED_POLICY
+                );
+            }
+
+            {
+                uint256[] memory policyIds = new uint256[](1);
+                policyIds[0] = policyId;
+                vm.stopPrank();
+                vm.startPrank(callingContractAdmin);
+                RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+                vm.stopPrank();
+            }
+        }
+
+        {
+            vm.startPrank(userContractAddress);
+            address to = address(0xBEEF);
+            uint256 value = 42;
+            bytes memory transferCalldata = abi.encodeWithSelector(ExampleUserContract.transferFrom.selector, to, value, abi.encode("TESTER"));
+
+            RulesEngineProcessorFacet(address(red)).checkPolicies(transferCalldata);
+
+            bytes memory actualMsgData = ExampleUserContract(userContractAddress).msgData();
+            assertEq(actualMsgData, transferCalldata, "Foreign call should set msgData to the transfer calldata");
+            vm.stopPrank();
+        }
+    }
+
+
+// **************************************************************************************************
+
 }
