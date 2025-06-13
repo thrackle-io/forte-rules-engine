@@ -12,6 +12,7 @@ import "src/client/RulesEngineClient.sol";
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 contract ExampleUserContract is RulesEngineClient {
+    bytes public msgData;
     /**
      * @notice Demonstrates a generic `transfer` function integrated with the Rules Engine.
      * @dev This function sends custom arguments to the Rules Engine for policy enforcement. The Rules Engine determines 
@@ -26,6 +27,20 @@ contract ExampleUserContract is RulesEngineClient {
         value;
         if (retval > 0) return true;
         else return false; 
+    }
+
+    function transferFrom(address to, uint256 value, bytes memory _bytes) public returns (bool) {
+        uint256 retval = _invokeRulesEngine(msg.data);
+        to;
+        value;
+        if (retval > 0) return true;
+        else return false; 
+    }
+
+
+    function setMsgData(bytes memory data) public returns(bool) {
+        msgData = data;
+        return true;
     }
 
 }

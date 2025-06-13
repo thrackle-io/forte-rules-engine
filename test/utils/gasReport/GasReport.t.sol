@@ -265,7 +265,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](2);
-        rule.placeHolders[0].foreignCall = true;
+        rule.placeHolders[0].flags = FLAG_FOREIGN_CALL;
         rule.placeHolders[0].typeSpecificIndex = uint128(foreignCallId);
         rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1;
@@ -334,7 +334,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         Rule memory rule2;
         // Build the foreign call placeholder
         rule1.placeHolders = new Placeholder[](2);
-        rule1.placeHolders[0].foreignCall = true;
+        rule1.placeHolders[0].flags = FLAG_FOREIGN_CALL;
         rule1.placeHolders[0].typeSpecificIndex = uint128(foreignCallId);
         rule1.placeHolders[1].pType = ParamTypes.UINT;
         rule1.placeHolders[1].typeSpecificIndex = 1;
@@ -407,7 +407,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         Rule memory rule1;
         // Build the foreign call placeholder
         rule1.placeHolders = new Placeholder[](2);
-        rule1.placeHolders[0].foreignCall = true;
+        rule1.placeHolders[0].flags = FLAG_FOREIGN_CALL;
         rule1.placeHolders[0].typeSpecificIndex = uint128(foreignCallId);
         rule1.placeHolders[1].pType = ParamTypes.UINT;
         rule1.placeHolders[1].typeSpecificIndex = 1;
@@ -486,7 +486,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         Rule memory rule2;
         // Build the foreign call placeholder
         rule1.placeHolders = new Placeholder[](2);
-        rule1.placeHolders[0].foreignCall = true;
+        rule1.placeHolders[0].flags = FLAG_FOREIGN_CALL;
         rule1.placeHolders[0].typeSpecificIndex = uint128(foreignCallId);
         rule1.placeHolders[1].pType = ParamTypes.UINT;
         rule1.placeHolders[1].typeSpecificIndex = 1;
@@ -576,7 +576,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             Rule memory rule3;
             // Build the foreign call placeholder
             rule1.placeHolders = new Placeholder[](2);
-            rule1.placeHolders[0].foreignCall = true;
+            rule1.placeHolders[0].flags = FLAG_FOREIGN_CALL;
             rule1.placeHolders[0].typeSpecificIndex = uint128(foreignCallId);
             rule1.placeHolders[1].pType = ParamTypes.UINT;
             rule1.placeHolders[1].typeSpecificIndex = 1;
@@ -996,11 +996,11 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](4);
-        rule.placeHolders[0].foreignCall = true;
+        rule.placeHolders[0].flags = FLAG_FOREIGN_CALL;
         rule.placeHolders[0].typeSpecificIndex = uint128(foreignCallId);
         rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 1;
-        rule.placeHolders[2].foreignCall = true;
+        rule.placeHolders[2].flags = FLAG_FOREIGN_CALL;
         rule.placeHolders[2].typeSpecificIndex = uint128(foreignCallId2);
         rule.placeHolders[3].pType = ParamTypes.UINT;
         rule.placeHolders[3].typeSpecificIndex = 1;
@@ -1087,7 +1087,7 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         rule.placeHolders = new Placeholder[](2);
         rule.placeHolders[0].pType = ParamTypes.UINT;
-        rule.placeHolders[0].trackerValue = true;
+        rule.placeHolders[0].flags = FLAG_TRACKER_VALUE;
         rule.placeHolders[0].typeSpecificIndex = 1;
         rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].typeSpecificIndex = 5;

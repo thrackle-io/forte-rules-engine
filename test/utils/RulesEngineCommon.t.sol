@@ -38,6 +38,11 @@ contract RulesEngineCommon is DiamondMine, Test {
     bytes32 public constant EVENTTEXT = bytes32("Rules Engine Event"); 
     bytes32 public constant EVENTTEXT2 = bytes32("Rules Engine Event 2");
 
+    uint8 constant FLAG_FOREIGN_CALL = 0x01;   // 00000001
+    uint8 constant FLAG_TRACKER_VALUE = 0x02;  // 00000010
+    uint8 constant MASK_GLOBAL_VAR = 0x1C;     // 00011100
+    uint8 constant SHIFT_GLOBAL_VAR = 2;
+
     //bytes4 
     bytes4[] callingFunctions;
 
@@ -424,7 +429,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.effectPlaceHolders[0].pType = ParamTypes.ADDR;
         rule.effectPlaceHolders[0].typeSpecificIndex = 2;
         rule.effectPlaceHolders[1].pType = ParamTypes.ADDR;
-        rule.effectPlaceHolders[1].trackerValue = true;
+        rule.effectPlaceHolders[1].flags = FLAG_TRACKER_VALUE;
         rule.effectPlaceHolders[1].typeSpecificIndex = 1;
 
         ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
@@ -494,10 +499,10 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         rule.effectPlaceHolders = new Placeholder[](2);
         rule.effectPlaceHolders[0].pType = ParamTypes.UINT;
-        rule.effectPlaceHolders[0].foreignCall = true;
+        rule.effectPlaceHolders[0].flags = FLAG_FOREIGN_CALL;
         rule.effectPlaceHolders[0].typeSpecificIndex = 1;
         rule.effectPlaceHolders[1].pType = ParamTypes.UINT;
-        rule.effectPlaceHolders[1].trackerValue = true;
+        rule.effectPlaceHolders[1].flags = FLAG_TRACKER_VALUE;
         rule.effectPlaceHolders[1].typeSpecificIndex = 1;
 
 
@@ -549,7 +554,7 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](1);
-        rule.placeHolders[0].foreignCall = true;
+        rule.placeHolders[0].flags = FLAG_FOREIGN_CALL;
         rule.placeHolders[0].typeSpecificIndex = 1;
 
         // Build the instruction set for the rule (including placeholders)
@@ -602,9 +607,9 @@ contract RulesEngineCommon is DiamondMine, Test {
         Rule memory rule;
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](2);
-        rule.placeHolders[0].foreignCall = true;
+        rule.placeHolders[0].flags = FLAG_FOREIGN_CALL;
         rule.placeHolders[0].typeSpecificIndex = 1;
-        rule.placeHolders[1].foreignCall = true;
+        rule.placeHolders[1].flags = FLAG_FOREIGN_CALL;
         rule.placeHolders[1].typeSpecificIndex = 2;
 
         // Build the instruction set for the rule (including placeholders)
@@ -670,9 +675,9 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](2);
-        rule.placeHolders[0].trackerValue = true;
+        rule.placeHolders[0].flags = FLAG_TRACKER_VALUE;
         rule.placeHolders[0].typeSpecificIndex = 1;
-        rule.placeHolders[1].foreignCall = true;
+        rule.placeHolders[1].flags = FLAG_FOREIGN_CALL;
         rule.placeHolders[1].typeSpecificIndex = 1;
 
         // Build the instruction set for the rule (including placeholders)
@@ -1043,7 +1048,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
         rule.placeHolders[1].pType = ParamTypes.UINT;
-        rule.placeHolders[1].trackerValue = true;
+        rule.placeHolders[1].flags = FLAG_TRACKER_VALUE;
         rule.placeHolders[1].typeSpecificIndex = 1;
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
@@ -1440,7 +1445,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders[0].pType = ruleParamType;
         rule.placeHolders[0].typeSpecificIndex = typeSpecificIndex;
         rule.placeHolders[1].pType = trackerKeyType;
-        rule.placeHolders[1].trackerValue = true;
+        rule.placeHolders[1].flags = FLAG_TRACKER_VALUE;
         rule.placeHolders[1].typeSpecificIndex = 1;
         rule.placeHolders[1].mappedTrackerKey = abi.encodePacked(trackerKeys[0]);
 
@@ -2269,7 +2274,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         Rule memory rule;
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](1); 
-        rule.placeHolders[0].foreignCall = true;
+        rule.placeHolders[0].flags = FLAG_FOREIGN_CALL;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(_transferValue);
@@ -2312,7 +2317,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         Rule memory rule;
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](1); 
-        rule.placeHolders[0].foreignCall = true;
+        rule.placeHolders[0].flags = FLAG_FOREIGN_CALL;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(_transferValue);
@@ -2350,7 +2355,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         Rule memory rule;
         // Build the foreign call placeholder
         rule.placeHolders = new Placeholder[](1); 
-        rule.placeHolders[0].foreignCall = true;
+        rule.placeHolders[0].flags = FLAG_FOREIGN_CALL;
         rule.placeHolders[0].typeSpecificIndex = 1;
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(_transferValue);

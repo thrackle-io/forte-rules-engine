@@ -83,11 +83,12 @@ struct Placeholder {
     ParamTypes pType;
     // The index in the specific array for the specified type;
     uint128 typeSpecificIndex;
-    /// Determine if the index of value to replace the placeholder is a tracker value
-    bool trackerValue;
-    // Used to determine whether this Placeholder represents the value returned from a foreign call
-    bool foreignCall;
     bytes mappedTrackerKey; 
+    // Packed flags/type:
+    // - Bit 0: foreignCall flag
+    // - Bit 1: trackerValue flag
+    // - Bits 2-4: Global variable type (0-7)
+    uint8 flags; 
 }
 
 /**
