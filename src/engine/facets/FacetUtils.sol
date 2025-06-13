@@ -76,46 +76,24 @@ contract FacetUtils{
     * @return isForeignCall Whether the foreign call flag is set
     * @return globalVarType The global variable type
     */
-    function _extractFlags(Placeholder memory placeholder) internal returns (
+    function _extractFlags(Placeholder memory placeholder) internal pure returns (
         bool isTrackerValue,
         bool isForeignCall,
         uint8 globalVarType
     ) {
-        /*assembly {
-            // Load the flags byte from memory (offset 0x60 from placeholder pointer)
-            let flags := and(mload(add(placeholder, 0x60)), 0xFF)
-        
-            // Check if foreign call bit is set (bit 0)
-            isForeignCall := iszero(iszero(and(flags, 0x01)))  // FLAG_FOREIGN_CALL = 0x01
-        
-            // Check if tracker bit is set (bit 1)
-            isTrackerValue := iszero(iszero(and(flags, 0x02)))  // FLAG_TRACKER_VALUE = 0x02
-        
-            // Extract global var type (bits 2-4)
-            // First AND with mask 0x1C (00011100), then shift right by 2 bits
-            globalVarType := shr(2, and(flags, 0x1C))  // MASK_GLOBAL_VAR = 0x1C, SHIFT_GLOBAL_VAR = 2
-        }*/
         assembly {
             // Load the flags byte from memory (offset 0x60 from placeholder pointer)
             let flags := and(mload(add(placeholder, 0x60)), 0xFF)
-            // Log flags value
-            log1(0, 0, flags)
-
+        
             // Check if foreign call bit is set (bit 0)
             isForeignCall := iszero(iszero(and(flags, 0x01)))  // FLAG_FOREIGN_CALL = 0x01
-            // Log isForeignCall value
-            log1(0, 0, isForeignCall)
-
+        
             // Check if tracker bit is set (bit 1)
             isTrackerValue := iszero(iszero(and(flags, 0x02)))  // FLAG_TRACKER_VALUE = 0x02
-            // Log isTrackerValue value
-            log1(0, 0, isTrackerValue)
-
+        
             // Extract global var type (bits 2-4)
             // First AND with mask 0x1C (00011100), then shift right by 2 bits
             globalVarType := shr(2, and(flags, 0x1C))  // MASK_GLOBAL_VAR = 0x1C, SHIFT_GLOBAL_VAR = 2
-            // Log globalVarType value
-            log1(0, 0, globalVarType)
         }
     }
 }
