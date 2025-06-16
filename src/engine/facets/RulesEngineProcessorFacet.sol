@@ -519,7 +519,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @return pType Parameter type enum value corresponding to the global variable
      */
     function _handleGlobalVar(
-        uint8 globalVarType
+        uint256 globalVarType
     ) internal view returns (bytes memory, ParamTypes pType) {
         if (globalVarType == GLOBAL_MSG_SENDER) {
             return (abi.encode(msg.sender), ParamTypes.ADDR);
