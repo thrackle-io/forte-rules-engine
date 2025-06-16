@@ -13,6 +13,15 @@ import {RulesEngineProcessorLib as ProcessorLib} from "src/engine/facets/RulesEn
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 contract RulesEngineProcessorFacet is FacetCommonImports{
+
+    // Global variable type constants
+    uint8 constant GLOBAL_NONE = 0;
+    uint8 constant GLOBAL_MSG_SENDER = 1;
+    uint8 constant GLOBAL_BLOCK_TIMESTAMP = 2;
+    uint8 constant GLOBAL_MSG_DATA = 3;
+    uint8 constant GLOBAL_BLOCK_NUMBER = 4;
+    uint8 constant GLOBAL_TX_ORIGIN = 5;
+
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
     // Rule Evaluation Functions
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -81,6 +90,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             bytes32 value;
             if (fc.typeSpecificIndices[i] < 0) {
                 typeSpecificIndex = _getAbsoluteAssembly(fc.typeSpecificIndices[i]) - 1; // -1 because retVals is 0 indexed
+
                 isRetVal = true;
                 value = bytes32(retVals[typeSpecificIndex]);
                 if (argType == ParamTypes.STR || argType == ParamTypes.BYTES) {
@@ -102,12 +112,14 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 }
             } else {
                 typeSpecificIndex = _getAbsoluteAssembly(fc.typeSpecificIndices[i]);
+
                 value = bytes32(functionArguments[typeSpecificIndex * 32: (typeSpecificIndex + 1) * 32]);
                 if (argType == ParamTypes.STR || argType == ParamTypes.BYTES) {
                     // Add offset to head
                     uint256 dynamicOffset = 32 * (fc.parameterTypes.length) + lengthToAppend;
                     encodedCall = bytes.concat(encodedCall, bytes32(dynamicOffset));
-                    // Get the dynamic data
+
+                    // Get the dynamic data - this is where our bytes param is failing
                     uint256 length = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
                     uint256 words = 32 + ((length / 32) + 1) * 32;
                     bytes memory dynamicValue = functionArguments[uint(value):uint(value) + words];
@@ -143,9 +155,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         }
 
         bytes memory callData = bytes.concat(encodedCall, dynamicData);
+
         // Place the foreign call
         (bool response, bytes memory data) = fc.foreignCallAddress.call(callData);
-    
 
         // Verify that the foreign call was successful
         if(response) {
@@ -227,40 +239,23 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         } else {
             placeHolders = _rule.placeHolders;
         }       
+
         bytes[] memory retVals = new bytes[](placeHolders.length);
         for(uint256 placeholderIndex = 0; placeholderIndex < placeHolders.length; placeholderIndex++) {
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
             Placeholder memory placeholder = placeHolders[placeholderIndex];
-            if(placeholder.foreignCall) {
-                    ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, _callingFunctionArgs, placeholder.typeSpecificIndex, retVals);
-                    // Set the placeholders value and type based on the value returned by the foreign call
-                    retVals[placeholderIndex] = retVal.value;
-                    placeHolders[placeholderIndex].pType = retVal.pType;
-            } else if (placeholder.trackerValue) {
-                // Load the Tracker data from storage
-                Trackers memory tracker = lib._getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex];
-                retVals[placeholderIndex] = tracker.trackerValue;
-                if (tracker.mapped) {
-                    // if the tracker is a mapped tracker, retrieve the value from the key stored in the tracker 
-                    bytes memory mappedTrackerValue = lib._getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][placeholder.mappedTrackerKey];
-                    retVals[placeholderIndex] = mappedTrackerValue;
-                }
+            
+            // Extract flags using helper function
+            (bool isTrackerValue, bool isForeignCall, uint8 globalVarType) = _extractFlags(placeholder);
+
+            if(globalVarType != GLOBAL_NONE) {
+                (retVals[placeholderIndex], placeHolders[placeholderIndex].pType) = _handleGlobalVar(globalVarType);
+            } else if(isForeignCall) {
+                (retVals[placeholderIndex], placeHolders[placeholderIndex].pType) = _handleForeignCall(_policyId, _callingFunctionArgs, placeholder.typeSpecificIndex, retVals);
+            } else if (isTrackerValue) {
+                retVals[placeholderIndex] = _handleTrackerValue(_policyId, placeholder);
             } else {
-                // The placeholder represents a parameter from the calling function, set the value in the ruleArgs struct to the correct parameter
-                if(placeholder.pType == ParamTypes.STR || placeholder.pType == ParamTypes.BYTES) {
-                    retVals[placeholderIndex] = _getDynamicVariableFromCalldata(_callingFunctionArgs, placeholder.typeSpecificIndex);
-                } else if (placeholder.pType == ParamTypes.STATIC_TYPE_ARRAY || placeholder.pType == ParamTypes.DYNAMIC_TYPE_ARRAY) {
-                    // if the placeholder represents an array, determine the length and set lenth as placeholder value in ruleArgs 
-                    bytes32 value = bytes32(_callingFunctionArgs[placeholder.typeSpecificIndex * 32: (placeholder.typeSpecificIndex + 1) * 32]);
-                    retVals[placeholderIndex] = abi.encode(uint256(bytes32(_callingFunctionArgs[uint(value):uint(value) + 32])));
-                } else {
-                    // since this is not a dynamic value, we can safely assume that it is only 1 word, therefore we multiply
-                    // the typeSpecificIndex by 32 to get the correct position in the callingFunctionArgs array
-                    // and then add 1 and multiply by 32 to get the correct 32 byte word to get the value
-                    retVals[placeholderIndex] = _callingFunctionArgs[
-                        placeholder.typeSpecificIndex * 32: (placeholder.typeSpecificIndex + 1) * 32
-                    ];
-                }
+                retVals[placeholderIndex] = _handleRegularParameter(_callingFunctionArgs, placeholder);
             }
         }
         return (retVals, placeHolders);
@@ -281,6 +276,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         while (idx < _prog.length) {
             uint256 v = 0;
             LogicalOp op = LogicalOp(_prog[idx]);
+
             if(op == LogicalOp.PLH) {
                 // Placeholder format is: get the index of the argument in the array. For example, PLH 0 is the first argument in the arguments array and its type and value
                 uint256 pli = _prog[idx+1];
@@ -486,6 +482,102 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             default { result := _value }
         }
         return result;
+    }
+
+    /**
+     * @notice Processes foreign calls within the rules engine
+     * @dev Internal helper function that delegates to evaluateForeignCalls and extracts the return value and type
+     *      This function is used during rules processing to execute external contract calls
+     *      and retrieve their results for rule evaluation
+     * @param _policyId The unique identifier of the policy associated with the foreign call
+     * @param _callingFunctionArgs Arguments from the original function call, passed to the foreign call as needed
+     * @param typeSpecificIndex Index referencing the specific foreign call configuration to execute
+     * @param retVals Array containing previously computed return values that might be used as inputs for this call
+     * @return value The encoded return data from the foreign call
+     * @return pType The parameter type of the foreign call's return value
+     */
+    function _handleForeignCall(
+        uint256 _policyId, 
+        bytes calldata _callingFunctionArgs, 
+        uint256 typeSpecificIndex, 
+        bytes[] memory retVals
+        ) internal returns (bytes memory value, ParamTypes pType) {
+        ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, _callingFunctionArgs, typeSpecificIndex, retVals);
+        return (retVal.value, retVal.pType);
+    }
+
+    /**
+     * @notice Handles global variables in the rules engine
+     * @dev Internal function that processes global variable types and returns their encoded values with corresponding parameter types
+     * @dev Used to access blockchain context variables like msg.sender, block.timestamp, etc. during rule evaluation
+     * @param globalVarType An uint8 identifier representing which global variable to retrieve
+     *                     - GLOBAL_MSG_SENDER (1): The sender of the current call
+     *                     - GLOBAL_BLOCK_TIMESTAMP (2): Current block timestamp
+     *                     - GLOBAL_MSG_DATA (3): Complete calldata
+     *                     - GLOBAL_BLOCK_NUMBER (4): Current block number
+     *                     - GLOBAL_TX_ORIGIN (5): Original transaction sender
+     * @return bytes Encoded value of the requested global variable
+     * @return pType Parameter type enum value corresponding to the global variable
+     */
+    function _handleGlobalVar(
+        uint256 globalVarType
+    ) internal view returns (bytes memory, ParamTypes pType) {
+        if (globalVarType == GLOBAL_MSG_SENDER) {
+            return (abi.encode(msg.sender), ParamTypes.ADDR);
+        } else if (globalVarType == GLOBAL_BLOCK_TIMESTAMP) {
+            return (abi.encode(block.timestamp), ParamTypes.UINT);
+        } else if (globalVarType == GLOBAL_MSG_DATA) {
+            return (abi.encode(msg.data), ParamTypes.BYTES);
+        } else if (globalVarType == GLOBAL_BLOCK_NUMBER) {
+            return(abi.encode(block.number), ParamTypes.UINT);
+        } else if (globalVarType == GLOBAL_TX_ORIGIN) {
+            return (abi.encode(tx.origin), ParamTypes.ADDR);
+        }
+        else {
+            revert("Invalid global variable type");
+        }
+    }
+
+    /**
+     * @notice Retrieves tracker values from storage based on policy ID and placeholder information
+     * @dev Internal function that fetches either a regular tracker value or a mapped tracker value
+     *      depending on the tracker's configuration. For mapped trackers, it uses the placeholder's
+     *      mappedTrackerKey to fetch the specific value from the mapping.
+     * @param _policyId The unique identifier of the policy containing the tracker
+     * @param placeholder A Placeholder struct containing metadata about the tracker:
+     *                    - typeSpecificIndex: The ID of the tracker within the policy
+     *                    - mappedTrackerKey: The key to use for mapped trackers (ignored for regular trackers)
+     * @return bytes The encoded value of the requested tracker
+     */
+    function _handleTrackerValue(uint256 _policyId, Placeholder memory placeholder) internal view returns (bytes memory) {
+        Trackers memory tracker = lib._getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex];
+        if (tracker.mapped) {
+            return lib._getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][placeholder.mappedTrackerKey];
+        }
+        return tracker.trackerValue;
+    }
+
+    /**
+     * @notice Extracts function parameters from calldata based on placeholder type information
+     * @dev Internal pure function that handles different parameter types and retrieves their values from calldata
+     *      - For dynamic types (strings, bytes): calls _getDynamicVariableFromCalldata to follow offsets
+     *      - For arrays: extracts the length from the offset indicated in calldata
+     *      - For value types: extracts 32 bytes directly from the specified position
+     * @param _callingFunctionArgs The raw calldata containing encoded function arguments
+     * @param placeholder A Placeholder struct containing:
+     *                    - pType: Parameter type enum indicating how to decode the data
+     *                    - typeSpecificIndex: Position in calldata to read from (slot index for value types)
+     * @return bytes The extracted parameter value as bytes (must be decoded according to pType)
+     */
+    function _handleRegularParameter(bytes calldata _callingFunctionArgs, Placeholder memory placeholder) internal pure returns (bytes memory) {
+        if(placeholder.pType == ParamTypes.STR || placeholder.pType == ParamTypes.BYTES) {
+            return _getDynamicVariableFromCalldata(_callingFunctionArgs, placeholder.typeSpecificIndex);
+        } else if (placeholder.pType == ParamTypes.STATIC_TYPE_ARRAY || placeholder.pType == ParamTypes.DYNAMIC_TYPE_ARRAY) {
+            bytes32 value = bytes32(_callingFunctionArgs[placeholder.typeSpecificIndex * 32: (placeholder.typeSpecificIndex + 1) * 32]);
+            return abi.encode(uint256(bytes32(_callingFunctionArgs[uint(value):uint(value) + 32])));
+        } else {
+            return _callingFunctionArgs[placeholder.typeSpecificIndex * 32: (placeholder.typeSpecificIndex + 1) * 32];
+        }
     }
 
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
