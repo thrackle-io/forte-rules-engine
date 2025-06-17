@@ -13,7 +13,8 @@ checksum = "8d9e0a885fa8ee6429a4d344aeb6799119f6a94c7c4fe6f188df79b0dce294ba"
 integrity = "9e60fdba82bc374df80db7f2951faff6467b9091873004a3d314cf0c084b3c7d"
 
 [[dependencies]]
-name = "safe-smart-account"
-version = "v1.4.1"
-git = "git@github.com:safe-global/safe-smart-account.git"
-rev = "21dc82410445637820f600c7399a804ad55841d5"
+name = "safe-global-safe-smart-account"
+version = "1.4.1-3"
+url = "https://soldeer-revisions.s3.amazonaws.com/safe-global-safe-smart-account/1_4_1-3_04-10-2024_19:23:24_safe-global-safe-smart-account-1.4.zip"
+checksum = "c1a19ae2fbc8448d24b1f561f7f93072edf0b628b6acfc46369043131fd4ba93"
+integrity = "036adada50297472c6d8361056a7c8617f28013cb1989b37b389184cd3ca5336"
