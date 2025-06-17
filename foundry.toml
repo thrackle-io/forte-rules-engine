@@ -10,6 +10,7 @@ remappings = [
     "@openzeppelin/=dependencies/@openzeppelin-contracts-5.3.0/",
     "diamond-std/=lib/diamond-std/",
     "forge-std/=dependencies/forge-std-1.9.7/",
+    "safe-smart-account/=dependencies/safe-smart-account-1.1.14/contracts/",
 ]
 
 [soldeer]
@@ -22,5 +23,6 @@ recursive_deps = false
 [dependencies]
 forge-std = "1.9.7"
 "@openzeppelin-contracts" = "5.3.0"
+safe-smart-account = { version = "1.1.14", git = "git@github.com:safe-global/safe-smart-account.git", branch = "main" }
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
