@@ -6,6 +6,8 @@ solc_version = "0.8.28"
 optimize = true
 optimizer_runs = 2000000000
 
+evm_version = "prague"
+
 remappings = [
     "@openzeppelin/=dependencies/@openzeppelin-contracts-5.3.0/",
     "diamond-std/=lib/diamond-std/",
