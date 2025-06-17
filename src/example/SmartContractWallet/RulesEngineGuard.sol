@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Unlicensed
 pragma solidity ^0.8.24;
 
-import "safe-smart-account/libraries/Enum.sol";
+import "safe-smart-account/common/Enum.sol";
 import "safe-smart-account/base/GuardManager.sol";
 import "src/client/RulesEngineClient.sol";
 import "forge-std/src/console.sol";
@@ -42,7 +42,7 @@ import "forge-std/src/console.sol";
  * @title Rules Engine Guard
  * @dev Safe Guard implementation that validates transactions through the Rules Engine
  */
-contract RulesEngineGuard is BaseTransactionGuard, RulesEngineClient {
+contract RulesEngineGuard is BaseGuard, RulesEngineClient {
     
     // ====================================
     // Events
