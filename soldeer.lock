@@ -14,6 +14,6 @@ integrity = "9e60fdba82bc374df80db7f2951faff6467b9091873004a3d314cf0c084b3c7d"
 
 [[dependencies]]
 name = "safe-smart-account"
-version = "1.1.14"
+version = "v1.4.1"
 git = "git@github.com:safe-global/safe-smart-account.git"
-rev = "8ce4fc7554290d8c29cfba4c005b527a35e74519"
+rev = "21dc82410445637820f600c7399a804ad55841d5"
