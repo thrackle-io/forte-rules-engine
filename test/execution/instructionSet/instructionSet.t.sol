@@ -8,7 +8,7 @@ abstract contract instructionSet is RulesEngineCommon {
 /**
  *
  *
- * Execution tests for instruction serts within the rules engine 
+ * Execution tests for instruction sets within the rules engine 
  *
  *
  */
