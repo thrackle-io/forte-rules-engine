@@ -3,9 +3,24 @@ pragma solidity ^0.8.24;
 
 import "forge-std/src/Test.sol";
 import "forge-std/src/console2.sol";
+
 import "test/utils/ForeignCallTestCommon.sol";
+import "test/utils/ExampleUserContractEncoding.sol";
 import "src/utils/DiamondMine.sol";
+
 import "src/engine/facets/RulesEngineComponentFacet.sol";
+import "src/engine/facets/RulesEngineComponentFacet.sol";
+
+import "src/example/ExampleERC20.sol";
+import "src/example/ExampleUserContract.sol";
+import "src/example/ExampleUserOwnableContract.sol";
+import "src/example/ExampleUserAccessControl.sol";
+
+import "src/example/ERC721A/ExampleERC721A.sol";
+import "src/example/ExampleERC721.sol";
+import "src/example/ExampleERC20.sol";
+import "src/example/ExampleERC1155.sol";
+
 
 /**
  * Shared testing logic, set ups, helper functions and global test variables for Rules Engine Testing Framework
@@ -16,6 +31,15 @@ contract RulesEngineCommon is DiamondMine, Test {
     // contract objects 
     ForeignCallTestContract testContract; 
     ForeignCallTestContractOFAC testContract2;
+    ExampleUserContract newUserContract;
+    ExampleUserContract userContract;
+
+    ExampleERC721A userContract721A;
+    ExampleERC721 userContract721;
+    ExampleERC20 userContractERC20;
+    ExampleERC1155 userContract1155;
+
+    
 
     // strings 
     string callingFunction = "transfer(address,uint256)";
@@ -94,6 +118,10 @@ contract RulesEngineCommon is DiamondMine, Test {
     address userContractAddress;
     address newUserContractAddress;
     address userContractExtraParamAddress;
+    address userContract1155Address;
+    address userContract721AAddress;
+    address userContract721Address; 
+    address userContractERC20Address;
 
     //test modifiers 
     modifier ifDeploymentTestsEnabled() {
@@ -2262,7 +2290,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         instructionSet[6] = 1;
     }
 
-    function _setup_checkRule_ForeignCall_Positive(uint256 _transferValue) public ifDeploymentTestsEnabled endWithStopPrank returns(uint256 _policyId) {
+    function _setup_checkRule_ForeignCall_Positive(uint256 _transferValue, address _userContractAddr) public ifDeploymentTestsEnabled endWithStopPrank returns(uint256 _policyId) {
        
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicyOpen();
@@ -2300,11 +2328,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);      
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(_userContractAddr, policyIds);
         return policyIds[0];
     }
 
-    function _setup_checkRule_TransferFrom_ForeignCall_Positive(uint256 _transferValue) public ifDeploymentTestsEnabled endWithStopPrank {
+    function _setup_checkRule_TransferFrom_ForeignCall_Positive(uint256 _transferValue, address _callingContractAddr) public ifDeploymentTestsEnabled endWithStopPrank {
        
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicyOpen();
@@ -2343,10 +2371,10 @@ contract RulesEngineCommon is DiamondMine, Test {
         _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);   
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);    
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(_callingContractAddr, policyIds);
     }
 
-    function _setup_checkRule_ForeignCall_Negative(uint256 _transferValue)  public ifDeploymentTestsEnabled endWithStopPrank {
+    function _setup_checkRule_ForeignCall_Negative(uint256 _transferValue, address _userContractAddr)  public ifDeploymentTestsEnabled endWithStopPrank {
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicy();
         
@@ -2381,7 +2409,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);    
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);   
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(_userContractAddr, policyIds);
     }
 
     function _setUpForeignCallSimple(uint256 _policyId) public ifDeploymentTestsEnabled  returns(ForeignCall memory foreignCall) {
@@ -2412,14 +2440,14 @@ contract RulesEngineCommon is DiamondMine, Test {
         return (fc, foreignCallId); 
     }
 
-    function _switchCallingContractAdminRole(address newAdmin, address userContract) public ifDeploymentTestsEnabled {
+    function _switchCallingContractAdminRole(address newAdmin, address _userContract) public ifDeploymentTestsEnabled {
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
-        RulesEngineAdminRolesFacet(address(red)).proposeNewCallingContractAdmin(newAdmin, userContract); 
+        RulesEngineAdminRolesFacet(address(red)).proposeNewCallingContractAdmin(newAdmin, _userContract); 
 
         vm.stopPrank();
         vm.startPrank(newAdmin);
-        RulesEngineAdminRolesFacet(address(red)).confirmNewCallingContractAdmin(userContract);
+        RulesEngineAdminRolesFacet(address(red)).confirmNewCallingContractAdmin(_userContract);
 
     }
 

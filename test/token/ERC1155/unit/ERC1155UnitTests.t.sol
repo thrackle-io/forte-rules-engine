@@ -7,11 +7,11 @@ contract ERC1155UnitTests is ERC1155UnitTestsCommon {
 
   function setUp() public{
         red = createRulesEngineDiamond(address(0xB0b)); 
-        userContract = new ExampleERC1155("example.uri/");
-        userContractAddress = address(userContract);
-        userContract.setRulesEngineAddress(address(red));
+        userContract1155 = new ExampleERC1155("example.uri/");
+        userContract1155Address = address(userContract1155);
+        userContract1155.setRulesEngineAddress(address(red));
         testContract = new ForeignCallTestContract();
-        userContract.setCallingContractAdmin(callingContractAdmin);
+        userContract1155.setCallingContractAdmin(callingContractAdmin);
         _setupEffectProcessor();    
         vm.startPrank(policyAdmin);    
     }

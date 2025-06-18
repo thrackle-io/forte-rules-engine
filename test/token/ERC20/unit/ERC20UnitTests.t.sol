@@ -9,11 +9,11 @@ contract ERC20UnitTests is ERC20UnitTestsCommon {
 
   function setUp() public{
         red = createRulesEngineDiamond(address(0xB0b)); 
-        userContract = new ExampleERC20("Token Name", "SYMB");
-        userContractAddress = address(userContract);
-        userContract.setRulesEngineAddress(address(red));
+        userContractERC20 = new ExampleERC20("Token Name", "SYMB");
+        userContractERC20Address = address(userContractERC20);
+        userContractERC20.setRulesEngineAddress(address(red));
         testContract = new ForeignCallTestContract();
-        userContract.setCallingContractAdmin(callingContractAdmin);
+        userContractERC20.setCallingContractAdmin(callingContractAdmin);
         _setupEffectProcessor(); 
         vm.startPrank(policyAdmin);       
     }
