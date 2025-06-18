@@ -20,11 +20,6 @@ abstract contract RulesEngineUnitTestsCommon is RulesEngineCommon {
 
     bytes internal testArgs;
 
-    /*uint8 constant FLAG_FOREIGN_CALL = 0x01;
-    uint8 constant FLAG_TRACKER_VALUE = 0x02;
-    uint8 constant SHIFT_GLOBAL_VAR = 2;
-    uint8 constant MASK_GLOBAL_VAR = 0x1C;*/
-
     // Global variable type constants
     uint8 constant GLOBAL_NONE = 0;
     uint8 constant GLOBAL_MSG_SENDER = 1;
