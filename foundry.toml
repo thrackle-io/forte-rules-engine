@@ -6,10 +6,13 @@ solc_version = "0.8.28"
 optimize = true
 optimizer_runs = 2000000000
 
+evm_version = "prague"
+
 remappings = [
     "@openzeppelin/=dependencies/@openzeppelin-contracts-5.3.0/",
     "diamond-std/=lib/diamond-std/",
     "forge-std/=dependencies/forge-std-1.9.7/",
+    "safe-smart-account/=dependencies/safe-global-safe-smart-account-1.4.1-3/contracts",
 ]
 
 [soldeer]
@@ -22,5 +25,6 @@ recursive_deps = false
 [dependencies]
 forge-std = "1.9.7"
 "@openzeppelin-contracts" = "5.3.0"
+safe-global-safe-smart-account = "1.4.1-3"
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
