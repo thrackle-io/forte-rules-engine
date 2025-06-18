@@ -1,0 +1,484 @@
+/// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.24;
+
+import "test/utils/RulesEngineCommon.t.sol";
+
+abstract contract adminRoles is RulesEngineCommon {
+
+    /**
+    *
+    *
+    * Validation tests for the admin roles within the rules engine 
+    *
+    *
+    */
+
+    // Create, Renounce, Revoke Admin Roles: Policy Admin 
+    function testRulesEngine_unit_adminRoles_GeneratePolicyAdminRole_ThroughRulesEngine()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        // policy admin role bytes string for policy 0: 0x35f49fd04fdc3104e07cf8040d0ede098e2a5ac11af26093ebea3a88e5ef9e2c
+        vm.startPrank(policyAdmin);
+        _createBlankPolicyWithAdminRoleString();
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(1, policyAdmin);
+        assertTrue(hasAdminRole);
+    }
+
+    function testRulesEngine_unit_adminRoles_GeneratePolicyAdminRole_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
+        assertFalse(hasAdminRole);
+        vm.expectRevert("Not Policy Admin");
+        RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID);
+    }
+
+    function testRulesEngine_unit_adminRoles_ProposedPolicyAdminRole_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicyWithAdminRoleString();
+        vm.expectEmit(true, true, false, false);
+        emit PolicyAdminRoleProposed(newPolicyAdmin, policyID);
+        RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID);
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        vm.expectEmit(true, true, false, false);
+        emit PolicyAdminRoleConfirmed(newPolicyAdmin, policyID);
+        RulesEngineAdminRolesFacet(address(red)).confirmNewPolicyAdmin(policyID);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(1, newPolicyAdmin);
+        assertTrue(hasAdminRole);
+    }
+
+    function testRulesEngine_unit_adminRoles_ProposedPolicyAdminRole_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicyWithAdminRoleString();
+        RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID);
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        vm.expectRevert("Not Policy Admin");
+        RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID);
+    }
+
+    function testRulesEngine_unit_adminRoles_RevokePolicyAdminRole_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyId = _createBlankPolicyWithAdminRoleString();
+        bytes32 adminRole = bytes32(
+            abi.encodePacked(
+                keccak256(
+                    bytes(string.concat(string(abi.encode(1)), "TestString"))
+                )
+            )
+        );
+        vm.expectRevert("Below Min Admin Threshold");
+        RulesEngineAdminRolesFacet(address(red)).revokeRole(adminRole, policyAdmin, policyId);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(1, policyAdmin);
+        assertTrue(hasAdminRole);
+    }
+
+    function testRulesEngine_unit_adminRoles_RenouncePolicyAdminRole_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyId = _createBlankPolicyWithAdminRoleString();
+        bytes32 adminRole = bytes32(
+            abi.encodePacked(
+                keccak256(
+                    bytes(string.concat(string(abi.encode(1)), "TestString"))
+                )
+            )
+        );
+        vm.expectRevert("Below Min Admin Threshold");
+        RulesEngineAdminRolesFacet(address(red)).renounceRole(adminRole, policyAdmin, 
+            policyId);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(1, policyAdmin);
+        assertTrue(hasAdminRole);
+    }
+
+    // Create, Renounce, Revoke Admin Roles: Calling Contract Admin
+    function testRulesEngine_Unit_CreateCallingContractAdmin_ThroughCallingContract_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.expectEmit(true, true, false, false);
+        emit CallingContractAdminRoleGranted(newUserContractAddress, callingContractAdmin); 
+        newUserContract.setCallingContractAdmin(callingContractAdmin);
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(newUserContractAddress, callingContractAdmin));
+    }
+
+    function testRulesEngine_Unit_CreateCallingContractAdmin_ThroughCallingContract_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        newUserContract.setCallingContractAdmin(policyAdmin);
+        assertFalse(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(newUserContractAddress, callingContractAdmin));
+    }
+
+        function testRulesEngine_Unit_ProposeAndConfirm_CallingContractAdmin_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
+        newUserContract.setCallingContractAdmin(callingContractAdmin);
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(newUserContractAddress, callingContractAdmin));
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        RulesEngineAdminRolesFacet(address(red)).proposeNewCallingContractAdmin(newUserContractAddress, user1);
+        vm.stopPrank();
+        vm.startPrank(user1);
+        RulesEngineAdminRolesFacet(address(red)).confirmNewCallingContractAdmin(newUserContractAddress); 
+
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(newUserContractAddress, user1));
+        assertFalse(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(newUserContractAddress, callingContractAdmin));
+    }
+
+    function testRulesEngine_Unit_ProposeAndConfirm_CallingContractAdmin_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        newUserContract.setCallingContractAdmin(callingContractAdmin);
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(newUserContractAddress, callingContractAdmin));
+        vm.stopPrank();
+        vm.startPrank(user1);
+        vm.expectRevert("Not Calling Contract Admin");
+        RulesEngineAdminRolesFacet(address(red)).proposeNewCallingContractAdmin(newUserContractAddress, user1);
+    }
+
+    function testRulesEngine_Unit_CreateCallingContractAdmin_ThroughEngineOwnable_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        ExampleUserOwnableContract ownableUserContract = new ExampleUserOwnableContract(callingContractAdmin);
+        address ownableUserContractAddress = address(ownableUserContract);
+        ownableUserContract.setRulesEngineAddress(address(red));
+        vm.expectEmit(true, true, false, false);
+        emit CallingContractAdminRoleGranted(ownableUserContractAddress, callingContractAdmin); 
+        RulesEngineAdminRolesFacet(address(red)).grantCallingContractRoleOwnable(ownableUserContractAddress, callingContractAdmin);
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(ownableUserContractAddress, callingContractAdmin));
+    }
+
+    function testRulesEngine_Unit_CreateCallingContractAdmin_ThroughEngineOwnable_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        ExampleUserOwnableContract ownableUserContract = new ExampleUserOwnableContract(policyAdmin);
+        address ownableUserContractAddress = address(ownableUserContract);
+        ownableUserContract.setRulesEngineAddress(address(red));
+        vm.expectRevert("Calling Contract Admin Role Not Granted From Calling Contract");
+        RulesEngineAdminRolesFacet(address(red)).grantCallingContractRoleOwnable(ownableUserContractAddress, callingContractAdmin);
+        assertFalse(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(ownableUserContractAddress, callingContractAdmin));
+    }
+
+    function testRulesEngine_Unit_CreateCallingContractAdmin_ThroughEngine_NonSupportedType_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        ExampleUserOwnableContract ownableUserContract = new ExampleUserOwnableContract(policyAdmin);
+        address ownableUserContractAddress = address(ownableUserContract);
+        ownableUserContract.setRulesEngineAddress(address(red));
+        vm.expectRevert(); // results in evmError: revert since the function is not inside contract 
+        RulesEngineAdminRolesFacet(address(red)).grantCallingContractRoleAccessControl(ownableUserContractAddress, callingContractAdmin);
+        assertFalse(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(ownableUserContractAddress, callingContractAdmin));
+    }
+
+    function testRulesEngine_Unit_CreateCallingContractAdmin_ThroughEngineAccessControl_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        ExampleUserAccessControl acUserContract = new ExampleUserAccessControl(callingContractAdmin);
+        address acUserContractAddress = address(acUserContract);
+        acUserContract.setRulesEngineAddress(address(red));
+        vm.expectEmit(true, true, false, false);
+        emit CallingContractAdminRoleGranted(acUserContractAddress, callingContractAdmin); 
+        RulesEngineAdminRolesFacet(address(red)).grantCallingContractRoleAccessControl(acUserContractAddress, callingContractAdmin);
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(acUserContractAddress, callingContractAdmin));
+    }
+
+    function testRulesEngine_Unit_CreateCallingContractAdmin_ThroughEngineAccessControl_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        ExampleUserAccessControl acUserContract = new ExampleUserAccessControl(policyAdmin);
+        address acUserContractAddress = address(acUserContract);
+        acUserContract.setRulesEngineAddress(address(red));
+        vm.expectRevert("Calling Contract Admin Role Not Granted From Calling Contract");
+        RulesEngineAdminRolesFacet(address(red)).grantCallingContractRoleAccessControl(acUserContractAddress, callingContractAdmin);
+        assertFalse(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(acUserContractAddress, callingContractAdmin));
+    }
+
+
+    // Rules Engine CRUD Functions 
+
+    // CRUD: Trackers 
+    function testRulesEngine_unit_adminRoles_CreateTracker_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = ParamTypes.ADDR;
+
+        RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
+    }
+
+    function testRulesEngine_unit_adminRoles_CreateTracker_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
+        assertFalse(hasAdminRole);
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = ParamTypes.ADDR;
+
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
+    }
+
+    function testRulesEngine_unit_adminRoles_UpdateTracker_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = ParamTypes.ADDR;
+
+        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
+
+        tracker.trackerValue = abi.encode(address(userContractAddress));
+        RulesEngineComponentFacet(address(red)).updateTracker(policyID, trackerId, tracker);
+    }
+
+    function testRulesEngine_unit_adminRoles_UpdateTracker_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = ParamTypes.ADDR;
+        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
+        assertFalse(hasAdminRole);
+        tracker.trackerValue = abi.encode(address(userContractAddress));
+        tracker.pType = ParamTypes.ADDR;
+
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).updateTracker(policyID, trackerId, tracker);
+    }
+
+    function testRulesEngine_unit_adminRoles_DeleteTracker_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = ParamTypes.ADDR;
+        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+        RulesEngineComponentFacet(address(red)).deleteTracker(policyID, trackerId);
+
+        tracker = RulesEngineComponentFacet(address(red)).getTracker(policyID, trackerId);
+        assertEq(tracker.set, false);
+        assertEq(uint8(tracker.pType), uint8(ParamTypes.ADDR));
+        assertEq(tracker.trackerValue, bytes(""));
+    }
+
+    function testRulesEngine_unit_adminRoles_DeleteTracker_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = ParamTypes.ADDR;
+        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trkName");
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
+        assertFalse(hasAdminRole);
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).deleteTracker(policyID, trackerId);
+    }
+
+
+    // CRUD: Foreign Calls 
+    function testRulesEngine_unit_adminRoles_CreateForeignCall_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+        _setUpForeignCallSimple(policyID);
+    }
+
+    function testRulesEngine_unit_adminRoles_CreateForeignCall_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
+        assertFalse(hasAdminRole);
+
+        vm.expectRevert("Not Authorized To Policy");
+        _setUpForeignCallSimple(policyID);
+    }
+
+    function testRulesEngine_unit_adminRoles_UpdateForeignCall_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+        ForeignCall memory fc;
+        fc = _setUpForeignCallSimple(policyID);
+
+        uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyID, fc, "simpleCheck(uint256)");
+        fc.foreignCallAddress = address(userContractAddress);
+        RulesEngineComponentFacet(address(red)).updateForeignCall(policyID, foreignCallId, fc);
+    }
+
+    function testRulesEngine_unit_adminRoles_UpdateForeignCall_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        uint256 foreignCallId;
+        ForeignCall memory fc;
+        (fc, foreignCallId) = _setUpForeignCallSimpleReturnID(policyID);
+
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
+        assertFalse(hasAdminRole);
+        fc.foreignCallAddress = address(userContractAddress);
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).updateForeignCall(policyID, foreignCallId, fc);
+    }
+    
+    function testRulesEngine_unit_adminRoles_DeleteForeignCall_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        uint256 foreignCallId;
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+
+        ForeignCall memory fc;
+        (fc, foreignCallId) = _setUpForeignCallSimpleReturnID(policyID);
+        RulesEngineComponentFacet(address(red)).deleteForeignCall(policyID, foreignCallId);
+
+        ForeignCall memory fc2 = RulesEngineComponentFacet(address(red)).getForeignCall(policyID, foreignCallId);
+        assertEq(fc2.set, false);
+        assertEq(fc2.foreignCallAddress, address(0));
+        assertEq(fc2.signature, bytes4(0));
+        assertEq(fc2.parameterTypes.length, 0);
+        assertEq(fc2.typeSpecificIndices.length, 0);
+        assertEq(uint8(fc2.returnType), uint8(ParamTypes.ADDR));
+        assertEq(fc2.foreignCallIndex, 0);
+    }
+
+    function testRulesEngine_unit_adminRoles_DeleteForeignCall_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        uint256 foreignCallId;
+        ForeignCall memory fc;
+        (fc, foreignCallId) = _setUpForeignCallSimpleReturnID(policyID);
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, newPolicyAdmin);
+        assertFalse(hasAdminRole);
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).deleteForeignCall(policyID, foreignCallId);
+    }
+
+    function testRulesEngine_unit_adminRoles_UpdateForeignCall_Event() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        ForeignCall memory fc;
+        fc = _setUpForeignCallSimple(policyID);
+        uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyID, fc, "simpleCheck(uint256)");
+        fc.foreignCallAddress = address(userContractAddress);
+        vm.expectEmit(true, false, false, false);
+        emit ForeignCallUpdated(policyID, foreignCallId);
+        RulesEngineComponentFacet(address(red)).updateForeignCall(policyID, foreignCallId, fc);
+    }
+
+    function testRulesEngine_unit_adminRoles_DeleteForeignCall_Event() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        uint256 foreignCallId;
+        ForeignCall memory fc;
+        (fc, foreignCallId) = _setUpForeignCallSimpleReturnID(policyID);
+        vm.expectEmit(true, false, false, false);
+        emit ForeignCallDeleted(policyID, foreignCallId);
+        RulesEngineComponentFacet(address(red)).deleteForeignCall(policyID, foreignCallId);
+    }
+
+    // CRUD: Rules
+    function testRulesEngine_Unit_UpdateRule_NotPolicyAdmin() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.startPrank(policyAdmin);
+        uint256 policyId = setupEffectWithTrackerUpdateUint();
+        Rule memory rule;
+        // Change to non policy admin user
+        vm.startPrank(user1);
+        vm.expectRevert("Not Authorized To Policy");
+        // Attempt to Save the rule
+        RulesEngineRuleFacet(address(red)).updateRule(policyId, 0, rule);
+    }
+
+    function test_GrantCallingContractRole() public ifDeploymentTestsEnabled{
+        vm.startPrank(address(0x1337));
+        vm.expectRevert("Only Calling Contract Can Create Admin");
+        RulesEngineAdminRolesFacet(address(red)).grantCallingContractRole(address(0x1337), callingContractAdmin);
+    }
+
+
+}

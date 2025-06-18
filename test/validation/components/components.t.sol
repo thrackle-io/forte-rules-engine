@@ -1,0 +1,612 @@
+/// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.24;
+
+import "test/utils/RulesEngineCommon.t.sol";
+
+abstract contract components is RulesEngineCommon {
+    /**
+    *
+    *
+    * Validation tests for components of rules and policies within the rules engine 
+    * Validate CRUD operations for Trackers, Foreign Calls and Calling Functions 
+    *
+    */
+
+    // CRUD Functions: Compnents  
+
+    // CRUD: Calling Functions
+    //Create Calling Functions 
+    function testRulesEngine_Unit_createCallingFunction_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+        uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
+        assertEq(callingFunctionId, 1);
+        CallingFunctionStorageSet memory sig = RulesEngineComponentFacet(address(red)).getCallingFunction(policyId, callingFunctionId);
+        assertEq(sig.set, true);
+        assertEq(sig.signature, bytes4(keccak256(bytes(callingFunction))));
+        assertEq(uint8(sig.parameterTypes[0]), uint8(ParamTypes.ADDR));
+        assertEq(uint8(sig.parameterTypes[1]), uint8(ParamTypes.UINT));
+    }
+
+    function testRulesEngine_Unit_createCallingFunction_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        vm.startPrank(newPolicyAdmin);
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).createCallingFunction(policyId, 
+            bytes4(keccak256(bytes(callingFunction))), 
+            pTypes,
+            callingFunction,
+            "");
+    }
+
+    function testRulesEngine_Unit_createCallingFunction_Negative_CementedPolicy()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyID = _createBlankPolicy();
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        RulesEnginePolicyFacet(address(red)).cementPolicy(policyID);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineComponentFacet(address(red)).createCallingFunction(
+            policyID, 
+            bytes4(keccak256(bytes(callingFunction))), 
+            pTypes,
+            callingFunction,
+            "");
+    }
+
+    function testRulesEngine_Unit_createCallingFunction_Event() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        uint256 callingFunctionId = 1;
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        vm.expectEmit(true, false, false, false);
+        emit CallingFunctionCreated(policyId, callingFunctionId);
+        RulesEngineComponentFacet(address(red)).createCallingFunction(
+            policyId, 
+            bytes4(bytes4(keccak256(bytes(callingFunction)))), 
+            pTypes,
+            callingFunction,
+            ""
+        );
+    }
+
+    // Update Calling Functions 
+    function testRulesEngine_Unit_updateCallingFunction_Negative_NewParameterTypesNotSameLength()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+        uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
+        ParamTypes[] memory pTypes2 = new ParamTypes[](1);
+        pTypes2[0] = ParamTypes.ADDR;
+        vm.expectRevert("New parameter types must be of greater or equal length to the original");
+        RulesEngineComponentFacet(address(red)).updateCallingFunction(policyId, callingFunctionId, bytes4(keccak256(bytes(callingFunction))), pTypes2);
+    }
+
+    function testRulesEngine_Unit_updateCallingFunction_Negative_NewParameterTypesNotSameType()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+        uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
+        ParamTypes[] memory pTypes2 = new ParamTypes[](2);
+        pTypes2[0] = ParamTypes.UINT;
+        pTypes2[1] = ParamTypes.UINT;
+        vm.expectRevert("New parameter types must be of the same type as the original");
+        RulesEngineComponentFacet(address(red)).updateCallingFunction(policyId, callingFunctionId, bytes4(keccak256(bytes(callingFunction))), pTypes2);
+    }
+
+    function testRulesEngine_Unit_updateCallingFunction_Negative_NewCallingFunctionNotSame()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
+        vm.expectRevert("Delete calling function before updating to a new one");
+        RulesEngineComponentFacet(address(red)).updateCallingFunction(policyId, callingFunctionId, bytes4(keccak256(bytes(callingFunction2))), pTypes);
+    }
+
+    function testRulesEngine_Unit_updateCallingFunction_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
+        vm.startPrank(newPolicyAdmin);
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).updateCallingFunction(policyId, callingFunctionId, bytes4(keccak256(bytes(callingFunction2))), pTypes);
+    }
+
+    function testRulesEngine_Unit_updateCallingFunctionWithRuleCheck_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        // create rule and set rule to user contract 
+        setUpRuleSimple();
+        // test rule works for user contract 
+        bool response = userContract.transfer(address(0x7654321), 47);
+        assertTrue(response);
+        // create pTypes array for new contract + new transfer function 
+        ParamTypes[] memory pTypes = new ParamTypes[](3);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.ADDR;
+        CallingFunctionStorageSet memory sig = RulesEngineComponentFacet(address(red)).getCallingFunction(1, 1);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
+        RulesEngineComponentFacet(address(red)).updateCallingFunction(1, 1, bytes4(keccak256(bytes(callingFunction))), pTypes);
+        assertEq(sig.set, true);
+        // ensure orignal contract rule check works 
+        bool ruleCheck = userContract.transfer(address(0x7654321), 47);
+        assertTrue(ruleCheck);
+        // test new contract rule check works 
+        bool secondRuleCheck = userContract.transfer(address(0x7654321), 47);
+        assertTrue(secondRuleCheck);
+    }
+
+    function testRulesEngine_Unit_updateCallingFunctionWithRuleCheck_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        // create rule and set rule to user contract 
+        setUpRuleSimple();
+        // test rule works for user contract 
+        bool response = userContract.transfer(address(0x7654321), 3);
+        assertFalse(response);
+        // create pTypes array for new contract + new transfer function 
+        ParamTypes[] memory pTypes = new ParamTypes[](3);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.ADDR;
+        CallingFunctionStorageSet memory sig = RulesEngineComponentFacet(address(red)).getCallingFunction(1, 1);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
+        RulesEngineComponentFacet(address(red)).updateCallingFunction(1, 1, bytes4(keccak256(bytes(callingFunction))), pTypes);
+        assertEq(sig.set, true);
+        // ensure orignal contract rule check works 
+        bool ruleCheck = userContract.transfer(address(0x7654321), 3);
+        assertFalse(ruleCheck);
+        // test new contract rule check works 
+        bool secondRuleCheck = userContract.transfer(address(0x7654321), 3);
+        assertFalse(secondRuleCheck);
+    }
+
+    function testRulesEngine_Unit_updateCallingFunction_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+        uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
+        ParamTypes[] memory pTypes2 = new ParamTypes[](4);
+        pTypes2[0] = ParamTypes.ADDR;
+        pTypes2[1] = ParamTypes.UINT;
+        pTypes2[2] = ParamTypes.ADDR;
+        pTypes2[3] = ParamTypes.UINT;
+        RulesEngineComponentFacet(address(red)).updateCallingFunction(policyId, callingFunctionId, bytes4(keccak256(bytes(callingFunction))), pTypes2);
+        CallingFunctionStorageSet memory sig = RulesEngineComponentFacet(address(red)).getCallingFunction(policyId, callingFunctionId);
+        assertEq(sig.set, true);
+        assertEq(sig.signature, bytes4(keccak256(bytes(callingFunction))));
+        for (uint256 i = 0; i < pTypes2.length; i++) {
+            assertEq(uint8(sig.parameterTypes[i]), uint8(pTypes2[i]));
+        }
+    }
+
+    function testRulesEngine_Unit_updateCallingFunction_Negative_CementedPolicy()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        // create rule and set rule to user contract 
+        (uint256 policyID, uint256 ruleID) = setUpRuleSimple();
+        ruleID;
+        RulesEngineComponentFacet(address(red)).getCallingFunction(1, 1);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
+        RulesEnginePolicyFacet(address(red)).cementPolicy(policyID);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineComponentFacet(address(red)).updateCallingFunction(1, 1, bytes4(keccak256(bytes(callingFunction))), new ParamTypes[](3));
+    }
+
+    function testRulesEngine_Unit_updateCallingFunction_Event() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
+        ParamTypes[] memory pTypes2 = new ParamTypes[](4);
+        pTypes2[0] = ParamTypes.ADDR;
+        pTypes2[1] = ParamTypes.UINT;
+        pTypes2[2] = ParamTypes.ADDR;
+        pTypes2[3] = ParamTypes.UINT;
+        vm.expectEmit(true, false, false, false);
+        emit CallingFunctionUpdated(policyId, callingFunctionId);
+        RulesEngineComponentFacet(address(red)).updateCallingFunction(policyId, callingFunctionId, bytes4(keccak256(bytes(callingFunction))), pTypes2);
+    }
+
+    // Delete Calling Functions
+
+    function testRulesEngine_Unit_deleteCallingFunction_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
+        assertEq(callingFunctionId, 1);
+        CallingFunctionStorageSet memory matchingCallingFunction = RulesEngineComponentFacet(address(red)).getCallingFunction(policyId, callingFunctionId);
+        assertEq(matchingCallingFunction.signature, bytes4(keccak256(bytes(callingFunction))));
+
+        RulesEngineComponentFacet(address(red)).deleteCallingFunction(policyId, callingFunctionId); 
+        CallingFunctionStorageSet memory cf = RulesEngineComponentFacet(address(red)).getCallingFunction(policyId, callingFunctionId);
+        assertEq(cf.set, false);
+        assertEq(cf.signature, bytes4(""));
+    }
+
+    function testRulesEngine_Unit_deleteCallingFunctionMultiple_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory _callingFunctions;
+        uint256[] memory _callingFunctionIds;
+        uint256[][] memory _ruleIds;
+        // This test does not utilize helper _addCallingFunctionToPolicy(policyId) because it needs to individually set the function callingFunctions for deletion 
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
+            policyId, 
+            bytes4(keccak256(bytes(callingFunction))), 
+            pTypes,
+            callingFunction,
+            ""
+        );
+        assertEq(callingFunctionId, 1);
+        uint256 callingFunctionId2 = RulesEngineComponentFacet(address(red)).createCallingFunction(
+            policyId, 
+            bytes4(keccak256(bytes(callingFunction2))), 
+            pTypes,
+            callingFunction2,
+            ""
+        );
+        assertEq(callingFunctionId2, 2);
+        CallingFunctionStorageSet memory matchingCallingFunction = RulesEngineComponentFacet(address(red)).getCallingFunction(policyId, callingFunctionId);
+        assertEq(matchingCallingFunction.signature, bytes4(keccak256(bytes(callingFunction))));
+
+        CallingFunctionStorageSet memory matchingCallingFunction2 = RulesEngineComponentFacet(address(red)).getCallingFunction(policyId, callingFunctionId2);
+        assertEq(matchingCallingFunction2.signature, bytes4(keccak256(bytes(callingFunction2))));
+
+        RulesEngineComponentFacet(address(red)).deleteCallingFunction(policyId, callingFunctionId); 
+        CallingFunctionStorageSet memory cf = RulesEngineComponentFacet(address(red)).getCallingFunction(policyId, callingFunctionId);
+        assertEq(cf.set, false);
+        assertEq(cf.signature, bytes4(""));
+
+        CallingFunctionStorageSet memory matchingCallingFunction3 = RulesEngineComponentFacet(address(red)).getCallingFunction(policyId, callingFunctionId2);
+        assertEq(matchingCallingFunction3.signature, bytes4(keccak256(bytes(callingFunction2))));
+
+        //check that policy callingFunctions array is resized to 1 
+        (_callingFunctions, _callingFunctionIds, _ruleIds) = RulesEnginePolicyFacet(address(red)).getPolicy(policyId);
+        assertEq(_callingFunctions.length, 1);
+        assertEq(_callingFunctions[0], bytes4(keccak256(bytes(callingFunction2))));
+
+    }
+
+    function testRulesEngine_Unit_deleteCallingFunction_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
+        assertEq(callingFunctionId, 1);
+
+        vm.startPrank(newPolicyAdmin);
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).deleteCallingFunction(policyId, callingFunctionId); 
+    }
+
+    function testRulesEngine_Unit_deleteCallingFunctionWithRuleCheck_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        // create rule and set rule to user contract 
+        setupRuleWithoutForeignCall();
+        // test rule works for user contract 
+        bool response = userContract.transfer(address(0x7654321), 3);
+        assertFalse(response);
+        // create pTypes array for new contract + new transfer function 
+        ParamTypes[] memory pTypes = new ParamTypes[](3);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.ADDR;
+        RulesEngineComponentFacet(address(red)).getCallingFunction(1, 0);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
+        RulesEngineComponentFacet(address(red)).deleteCallingFunction(1, 1); 
+        // test that rule no longer checks 
+        bool ruleCheck = userContract.transfer(address(0x7654321), 3);
+        assertTrue(ruleCheck);
+    }
+
+    function testRulesEngine_Unit_deleteCallingFunction_Negative_CementedPolicy()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
+        assertEq(callingFunctionId, 1);
+        CallingFunctionStorageSet memory matchingCallingFunction = RulesEngineComponentFacet(address(red)).getCallingFunction(policyId, callingFunctionId);
+        assertEq(matchingCallingFunction.signature, bytes4(keccak256(bytes(callingFunction))));
+
+        RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineComponentFacet(address(red)).deleteCallingFunction(policyId, callingFunctionId); 
+    }
+
+    function testRulesEngine_Unit_deleteCallingFunction_Event() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        uint256 callingFunctionId = _addCallingFunctionToPolicy(policyId);
+        vm.expectEmit(true, false, false, false);
+        emit CallingFunctionDeleted(policyId, callingFunctionId);
+        RulesEngineComponentFacet(address(red)).deleteCallingFunction(policyId, callingFunctionId); 
+
+    }
+
+
+    // CRUD: Foreign Calls
+    // Create Foreign Calls
+    function testRulesEngine_Unit_CreateForeignCall_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory blankcallingFunctions = new bytes4[](0);
+        uint256[] memory blankcallingFunctionIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyId, blankcallingFunctions, blankcallingFunctionIds, blankRuleIds, PolicyType.OPEN_POLICY);
+        RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
+
+        ForeignCall memory fc;
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineComponentFacet(address(red)).createForeignCall(policyId, fc, "simpleCheck(uint256)");
+    }
+
+    function testRulesEngine_unit_CreateForeignCall_Event() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        uint256 foreignCallId = 1; 
+        ForeignCall memory fc;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.parameterTypes = new ParamTypes[](1);
+        fc.parameterTypes[0] = ParamTypes.UINT;
+        fc.typeSpecificIndices = new int8[](1);
+        fc.typeSpecificIndices[0] = 1;
+        fc.returnType = ParamTypes.UINT;
+        fc.foreignCallIndex = 0;
+        vm.expectEmit(true, false, false, false);
+        emit ForeignCallCreated(policyID, foreignCallId);
+        RulesEngineComponentFacet(address(red)).createForeignCall(policyID, fc, "simpleCheck(uint256)");
+    }
+
+    // Update Foreign Calls
+    function testRulesEngine_unit_UpdateForeignCall_Negative_CementedPolicy()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        ForeignCall memory fc;
+        fc = _setUpForeignCallSimple(policyID);
+
+        uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyID, fc, "simpleCheck(uint256)");
+        fc.foreignCallAddress = address(userContractAddress);
+        RulesEnginePolicyFacet(address(red)).cementPolicy(policyID);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineComponentFacet(address(red)).updateForeignCall(policyID, foreignCallId, fc);
+    }
+
+    // Delete Foreign Calls
+    function testRulesEngine_Unit_DeleteForeignCall_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
+
+        // set up the ERC20
+        uint256 policyId = _setup_checkRule_ForeignCall_Positive(ruleValue, userContractAddress);
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
+        RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineComponentFacet(address(red)).deleteForeignCall(policyId,0);
+    }
+
+    // Get Foreign Calls
+    function testRulesEngine_Unit_GetAllForeignCallsTest()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+        for (uint256 i = 0; i < 10; i++) {
+            _setUpForeignCallSimpleReturnID(policyId);
+        }
+        
+        ForeignCall[] memory foreignCalls = RulesEngineComponentFacet(address(red)).getAllForeignCalls(policyId);
+        assertEq(foreignCalls.length, 10);
+        RulesEngineComponentFacet(address(red)).deleteForeignCall(policyId, 3);
+
+        foreignCalls = RulesEngineComponentFacet(address(red)).getAllForeignCalls(policyId);
+        assertEq(foreignCalls.length, 10);
+
+        for (uint256 i = 0; i < foreignCalls.length - 1; i++) {
+            if (i >= 2) {
+                assertEq(foreignCalls[i].foreignCallIndex, i + 2);
+            } else {
+                assertEq(foreignCalls[i].foreignCallIndex, i + 1);
+            }
+        }
+    }
+
+
+
+    // CRUD: Trackers 
+    // Create Trackers
+    function testRulesEngine_unit_CreateTracker_Negative_CementedPolicy()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = ParamTypes.ADDR;
+        RulesEnginePolicyFacet(address(red)).cementPolicy(policyID);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
+    }
+
+    function testRulesEngine_unit_CreateTracker_Event() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, policyAdmin);
+        uint256 trackerId = 1;
+        assertTrue(hasAdminRole);
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = ParamTypes.ADDR;
+        vm.expectEmit(true, false, false, false);
+        emit TrackerCreated(policyID, trackerId);
+        RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
+    }
+
+
+    // Get Trackers 
+    function testRulesEngine_Unit_GetTrackerValue()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = setupRuleWithTracker(2);
+        bool retVal = userContract.transfer(address(0x7654321), 3);
+        assertTrue(retVal);
+        Trackers memory testTracker = RulesEngineComponentFacet(address(red)).getTracker(policyId, 1);
+        assertTrue(abi.decode(testTracker.trackerValue, (uint256)) == 2);
+        assertFalse(abi.decode(testTracker.trackerValue, (uint256)) == 3);
+    }
+
+    function testRulesEngine_Unit_GetAllTrackersTest()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+
+        for (uint256 i = 0; i < 10; i++) {
+            Trackers memory tracker;
+            tracker.trackerValue = abi.encode(uint256(i));
+            tracker.pType = ParamTypes.UINT;
+            RulesEngineComponentFacet(address(red)).createTracker(policyId, tracker, "trName");
+        }
+
+        Trackers[] memory trackers = RulesEngineComponentFacet(address(red)).getAllTrackers(policyId);
+        assertEq(trackers.length, 10);
+        RulesEngineComponentFacet(address(red)).deleteTracker(policyId, 3);
+
+        trackers = RulesEngineComponentFacet(address(red)).getAllTrackers(policyId);
+        assertEq(trackers.length, 10);
+        for (uint256 i = 0; i < trackers.length - 1; i++) {
+            if (i >= 2) {
+                assertEq(trackers[i].trackerValue, abi.encode(uint256(i + 1)));
+            } else {
+                assertEq(trackers[i].trackerValue, abi.encode(uint256(i)));
+            }
+        }
+    }
+
+    // Update Trackers
+    function testRulesEngine_unit_UpdateTracker_Event() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = ParamTypes.ADDR;
+        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
+        tracker.trackerValue = abi.encode(address(userContractAddress));
+        vm.expectEmit(true, false, false, false);
+        emit TrackerUpdated(policyID, trackerId);
+        RulesEngineComponentFacet(address(red)).updateTracker(policyID, trackerId, tracker);
+    }
+
+    // Delete Trackers
+    function testRulesEngine_unit_DeleteTracker_Negative_CementedPolicy()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = ParamTypes.ADDR;
+        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
+        RulesEnginePolicyFacet(address(red)).cementPolicy(policyID);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineComponentFacet(address(red)).deleteTracker(policyID, trackerId);
+    }
+
+    function testRulesEngine_unit_DeleteTracker_Event() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = ParamTypes.ADDR;
+        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
+
+        vm.expectEmit(true, false, false, false);
+        emit TrackerDeleted(policyID, trackerId);
+        RulesEngineComponentFacet(address(red)).deleteTracker(policyID, trackerId);
+    }
+}

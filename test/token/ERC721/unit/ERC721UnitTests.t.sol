@@ -9,11 +9,11 @@ contract ERC721UnitTests is ERC721UnitTestsCommon {
 
   function setUp() public{
         red = createRulesEngineDiamond(address(0xB0b)); 
-        userContract = new ExampleERC721("Token Name", "SYMB");
-        userContractAddress = address(userContract);
-        userContract.setRulesEngineAddress(address(red));
+        userContract721 = new ExampleERC721("Token Name", "SYMB");
+        userContract721Address = address(userContract721);
+        userContract721.setRulesEngineAddress(address(red));
         testContract = new ForeignCallTestContract();
-        userContract.setCallingContractAdmin(callingContractAdmin);
+        userContract721.setCallingContractAdmin(callingContractAdmin);
         _setupEffectProcessor();    
         vm.startPrank(policyAdmin);    
     }

@@ -2,14 +2,19 @@
 pragma solidity ^0.8.24;
 
 import "test/utils/RulesEngineCommon.t.sol";
-import "src/engine/facets/RulesEngineComponentFacet.sol";
 
-abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
+abstract contract rulesFuzz is RulesEngineCommon {
 
-    /// Creation and update Fuzz Tests 
-    // Rule creation 
-    // 45   This single function is not the full fuzz test suite. Only serving as a stepping stone to further fuzz tests. TODO remove in fuzz test ticket
-    function testRulesEngine_Fuzz_createRule_simple(uint256 ruleValue, uint256 transferValue) public {
+    /**
+    *
+    *
+    * Validation fuzz tests for rules within the rules engine 
+    *
+    *
+    */
+
+
+function testRulesEngine_Fuzz_createRule_simple(uint256 ruleValue, uint256 transferValue) public {
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
         uint256 response;
@@ -56,31 +61,5 @@ abstract contract RulesEngineFuzzTestsCommon is RulesEngineCommon {
             assertFalse(response == 1);
         }
     }
-
-    function testRulesEngine_Fuzz_createPolicyAndAdmin_simple(uint8 addrIndex) public {
-        testAddressArray.push(policyAdmin); 
-        testAddressArray.push(newPolicyAdmin);
-
-        vm.startPrank(policyAdmin); 
-        uint256 policyID = _createBlankPolicy();
-
-        address sender = testAddressArray[addrIndex % testAddressArray.length];
-        vm.stopPrank();
-        vm.startPrank(sender);
-
-        if(sender == policyAdmin) {
-            RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID); 
-            vm.stopPrank();
-            vm.startPrank(newPolicyAdmin); 
-            RulesEngineAdminRolesFacet(address(red)).confirmNewPolicyAdmin(policyID);
-            RulesEnginePolicyFacet(address(red)).createPolicy(PolicyType.CLOSED_POLICY);
-        } else {
-            vm.expectRevert("Not Policy Admin");
-            RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID);
-        }
-
-
-    }
-
 
 }

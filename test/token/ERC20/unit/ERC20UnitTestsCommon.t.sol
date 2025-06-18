@@ -2,11 +2,9 @@
 pragma solidity ^0.8.24;
 
 import "test/utils/RulesEngineCommon.t.sol";
-import "src/example/ExampleERC20.sol";
 
 abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
 
-    ExampleERC20 userContract;
     string constant ERC20_TRANSFER_SIGNATURE = "transfer(address,uint256)";
     string constant ERC20_TRANSFER_FROM_SIGNATURE = "transferFrom(address,address,uint256)";
     string constant ERC20_MINT_SIGNATURE = "mint(address,uint256)";
@@ -14,54 +12,54 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
 
     function testERC20_Transfer_Before_Unit_checkRule_ForeignCall_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
         // set up the ERC20
-        userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
-        _setup_checkRule_ForeignCall_Positive(ruleValue);
+        userContractERC20.mint(USER_ADDRESS, 1_000_000 * ATTO);
+        _setup_checkRule_ForeignCall_Positive(ruleValue, userContractERC20Address);
 
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly 
         vm.startPrank(USER_ADDRESS);
-        bool response = userContract.transfer(address(0x7654321), transferValue);
+        bool response = userContractERC20.transfer(address(0x7654321), transferValue);
         assertTrue(response);
     }
 
     function testERC20_Transfer_Before_Unit_checkRule_ForeignCall_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
         // set up the ERC20
-        userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
+        userContractERC20.mint(USER_ADDRESS, 1_000_000 * ATTO);
         ParamTypes[] memory pTypes = new ParamTypes[](2);
         pTypes[0] = ParamTypes.ADDR;
         pTypes[1] = ParamTypes.UINT;
         ruleValue = 15; 
         transferValue = 10;
-        _setup_checkRule_ForeignCall_Negative(ruleValue);
+        _setup_checkRule_ForeignCall_Negative(ruleValue, userContractERC20Address);
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly 
         vm.startPrank(USER_ADDRESS);
         vm.expectRevert(abi.encodePacked(revert_text)); 
-        userContract.transfer(address(0x7654321), transferValue);
+        userContractERC20.transfer(address(0x7654321), transferValue);
     }
 
     function testERC20_TransferFrom_Before_Unit_checkRule_ForeignCall_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
         // set up the ERC20
-        userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
-        _setup_checkRule_TransferFrom_ForeignCall_Positive(ruleValue);
+        userContractERC20.mint(USER_ADDRESS, 1_000_000 * ATTO);
+        _setup_checkRule_TransferFrom_ForeignCall_Positive(ruleValue, userContractERC20Address);
 
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly 
         vm.startPrank(USER_ADDRESS);
-        userContract.approve(USER_ADDRESS, transferValue);
-        bool response = userContract.transferFrom(USER_ADDRESS, address(0x7654321), transferValue);
+        userContractERC20.approve(USER_ADDRESS, transferValue);
+        bool response = userContractERC20.transferFrom(USER_ADDRESS, address(0x7654321), transferValue);
         assertTrue(response);
     }
 
     function testERC20_Transfer_Unit_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
         // set up the ERC20
-        userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
-        _setupRuleWithRevert(address(userContract));
+        userContractERC20.mint(USER_ADDRESS, 1_000_000 * ATTO);
+        _setupRuleWithRevert(address(userContractERC20));
         vm.startPrank(USER_ADDRESS);
         vm.expectRevert(abi.encodePacked(revert_text)); 
-        userContract.transfer(address(0x7654321), 5);
+        userContractERC20.transfer(address(0x7654321), 5);
     }
 
     function testERC20_TransferFrom_Unit_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
         // set up the ERC20
-        userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
+        userContractERC20.mint(USER_ADDRESS, 1_000_000 * ATTO);
         ParamTypes[] memory pTypes = new ParamTypes[](4);
         pTypes[0] = ParamTypes.ADDR;
         pTypes[1] = ParamTypes.ADDR;
@@ -69,14 +67,14 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         pTypes[3] = ParamTypes.ADDR;
         _setupRuleWithRevertTransferFrom(ERC20_TRANSFER_FROM_SIGNATURE,pTypes);
         vm.startPrank(USER_ADDRESS);
-        userContract.approve(USER_ADDRESS, 3);
+        userContractERC20.approve(USER_ADDRESS, 3);
         vm.expectRevert(abi.encodePacked(revert_text)); 
-        userContract.transferFrom(USER_ADDRESS, address(0x7654321), 3);
+        userContractERC20.transferFrom(USER_ADDRESS, address(0x7654321), 3);
     }
 
     function testERC20_TransferFrom_Unit_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
         // set up the ERC20
-        userContract.mint(USER_ADDRESS, 1_000_000 * ATTO);
+        userContractERC20.mint(USER_ADDRESS, 1_000_000 * ATTO);
         ParamTypes[] memory pTypes = new ParamTypes[](4);
         pTypes[0] = ParamTypes.ADDR;
         pTypes[1] = ParamTypes.ADDR;
@@ -84,10 +82,10 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         pTypes[3] = ParamTypes.ADDR;
         _setupRuleWithRevertTransferFrom(ERC20_TRANSFER_FROM_SIGNATURE,pTypes);
         vm.startPrank(USER_ADDRESS);
-        userContract.approve(USER_ADDRESS, 5);
+        userContractERC20.approve(USER_ADDRESS, 5);
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, event_text);
-        bool response = userContract.transferFrom(USER_ADDRESS, address(0x7654321), 5);
+        bool response = userContractERC20.transferFrom(USER_ADDRESS, address(0x7654321), 5);
         assertTrue(response);
     }
 
@@ -99,7 +97,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         _setupRuleWithRevertMint(ERC20_MINT_SIGNATURE, pTypes);
         vm.startPrank(USER_ADDRESS);
         vm.expectRevert(abi.encodePacked(revert_text)); 
-        userContract.mint(USER_ADDRESS, 3);
+        userContractERC20.mint(USER_ADDRESS, 3);
     }
 
     function testERC20_Mint_Unit_Positve() public ifDeploymentTestsEnabled endWithStopPrank {
@@ -111,7 +109,7 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         vm.startPrank(USER_ADDRESS);
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, event_text); 
-        userContract.mint(USER_ADDRESS, 5);
+        userContractERC20.mint(USER_ADDRESS, 5);
     }
 
     function testERC20_Unit_Disabled_Policy() public ifDeploymentTestsEnabled endWithStopPrank {
@@ -123,14 +121,14 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         uint256 _policyId = _setupRuleWithRevertMint(ERC20_MINT_SIGNATURE, pTypes);
         vm.startPrank(USER_ADDRESS);
         vm.expectRevert(abi.encodePacked(revert_text)); 
-        userContract.mint(USER_ADDRESS, 3);
+        userContractERC20.mint(USER_ADDRESS, 3);
 
         // Disable the policy and expect it to go through
         vm.startPrank(policyAdmin);
         RulesEnginePolicyFacet(address(red)).disablePolicy(_policyId);
         assertTrue(RulesEnginePolicyFacet(address(red)).isDisabledPolicy(_policyId));
         vm.startPrank(USER_ADDRESS);
-        userContract.mint(USER_ADDRESS, 3);
+        userContractERC20.mint(USER_ADDRESS, 3);
     }
 
     function _setupRuleWithRevertTransferFrom(string memory _callingFunction, ParamTypes[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
@@ -156,13 +154,13 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractERC20Address, policyIds);
     }
 
-    function _setupRuleWithRevertMint(string memory _callingFunction, ParamTypes[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256){
+    function _setupRuleWithRevertMint(string memory _callingFunction, ParamTypes[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256 _policyId){
         uint256[] memory policyIds = new uint256[](1);
         
-        policyIds[0] = _createBlankPolicyOpen();
+        _policyId = policyIds[0] = _createBlankPolicyOpen();
 
         _addCallingFunctionToPolicyOpen(
             policyIds[0], 
@@ -183,8 +181,8 @@ abstract contract ERC20UnitTestsCommon is RulesEngineCommon {
         _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-        return policyIds[0];
+        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractERC20Address, policyIds);
+        return _policyId;
     }
 
     function _createGTRuleTransferFrom(uint256 _amount) public returns(Rule memory){

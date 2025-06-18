@@ -31,8 +31,9 @@ contract ExampleUserContract is RulesEngineClient {
 
     function transferFrom(address to, uint256 value, bytes memory _bytes) public returns (bool) {
         uint256 retval = _invokeRulesEngine(msg.data);
-        to;
-        value;
+        to; // added to silence compiler warnings
+        value; // added to silence compiler warnings
+        _bytes; // added to silence compiler warnings 
         if (retval > 0) return true;
         else return false; 
     }

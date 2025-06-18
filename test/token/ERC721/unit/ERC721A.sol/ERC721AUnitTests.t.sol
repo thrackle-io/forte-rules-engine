@@ -7,11 +7,11 @@ contract ERC721AUnitTests is ERC721AUnitTestsCommon {
 
   function setUp() public{
         red = createRulesEngineDiamond(address(0xB0b));
-        userContract = new ExampleERC721A("Name", "SYMB");
-        userContractAddress = address(userContract);
-        userContract.setRulesEngineAddress(address(red));
+        userContract721A = new ExampleERC721A("Name", "SYMB");
+        userContract721AAddress = address(userContract721A);
+        userContract721A.setRulesEngineAddress(address(red));
         testContract = new ForeignCallTestContract();
-        userContract.setCallingContractAdmin(callingContractAdmin);
+        userContract721A.setCallingContractAdmin(callingContractAdmin);
         _setupEffectProcessor();
         vm.startPrank(policyAdmin);
     }
