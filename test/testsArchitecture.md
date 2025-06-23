@@ -1,17 +1,18 @@
 # Test Archecture 
 
-This file is to aid in transitioning tests to the new test directory architecture and should be removed with the final PR for this effort. 
+This file is to serve as a visual aide for the Rules Engine Testing Suite.  
 
 
-The new directory structure is: 
-
-``
+The directory structure is: 
+```
 test 
 ├── validation
 │ ├── adminRoles
 | │ └── adminRoles.t.sol
 │ ├── components
 | │ └── components.t.sol 
+│ ├── forkTests 
+| │ └──forkTests.t.sol
 │ ├── policy 
 | │ └──policy.t.sol
 │ └── rules
@@ -19,6 +20,8 @@ test
 ├── execution 
 │ ├── diamondInternalFunctions
 | │ └──diamondInternalFunctions.t.sol 
+│ ├── rulesEngineInternalFunctions
+| │ └──rulesEngineInternalFunctions.t.sol 
 │ ├── effects
 | │ └── effects.t.sol
 │ ├── foreignCalls
@@ -29,27 +32,48 @@ test
 | │ └── runFunction.t.sol
 │ └── trackers 
 |   └── trackers.t.sol 
+│ └── rulesExecution
+|   └──rulesExecution.t.sol
+│ └── policies
+|   └──policiesExecution.t.sol
+├── rulesEngine
+│ └── rulesEngineUnitTest.t.sol
+├── token
+│ ├── ERC1155
+│ ├── ERC721A
+│ ├── ERC721
+│ ├── ERC20
 ├── invariants 
 └── utils
     └── GasReports 
 
-``
-Each directory above will contain unit test files. Some may need to contain helper function files, fuzz tests or various util functions. It should be assumed that unit test files are the directory level name + `.t.sol`. For different types such as fuzz a descriptor should be added to the file name, e.g. adminRolesFuzz.t.sol to deliniate the type of test inside the file, without needing to open (help keep navigation easy!). 
+```
+Each directory above will contain unit test files. Some may contain helper function files, fuzz tests or various util functions. Unit test files are named with the directory level name + `.t.sol`. For different types such as fuzz a descriptor should be added to the file name, e.g. adminRolesFuzz.t.sol to deliniate the type of test inside the file, without needing to open (help keep navigation easy!). 
 
-Make effort to consolidate everything needed for each test directory to be contained within the directory only. 
+When adding new tests make effort to consolidate everything needed for that tests directory, within the directory only. 
 
-Shares utility and set up files should be in utils directory (if more than one directory shares, it goes in utils). 
+Shared utility and set up files should be in utils directory (if more than one directory shares, it goes in utils). 
 
 For individual testing directories requirements reference the Rules Engine Testing Scope doc. 
 
-Strategy for tests migration: 
 
-1. Move shared files and set up files to the proper directories first and ensure
 
-2. Copy tests into their proper test files and ensure the tests still run 
 
-3. Comment or remove the test from the improper test file (comment if swarming / remove if solo). 
+Remaining Tests Strategy: 
 
-4. Remove test files, directories and THIS DOCUMENT when all tests have been migrated. 
+Each validation test should consist of at least: 
+Create 
+Update 
+Delete 
+Get 
+Event 
 
-!! REMOVE ONCE TESTS ARE IN NEW ARCHECTURE  !!
+Any additional validations necessary for that specific directory. 
+
+Execution tests should consist of at least: 
+Positive 
+Negative 
+-1,0,1 tests (meaning below the executing conditional, at the conditional and above the conditional)
+        i.e. minBalance rule conditional would execute tests for below the min, at the min and above the min value. 
+
+Any additional executions necessary for that specific directory.

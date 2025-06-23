@@ -2,11 +2,10 @@
 pragma solidity ^0.8.24;
 
 import "test/utils/RulesEngineCommon.t.sol";
-import "src/example/ExampleERC721.sol";
+
 
 abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
 
-    ExampleERC721 userContract;
     string constant ERC721_SAFEMINT_SIGNATURE = "safeMint(address)";
     string constant ERC721_SAFETRANSFERFROM_SIGNATURE = "safeTransferFrom(address,address,uint256,bytes)";
     string constant ERC721_TRANSFERFROM_SIGNATURE = "transferFrom(address,address,uint256)";
@@ -18,7 +17,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         pTypes[1] = ParamTypes.ADDR;
         _setupRuleWithRevertSafeMint(ERC721_SAFEMINT_SIGNATURE, pTypes);
         vm.expectRevert(abi.encodePacked(revert_text)); 
-        userContract.safeMint(address(55));
+        userContract721.safeMint(address(55));
     }
 
     function testERC721_SafeMint_Unit_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
@@ -29,11 +28,11 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         vm.startPrank(USER_ADDRESS);
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, event_text); 
-        userContract.safeMint(USER_ADDRESS);
+        userContract721.safeMint(USER_ADDRESS);
     }
 
     function testERC721_SafeTransferFrom_Unit_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
-        userContract.safeMint(USER_ADDRESS);
+        userContract721.safeMint(USER_ADDRESS);
         ParamTypes[] memory pTypes = new ParamTypes[](5);
         pTypes[0] = ParamTypes.ADDR;
         pTypes[1] = ParamTypes.ADDR;
@@ -43,11 +42,11 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         _setupRuleWithRevertSafeTransferFrom(ERC721_SAFETRANSFERFROM_SIGNATURE, pTypes);
         vm.startPrank(USER_ADDRESS);
         vm.expectRevert(abi.encodePacked(revert_text)); 
-        userContract.safeTransferFrom(USER_ADDRESS, USER_ADDRESS_2, 0, "");
+        userContract721.safeTransferFrom(USER_ADDRESS, USER_ADDRESS_2, 0, "");
     }
 
     function testERC721_SafeTransferFrom_Unit_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
-        userContract.safeMint(USER_ADDRESS_2);
+        userContract721.safeMint(USER_ADDRESS_2);
         ParamTypes[] memory pTypes = new ParamTypes[](5);
         pTypes[0] = ParamTypes.ADDR;
         pTypes[1] = ParamTypes.ADDR;
@@ -58,11 +57,11 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         vm.startPrank(USER_ADDRESS_2);
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, event_text);
-        userContract.safeTransferFrom(USER_ADDRESS_2, USER_ADDRESS, 0, "");
+        userContract721.safeTransferFrom(USER_ADDRESS_2, USER_ADDRESS, 0, "");
     }
 
     function testERC721_TransferFrom_Unit_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
-        userContract.safeMint(USER_ADDRESS_2);
+        userContract721.safeMint(USER_ADDRESS_2);
        ParamTypes[] memory pTypes = new ParamTypes[](4);
         pTypes[0] = ParamTypes.ADDR;
         pTypes[1] = ParamTypes.ADDR;
@@ -72,11 +71,11 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         vm.startPrank(USER_ADDRESS_2);
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, event_text);
-        userContract.transferFrom(USER_ADDRESS_2, USER_ADDRESS, 0);
+        userContract721.transferFrom(USER_ADDRESS_2, USER_ADDRESS, 0);
     }
 
     function testERC721_TransferFrom_Unit_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
-        userContract.safeMint(USER_ADDRESS);
+        userContract721.safeMint(USER_ADDRESS);
         ParamTypes[] memory pTypes = new ParamTypes[](4);
         pTypes[0] = ParamTypes.ADDR;
         pTypes[1] = ParamTypes.ADDR;
@@ -85,11 +84,11 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         _setupRuleWithRevertTransferFrom(ERC721_TRANSFERFROM_SIGNATURE, pTypes);
         vm.startPrank(USER_ADDRESS);
         vm.expectRevert(abi.encodePacked(revert_text)); 
-        userContract.transferFrom(USER_ADDRESS, USER_ADDRESS_2, 0);
+        userContract721.transferFrom(USER_ADDRESS, USER_ADDRESS_2, 0);
     }
 
     function testERC721_Unit_Disabled_Policy() public ifDeploymentTestsEnabled endWithStopPrank {
-        userContract.safeMint(USER_ADDRESS);
+        userContract721.safeMint(USER_ADDRESS);
         ParamTypes[] memory pTypes = new ParamTypes[](4);
         pTypes[0] = ParamTypes.ADDR;
         pTypes[1] = ParamTypes.ADDR;
@@ -99,14 +98,14 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         uint256 _policyId = _setupRuleWithRevertTransferFrom(ERC721_TRANSFERFROM_SIGNATURE, pTypes);
         vm.startPrank(USER_ADDRESS);
         vm.expectRevert(abi.encodePacked(revert_text)); 
-        userContract.transferFrom(USER_ADDRESS, USER_ADDRESS_2, 0);
+        userContract721.transferFrom(USER_ADDRESS, USER_ADDRESS_2, 0);
 
         // Disable the policy and expect it to go through
         vm.startPrank(policyAdmin);
         RulesEnginePolicyFacet(address(red)).disablePolicy(_policyId);
         assertTrue(RulesEnginePolicyFacet(address(red)).isDisabledPolicy(_policyId));
         vm.startPrank(USER_ADDRESS);
-        userContract.transferFrom(USER_ADDRESS, USER_ADDRESS_2, 0);
+        userContract721.transferFrom(USER_ADDRESS, USER_ADDRESS_2, 0);
     }
     
     function _setupRuleWithRevertSafeMint(string memory _callingFunction, ParamTypes[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
@@ -133,7 +132,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(userContract721Address, policyIds);
     }
 
     function _setupRuleWithRevertSafeTransferFrom(string memory _callingFunction, ParamTypes[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
@@ -159,14 +158,14 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(userContract721Address, policyIds);
     }
 
-    function _setupRuleWithRevertTransferFrom(string memory _callingFunction, ParamTypes[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256){
+    function _setupRuleWithRevertTransferFrom(string memory _callingFunction, ParamTypes[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256 _policyId){
         // if the address equals the mint to address, then emit event, else revert
         uint256[] memory policyIds = new uint256[](1);
         
-        policyIds[0] = _createBlankPolicyOpen();
+        _policyId = policyIds[0] = _createBlankPolicyOpen();
 
         _addCallingFunctionToPolicy(
             policyIds[0], 
@@ -186,8 +185,8 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-        return policyIds[0];
+        RulesEnginePolicyFacet(address(red)).applyPolicy(userContract721Address, policyIds);
+        return _policyId;
     }
 
     function _createEQRuleSafeMint(address _address) public returns(Rule memory){

@@ -13,11 +13,9 @@ contract BasicBatchTest is RulesEngineCommon {
     function test_basicBatching() public {
         bytes[] memory calls = new bytes[](3);
 
-        CallingFunctionStorageSet[] memory blankCallingFunctionSets = new CallingFunctionStorageSet[](0);
         bytes4[] memory blankCallingFunctions = new bytes4[](0);
         uint256[] memory blankCallingFunctionIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
-        Rule[] memory blankRules = new Rule[](0);
         calls[0] = abi.encodeWithSelector(RulesEnginePolicyFacet.createPolicy.selector, PolicyType.CLOSED_POLICY);
         address _address = address(22);
         ParamTypes[] memory fcArgs = new ParamTypes[](1);

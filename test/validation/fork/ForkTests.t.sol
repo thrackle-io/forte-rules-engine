@@ -1,7 +1,10 @@
 /// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import "test/rulesEngine/unit/RulesEngineUnitTestsCommon.t.sol"; 
+import "test/validation/adminRoles/adminRoles.t.sol";
+import "test/validation/components/components.t.sol";
+import "test/validation/rules/rules.t.sol";
+import "test/validation/policy/policies.t.sol";
 /** 
  * This testing suite is intended to set deployed addresses of non rules engine contracts and test locally. Deployment tests of the Rules engine are here: 
  * test/rulesEngine/deployment/DeploymentValidation.t.sol
@@ -15,7 +18,8 @@ import "test/rulesEngine/unit/RulesEngineUnitTestsCommon.t.sol";
  * URQTBC AMM
 */
 
-contract RulesEngineForkTests is RulesEngineUnitTestsCommon {
+contract RulesEngineForkTests is adminRoles, components, rules, policies 
+    {
     // Set your Fork Test addresses 
     address deploymentOwner = address(0x000); 
     address marketPlace = address(0x0000);
