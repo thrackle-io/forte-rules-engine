@@ -1,6 +1,6 @@
 {
   "name": "forte-rules-engine",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Forte Rules Engine",
   "files": [
     "LICENSE",
@@ -14,7 +14,15 @@
     "out/RulesEnginePolicyFacet/RulesEnginePolicyFacet.json",
     "out/RulesEngineRuleFacet/RulesEngineRuleFacet.json"
   ],
-  "keywords":  ["evm", "solidity", "ethereum", "smart contracts", "forte","rules engine", "thrackle"],
+  "keywords": [
+    "evm",
+    "solidity",
+    "ethereum",
+    "smart contracts",
+    "forte",
+    "rules engine",
+    "thrackle"
+  ],
   "author": "Thrackle",
   "homepage": "https://github.com/thrackle-io/forte-rules-engine#readme",
   "license": "BUSL-1.1",
