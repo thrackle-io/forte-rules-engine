@@ -66,9 +66,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ github.ref }}
           tags: true
-      - name: Build package
-        if: github.event.inputs.publish
-        run: npm run build
       - name: Publish the NPM package
         if: github.event.inputs.publish
         run: |
