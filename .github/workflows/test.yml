@@ -39,6 +39,10 @@ jobs:
           # Defaults to the user or organization that owns the workflow file
           scope: "@thrackle-io"
           always-auth: true
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.2.1
       - name: Install dependencies
         run: npm install && forge soldeer install && forge build
       - name: Update version if necessary
