@@ -128,10 +128,11 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param _policyId The policy ID the foreign call is associated with.
      * @param _foreignCall The foreign call to store.
      */
-    function _storeForeignCall(uint256 _policyId, ForeignCall memory _foreignCall) internal {
-        assert(_foreignCall.parameterTypes.length == _foreignCall.typeSpecificIndices.length);
-        _foreignCall.set = true;
-        lib._getForeignCallStorage().foreignCalls[_policyId][_foreignCall.foreignCallIndex] = _foreignCall;
+    function _storeForeignCall(uint256 _policyId, ForeignCall calldata _foreignCall, uint256 _foreignCallIndex) internal {
+        assert(_foreignCall.parameterTypes.length == _foreignCall.encodedIndices.length);
+        lib._getForeignCallStorage().foreignCalls[_policyId][_foreignCallIndex] = _foreignCall;
+        lib._getForeignCallStorage().foreignCalls[_policyId][_foreignCallIndex].set = true;
+        lib._getForeignCallStorage().foreignCalls[_policyId][_foreignCallIndex].foreignCallIndex = _foreignCallIndex;
     }
 
     /** 
@@ -157,9 +158,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         uint256 _foreignCallIndex
     ) private {
         ForeignCallStorage storage data = lib._getForeignCallStorage();
-        ForeignCall memory fc = _foreignCall;
-        fc.foreignCallIndex = _foreignCallIndex;
-        _storeForeignCall(_policyId, fc);
+        _storeForeignCall(_policyId, _foreignCall, _foreignCallIndex);
         data.foreignCallIdxCounter[_policyId] = _foreignCallIndex;
     }
 

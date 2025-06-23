@@ -475,11 +475,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");      
         ParamTypes[] memory fcArgs = new ParamTypes[](1);
         fcArgs[0] = ParamTypes.UINT;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 1;
-
         ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
@@ -543,11 +543,11 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");      
         ParamTypes[] memory fcArgs = new ParamTypes[](1);
         fcArgs[0] = ParamTypes.UINT;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 1;
-
         ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
@@ -592,10 +592,11 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         ParamTypes[] memory fcArgs = new ParamTypes[](1);
         fcArgs[0] = ParamTypes.UINT;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 1;
         ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
@@ -647,10 +648,11 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         ParamTypes[] memory fcArgs = new ParamTypes[](1);
         fcArgs[0] = ParamTypes.UINT;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 1;
         ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
@@ -659,9 +661,9 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
 
         ForeignCall memory fc2;
-        int8[] memory typeSpecificIndices2 = new int8[](1);
-        typeSpecificIndices2[0] = -1;
-        fc2.typeSpecificIndices = typeSpecificIndices2;
+        fc2.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc2.encodedIndices[0].index = 1;
+        fc2.encodedIndices[0].eType = EncodedIndexType.FOREIGN_CALL;
         fc2.parameterTypes = fcArgs;
         fc2.foreignCallAddress = address(testContract);
         fc2.signature = bytes4(keccak256(bytes("square(uint256)")));
@@ -724,9 +726,9 @@ contract RulesEngineCommon is DiamondMine, Test {
         ParamTypes[] memory fcArgs = new ParamTypes[](1);
         fcArgs[0] = ParamTypes.UINT;
         ForeignCall memory fc;
-        int8[] memory typeSpecificIndices2 = new int8[](1);
-        typeSpecificIndices2[0] = -1;
-        fc.typeSpecificIndices = typeSpecificIndices2;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.TRACKER;
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("square(uint256)")));
@@ -2313,10 +2315,11 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         ParamTypes[] memory fcArgs = new ParamTypes[](1);
         fcArgs[0] = ParamTypes.UINT;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 1;
         ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
@@ -2341,6 +2344,21 @@ contract RulesEngineCommon is DiamondMine, Test {
         pTypes[1] = ParamTypes.ADDR;
         pTypes[2] = ParamTypes.UINT;
         _addCallingFunctionToPolicy(policyIds[0]);
+
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.UINT;
+        ForeignCall memory fc;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 2;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.returnType = ParamTypes.UINT;
+        // fc.foreignCallIndex = 1;
+        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
+
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"        
         Rule memory rule;
         // Build the foreign call placeholder
@@ -2354,18 +2372,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-        ParamTypes[] memory fcArgs = new ParamTypes[](1);
-        fcArgs[0] = ParamTypes.UINT;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 2;
-        ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
-        fc.parameterTypes = fcArgs;
-        fc.foreignCallAddress = address(testContract);
-        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
-        fc.returnType = ParamTypes.UINT;
-        fc.foreignCallIndex = 0;
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
         _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);   
@@ -2394,10 +2400,11 @@ contract RulesEngineCommon is DiamondMine, Test {
 
         ParamTypes[] memory fcArgs = new ParamTypes[](1);
         fcArgs[0] = ParamTypes.UINT;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 1;
         ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
@@ -2418,8 +2425,9 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.parameterTypes = new ParamTypes[](1);
         fc.parameterTypes[0] = ParamTypes.UINT;
-        fc.typeSpecificIndices = new int8[](1);
-        fc.typeSpecificIndices[0] = 1;
+         fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+         fc.encodedIndices[0].index = 1;
+         fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
         fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 0;
         RulesEngineComponentFacet(address(red)).createForeignCall(_policyId, fc, "simpleCheck(uint256)");
@@ -2432,8 +2440,9 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.parameterTypes = new ParamTypes[](1);
         fc.parameterTypes[0] = ParamTypes.UINT;
-        fc.typeSpecificIndices = new int8[](1);
-        fc.typeSpecificIndices[0] = 1;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
         fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 0;
         uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(_policyId, fc, "simpleCheck(uint256)");

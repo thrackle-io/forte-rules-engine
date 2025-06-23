@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
 import {RulesEngineProcessorLib as ProcessorLib} from "src/engine/facets/RulesEngineProcessorLib.sol";
+import "forge-std/src/console2.sol";
 
 /**
  * @title Rules Engine Processor Facet
@@ -61,12 +62,13 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         uint256 policyId, 
         bytes calldata callingFunctionArgs, 
         uint256 foreignCallIndex,
-        bytes[] memory retVals
+        bytes[] memory retVals,
+        ForeignCallEncodedIndex[] memory metadata
     ) public returns(ForeignCallReturnValue memory returnValue) {
         // Load the Foreign Call data from storage
         ForeignCall memory foreignCall = lib._getForeignCallStorage().foreignCalls[policyId][foreignCallIndex];
         if (foreignCall.set) {
-            return evaluateForeignCallForRule(foreignCall, callingFunctionArgs, retVals);
+            return evaluateForeignCallForRule(foreignCall, callingFunctionArgs, retVals, metadata);
         }
     }
 
@@ -76,7 +78,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @param functionArguments the arguments of the rules calling function (to be passed to the foreign call as needed)
      * @return retVal the foreign calls return value
      */
-    function evaluateForeignCallForRule(ForeignCall memory fc, bytes calldata functionArguments, bytes[] memory retVals) public returns (ForeignCallReturnValue memory retVal) {
+    function evaluateForeignCallForRule(ForeignCall memory fc, bytes calldata functionArguments, bytes[] memory retVals, ForeignCallEncodedIndex[] memory metadata) public returns (ForeignCallReturnValue memory retVal) {
         // First, calculate total size needed and positions of dynamic data
         bytes memory encodedCall = bytes.concat(bytes4(fc.signature));
         bytes memory dynamicData;
@@ -85,35 +87,32 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         // First pass: calculate sizes
         for(uint256 i = 0; i < fc.parameterTypes.length; i++) {
             ParamTypes argType = fc.parameterTypes[i];
-            uint256 typeSpecificIndex;
+            
             bool isRetVal = false;
-            bytes32 value;
-            if (fc.typeSpecificIndices[i] < 0) {
-                typeSpecificIndex = _getAbsoluteAssembly(fc.typeSpecificIndices[i]) - 1; // -1 because retVals is 0 indexed
-
-                isRetVal = true;
-                value = bytes32(retVals[typeSpecificIndex]);
-                if (argType == ParamTypes.STR || argType == ParamTypes.BYTES) {
-                    encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
-                    bytes memory stringData = ProcessorLib._extractStringData(retVals[typeSpecificIndex]);
-                    dynamicData = bytes.concat(
-                        dynamicData,
-                        stringData      // data (already padded)
-                    );
-                    lengthToAppend += stringData.length;
-                } else if (argType == ParamTypes.STATIC_TYPE_ARRAY || argType == ParamTypes.DYNAMIC_TYPE_ARRAY) {
-                    // encode the static offset
-                    encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
-                    bytes memory arrayData = ProcessorLib._extractDynamicArrayData(retVals[typeSpecificIndex]);
-                    dynamicData = bytes.concat(dynamicData, arrayData);
-                    lengthToAppend += arrayData.length;
-                } else {
-                    encodedCall = bytes.concat(encodedCall, value);
-                }
+            
+            if(fc.encodedIndices[i].eType != EncodedIndexType.ENCODED_VALUES) {
+                (encodedCall, lengthToAppend, dynamicData) = evaluateForeignCallForRuleNotEncodedValues(fc, retVals, metadata, encodedCall, lengthToAppend, i, dynamicData);
             } else {
-                typeSpecificIndex = _getAbsoluteAssembly(fc.typeSpecificIndices[i]);
+                (encodedCall, lengthToAppend, dynamicData) = evaluateForeignCallForRuleEncodedValues(fc, argType, functionArguments, encodedCall, lengthToAppend, dynamicData, i);
+            }
+        }
 
-                value = bytes32(functionArguments[typeSpecificIndex * 32: (typeSpecificIndex + 1) * 32]);
+        bytes memory callData = bytes.concat(encodedCall, dynamicData);
+        // Place the foreign call
+        (bool response, bytes memory data) = fc.foreignCallAddress.call(callData);
+    
+
+        // Verify that the foreign call was successful
+        if(response) {
+            // Decode the return value based on the specified return value parameter type in the foreign call structure
+            retVal.pType = fc.returnType;
+            retVal.value = data;
+        }
+    }
+
+    function evaluateForeignCallForRuleEncodedValues(ForeignCall memory fc, ParamTypes argType, bytes calldata functionArguments, bytes memory encodedCall, uint256 lengthToAppend, bytes memory dynamicData, uint256 i) public returns (bytes memory, uint256, bytes memory) {
+                uint256 typeSpecificIndex = fc.encodedIndices[i].index;
+                bytes32 value = bytes32(functionArguments[typeSpecificIndex * 32: (typeSpecificIndex + 1) * 32]);
                 if (argType == ParamTypes.STR || argType == ParamTypes.BYTES) {
                     // Add offset to head
                     uint256 dynamicOffset = 32 * (fc.parameterTypes.length) + lengthToAppend;
@@ -151,20 +150,42 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 else {
                     encodedCall = bytes.concat(encodedCall, value);
                 }
+            return (encodedCall, lengthToAppend, dynamicData);
+    }
+
+    function evaluateForeignCallForRuleNotEncodedValues(ForeignCall memory fc, bytes[] memory retVals, ForeignCallEncodedIndex[] memory metadata, bytes memory encodedCall, uint256 lengthToAppend, uint256 i, bytes memory dynamicData) public returns (bytes memory, uint256, bytes memory) {
+        uint256 retValIndex;
+        ParamTypes argType = fc.parameterTypes[i];
+        uint256 index = fc.encodedIndices[i].index;
+        uint256 iter = 0;
+        for(uint256 j = 0; j < metadata.length; j++) {
+            if(metadata[j].index == index) {
+                retValIndex = iter;
+                break;
+            } 
+            if(metadata[j].eType != EncodedIndexType.ENCODED_VALUES) {
+                iter += 1;
             }
         }
 
-        bytes memory callData = bytes.concat(encodedCall, dynamicData);
-
-        // Place the foreign call
-        (bool response, bytes memory data) = fc.foreignCallAddress.call(callData);
-
-        // Verify that the foreign call was successful
-        if(response) {
-            // Decode the return value based on the specified return value parameter type in the foreign call structure
-            retVal.pType = fc.returnType;
-            retVal.value = data;
+        if (argType == ParamTypes.STR || argType == ParamTypes.BYTES) {
+            encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
+            bytes memory stringData = ProcessorLib._extractStringData(retVals[retValIndex]);
+            dynamicData = bytes.concat(
+                dynamicData,
+                stringData      // data (already padded)
+            );
+            lengthToAppend += stringData.length;
+        } else if (argType == ParamTypes.STATIC_TYPE_ARRAY || argType == ParamTypes.DYNAMIC_TYPE_ARRAY) {
+            // encode the static offset
+            encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
+            bytes memory arrayData = ProcessorLib._extractDynamicArrayData(retVals[retValIndex]);
+            dynamicData = bytes.concat(dynamicData, arrayData);
+            lengthToAppend += arrayData.length;
+        } else {
+            encodedCall = bytes.concat(encodedCall, retVals[retValIndex]);
         }
+        return (encodedCall, lengthToAppend, dynamicData);
     }
 
     /**
@@ -239,8 +260,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         } else {
             placeHolders = _rule.placeHolders;
         }       
-
         bytes[] memory retVals = new bytes[](placeHolders.length);
+        ForeignCallEncodedIndex[] memory metadata = new ForeignCallEncodedIndex[](placeHolders.length);
         for(uint256 placeholderIndex = 0; placeholderIndex < placeHolders.length; placeholderIndex++) {
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
             Placeholder memory placeholder = placeHolders[placeholderIndex];
@@ -251,8 +272,12 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             if(globalVarType != GLOBAL_NONE) {
                 (retVals[placeholderIndex], placeHolders[placeholderIndex].pType) = _handleGlobalVar(globalVarType);
             } else if(isForeignCall) {
-                (retVals[placeholderIndex], placeHolders[placeholderIndex].pType) = _handleForeignCall(_policyId, _callingFunctionArgs, placeholder.typeSpecificIndex, retVals);
+                metadata[placeholderIndex].eType = EncodedIndexType.FOREIGN_CALL;
+                metadata[placeholderIndex].index = placeholder.typeSpecificIndex;
+                (retVals[placeholderIndex], placeHolders[placeholderIndex].pType) = _handleForeignCall(_policyId, _callingFunctionArgs, placeholder.typeSpecificIndex, retVals, metadata);
             } else if (isTrackerValue) {
+                 metadata[placeholderIndex].eType = EncodedIndexType.TRACKER;
+                metadata[placeholderIndex].index = placeholder.typeSpecificIndex;
                 retVals[placeholderIndex] = _handleTrackerValue(_policyId, placeholder);
             } else {
                 retVals[placeholderIndex] = _handleRegularParameter(_callingFunctionArgs, placeholder);
