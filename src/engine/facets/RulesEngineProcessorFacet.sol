@@ -525,9 +525,10 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         uint256 _policyId, 
         bytes calldata _callingFunctionArgs, 
         uint256 typeSpecificIndex, 
-        bytes[] memory retVals
+        bytes[] memory retVals,
+        ForeignCallEncodedIndex[] memory metadata
         ) internal returns (bytes memory value, ParamTypes pType) {
-        ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, _callingFunctionArgs, typeSpecificIndex, retVals);
+        ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, _callingFunctionArgs, typeSpecificIndex, retVals, metadata);
         return (retVal.value, retVal.pType);
     }
 
