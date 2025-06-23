@@ -1,0 +1,73 @@
+name: Version Update and publish to NPM
+
+on:
+  workflow_dispatch:
+    inputs:
+      versionUpdateSignificance:
+        type: choice
+        description: "The significance of the version to update"
+        default: "current"
+        options:
+          - Major
+          - Minor
+          - Patch
+          - Release Candidate
+          - current
+      publish:
+        type: boolean
+        description: "Publish to NPM"
+        default: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+      # Setup .npmrc file to publish to npm
+      - name: Configure git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.4.0"
+          registry-url: "https://registry.npmjs.org"
+          # Defaults to the user or organization that owns the workflow file
+          scope: "@thrackle-io"
+          always-auth: true
+      - name: Install dependencies
+        run: npm install && forge soldeer install && forge build
+      - name: Update version if necessary
+        if: github.event.inputs.versionUpdateSignificance != 'current'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event.inputs.versionUpdateSignificance }}" = "Major" ]; then
+            npm version major
+          elif [ "${{ github.event.inputs.versionUpdateSignificance }}" = "Minor" ]; then
+            npm version minor
+          elif [ "${{ github.event.inputs.versionUpdateSignificance }}" = "Patch" ]; then
+            npm version patch
+          else
+            npm version prerelease --preid=rc
+          fi
+      - name: Push changes to the repository
+        if: github.event.inputs.versionUpdateSignificance != 'current'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+          tags: true
+      - name: Build package
+        if: github.event.inputs.publish
+        run: npm run build
+      - name: Publish the NPM package
+        if: github.event.inputs.publish
+        run: |
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
