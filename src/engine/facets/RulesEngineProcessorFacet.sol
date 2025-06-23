@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
 import {RulesEngineProcessorLib as ProcessorLib} from "src/engine/facets/RulesEngineProcessorLib.sol";
-import "forge-std/src/console2.sol";
 
 /**
  * @title Rules Engine Processor Facet
@@ -91,7 +90,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             bool isRetVal = false;
             
             if(fc.encodedIndices[i].eType != EncodedIndexType.ENCODED_VALUES) {
-                (encodedCall, lengthToAppend, dynamicData) = evaluateForeignCallForRuleNotEncodedValues(fc, retVals, metadata, encodedCall, lengthToAppend, i, dynamicData);
+                (encodedCall, lengthToAppend, dynamicData) = evaluateForeignCallForRulePlaceholderValues(fc, retVals, metadata, encodedCall, lengthToAppend, i, dynamicData);
             } else {
                 (encodedCall, lengthToAppend, dynamicData) = evaluateForeignCallForRuleEncodedValues(fc, argType, functionArguments, encodedCall, lengthToAppend, dynamicData, i);
             }
@@ -153,13 +152,13 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             return (encodedCall, lengthToAppend, dynamicData);
     }
 
-    function evaluateForeignCallForRuleNotEncodedValues(ForeignCall memory fc, bytes[] memory retVals, ForeignCallEncodedIndex[] memory metadata, bytes memory encodedCall, uint256 lengthToAppend, uint256 i, bytes memory dynamicData) public returns (bytes memory, uint256, bytes memory) {
+    function evaluateForeignCallForRulePlaceholderValues(ForeignCall memory fc, bytes[] memory retVals, ForeignCallEncodedIndex[] memory metadata, bytes memory encodedCall, uint256 lengthToAppend, uint256 i, bytes memory dynamicData) public returns (bytes memory, uint256, bytes memory) {
         uint256 retValIndex;
         ParamTypes argType = fc.parameterTypes[i];
         uint256 index = fc.encodedIndices[i].index;
         uint256 iter = 0;
         for(uint256 j = 0; j < metadata.length; j++) {
-            if(metadata[j].index == index) {
+            if(metadata[j].index == index && metadata[j].eType == fc.encodedIndices[i].eType) {
                 retValIndex = iter;
                 break;
             } 
@@ -270,6 +269,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             (bool isTrackerValue, bool isForeignCall, uint8 globalVarType) = _extractFlags(placeholder);
 
             if(globalVarType != GLOBAL_NONE) {
+                metadata[placeholderIndex].eType = EncodedIndexType.ENCODED_VALUES;
+                metadata[placeholderIndex].index = 0;
                 (retVals[placeholderIndex], placeHolders[placeholderIndex].pType) = _handleGlobalVar(globalVarType);
             } else if(isForeignCall) {
                 metadata[placeholderIndex].eType = EncodedIndexType.FOREIGN_CALL;
@@ -280,6 +281,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 metadata[placeholderIndex].index = placeholder.typeSpecificIndex;
                 retVals[placeholderIndex] = _handleTrackerValue(_policyId, placeholder);
             } else {
+                metadata[placeholderIndex].eType = EncodedIndexType.ENCODED_VALUES;
+                metadata[placeholderIndex].index = 0;
                 retVals[placeholderIndex] = _handleRegularParameter(_callingFunctionArgs, placeholder);
             }
         }
