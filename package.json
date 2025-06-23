@@ -1,5 +1,5 @@
 {
-  "name": "forte-rules-engine",
+  "name": "@thrackle-io/forte-rules-engine",
   "version": "0.0.2",
   "description": "Forte Rules Engine",
   "files": [
