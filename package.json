@@ -8,11 +8,11 @@
     "deployments",
     "src/client",
     "src/example",
-    "out/RulesEngineAdminRolesFacet/RulesEngineAdminRolesFacet.json",
-    "out/RulesEngineComponentFacet/RulesEngineComponentFacet.sol",
-    "out/RulesEngineDiamond/RulesEngineDiamond.json",
-    "out/RulesEnginePolicyFacet/RulesEnginePolicyFacet.json",
-    "out/RulesEngineRuleFacet/RulesEngineRuleFacet.json"
+    "out/RulesEngineAdminRolesFacet.sol/RulesEngineAdminRolesFacet.json",
+    "out/RulesEngineComponentFacet.sol/RulesEngineComponentFacet.sol",
+    "out/RulesEngineDiamond.sol/RulesEngineDiamond.json",
+    "out/RulesEnginePolicyFacet.sol/RulesEnginePolicyFacet.json",
+    "out/RulesEngineRuleFacet.sol/RulesEngineRuleFacet.json"
   ],
   "keywords": [
     "evm",
