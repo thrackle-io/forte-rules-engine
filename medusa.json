@@ -4,7 +4,7 @@
 		"workers": 10,
 		"workerResetLimit": 50,
 		"timeout": 0,
-		"testLimit": 0,
+		"testLimit": 10000,
 		"shrinkLimit": 5000,
 		"callSequenceLength": 100,
 		"corpusDirectory": "",
