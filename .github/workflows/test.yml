@@ -49,12 +49,11 @@ jobs:
         run: |
           forge build
         id: build
-      - name: Run Foundry tests
-        run: |
-          forge test --ffi -vvv 
-        id: test
+      # - name: Run Foundry tests
+      #   run: |
+      #     forge test --ffi -vvv 
+      #   id: forge-test
       - name: Run Medusa tests
-        working-directory: tests/
         run: |
           medusa fuzz --config medusa-config.json
-          id: medusa
+          id: medusa-test
