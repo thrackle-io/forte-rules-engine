@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
 import {RulesEngineProcessorLib as ProcessorLib} from "src/engine/facets/RulesEngineProcessorLib.sol";
-import "forge-std/src/console2.sol";
 
 /**
  * @title Rules Engine Processor Facet
