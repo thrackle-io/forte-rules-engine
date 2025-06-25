@@ -31,7 +31,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @dev Primary entry point for policy checks.
      * @param arguments Function arguments, including the function signature and the arguments to be passed to the function.
      * @return retVal 1 if all rules pass, 0 if any rule fails.
-     * TODO: refine the parameters to this function. contractAddress is not necessary as it's the message caller
      */
     function checkPolicies(bytes calldata arguments) public returns (uint256 retVal) {  
         retVal = 1;

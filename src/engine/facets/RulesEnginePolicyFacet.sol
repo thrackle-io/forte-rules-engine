@@ -229,8 +229,6 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         return policyId;
     }
 
-    // TODO add removePolicy fn
-
     /**
      * @notice Retrieves the IDs of policies applied to a specific contract.
      * @param contractAddress The address of the contract.
