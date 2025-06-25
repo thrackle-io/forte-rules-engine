@@ -417,8 +417,9 @@ abstract contract components is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.parameterTypes = new ParamTypes[](1);
         fc.parameterTypes[0] = ParamTypes.UINT;
-        fc.typeSpecificIndices = new int8[](1);
-        fc.typeSpecificIndices[0] = 1;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
         fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 0;
         vm.expectEmit(true, false, false, false);

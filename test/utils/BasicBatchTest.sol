@@ -20,10 +20,10 @@ contract BasicBatchTest is RulesEngineCommon {
         address _address = address(22);
         ParamTypes[] memory fcArgs = new ParamTypes[](1);
         fcArgs[0] = ParamTypes.UINT;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 1;
         ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = _address;
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));

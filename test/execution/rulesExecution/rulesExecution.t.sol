@@ -272,10 +272,10 @@ abstract contract rulesExecution is RulesEngineCommon {
 
         ParamTypes[] memory fcArgs = new ParamTypes[](1);
         fcArgs[0] = ParamTypes.ADDR;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 2; // set the placeholder index to retrieve value 
         ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 2;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = address(testContract2);
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));

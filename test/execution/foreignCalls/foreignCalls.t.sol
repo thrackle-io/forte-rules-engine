@@ -136,14 +136,14 @@ abstract contract foreignCalls is RulesEngineCommon {
             {
                 ParamTypes[] memory fcParamTypes = new ParamTypes[](1);
                 fcParamTypes[0] = ParamTypes.BYTES;
-                int8[] memory fcTypeSpecificIndices = new int8[](1);
-                fcTypeSpecificIndices[0] = 0;
                 ForeignCall memory fc;
+                fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+                fc.encodedIndices[0].index = 0;
+                fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
                 fc.foreignCallAddress = foreignCallTarget;
                 fc.signature = setMsgDataSelector;
                 fc.returnType = ParamTypes.BOOL;
                 fc.parameterTypes = fcParamTypes;
-                fc.typeSpecificIndices = fcTypeSpecificIndices;
                 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyId, fc, "setMsgData(bytes)");
             }
 

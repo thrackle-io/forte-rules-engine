@@ -244,10 +244,11 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         ParamTypes[] memory fcArgs = new ParamTypes[](1);
         fcArgs[0] = ParamTypes.ADDR;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 0;
         ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = _contractAddress;
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
@@ -313,10 +314,11 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         ParamTypes[] memory fcArgs = new ParamTypes[](1);
         fcArgs[0] = ParamTypes.ADDR;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 0;
         ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+       
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = _contractAddress;
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
@@ -387,10 +389,11 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         ParamTypes[] memory fcArgs = new ParamTypes[](1);
         fcArgs[0] = ParamTypes.ADDR;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 1;
         ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = _contractAddress;
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
@@ -465,10 +468,11 @@ contract GasReports is GasHelpers, RulesEngineCommon {
 
         ParamTypes[] memory fcArgs = new ParamTypes[](1);
         fcArgs[0] = ParamTypes.ADDR;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 0;
-        ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
+         ForeignCall memory fc;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+       
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = _contractAddress;
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
@@ -549,11 +553,11 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         _addCallingFunctionToPolicy(policyIds[0]);
         ParamTypes[] memory fcArgs = new ParamTypes[](1);
         fcArgs[0] = ParamTypes.ADDR;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 0;
-
         ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = _contractAddress;
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
@@ -958,10 +962,11 @@ contract GasReports is GasHelpers, RulesEngineCommon {
         // There is no reason to incorporate a toggle like the oracle flex rule in V1 
         ParamTypes[] memory fcArgs = new ParamTypes[](1);
         fcArgs[0] = ParamTypes.ADDR;
-        int8[] memory typeSpecificIndices = new int8[](1);
-        typeSpecificIndices[0] = 0;
         ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        
         fc.parameterTypes = fcArgs;
         fc.foreignCallAddress = _contractAddress;
         fc.signature = bytes4(keccak256(bytes("getNaughty(address)")));
@@ -975,10 +980,11 @@ contract GasReports is GasHelpers, RulesEngineCommon {
             );
 
         // Add additional check for second address 
-        int8[] memory typeSpecificIndices2 = new int8[](1);
-        typeSpecificIndices2[0] = 2;
         ForeignCall memory newfc;
-        newfc.typeSpecificIndices = typeSpecificIndices2;
+        newfc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        newfc.encodedIndices[0].index = 2;
+        newfc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        
         newfc.parameterTypes = fcArgs;
         newfc.foreignCallAddress = _contractAddress;
         newfc.signature = bytes4(keccak256(bytes("getNaughty(address)")));

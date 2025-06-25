@@ -416,7 +416,7 @@ abstract contract adminRoles is RulesEngineCommon {
         assertEq(fc2.foreignCallAddress, address(0));
         assertEq(fc2.signature, bytes4(0));
         assertEq(fc2.parameterTypes.length, 0);
-        assertEq(fc2.typeSpecificIndices.length, 0);
+        assertEq(fc2.encodedIndices.length, 0);
         assertEq(uint8(fc2.returnType), uint8(ParamTypes.ADDR));
         assertEq(fc2.foreignCallIndex, 0);
     }

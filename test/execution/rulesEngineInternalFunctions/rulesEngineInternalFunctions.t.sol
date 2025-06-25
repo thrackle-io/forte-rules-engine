@@ -24,11 +24,15 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes(functionSig)));
         fc.parameterTypes = new ParamTypes[](1);
         fc.parameterTypes[0] = ParamTypes.UINT;
-        fc.typeSpecificIndices = new int8[](1);
-        fc.typeSpecificIndices[0] = 0;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](1);
+        typeSpecificIndices[0].index = 0;
+        typeSpecificIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
         bytes memory vals = abi.encode(1);
         bytes[] memory retVals = new bytes[](0);
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getDecodedIntOne(), 1);
     }
 
@@ -45,12 +49,16 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes(functionSig)));
         fc.parameterTypes = new ParamTypes[](1);
         fc.parameterTypes[0] = ParamTypes.UINT;
-        fc.typeSpecificIndices = new int8[](1);
-        fc.typeSpecificIndices[0] = -1;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.FOREIGN_CALL;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](1);
+        typeSpecificIndices[0].index = 1;
+        typeSpecificIndices[0].eType = EncodedIndexType.FOREIGN_CALL;
         bytes memory vals = abi.encode(1);
         bytes[] memory retVals = new bytes[](1);
         retVals[0] = abi.encode(4);
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getDecodedIntOne(), 4);
     }
     
@@ -68,12 +76,19 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.parameterTypes = new ParamTypes[](2);
         fc.parameterTypes[0] = ParamTypes.UINT;
         fc.parameterTypes[1] = ParamTypes.UINT;
-        fc.typeSpecificIndices = new int8[](2);
-        fc.typeSpecificIndices[0] = 0;
-        fc.typeSpecificIndices[1] = 1;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](2);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        fc.encodedIndices[1].index = 1;
+        fc.encodedIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](2);
+        typeSpecificIndices[0].index = 0;
+        typeSpecificIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        typeSpecificIndices[1].index = 1;
+        typeSpecificIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
         bytes memory vals = abi.encode(1, 2);
         bytes[] memory retVals = new bytes[](0);
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getDecodedIntOne(), 1);
         assertEq(foreignCall.getDecodedIntTwo(), 2);
     }
@@ -92,14 +107,21 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.parameterTypes = new ParamTypes[](2);
         fc.parameterTypes[0] = ParamTypes.UINT;
         fc.parameterTypes[1] = ParamTypes.UINT;
-        fc.typeSpecificIndices = new int8[](2);
-        fc.typeSpecificIndices[0] = -1;
-        fc.typeSpecificIndices[1] = -2;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](2);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.FOREIGN_CALL;
+        fc.encodedIndices[1].index = 2;
+        fc.encodedIndices[1].eType = EncodedIndexType.FOREIGN_CALL;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](2);
+        typeSpecificIndices[0].index = 1;
+        typeSpecificIndices[0].eType = EncodedIndexType.FOREIGN_CALL;
+        typeSpecificIndices[1].index = 2;
+        typeSpecificIndices[1].eType = EncodedIndexType.FOREIGN_CALL;
         bytes memory vals = abi.encode(1, 2);
         bytes[] memory retVals = new bytes[](2);
         retVals[0] = abi.encode(4);
         retVals[1] = abi.encode(3);
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getDecodedIntOne(), 4);
         assertEq(foreignCall.getDecodedIntTwo(), 3);
     }
@@ -117,11 +139,15 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes(functionSig)));
         fc.parameterTypes = new ParamTypes[](1);
         fc.parameterTypes[0] = ParamTypes.ADDR;
-        fc.typeSpecificIndices = new int8[](1);
-        fc.typeSpecificIndices[0] = 0;
+        fc.encodedIndices= new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](1);
+        typeSpecificIndices[0].index = 0;
+        typeSpecificIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
         bytes memory vals = abi.encode(address(0x1234567));
         bytes[] memory retVals = new bytes[](0);
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getDecodedAddr(), address(0x1234567));
     }
 
@@ -138,12 +164,16 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes(functionSig)));
         fc.parameterTypes = new ParamTypes[](1);
         fc.parameterTypes[0] = ParamTypes.ADDR;
-        fc.typeSpecificIndices = new int8[](1);
-        fc.typeSpecificIndices[0] = -1;
+        fc.encodedIndices= new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.FOREIGN_CALL;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](1);
+        typeSpecificIndices[0].index = 1;
+        typeSpecificIndices[0].eType = EncodedIndexType.FOREIGN_CALL;
         bytes memory vals = abi.encode(address(0x1234567));
         bytes[] memory retVals = new bytes[](1);
         retVals[0] = abi.encode(0x567890);
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getDecodedAddr(), address(0x567890));
     }
 
@@ -161,12 +191,19 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.parameterTypes = new ParamTypes[](2);
         fc.parameterTypes[0] = ParamTypes.ADDR;
         fc.parameterTypes[1] = ParamTypes.ADDR;
-        fc.typeSpecificIndices = new int8[](2);
-        fc.typeSpecificIndices[0] = 0;
-        fc.typeSpecificIndices[1] = 1;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](2);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        fc.encodedIndices[1].index = 1;
+        fc.encodedIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](2);
+        typeSpecificIndices[0].index = 0;
+        typeSpecificIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        typeSpecificIndices[1].index = 1;
+        typeSpecificIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
         bytes memory vals = abi.encode(address(0x1234567), address(0x7654321));
         bytes[] memory retVals = new bytes[](0);
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getDecodedAddr(), address(0x1234567));
         assertEq(foreignCall.getDecodedAddrTwo(), address(0x7654321));
     }   
@@ -185,14 +222,21 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.parameterTypes = new ParamTypes[](2);
         fc.parameterTypes[0] = ParamTypes.ADDR;
         fc.parameterTypes[1] = ParamTypes.ADDR;
-        fc.typeSpecificIndices = new int8[](2);
-        fc.typeSpecificIndices[0] = -1;
-        fc.typeSpecificIndices[1] = -2;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](2);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.FOREIGN_CALL;
+        fc.encodedIndices[1].index = 2;
+        fc.encodedIndices[1].eType = EncodedIndexType.FOREIGN_CALL;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](2);
+        typeSpecificIndices[0].index = 1;
+        typeSpecificIndices[0].eType = EncodedIndexType.FOREIGN_CALL;
+        typeSpecificIndices[1].index = 2;
+        typeSpecificIndices[1].eType = EncodedIndexType.FOREIGN_CALL;
         bytes memory vals = abi.encode(address(0x1234567), address(0x7654321));
         bytes[] memory retVals = new bytes[](2);
         retVals[0] = abi.encode(0x567890);
         retVals[1] = abi.encode(0x111111);
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getDecodedAddr(), address(0x567890));
         assertEq(foreignCall.getDecodedAddrTwo(), address(0x111111));
     }
@@ -210,11 +254,15 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes(functionSig)));
         fc.parameterTypes = new ParamTypes[](1);
         fc.parameterTypes[0] = ParamTypes.STR;
-        fc.typeSpecificIndices = new int8[](1);
-        fc.typeSpecificIndices[0] = 0;
+        fc.encodedIndices= new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](1);
+        typeSpecificIndices[0].index = 0;
+        typeSpecificIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
         bytes memory vals = abi.encode("test");
         bytes[] memory retVals = new bytes[](0);
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getDecodedStrOne(), "test");
     }
 
@@ -231,12 +279,16 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes(functionSig)));
         fc.parameterTypes = new ParamTypes[](1);
         fc.parameterTypes[0] = ParamTypes.STR;
-        fc.typeSpecificIndices = new int8[](1);
-        fc.typeSpecificIndices[0] = -1;
+        fc.encodedIndices= new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.FOREIGN_CALL;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](1);
+        typeSpecificIndices[0].index = 1;
+        typeSpecificIndices[0].eType = EncodedIndexType.FOREIGN_CALL;
         bytes memory vals = abi.encode("test");
         bytes[] memory retVals = new bytes[](1);
         retVals[0] = abi.encode("tset");
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getDecodedStrOne(), "tset");
     }
 
@@ -254,12 +306,19 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.parameterTypes = new ParamTypes[](2);
         fc.parameterTypes[0] = ParamTypes.STR;
         fc.parameterTypes[1] = ParamTypes.STR;
-        fc.typeSpecificIndices = new int8[](2);
-        fc.typeSpecificIndices[0] = 0;
-        fc.typeSpecificIndices[1] = 1;
+        fc.encodedIndices= new ForeignCallEncodedIndex[](2);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        fc.encodedIndices[1].index = 1;
+        fc.encodedIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](2);
+        typeSpecificIndices[0].index = 0;
+        typeSpecificIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        typeSpecificIndices[1].index = 1;
+        typeSpecificIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
         bytes memory vals = abi.encode("test", "superduper");
         bytes[] memory retVals = new bytes[](0);
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getDecodedStrOne(), "test");
         assertEq(foreignCall.getDecodedStrTwo(), "superduper");
     }
@@ -278,14 +337,21 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.parameterTypes = new ParamTypes[](2);
         fc.parameterTypes[0] = ParamTypes.STR;
         fc.parameterTypes[1] = ParamTypes.STR;
-        fc.typeSpecificIndices = new int8[](2);
-        fc.typeSpecificIndices[0] = -1;
-        fc.typeSpecificIndices[1] = -2;
+        fc.encodedIndices= new ForeignCallEncodedIndex[](2);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.FOREIGN_CALL;
+        fc.encodedIndices[1].index = 2;
+        fc.encodedIndices[1].eType = EncodedIndexType.FOREIGN_CALL;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](2);
+        typeSpecificIndices[0].index = 1;
+        typeSpecificIndices[0].eType = EncodedIndexType.FOREIGN_CALL;
+        typeSpecificIndices[1].index = 2;
+        typeSpecificIndices[1].eType = EncodedIndexType.FOREIGN_CALL;
         bytes memory vals = abi.encode("test", "superduper");
         bytes[] memory retVals = new bytes[](2);
         retVals[0] = abi.encode("tset");
         retVals[1] = abi.encode("rupersuper");
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getDecodedStrOne(), "tset");
         assertEq(foreignCall.getDecodedStrTwo(), "rupersuper");
     }
@@ -303,8 +369,12 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes(functionSig)));
         fc.parameterTypes = new ParamTypes[](1);
         fc.parameterTypes[0] = ParamTypes.STATIC_TYPE_ARRAY;
-        fc.typeSpecificIndices = new int8[](1);
-        fc.typeSpecificIndices[0] = 0;
+        fc.encodedIndices= new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](1);
+        typeSpecificIndices[0].index = 0;
+        typeSpecificIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
         uint256[] memory array = new uint256[](5);
         array[0] = 1;
         array[1] = 2;
@@ -313,7 +383,7 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         array[4] = 5;
         bytes memory vals = abi.encode(array);
         bytes[] memory retVals = new bytes[](0);
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getInternalArrayUint()[0], 1);
         assertEq(foreignCall.getInternalArrayUint()[1], 2);
         assertEq(foreignCall.getInternalArrayUint()[2], 3);
@@ -334,8 +404,12 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes(functionSig)));
         fc.parameterTypes = new ParamTypes[](1);
         fc.parameterTypes[0] = ParamTypes.STATIC_TYPE_ARRAY;
-        fc.typeSpecificIndices = new int8[](1);
-        fc.typeSpecificIndices[0] = -1;
+        fc.encodedIndices= new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.FOREIGN_CALL;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](1);
+        typeSpecificIndices[0].index = 1;
+        typeSpecificIndices[0].eType = EncodedIndexType.FOREIGN_CALL;
         uint256[] memory array = new uint256[](5);
         array[0] = 1;
         array[1] = 2;
@@ -351,15 +425,13 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         retArray[3] = 14;
         retArray[4] = 15;
         retVals[0] = abi.encode(retArray);
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getInternalArrayUint()[0], 11);
         assertEq(foreignCall.getInternalArrayUint()[1], 12);
         assertEq(foreignCall.getInternalArrayUint()[2], 13);
         assertEq(foreignCall.getInternalArrayUint()[3], 14);
         assertEq(foreignCall.getInternalArrayUint()[4], 15);
     }
-
-    
 
     function testRulesEngine_Unit_EncodingForeignCallTwoArrayUintWithRetVals()
         public
@@ -375,9 +447,16 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.parameterTypes = new ParamTypes[](2);
         fc.parameterTypes[0] = ParamTypes.STATIC_TYPE_ARRAY;
         fc.parameterTypes[1] = ParamTypes.STATIC_TYPE_ARRAY;
-        fc.typeSpecificIndices = new int8[](2);
-        fc.typeSpecificIndices[0] = -1;
-        fc.typeSpecificIndices[1] = -2;
+        fc.encodedIndices= new ForeignCallEncodedIndex[](2);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.FOREIGN_CALL;
+        fc.encodedIndices[1].index = 2;
+        fc.encodedIndices[1].eType = EncodedIndexType.FOREIGN_CALL;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](2);
+        typeSpecificIndices[0].index = 1;
+        typeSpecificIndices[0].eType = EncodedIndexType.FOREIGN_CALL;
+        typeSpecificIndices[1].index = 2;
+        typeSpecificIndices[1].eType = EncodedIndexType.FOREIGN_CALL;
         uint256[] memory array = new uint256[](5);
         array[0] = 1;
         array[1] = 2;
@@ -406,7 +485,7 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         retArrayTwo[4] = 20;
         retVals[0] = abi.encode(retArray);
         retVals[1] = abi.encode(retArrayTwo);
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getInternalArrayUint()[0], 11);
         assertEq(foreignCall.getInternalArrayUint()[1], 12);
         assertEq(foreignCall.getInternalArrayUint()[2], 13);
@@ -433,9 +512,16 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.parameterTypes = new ParamTypes[](2);
         fc.parameterTypes[0] = ParamTypes.STATIC_TYPE_ARRAY;
         fc.parameterTypes[1] = ParamTypes.STATIC_TYPE_ARRAY;
-        fc.typeSpecificIndices = new int8[](2);
-        fc.typeSpecificIndices[0] = 0;
-        fc.typeSpecificIndices[1] = 1;
+        fc.encodedIndices= new ForeignCallEncodedIndex[](2);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        fc.encodedIndices[1].index = 1;
+        fc.encodedIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](2);
+        typeSpecificIndices[0].index = 0;
+        typeSpecificIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        typeSpecificIndices[1].index = 1;
+        typeSpecificIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
         uint256[] memory array = new uint256[](5);
         array[0] = 1;
         array[1] = 2;
@@ -450,7 +536,7 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         arrayTwo[4] = 10;
         bytes memory vals = abi.encode(array, arrayTwo);
         bytes[] memory retVals = new bytes[](0);
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getInternalArrayUint()[0], 1);
         assertEq(foreignCall.getInternalArrayUint()[1], 2);
         assertEq(foreignCall.getInternalArrayUint()[2], 3);
@@ -477,9 +563,16 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.parameterTypes = new ParamTypes[](2);
         fc.parameterTypes[0] = ParamTypes.DYNAMIC_TYPE_ARRAY;
         fc.parameterTypes[1] = ParamTypes.DYNAMIC_TYPE_ARRAY;
-        fc.typeSpecificIndices = new int8[](2);
-        fc.typeSpecificIndices[0] = 0;
-        fc.typeSpecificIndices[1] = 1;
+        fc.encodedIndices= new ForeignCallEncodedIndex[](2);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        fc.encodedIndices[1].index = 1;
+        fc.encodedIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](2);
+        typeSpecificIndices[0].index = 0;
+        typeSpecificIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        typeSpecificIndices[1].index = 1;
+        typeSpecificIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
         string[] memory array = new string[](5);
         array[0] = "test";
         array[1] = "superduper";
@@ -494,7 +587,7 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         arrayTwo[4] = "muperduperduperduperduperduperduperduperduperduperduperduperlongstring";
         bytes memory vals = abi.encode(array, arrayTwo);
         bytes[] memory retVals = new bytes[](0);
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getInternalArrayStr()[0], "test");
         assertEq(foreignCall.getInternalArrayStr()[1], "superduper");
         assertEq(foreignCall.getInternalArrayStr()[2], "superduperduper");
@@ -521,9 +614,16 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.parameterTypes = new ParamTypes[](2);
         fc.parameterTypes[0] = ParamTypes.DYNAMIC_TYPE_ARRAY;
         fc.parameterTypes[1] = ParamTypes.DYNAMIC_TYPE_ARRAY;
-        fc.typeSpecificIndices = new int8[](2);
-        fc.typeSpecificIndices[0] = -1;
-        fc.typeSpecificIndices[1] = -2;
+        fc.encodedIndices= new ForeignCallEncodedIndex[](2);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.FOREIGN_CALL;
+        fc.encodedIndices[1].index = 2;
+        fc.encodedIndices[1].eType = EncodedIndexType.FOREIGN_CALL;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](2);
+        typeSpecificIndices[0].index = 1;
+        typeSpecificIndices[0].eType = EncodedIndexType.FOREIGN_CALL;
+        typeSpecificIndices[1].index = 2;
+        typeSpecificIndices[1].eType = EncodedIndexType.FOREIGN_CALL;
         string[] memory array = new string[](5);
         array[0] = "test";
         array[1] = "superduper";
@@ -552,7 +652,7 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         retArrayTwo[3] = "dankitycrankitydankitydankity";
         retArrayTwo[4] = "dankitycrankitydankitydankitydankity";
         retVals[1] = abi.encode(retArrayTwo);
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getInternalArrayStr()[0], "crank");
         assertEq(foreignCall.getInternalArrayStr()[1], "crankitydankity");
         assertEq(foreignCall.getInternalArrayStr()[2], "crankitydankitydankity");
@@ -579,8 +679,12 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes(functionSig)));
         fc.parameterTypes = new ParamTypes[](1);
         fc.parameterTypes[0] = ParamTypes.STATIC_TYPE_ARRAY;
-        fc.typeSpecificIndices = new int8[](1);
-        fc.typeSpecificIndices[0] = 0;
+        fc.encodedIndices= new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](1);
+        typeSpecificIndices[0].index = 0;
+        typeSpecificIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
         address[] memory array = new address[](5);
         array[0] = address(0x1234567);
         array[1] = address(0x7654321);
@@ -590,7 +694,7 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         bytes memory vals = abi.encode(array);
         bytes[] memory retVals = new bytes[](0);
         RulesEngineProcessorFacet(address(red))
-            .evaluateForeignCallForRule(fc, vals, retVals);
+            .evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getInternalArrayAddr()[0], address(0x1234567));
         assertEq(foreignCall.getInternalArrayAddr()[1], address(0x7654321));
         assertEq(foreignCall.getInternalArrayAddr()[2], address(0x1111111));
@@ -611,8 +715,12 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes(functionSig)));
         fc.parameterTypes = new ParamTypes[](1);
         fc.parameterTypes[0] = ParamTypes.DYNAMIC_TYPE_ARRAY;
-        fc.typeSpecificIndices = new int8[](1);
-        fc.typeSpecificIndices[0] = 0;
+        fc.encodedIndices= new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](1);
+        typeSpecificIndices[0].index = 0;
+        typeSpecificIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
         string[] memory array = new string[](5);
         array[0] = "test";
         array[1] = "superduper";
@@ -622,7 +730,7 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         bytes memory vals = abi.encode(array);
         bytes[] memory retVals = new bytes[](0);
         RulesEngineProcessorFacet(address(red))
-            .evaluateForeignCallForRule(fc, vals, retVals);
+            .evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getInternalArrayStr()[0], "test");
         assertEq(foreignCall.getInternalArrayStr()[1], "superduper");
         assertEq(foreignCall.getInternalArrayStr()[2], "superduperduper");
@@ -643,8 +751,12 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes(functionSig)));
         fc.parameterTypes = new ParamTypes[](1);
         fc.parameterTypes[0] = ParamTypes.DYNAMIC_TYPE_ARRAY;
-        fc.typeSpecificIndices = new int8[](1);
-        fc.typeSpecificIndices[0] = 0;
+        fc.encodedIndices= new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](1);
+        typeSpecificIndices[0].index = 0;
+        typeSpecificIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
         bytes[] memory array = new bytes[](5);
         array[0] = abi.encodeWithSelector(bytes4(keccak256(bytes("test(uint256)"))), 1);
         array[1] = abi.encodeWithSelector(bytes4(keccak256(bytes("superduper(uint256)"))), 2);
@@ -654,7 +766,7 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         bytes memory vals = abi.encode(array);
         bytes[] memory retVals = new bytes[](0);
         RulesEngineProcessorFacet(address(red))
-            .evaluateForeignCallForRule(fc, vals, retVals);
+            .evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getInternalArrayBytes()[0], abi.encodeWithSelector(bytes4(keccak256(bytes("test(uint256)"))), 1));
         assertEq(foreignCall.getInternalArrayBytes()[1], abi.encodeWithSelector(bytes4(keccak256(bytes("superduper(uint256)"))), 2));
         assertEq(foreignCall.getInternalArrayBytes()[2], abi.encodeWithSelector(bytes4(keccak256(bytes("superduperduper(uint256)"))), 3));
@@ -675,12 +787,16 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes(functionSig)));
         fc.parameterTypes = new ParamTypes[](1);
         fc.parameterTypes[0] = ParamTypes.BYTES;
-        fc.typeSpecificIndices = new int8[](1);
-        fc.typeSpecificIndices[0] = 0;
+        fc.encodedIndices= new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](1);
+        typeSpecificIndices[0].index = 0;
+        typeSpecificIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
         
         bytes memory vals = abi.encode(bytes("test"));
         bytes[] memory retVals = new bytes[](0);
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
+        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getDecodedBytes(), bytes("test"));
     
     }
@@ -701,11 +817,24 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.parameterTypes[1] = ParamTypes.STATIC_TYPE_ARRAY;
         fc.parameterTypes[2] = ParamTypes.DYNAMIC_TYPE_ARRAY;
         fc.parameterTypes[3] = ParamTypes.DYNAMIC_TYPE_ARRAY;
-        fc.typeSpecificIndices = new int8[](4);
-        fc.typeSpecificIndices[0] = 0;
-        fc.typeSpecificIndices[1] = 1;
-        fc.typeSpecificIndices[2] = 2;
-        fc.typeSpecificIndices[3] = 3;
+        fc.encodedIndices= new ForeignCallEncodedIndex[](4);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        fc.encodedIndices[1].index = 1;
+        fc.encodedIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
+        fc.encodedIndices[2].index = 2;
+        fc.encodedIndices[2].eType = EncodedIndexType.ENCODED_VALUES;
+        fc.encodedIndices[3].index = 3;
+        fc.encodedIndices[3].eType = EncodedIndexType.ENCODED_VALUES;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](4);
+        typeSpecificIndices[0].index = 0;
+        typeSpecificIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        typeSpecificIndices[1].index = 0;
+        typeSpecificIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
+        typeSpecificIndices[2].index = 0;
+        typeSpecificIndices[2].eType = EncodedIndexType.ENCODED_VALUES;
+        typeSpecificIndices[3].index = 0;
+        typeSpecificIndices[3].eType = EncodedIndexType.ENCODED_VALUES;
         uint256[] memory array1 = new uint256[](5);
         array1[0] = 1;
         array1[1] = 2;
@@ -735,7 +864,7 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         bytes memory vals = abi.encode(array1, array2, array3, array4);
         bytes[] memory retVals = new bytes[](0);
         RulesEngineProcessorFacet(address(red))
-            .evaluateForeignCallForRule(fc, vals, retVals);
+            .evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getInternalArrayUint()[0], 1);
         assertEq(foreignCall.getInternalArrayUint()[1], 2);
         assertEq(foreignCall.getInternalArrayUint()[2], 3);
@@ -774,11 +903,26 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.parameterTypes[1] = ParamTypes.STATIC_TYPE_ARRAY;
         fc.parameterTypes[2] = ParamTypes.DYNAMIC_TYPE_ARRAY;
         fc.parameterTypes[3] = ParamTypes.DYNAMIC_TYPE_ARRAY;
-        fc.typeSpecificIndices = new int8[](4);
-        fc.typeSpecificIndices[0] = 0;
-        fc.typeSpecificIndices[1] = -1;
-        fc.typeSpecificIndices[2] = 1;
-        fc.typeSpecificIndices[3] = -2;
+
+        fc.encodedIndices= new ForeignCallEncodedIndex[](4);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        fc.encodedIndices[1].index = 1;
+        fc.encodedIndices[1].eType = EncodedIndexType.FOREIGN_CALL;
+        fc.encodedIndices[2].index = 1;
+        fc.encodedIndices[2].eType = EncodedIndexType.ENCODED_VALUES;
+        fc.encodedIndices[3].index = 2;
+        fc.encodedIndices[3].eType = EncodedIndexType.FOREIGN_CALL;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](4);
+        typeSpecificIndices[0].index = 0;
+        typeSpecificIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        typeSpecificIndices[1].index = 1;
+        typeSpecificIndices[1].eType = EncodedIndexType.FOREIGN_CALL;
+        typeSpecificIndices[2].index = 1;
+        typeSpecificIndices[2].eType = EncodedIndexType.ENCODED_VALUES;
+        typeSpecificIndices[3].index = 2;
+        typeSpecificIndices[3].eType = EncodedIndexType.FOREIGN_CALL;
+
         uint256[] memory array1 = new uint256[](5);
         array1[0] = 1;
         array1[1] = 2;
@@ -810,7 +954,7 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         retVals[0] = abi.encode(array2);
         retVals[1] = abi.encode(array4);
         RulesEngineProcessorFacet(address(red))
-            .evaluateForeignCallForRule(fc, vals, retVals);
+            .evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getInternalArrayUint()[0], 1);
         assertEq(foreignCall.getInternalArrayUint()[1], 2);
         assertEq(foreignCall.getInternalArrayUint()[2], 3);
@@ -833,32 +977,6 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         assertEq(foreignCall.getInternalArrayBytes()[4], abi.encodeWithSelector(bytes4(keccak256(bytes("test(uint256,string,address)"))), 5, "superduperduperduperduperduperduperduperduperduperduperduperduperlongstring", address(0x1234567)));
     }
 
-    function testRulesEngine_Unit_EncodingForeignCallRetVals_Reversed()
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-    {
-        string memory functionSig = "testSig(address,uint256)";
-        ForeignCallTestContract foreignCall = new ForeignCallTestContract();
-        ForeignCall memory fc;
-        fc.foreignCallAddress = address(foreignCall);
-        fc.signature = bytes4(keccak256(bytes(functionSig)));
-        fc.parameterTypes = new ParamTypes[](2);
-        fc.parameterTypes[0] = ParamTypes.ADDR;
-        fc.parameterTypes[1] = ParamTypes.UINT;
-        fc.typeSpecificIndices = new int8[](2);
-        fc.typeSpecificIndices[0] = -3;
-        fc.typeSpecificIndices[1] = -2;
-        bytes memory vals = abi.encode(address(0x1234567), 1);
-        bytes[] memory retVals = new bytes[](3);
-        retVals[0] = abi.encode("I'm a string");
-        retVals[1] = abi.encode(42);
-        retVals[2] = abi.encode(address(0xdeadbeefdeadbeef));
-        RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
-        assertEq(foreignCall.getDecodedAddr(), address(0xdeadbeefdeadbeef));
-        assertEq(foreignCall.getDecodedIntOne(), 42);
-    }
-
     function testRulesEngine_Unit_EncodingForeignCallArrayMixedTypes_Simple()
         public
         ifDeploymentTestsEnabled
@@ -873,9 +991,18 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.parameterTypes = new ParamTypes[](2);
         fc.parameterTypes[0] = ParamTypes.DYNAMIC_TYPE_ARRAY;
         fc.parameterTypes[1] = ParamTypes.STATIC_TYPE_ARRAY;
-        fc.typeSpecificIndices = new int8[](2);
-        fc.typeSpecificIndices[0] = 0;
-        fc.typeSpecificIndices[1] = 1;
+
+        fc.encodedIndices= new ForeignCallEncodedIndex[](2);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        fc.encodedIndices[1].index = 1;
+        fc.encodedIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](2);
+        typeSpecificIndices[0].index = 0;
+        typeSpecificIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        typeSpecificIndices[1].index = 1;
+        typeSpecificIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
+
         string[] memory array3 = new string[](5);
         array3[0] = "test";
         array3[1] = "superduper";
@@ -891,7 +1018,7 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         bytes memory vals = abi.encode(array3, array1);
         bytes[] memory retVals = new bytes[](0);
         RulesEngineProcessorFacet(address(red))
-            .evaluateForeignCallForRule(fc, vals, retVals);
+            .evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         assertEq(foreignCall.getInternalArrayStr()[0], "test");
         assertEq(foreignCall.getInternalArrayStr()[1], "superduper");
         assertEq(foreignCall.getInternalArrayStr()[2], "superduperduper");
@@ -918,9 +1045,18 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.parameterTypes = new ParamTypes[](2);
         fc.parameterTypes[0] = ParamTypes.STATIC_TYPE_ARRAY;
         fc.parameterTypes[1] = ParamTypes.DYNAMIC_TYPE_ARRAY;
-        fc.typeSpecificIndices = new int8[](2);
-        fc.typeSpecificIndices[0] = 0;
-        fc.typeSpecificIndices[1] = 1;
+
+        fc.encodedIndices= new ForeignCallEncodedIndex[](2);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        fc.encodedIndices[1].index = 1;
+        fc.encodedIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](2);
+        typeSpecificIndices[0].index = 0;
+        typeSpecificIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        typeSpecificIndices[1].index = 1;
+        typeSpecificIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
+        
         uint256[] memory array1 = new uint256[](5);
         array1[0] = 1;
         array1[1] = 2;
@@ -937,7 +1073,7 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         bytes memory vals = abi.encode(array1, array3);
         bytes[] memory retVals = new bytes[](0);
         RulesEngineProcessorFacet(address(red))
-            .evaluateForeignCallForRule(fc, vals, retVals);
+            .evaluateForeignCallForRule(fc, vals, retVals, typeSpecificIndices);
         
         assertEq(foreignCall.getInternalArrayUint()[0], 1);
         assertEq(foreignCall.getInternalArrayUint()[1], 2);
@@ -970,12 +1106,28 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.parameterTypes[3] = ParamTypes.STR;
         fc.parameterTypes[4] = ParamTypes.ADDR;
 
-        fc.typeSpecificIndices = new int8[](5);
-        fc.typeSpecificIndices[0] = 0;
-        fc.typeSpecificIndices[1] = 1;
-        fc.typeSpecificIndices[2] = 2;
-        fc.typeSpecificIndices[3] = 3;
-        fc.typeSpecificIndices[4] = 4;
+        fc.encodedIndices= new ForeignCallEncodedIndex[](5);
+        fc.encodedIndices[0].index = 0;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        fc.encodedIndices[1].index = 1;
+        fc.encodedIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
+        fc.encodedIndices[2].index = 2;
+        fc.encodedIndices[2].eType = EncodedIndexType.ENCODED_VALUES;
+        fc.encodedIndices[3].index = 3;
+        fc.encodedIndices[3].eType = EncodedIndexType.ENCODED_VALUES;
+        fc.encodedIndices[4].index = 4;
+        fc.encodedIndices[4].eType = EncodedIndexType.ENCODED_VALUES;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](5);
+        typeSpecificIndices[0].index = 0;
+        typeSpecificIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        typeSpecificIndices[1].index = 1;
+        typeSpecificIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
+        typeSpecificIndices[2].index = 2;
+        typeSpecificIndices[2].eType = EncodedIndexType.ENCODED_VALUES;
+        typeSpecificIndices[3].index = 3;
+        typeSpecificIndices[3].eType = EncodedIndexType.ENCODED_VALUES;
+        typeSpecificIndices[4].index = 4;
+        typeSpecificIndices[4].eType = EncodedIndexType.ENCODED_VALUES;
 
         bytes memory vals = abi.encode(
             1, 
@@ -990,7 +1142,8 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
             .evaluateForeignCallForRule(
                 fc,
                 vals,
-                retVals
+                retVals,
+                typeSpecificIndices
             );
 
         assertEq(foreignCall.getDecodedIntOne(), 1);
@@ -1001,45 +1154,6 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
             "superduperduperduperduperduperduperduperduperduperduperduperlongstring"
         );
         assertEq(foreignCall.getDecodedAddr(), address(0x1234567));
-        retVal;
-    }
-
-    function testRulesEngine_Unit_EvaluateForeignCallForRule_WithStringAndDynamicAndStaticArray()
-        public
-        ifDeploymentTestsEnabled
-        endWithStopPrank
-    {
-        //ForeignCall Builder not used here to test the data structures 
-        ForeignCall memory fc;
-        ForeignCallTestContract foreignCall = new ForeignCallTestContract();
-        string memory functionSig = "testSigWithMultiArrays(string,uint256[],string[])";
-        fc.foreignCallAddress = address(foreignCall);
-        fc.signature = bytes4(keccak256(bytes(functionSig)));
-        fc.parameterTypes = new ParamTypes[](3);
-        fc.parameterTypes[0] = ParamTypes.STR;
-        fc.parameterTypes[1] = ParamTypes.STATIC_TYPE_ARRAY;
-        fc.parameterTypes[2] = ParamTypes.DYNAMIC_TYPE_ARRAY;
-        fc.typeSpecificIndices = new int8[](3);
-        fc.typeSpecificIndices[0] = 2;
-        fc.typeSpecificIndices[1] = 1;
-        fc.typeSpecificIndices[2] = 0;
-
-        string memory str = "superduperduperduperduperduperduperduperduperduperduperduperlongstring";
-        uint256[] memory uintArray = new uint256[](5);
-        uintArray[0] = 1;
-        uintArray[1] = 2;
-        uintArray[2] = 3;
-        uintArray[3] = 4;
-        uintArray[4] = 5;
-        string[] memory strArray = new string[](5);
-        strArray[0] = "test";
-        strArray[1] = "superduper";
-        strArray[2] = "superduperduper";
-        strArray[3] = "superduperduperduper";
-        strArray[4] = "superduperduperduperduperduperduperduperduperduperduperduperlongstring";
-        bytes memory vals = abi.encode(strArray, uintArray, str);
-        bytes[] memory retVals = new bytes[](0);
-        ForeignCallReturnValue memory retVal = RulesEngineProcessorFacet(address(red)).evaluateForeignCallForRule(fc, vals, retVals);
         retVal;
     }
 
@@ -1065,12 +1179,29 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         fc.parameterTypes[3] = ParamTypes.STR;
         fc.parameterTypes[4] = ParamTypes.ADDR;
 
-        fc.typeSpecificIndices = new int8[](5);
-        fc.typeSpecificIndices[0] = 1;
-        fc.typeSpecificIndices[1] = 0;
-        fc.typeSpecificIndices[2] = 2;
-        fc.typeSpecificIndices[3] = 3;
-        fc.typeSpecificIndices[4] = 5;
+        fc.encodedIndices= new ForeignCallEncodedIndex[](5);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        fc.encodedIndices[1].index = 0;
+        fc.encodedIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
+        fc.encodedIndices[2].index = 2;
+        fc.encodedIndices[2].eType = EncodedIndexType.ENCODED_VALUES;
+        fc.encodedIndices[3].index = 3;
+        fc.encodedIndices[3].eType = EncodedIndexType.ENCODED_VALUES;
+        fc.encodedIndices[4].index = 5;
+        fc.encodedIndices[4].eType = EncodedIndexType.ENCODED_VALUES;
+        ForeignCallEncodedIndex[] memory typeSpecificIndices = new ForeignCallEncodedIndex[](5);
+        typeSpecificIndices[0].index = 1;
+        typeSpecificIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        typeSpecificIndices[1].index = 0;
+        typeSpecificIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
+        typeSpecificIndices[2].index = 2;
+        typeSpecificIndices[2].eType = EncodedIndexType.ENCODED_VALUES;
+        typeSpecificIndices[3].index = 3;
+        typeSpecificIndices[3].eType = EncodedIndexType.ENCODED_VALUES;
+        typeSpecificIndices[4].index = 5;
+        typeSpecificIndices[4].eType = EncodedIndexType.ENCODED_VALUES;
+        
 
         // rule signature function arguments (RS): string, uint256, uint256, string, uint256, string, address
         // foreign call function arguments (FC): uint256, string, uint256, string, address
@@ -1090,13 +1221,14 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         ).evaluateForeignCallForRule(
                 fc,
                 arguments,
-                retVals
+                retVals,
+                typeSpecificIndices
             );
         console2.logBytes(retVal.value);
     }
 
 
-    /// Test utility functions within ExampleUserContract.sol and RulesEngineRunRulesEngineProcessorFacet(address(red)).sol
+    // /// Test utility functions within ExampleUserContract.sol and RulesEngineRunRulesEngineProcessorFacet(address(red)).sol
     function testRulesEngine_Utils_UserContract_setRulesEngineAddress()
         public
         ifDeploymentTestsEnabled
@@ -1179,6 +1311,4 @@ abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
         bytes memory extracted = hex"00000000000000000000000000000000000000000000000000000000000000467375706572647570657264757065726475706572647570657264757065726475706572647570657264757065726475706572647570657264757065726c6f6e67737472696e670000000000000000000000000000000000000000000000000000";
         assertEq(ProcessorLib._extractStringData(b), extracted);
     }
-
-
 }
