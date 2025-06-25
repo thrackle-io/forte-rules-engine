@@ -13,7 +13,7 @@
 			"html",
 			"lcov"
 		],
-		"revertReporterEnabled": false,
+		"revertReporterEnabled": true,
 		"targetContracts": ["RulesEngineAdminRolesTest"],
 		"predeployedContracts": {},
 		"targetContractsBalances": [],
