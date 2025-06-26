@@ -2,7 +2,7 @@
 ## Highest 
 ### Admin Roles Invariants 
 #### Policy Admin 
-- A policy must always have a one policy admin 
+- A policy must always have one policy admin 
 - There can only ever be one policy admin per policy at a time
 - Only the current policy admin can propose a new policy admin 
 - Proposed Admin Role cannot act as policy admin until role is confirmed  
