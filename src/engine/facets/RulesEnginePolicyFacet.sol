@@ -4,7 +4,6 @@ pragma solidity ^0.8.24;
 import "src/engine/facets/FacetCommonImports.sol";
 import "src/engine/facets/RulesEngineAdminRolesFacet.sol";
 import {RulesEngineStorageLib as StorageLib} from "src/engine/facets/RulesEngineStorageLib.sol";
-import "forge-std/src/console.sol";
 /**
  * @title Rules Engine Policy Facet
  * @dev This contract serves as the primary data facet for the Rules Engine. It is responsible for creating, updating, 
@@ -307,10 +306,8 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         // clear the iterator array
         delete data.callingFunctions;
         if (_ruleIds.length > 0) {
-            console.log("ruleIds.length", _ruleIds.length);
             // Loop through all the passed in calling functions for the policy      
             for (uint256 i = 0; i < _callingFunctions.length; i++) {
-                console.log("i", i);
                 // make sure that all the calling functions exist
                 if(!StorageLib._isCallingFunctionSet(_policyId, _callingFunctionIds[i])) revert(INVALID_SIGNATURE);
                 // Load into the mapping
@@ -319,7 +316,6 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
                 data.callingFunctions.push(_callingFunctions[i]);
                 // make sure that all the rules attached to each calling function exist
                 for (uint256 j = 0; j < _ruleIds[i].length; j++) {
-                    console.log("j", j);
                     RuleStorageSet memory ruleStore = lib._getRuleStorage().ruleStorageSets[_policyId][_ruleIds[i][j]];
                     if(!ruleStore.set) revert(INVALID_RULE);
                     for (uint256 k = 0; k < ruleStore.rule.placeHolders.length; k++) {
