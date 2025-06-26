@@ -112,12 +112,14 @@ contract ReentrancyTest is RulesEngineCommon {
 
         // Create a tracker for the rule
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker1, "totalVolume");      
-        int8[] memory typeSpecificIndices = new int8[](2);
-        typeSpecificIndices[0] = 0;
-        typeSpecificIndices[1] = 1;
+        ForeignCallEncodedIndex[] memory encodedIndices = new ForeignCallEncodedIndex[](2);
+        encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        encodedIndices[0].index = 0;
+        encodedIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
+        encodedIndices[1].index = 1;
 
         ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.encodedIndices = encodedIndices;
         fc.parameterTypes = pTypes;
         fc.foreignCallAddress = address(reentrancy);
         fc.signature = bytes4(keccak256(bytes("transfer(address,uint256)")));
@@ -193,12 +195,14 @@ contract ReentrancyTest is RulesEngineCommon {
         // Create a tracker for the rule
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker1, "totalVolume");      
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[1], tracker1, "totalVolume");      
-        int8[] memory typeSpecificIndices = new int8[](2);
-        typeSpecificIndices[0] = 0;
-        typeSpecificIndices[1] = 1;
+        ForeignCallEncodedIndex[] memory encodedIndices = new ForeignCallEncodedIndex[](2);
+        encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+        encodedIndices[0].index = 0;
+        encodedIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
+        encodedIndices[1].index = 1;
 
         ForeignCall memory fc;
-        fc.typeSpecificIndices = typeSpecificIndices;
+        fc.encodedIndices = encodedIndices;
         fc.parameterTypes = pTypes;
         fc.foreignCallAddress = address(reentrancy);
         fc.signature = bytes4(keccak256(bytes("transfer(address,uint256)")));
