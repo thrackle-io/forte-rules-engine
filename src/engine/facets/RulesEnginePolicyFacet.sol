@@ -334,7 +334,6 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         } else {
             // Solely loop through and add calling functions to the policy
             for (uint256 i = 0; i < _callingFunctions.length; i++) {
-                console.log("i", i);
                 // make sure that all the calling functions exist
                 if(!StorageLib._isCallingFunctionSet(_policyId, _callingFunctionIds[i])) revert(INVALID_SIGNATURE);
                 // Load into the mapping
