@@ -229,8 +229,6 @@ contract ReentrancyTest is RulesEngineCommon {
 
         RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[0], callingFunctionsNew, callingFunctionIdsNew, ruleIds, PolicyType.CLOSED_POLICY);
         RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[1], callingFunctionsNew, callingFunctionIdsNew, ruleIds, PolicyType.CLOSED_POLICY);
-        // _addRuleIdsToPolicy(policyIds[0], ruleIds);
-        // _addRuleIdsToPolicy(policyIds[1], ruleIds);
         
         vm.stopPrank();
         vm.startPrank(policyAdmin);
