@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.24;
 
-import "src/example/ERC721A/ERC721A.sol";
+import "test/clientContractExamples/ERC721A/ERC721A.sol";
 import "src/client/RulesEngineClientERC721A.sol";
 
 contract ExampleERC721A is ERC721A, RulesEngineClientERC721A {
