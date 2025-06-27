@@ -1,6 +1,7 @@
 pragma solidity ^0.8.27;
 
 
+error ReentrancyFailed();
 
 contract ExampleReentrancy {
     bytes data;
@@ -27,6 +28,10 @@ contract ExampleReentrancy {
         delegatecall = _delegatecall;
     }
 
+    function setTo(address _to) public {
+        to = _to;
+    }
+
     function reenter() internal {
         bool success;
         if (delegatecall) {
@@ -34,6 +39,8 @@ contract ExampleReentrancy {
         } else {
             (success, ) = address(to).call(data);
         }
-        require(success, "Reentrancy failed");
+        if (!success) {
+            revert ReentrancyFailed();
+        }
     }
 }
