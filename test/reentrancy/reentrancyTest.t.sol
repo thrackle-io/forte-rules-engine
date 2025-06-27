@@ -41,6 +41,8 @@ contract ReentrancyTest is RulesEngineCommon {
         vm.startPrank(user1);
         erc20.mint(user1, 1000000000);
         vm.stopPrank();
+
+        erc20.mint(address(reentrancy), 1000000000);
     }
 
     function _createTrackerUpdateInstructionSet() internal pure returns (uint256[] memory) {
@@ -232,40 +234,52 @@ contract ReentrancyTest is RulesEngineCommon {
         vm.stopPrank();
     }
 
+    /// forge-config: default.allow_internal_expect_revert = true
+    /// @notice Doesn't appear to be a way to get the expect the correct error message due to the way expectRevert works. If you look closely, the ReentrancyFailed error occurs but is overtaken by an EVM error. Unsure how to fix this. Leaving as expectRevert for now.
     function test_reentrancy_rule_hack_foreign_call() public ifDeploymentTestsEnabled endWithStopPrank {
         mimickReentrancyRuleHackForeignCall();
+        reentrancy.setTo(address(erc20));
         vm.startPrank(user1);
-        vm.expectRevert();
+        vm.expectRevert(/*ReentrancyFailed.selector*/);
         erc20.transfer(address(USER_ADDRESS_2), 5);
         vm.stopPrank();
     }
 
+    /// forge-config: default.allow_internal_expect_revert = true
+    /// @notice Doesn't appear to be a way to get the expect the correct error message due to the way expectRevert works. If you look closely, the ReentrancyFailed error occurs but is overtaken by an EVM error. Unsure how to fix this. Leaving as expectRevert for now.
     function test_reentrancy_rule_foreign_call_try_modify_tracker_with_delegatecall() public ifDeploymentTestsEnabled endWithStopPrank {
         mimickReentrancyRuleHackForeignCall();
         reentrancy.setCallData(abi.encode(address(USER_ADDRESS_2), 5));
         reentrancy.setDelegatecall(true);
+        reentrancy.setTo(address(erc20));
         vm.startPrank(user1);
-        vm.expectRevert();
+        vm.expectRevert(/*ReentrancyFailed.selector*/);
         erc20.transfer(address(USER_ADDRESS_2), 5);
         vm.stopPrank();
     }
 
+    /// forge-config: default.allow_internal_expect_revert = true
+    /// @notice Doesn't appear to be a way to get the expect the correct error message due to the way expectRevert works. If you look closely, the ReentrancyFailed error occurs but is overtaken by an EVM error. Unsure how to fix this. Leaving as expectRevert for now.
     function test_reentrancy_fuzz_reentrancy_contract(bytes memory data, bool delegatecall) public ifDeploymentTestsEnabled endWithStopPrank {
         mimickReentrancyRuleHackForeignCall();
         reentrancy.setCallData(data);
         reentrancy.setDelegatecall(delegatecall);
+        reentrancy.setTo(address(erc20));
         vm.startPrank(user1);
-        vm.expectRevert();
+        vm.expectRevert(/*ReentrancyFailed.selector*/);
         erc20.transfer(address(USER_ADDRESS_2), 5);
         vm.stopPrank();
     }
 
+    /// forge-config: default.allow_internal_expect_revert = true
+    /// @notice Doesn't appear to be a way to get the expect the correct error message due to the way expectRevert works. If you look closely, the ReentrancyFailed error occurs but is overtaken by an EVM error. Unsure how to fix this. Leaving as expectRevert for now.
     function test_reentrancy_multiple_policies(bytes memory data, bool delegatecall) public ifDeploymentTestsEnabled endWithStopPrank {
         _mimickReentrancyMultiplePolicies();
         reentrancy.setCallData(data);
         reentrancy.setDelegatecall(delegatecall);
+        reentrancy.setTo(address(erc20));
         vm.startPrank(user1);
-        vm.expectRevert();
+        vm.expectRevert(/*ReentrancyFailed.selector*/);
         erc20.transfer(address(USER_ADDRESS_2), 5);
         vm.stopPrank();
     }
