@@ -418,30 +418,37 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             uint256 v = 0;
             LogicalOp op = LogicalOp(_prog[idx]);
 
-            if(op == LogicalOp.PLH) {
+            if(op == LogicalOp.PLH || op == LogicalOp.PLHM) {
                 // Placeholder format is: get the index of the argument in the array. For example, PLH 0 is the first argument in the arguments array and its type and value
                 uint256 pli = _prog[idx+1];
                 ParamTypes typ = _placeHolders[pli].pType;
+                if(op == LogicalOp.PLHM) {
+                    v = _getMappedTrackerValue(_policyId, _prog[idx+2], _prog[idx+3]);
+                    idx += 3;
+                } else {
+                    v = _arguments[pli];
+                    idx += 2;
+                }
                 if(typ == ParamTypes.UINT) {
-                    v = abi.decode(_arguments[pli], (uint256)); idx += 2;
+                    v = abi.decode(v, (uint256));
                 } else if(typ == ParamTypes.ADDR) {
                     // Convert address to uint256 for direct comparison using == and != operations
-                    v = uint256(uint160(address(abi.decode(_arguments[pli], (address))))); idx += 2;
+                    v = uint256(uint160(address(abi.decode(v, (address)))));
                 } else if(typ == ParamTypes.STR) {
                     // Convert string to uint256 for direct comparison using == and != operations
-                    v = uint256(keccak256(abi.encode(abi.decode(_arguments[pli], (string))))); idx += 2;
+                    v = uint256(keccak256(abi.encode(abi.decode(v, (string)))));
                 } else if(typ == ParamTypes.BOOL) {
                     // Convert bool to uint256 for direct comparison using == and != operations
-                    v = uint256(ProcessorLib._boolToUint((abi.decode(_arguments[pli], (bool))))); idx += 2;
+                    v = uint256(ProcessorLib._boolToUint((abi.decode(v, (bool)))));
                 } else if(typ == ParamTypes.BYTES) {
                     // Convert bytes to uint256 for direct comparison using == and != operations
-                    v = uint256(keccak256(abi.encode(abi.decode(_arguments[pli], (bytes))))); idx += 2;
+                    v = uint256(keccak256(abi.encode(abi.decode(v, (bytes)))));
                 } else if(typ == ParamTypes.STATIC_TYPE_ARRAY || typ == ParamTypes.DYNAMIC_TYPE_ARRAY) {
                     // length of array for direct comparison using == and != operations
-                    v = abi.decode(_arguments[pli], (uint256)); idx += 2;
+                    v = abi.decode(v, (uint256));
                 } else if (typ == ParamTypes.VOID) {
                     // v = 0; but already set to 0 above no need to do anything
-                    idx += 2;
+                    v = 0;
                 }
             } else if(op == LogicalOp.TRU) {
                 // update the tracker value
@@ -561,6 +568,10 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         }
         // re encode as bytes to mapping 
         lib._getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][encodedKey] = encodedValue;
+    }
+
+    function _getMappedTrackerValue(uint256 _policyId, uint256 _trackerId, uint256 _mappedTrackerKey) internal view returns (bytes memory) {
+        return lib._getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][_mappedTrackerKey];
     }
 
     /**
