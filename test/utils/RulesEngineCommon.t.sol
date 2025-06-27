@@ -12,14 +12,14 @@ import "src/engine/facets/RulesEngineComponentFacet.sol";
 import "src/engine/facets/RulesEngineComponentFacet.sol";
 
 import "src/example/ExampleERC20.sol";
-import "src/example/ExampleUserContract.sol";
-import "src/example/ExampleUserOwnableContract.sol";
-import "src/example/ExampleUserAccessControl.sol";
+import "test/clientContractExamples/ExampleUserContract.sol";
+import "test/clientContractExamples/ExampleUserOwnableContract.sol";
+import "test/clientContractExamples/ExampleUserAccessControl.sol";
 
-import "src/example/ERC721A/ExampleERC721A.sol";
+import "test/clientContractExamples/ERC721A/ExampleERC721A.sol";
 import "src/example/ExampleERC721.sol";
 import "src/example/ExampleERC20.sol";
-import "src/example/ExampleERC1155.sol";
+import "test/clientContractExamples/ExampleERC1155.sol";
 
 
 /**

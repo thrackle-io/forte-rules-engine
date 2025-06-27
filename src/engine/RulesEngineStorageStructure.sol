@@ -182,7 +182,8 @@ struct ForeignCall {
 enum EncodedIndexType {
     ENCODED_VALUES,
     FOREIGN_CALL,
-    TRACKER
+    TRACKER,
+    GLOBAL_VAR
 }
 
 struct ForeignCallEncodedIndex {

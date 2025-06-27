@@ -5,7 +5,7 @@ import {Test} from "forge-std/src/Test.sol";
 import {console} from "forge-std/src/console.sol";
 import {StdInvariant} from "forge-std/src/StdInvariant.sol";
 import "test/utils/RulesEngineCommon.t.sol";
-import "src/example/ExampleUserContract.sol";
+import "test/clientContractExamples/ExampleUserContract.sol";
 
 contract RulesEngineAdminRolesTest is RulesEngineCommon, RulesEngineAdminRolesFacet{
     

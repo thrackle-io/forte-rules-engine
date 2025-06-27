@@ -13,6 +13,8 @@ import "src/client/RulesEngineClient.sol";
  */
 contract ExampleUserContract is RulesEngineClient {
     bytes public msgData;
+    address public userAddress;
+    uint256 public number;
     /**
      * @notice Demonstrates a generic `transfer` function integrated with the Rules Engine.
      * @dev This function sends custom arguments to the Rules Engine for policy enforcement. The Rules Engine determines 
@@ -44,6 +46,15 @@ contract ExampleUserContract is RulesEngineClient {
         return true;
     }
 
+    function setUserAddress(address user) public returns(bool) {
+        userAddress = user;
+        return true;
+    }
+
+    function setNumber(uint256 num) public returns(bool) {
+        number = num;
+        return true;
+    }
 }
 
 /**

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "test/utils/RulesEngineCommon.t.sol";
-import "src/example/ExampleUserContract.sol";
+import "test/clientContractExamples/ExampleUserContract.sol";
 import {RulesEngineProcessorLib as ProcessorLib} from "src/engine/facets/RulesEngineProcessorLib.sol";
 abstract contract rulesEngineInternalFunctions is RulesEngineCommon {
 

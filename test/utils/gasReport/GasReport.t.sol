@@ -6,7 +6,7 @@ import "test/utils/RulesEngineCommon.t.sol";
 import "test/utils/ExampleUserContractWithMinTransfer.sol";
 import "test/utils/ExampleUserContractWithMinTransferFC.sol";
 import "test/utils/ExampleUserContractBase.sol";
-import "src/example/ExampleUserContract.sol";
+import "test/clientContractExamples/ExampleUserContract.sol";
 import "test/utils/ExampleUserContractWithDenyList.sol";
 import "test/utils/ExampleUserContractWithMinTransferAndDenyList.sol";
 import "test/utils/ExampleUserContractWithMinTransferRevert.sol";
