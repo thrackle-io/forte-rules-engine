@@ -486,42 +486,37 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
 
             if (op == LogicalOp.PLH || op == LogicalOp.PLHM) {
                 // Placeholder format is: get the index of the argument in the array. For example, PLH 0 is the first argument in the arguments array and its type and value
-                uint256 pli;
-                bytes memory value;
-                ParamTypes typ;
-                if (op == LogicalOp.PLHM) {
-                    uint256 key = mem[_prog[idx + 2]];
-                    (value, typ) = _getMappedTrackerValue(_policyId, _prog[idx + 1], key);
-                } else {
-                    pli = _prog[idx + 1];
-                    value = _arguments[pli];
-                    typ = _placeHolders[pli].pType;
-                }
-                if (typ == ParamTypes.UINT) {
-                    v = abi.decode(value, (uint256));
-                } else if (typ == ParamTypes.ADDR) {
-                    // Convert address to uint256 for direct comparison using == and != operations
-                    v = uint256(uint160(address(abi.decode(value, (address)))));
-                } else if (typ == ParamTypes.STR) {
-                    // Convert string to uint256 for direct comparison using == and != operations
-                    v = uint256(keccak256(abi.encode(abi.decode(value, (string)))));
-                } else if (typ == ParamTypes.BOOL) {
-                    // Convert bool to uint256 for direct comparison using == and != operations
-                    v = uint256(ProcessorLib._boolToUint((abi.decode(value, (bool)))));
-                } else if (typ == ParamTypes.BYTES) {
-                    // Convert bytes to uint256 for direct comparison using == and != operations
-                    v = uint256(keccak256(abi.encode(abi.decode(value, (bytes)))));
-                } else if (typ == ParamTypes.STATIC_TYPE_ARRAY || typ == ParamTypes.DYNAMIC_TYPE_ARRAY) {
-                    // length of array for direct comparison using == and != operations
-                    v = abi.decode(value, (uint256));
-                }
-
-                if (op == LogicalOp.PLHM) {
+                uint256 pli = _prog[idx+1];
+                ParamTypes typ = _placeHolders[pli].pType;
+                if(op == LogicalOp.PLHM) {
+                    v = _getMappedTrackerValue(_policyId, _prog[idx+2], _prog[idx+3]);
                     idx += 3;
                 } else {
+                    v = _arguments[pli];
                     idx += 2;
                 }
-            } else if (op == LogicalOp.TRU) {
+                if(typ == ParamTypes.UINT) {
+                    v = abi.decode(v, (uint256));
+                } else if(typ == ParamTypes.ADDR) {
+                    // Convert address to uint256 for direct comparison using == and != operations
+                    v = uint256(uint160(address(abi.decode(v, (address)))));
+                } else if(typ == ParamTypes.STR) {
+                    // Convert string to uint256 for direct comparison using == and != operations
+                    v = uint256(keccak256(abi.encode(abi.decode(v, (string)))));
+                } else if(typ == ParamTypes.BOOL) {
+                    // Convert bool to uint256 for direct comparison using == and != operations
+                    v = uint256(ProcessorLib._boolToUint((abi.decode(v, (bool)))));
+                } else if(typ == ParamTypes.BYTES) {
+                    // Convert bytes to uint256 for direct comparison using == and != operations
+                    v = uint256(keccak256(abi.encode(abi.decode(v, (bytes)))));
+                } else if(typ == ParamTypes.STATIC_TYPE_ARRAY || typ == ParamTypes.DYNAMIC_TYPE_ARRAY) {
+                    // length of array for direct comparison using == and != operations
+                    v = abi.decode(v, (uint256));
+                } else if (typ == ParamTypes.VOID) {
+                    // v = 0; but already set to 0 above no need to do anything
+                    v = 0;
+                }
+            } else if(op == LogicalOp.TRU) {
                 // update the tracker value
                 // If the Tracker Type == Place Holder, pull the data from the place holder, otherwise, pull it from Memory
                 TrackerTypes tt = TrackerTypes(_prog[idx + 3]);
@@ -676,15 +671,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         lib._getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][encodedKey] = encodedValue;
     }
 
-    function _getMappedTrackerValue(
-        uint256 _policyId,
-        uint256 _trackerId,
-        uint256 _mappedTrackerKey
-    ) internal view returns (bytes memory, ParamTypes) {
-        assert(lib._getTrackerStorage().trackers[_policyId][_trackerId].mapped);
-        ParamTypes keyType = lib._getTrackerStorage().trackers[_policyId][_trackerId].pType;
-        bytes memory value = lib._getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][abi.encode(_mappedTrackerKey)];
-        return (value, keyType);
+    function _getMappedTrackerValue(uint256 _policyId, uint256 _trackerId, uint256 _mappedTrackerKey) internal view returns (bytes memory) {
+        return lib._getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][_mappedTrackerKey];
     }
 
     /**
