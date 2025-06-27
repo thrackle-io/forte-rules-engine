@@ -106,6 +106,19 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         }
     }
 
+    /**
+     * @notice Processes encoded values from function arguments for foreign call encoding
+     * @param fc The ForeignCall struct containing call configuration
+     * @param argType The parameter type for the current argument
+     * @param functionArguments The encoded arguments from the calling function
+     * @param encodedCall Current encoded call data being built
+     * @param lengthToAppend Current length of dynamic data to append
+     * @param dynamicData Current dynamic data portion of the call
+     * @param i Current parameter index being processed
+     * @return encodedCall Updated encoded call data
+     * @return lengthToAppend Updated length of dynamic data
+     * @return dynamicData Updated dynamic data portion
+     */
     function evaluateForeignCallForRuleEncodedValues(ForeignCall memory fc, ParamTypes argType, bytes calldata functionArguments, bytes memory encodedCall, uint256 lengthToAppend, bytes memory dynamicData, uint256 i) public pure returns (bytes memory, uint256, bytes memory) {
         uint256 typeSpecificIndex = fc.encodedIndices[i].index;
         bytes32 value = bytes32(functionArguments[typeSpecificIndex * 32: (typeSpecificIndex + 1) * 32]);
@@ -153,6 +166,19 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         return (encodedCall, lengthToAppend, dynamicData);
     }
 
+    /**
+     * @notice Processes placeholder values for foreign call encoding
+     * @param fc The ForeignCall struct containing call configuration
+     * @param retVals Array of return values from previous operations
+     * @param metadata Array of encoded index metadata for parameter resolution
+     * @param encodedCall Current encoded call data being built
+     * @param lengthToAppend Current length of dynamic data to append
+     * @param i Current parameter index being processed
+     * @param dynamicData Current dynamic data portion of the call
+     * @return encodedCall Updated encoded call data
+     * @return lengthToAppend Updated length of dynamic data
+     * @return dynamicData Updated dynamic data portion
+     */
     function evaluateForeignCallForRulePlaceholderValues(ForeignCall memory fc, bytes[] memory retVals, ForeignCallEncodedIndex[] memory metadata, bytes memory encodedCall, uint256 lengthToAppend, uint256 i, bytes memory dynamicData) public view returns (bytes memory, uint256, bytes memory) {
         ParamTypes argType = fc.parameterTypes[i];
         uint256 index = fc.encodedIndices[i].index;
@@ -195,6 +221,19 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         return (encodedCall, lengthToAppend, dynamicData);
     }
 
+    /**
+     * @notice Handles global variable processing for foreign call encoding
+     * @dev Internal function that processes global variable types and encodes them appropriately for foreign call arguments
+     * @param fc The ForeignCall struct containing the call configuration and parameter types
+     * @param argType The expected parameter type for the global variable in the foreign call
+     * @param globalVarType An uint8 identifier representing which global variable to process:
+     * @param encodedCall The current encoded call data being built for the foreign call
+     * @param lengthToAppend The current length of dynamic data to be appended
+     * @param dynamicData The current dynamic data portion of the encoded call
+     * @return encodedCall The updated encoded call data with the global variable parameter added
+     * @return lengthToAppend The updated length of dynamic data after processing
+     * @return dynamicData The updated dynamic data portion after processing
+     */
     function _handleGlobalVarForForeignCall(
         ForeignCall memory fc, 
         ParamTypes argType, 
@@ -622,9 +661,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @return bytes Encoded value of the requested global variable
      * @return pType Parameter type enum value corresponding to the global variable
      */
-    function _handleGlobalVar(
-        uint256 globalVarType
-    ) internal view returns (bytes memory, ParamTypes pType) {
+    function _handleGlobalVar(uint256 globalVarType) internal view returns (bytes memory, ParamTypes pType) {
         if (globalVarType == GLOBAL_MSG_SENDER) {
             return (abi.encode(msg.sender), ParamTypes.ADDR);
         } else if (globalVarType == GLOBAL_BLOCK_TIMESTAMP) {
