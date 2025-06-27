@@ -577,14 +577,15 @@ abstract contract rules is RulesEngineCommon {
             {
                 ParamTypes[] memory fcParamTypes = new ParamTypes[](1);
                 fcParamTypes[0] = ParamTypes.BYTES;
-                int8[] memory fcTypeSpecificIndices = new int8[](1);
-                fcTypeSpecificIndices[0] = 2;
+                ForeignCallEncodedIndex[] memory encodedIndices = new ForeignCallEncodedIndex[](1);
+                encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES; // Regular parameter
+                encodedIndices[0].index = 2;
                 ForeignCall memory fc;
                 fc.foreignCallAddress = foreignCallTarget;
                 fc.signature = setMsgDataSelector;
                 fc.returnType = ParamTypes.BOOL;
                 fc.parameterTypes = fcParamTypes;
-                fc.typeSpecificIndices = fcTypeSpecificIndices;
+                fc.encodedIndices = encodedIndices;
                 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyId, fc, "setMsgData(bytes)");
             }
 
@@ -700,14 +701,15 @@ abstract contract rules is RulesEngineCommon {
             {
                 ParamTypes[] memory fcParamTypes = new ParamTypes[](1);
                 fcParamTypes[0] = ParamTypes.BYTES;
-                int8[] memory fcTypeSpecificIndices = new int8[](1);
-                fcTypeSpecificIndices[0] = -100;
+                ForeignCallEncodedIndex[] memory encodedIndices = new ForeignCallEncodedIndex[](1);
+                encodedIndices[0].eType = EncodedIndexType.GLOBAL_VAR; 
+                encodedIndices[0].index = GLOBAL_MSG_DATA;
                 ForeignCall memory fc;
                 fc.foreignCallAddress = foreignCallTarget;
                 fc.signature = setMsgDataSelector;
                 fc.returnType = ParamTypes.BOOL;
                 fc.parameterTypes = fcParamTypes;
-                fc.typeSpecificIndices = fcTypeSpecificIndices;
+                fc.encodedIndices = encodedIndices;
                 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyId, fc, "setMsgData(bytes)");
             }
 
@@ -831,14 +833,15 @@ abstract contract rules is RulesEngineCommon {
             {
                 ParamTypes[] memory fcParamTypes = new ParamTypes[](1);
                 fcParamTypes[0] = ParamTypes.ADDR;
-                int8[] memory fcTypeSpecificIndices = new int8[](1);
-                fcTypeSpecificIndices[0] = -101; // GLOBAL_MSG_SENDER_INDEX
+                ForeignCallEncodedIndex[] memory encodedIndices = new ForeignCallEncodedIndex[](1);
+                encodedIndices[0].eType = EncodedIndexType.GLOBAL_VAR;
+                encodedIndices[0].index = GLOBAL_MSG_SENDER;
                 ForeignCall memory fc;
                 fc.foreignCallAddress = foreignCallTarget;
                 fc.signature = setUserAddressSelector;
                 fc.returnType = ParamTypes.BOOL;
                 fc.parameterTypes = fcParamTypes;
-                fc.typeSpecificIndices = fcTypeSpecificIndices;
+                fc.encodedIndices = encodedIndices;
                 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyId, fc, "setUserAddress(address)");
             }
 
@@ -939,14 +942,15 @@ abstract contract rules is RulesEngineCommon {
             {
                 ParamTypes[] memory fcParamTypes = new ParamTypes[](1);
                 fcParamTypes[0] = ParamTypes.UINT;
-                int8[] memory fcTypeSpecificIndices = new int8[](1);
-                fcTypeSpecificIndices[0] = -102; // GLOBAL_BLOCK_TIMESTAMP_INDEX
+                ForeignCallEncodedIndex[] memory encodedIndices = new ForeignCallEncodedIndex[](1);
+                encodedIndices[0].eType = EncodedIndexType.GLOBAL_VAR;
+                encodedIndices[0].index = GLOBAL_BLOCK_TIMESTAMP;
                 ForeignCall memory fc;
                 fc.foreignCallAddress = foreignCallTarget;
                 fc.signature = setNumberSelector;
                 fc.returnType = ParamTypes.BOOL;
                 fc.parameterTypes = fcParamTypes;
-                fc.typeSpecificIndices = fcTypeSpecificIndices;
+                fc.encodedIndices = encodedIndices;
                 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyId, fc, "setNumber(uint256)");
             }
 
@@ -1052,14 +1056,15 @@ abstract contract rules is RulesEngineCommon {
             {
                 ParamTypes[] memory fcParamTypes = new ParamTypes[](1);
                 fcParamTypes[0] = ParamTypes.UINT;
-                int8[] memory fcTypeSpecificIndices = new int8[](1);
-                fcTypeSpecificIndices[0] = -103; // GLOBAL_BLOCK_NUMBER_INDEX
+                ForeignCallEncodedIndex[] memory encodedIndices = new ForeignCallEncodedIndex[](1);
+                encodedIndices[0].eType = EncodedIndexType.GLOBAL_VAR;
+                encodedIndices[0].index = GLOBAL_BLOCK_NUMBER;
                 ForeignCall memory fc;
                 fc.foreignCallAddress = foreignCallTarget;
                 fc.signature = setNumberSelector;
                 fc.returnType = ParamTypes.BOOL;
                 fc.parameterTypes = fcParamTypes;
-                fc.typeSpecificIndices = fcTypeSpecificIndices;
+                fc.encodedIndices = encodedIndices;
                 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyId, fc, "setNumber(uint256)");
             }
 
@@ -1165,14 +1170,15 @@ abstract contract rules is RulesEngineCommon {
             {
                 ParamTypes[] memory fcParamTypes = new ParamTypes[](1);
                 fcParamTypes[0] = ParamTypes.ADDR;
-                int8[] memory fcTypeSpecificIndices = new int8[](1);
-                fcTypeSpecificIndices[0] = -104; // GLOBAL_TX_ORIGIN_INDEX
+                ForeignCallEncodedIndex[] memory encodedIndices = new ForeignCallEncodedIndex[](1);
+                encodedIndices[0].eType = EncodedIndexType.GLOBAL_VAR;
+                encodedIndices[0].index = GLOBAL_TX_ORIGIN;
                 ForeignCall memory fc;
                 fc.foreignCallAddress = foreignCallTarget;
                 fc.signature = setUserAddressSelector;
                 fc.returnType = ParamTypes.BOOL;
                 fc.parameterTypes = fcParamTypes;
-                fc.typeSpecificIndices = fcTypeSpecificIndices;
+                fc.encodedIndices = encodedIndices;
                 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyId, fc, "setUserAddress(address)");
             }
 
@@ -1258,5 +1264,113 @@ abstract contract rules is RulesEngineCommon {
             assertEq(actualUserAddress, txOriginAddress, "Foreign call should set userAddress to tx.origin");
             vm.stopPrank();
         }
+    }
+
+    function testRulesEngine_Unit_Tracker_UpdateWithBlockTimestamp() public ifDeploymentTestsEnabled resetsGlobalVariables {
+        uint256 policyId;
+        uint256 trackerId;
+        uint256 ruleId;
+        uint256 callingFunctionId;
+
+        {
+            vm.startPrank(policyAdmin);
+
+            policyId = _createBlankPolicy();
+
+            // Create a tracker to store the timestamp
+            Trackers memory tracker;
+            tracker.pType = ParamTypes.UINT;
+            tracker.trackerValue = abi.encode(uint256(0));
+            trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyId, tracker, "timestampTracker");
+
+            // Create a rule that always passes (1 == 1)
+            Rule memory rule;
+        
+            // Simple rule instruction: 1 == 1 (always true)
+            rule.instructionSet = new uint256[](7);
+            rule.instructionSet[0] = uint(LogicalOp.NUM);    // Load constant 1 into memory[0]
+            rule.instructionSet[1] = 1;
+            rule.instructionSet[2] = uint(LogicalOp.NUM);    // Load constant 1 into memory[1]
+            rule.instructionSet[3] = 1;
+            rule.instructionSet[4] = uint(LogicalOp.EQ);     // Compare memory[0] == memory[1] (always true)
+            rule.instructionSet[5] = 0;
+            rule.instructionSet[6] = 1;
+
+            // Effect placeholders for global block.timestamp
+            rule.effectPlaceHolders = new Placeholder[](1);
+            rule.effectPlaceHolders[0].pType = ParamTypes.UINT;
+            rule.effectPlaceHolders[0].flags = uint8(GLOBAL_BLOCK_TIMESTAMP << SHIFT_GLOBAL_VAR);
+
+            // Create effect that updates tracker with current block.timestamp
+            rule.posEffects = new Effect[](1);
+            rule.posEffects[0].valid = true;
+            rule.posEffects[0].effectType = EffectTypes.EXPRESSION;
+            rule.posEffects[0].text = "";
+        
+            // Effect instruction: TRU trackerId = effectPlaceholder[0] (global timestamp)
+            rule.posEffects[0].instructionSet = new uint256[](4);
+            rule.posEffects[0].instructionSet[0] = uint(LogicalOp.TRU);
+            rule.posEffects[0].instructionSet[1] = trackerId;
+            rule.posEffects[0].instructionSet[2] = 0;  // effectPlaceHolders[0] (contains block.timestamp)
+            rule.posEffects[0].instructionSet[3] = uint(TrackerTypes.PLACE_HOLDER);  // Use PLACE_HOLDER type
+
+            ruleId = RulesEngineRuleFacet(address(red)).createRule(policyId, rule);
+
+            // Set up calling function (transfer)
+            ParamTypes[] memory pTypes = new ParamTypes[](2);
+            pTypes[0] = ParamTypes.ADDR;
+            pTypes[1] = ParamTypes.UINT;
+            callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
+                policyId, 
+                bytes4(keccak256(bytes(callingFunction))), 
+                pTypes,
+                callingFunction,
+                ""
+            );
+
+            // Link rule to calling function in policy
+            bytes4[] memory selectors = new bytes4[](1);
+            selectors[0] = bytes4(keccak256(bytes(callingFunction)));
+            uint256[] memory functionIds = new uint256[](1);
+            functionIds[0] = callingFunctionId;
+            uint256[][] memory ruleIdsArr = new uint256[][](1);
+            ruleIdsArr[0] = new uint256[](1);
+            ruleIdsArr[0][0] = ruleId;
+            RulesEnginePolicyFacet(address(red)).updatePolicy(
+                policyId,
+                selectors,
+                functionIds,
+                ruleIdsArr,
+                PolicyType.CLOSED_POLICY
+            );
+
+            // Apply policy to user contract
+            uint256[] memory policyIds = new uint256[](1);
+            policyIds[0] = policyId;
+            vm.stopPrank();
+            vm.startPrank(callingContractAdmin);
+            RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+            vm.stopPrank();
+        }
+
+        // Set a specific block timestamp for testing
+        uint256 testTimestamp = 12345;
+        vm.warp(testTimestamp);
+
+        // Execute the rule
+        vm.startPrank(userContractAddress);
+        bytes memory arguments = abi.encodeWithSelector(
+            bytes4(keccak256(bytes(callingFunction))), 
+            address(0x7654321), 
+            5
+        );
+        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        assertEq(response, 1, "Rule should pass");
+        vm.stopPrank();
+
+        // Check if tracker was updated with the block timestamp
+        Trackers memory updatedTracker = RulesEngineComponentFacet(address(red)).getTracker(policyId, trackerId);
+        uint256 trackerTimestamp = abi.decode(updatedTracker.trackerValue, (uint256));
+        assertEq(trackerTimestamp, testTimestamp, "Tracker should be updated with current block.timestamp");
     }
 }

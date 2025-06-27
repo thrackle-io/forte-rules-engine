@@ -22,12 +22,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     uint8 constant GLOBAL_BLOCK_NUMBER = 4;
     uint8 constant GLOBAL_TX_ORIGIN = 5;
 
-    int8 constant GLOBAL_VAR_MSG_DATA = -100;
-    int8 constant GLOBAL_MSG_SENDER_INDEX = -101;
-    int8 constant GLOBAL_BLOCK_TIMESTAMP_INDEX = -102;
-    int8 constant GLOBAL_BLOCK_NUMBER_INDEX = -103;
-    int8 constant GLOBAL_TX_ORIGIN_INDEX = -104;
-
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
     // Rule Evaluation Functions
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -92,8 +86,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         for(uint256 i = 0; i < fc.parameterTypes.length; i++) {
             ParamTypes argType = fc.parameterTypes[i];
             
-            bool isRetVal = false;
-            
             if(fc.encodedIndices[i].eType != EncodedIndexType.ENCODED_VALUES) {
                 (encodedCall, lengthToAppend, dynamicData) = evaluateForeignCallForRulePlaceholderValues(fc, retVals, metadata, encodedCall, lengthToAppend, i, dynamicData);
             } else {
@@ -114,57 +106,64 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         }
     }
 
-    function evaluateForeignCallForRuleEncodedValues(ForeignCall memory fc, ParamTypes argType, bytes calldata functionArguments, bytes memory encodedCall, uint256 lengthToAppend, bytes memory dynamicData, uint256 i) public returns (bytes memory, uint256, bytes memory) {
-                uint256 typeSpecificIndex = fc.encodedIndices[i].index;
-                bytes32 value = bytes32(functionArguments[typeSpecificIndex * 32: (typeSpecificIndex + 1) * 32]);
-                if (argType == ParamTypes.STR || argType == ParamTypes.BYTES) {
-                    // Add offset to head
-                    uint256 dynamicOffset = 32 * (fc.parameterTypes.length) + lengthToAppend;
-                    encodedCall = bytes.concat(encodedCall, bytes32(dynamicOffset));
+    function evaluateForeignCallForRuleEncodedValues(ForeignCall memory fc, ParamTypes argType, bytes calldata functionArguments, bytes memory encodedCall, uint256 lengthToAppend, bytes memory dynamicData, uint256 i) public pure returns (bytes memory, uint256, bytes memory) {
+        uint256 typeSpecificIndex = fc.encodedIndices[i].index;
+        bytes32 value = bytes32(functionArguments[typeSpecificIndex * 32: (typeSpecificIndex + 1) * 32]);
+        if (argType == ParamTypes.STR || argType == ParamTypes.BYTES) {
+            // Add offset to head
+            uint256 dynamicOffset = 32 * (fc.parameterTypes.length) + lengthToAppend;
+            encodedCall = bytes.concat(encodedCall, bytes32(dynamicOffset));
 
-                    // Get the dynamic data - and bounds checking
-                    require(uint(value) < functionArguments.length, "Invalid dynamic data offset");
-                    require(uint(value) + 32 <= functionArguments.length, "Dynamic data length out of bounds");
-                    uint256 length = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
-                    uint256 words = 32 + ((length / 32) + 1) * 32;
+            // Get the dynamic data - and bounds checking
+            require(uint(value) < functionArguments.length, "Invalid dynamic data offset");
+            require(uint(value) + 32 <= functionArguments.length, "Dynamic data length out of bounds");
+            uint256 length = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
+            // Calculate total bytes needed: 32 bytes for length prefix + padded data length (round up to nearest 32-byte boundary)
+            uint256 words = 32 + ((length + 31) / 32) * 32;
 
-                    require(uint(value) + words <= functionArguments.length, "Dynamic data content out of bounds");
+            require(uint(value) + words <= functionArguments.length, "Dynamic data content out of bounds");
 
-                    bytes memory dynamicValue = functionArguments[uint(value):uint(value) + words];
-                    // Add length and data (data is already padded to 32 bytes)
-                    dynamicData = bytes.concat(
-                        dynamicData,
-                        dynamicValue      // data (already padded)
-                    );
-                    lengthToAppend += words;  // 32 for length + 32 for padded data
-                } else if (argType == ParamTypes.STATIC_TYPE_ARRAY) {
-                    // encode the static offset
-                    encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
-                    uint256 arrayLength = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
-                    // Get the static type array
-                    bytes memory staticArray = new bytes(arrayLength * 32);
-                    uint256 lengthToGrab = ((arrayLength + 1) * 32);
-                    staticArray = functionArguments[uint(value):uint(value) + lengthToGrab];
-                    dynamicData = bytes.concat(dynamicData, staticArray);
-                    lengthToAppend += lengthToGrab;
-                } else if (argType == ParamTypes.DYNAMIC_TYPE_ARRAY) {
-                    uint256 baseDynamicOffset = 32 * (fc.parameterTypes.length) + lengthToAppend;
-                    encodedCall = bytes.concat(encodedCall, bytes32(baseDynamicOffset));
-                    uint256 length = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
-                    lengthToAppend += 32;
-                    dynamicData = bytes.concat(dynamicData, abi.encode(length));
-                    (dynamicData, lengthToAppend) = _getDynamicValueArrayData(functionArguments, dynamicData, length, lengthToAppend, uint(value));
-                }
-                else {
-                    encodedCall = bytes.concat(encodedCall, value);
-                }
-            return (encodedCall, lengthToAppend, dynamicData);
+            bytes memory dynamicValue = functionArguments[uint(value):uint(value) + words];
+            // Add length and data (data is already padded to 32 bytes)
+            dynamicData = bytes.concat(
+                dynamicData,
+                dynamicValue      // data (already padded)
+            );
+            lengthToAppend += words;  // 32 for length + 32 for padded data
+        } else if (argType == ParamTypes.STATIC_TYPE_ARRAY) {
+            // encode the static offset
+            encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
+            uint256 arrayLength = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
+            // Get the static type array
+            bytes memory staticArray = new bytes(arrayLength * 32);
+            uint256 lengthToGrab = ((arrayLength + 1) * 32);
+            staticArray = functionArguments[uint(value):uint(value) + lengthToGrab];
+            dynamicData = bytes.concat(dynamicData, staticArray);
+            lengthToAppend += lengthToGrab;
+        } else if (argType == ParamTypes.DYNAMIC_TYPE_ARRAY) {
+            uint256 baseDynamicOffset = 32 * (fc.parameterTypes.length) + lengthToAppend;
+            encodedCall = bytes.concat(encodedCall, bytes32(baseDynamicOffset));
+            uint256 length = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
+            lengthToAppend += 32;
+            dynamicData = bytes.concat(dynamicData, abi.encode(length));
+            (dynamicData, lengthToAppend) = _getDynamicValueArrayData(functionArguments, dynamicData, length, lengthToAppend, uint(value));
+        } else {
+            encodedCall = bytes.concat(encodedCall, value);
+        }
+        return (encodedCall, lengthToAppend, dynamicData);
     }
 
-    function evaluateForeignCallForRulePlaceholderValues(ForeignCall memory fc, bytes[] memory retVals, ForeignCallEncodedIndex[] memory metadata, bytes memory encodedCall, uint256 lengthToAppend, uint256 i, bytes memory dynamicData) public returns (bytes memory, uint256, bytes memory) {
-        uint256 retValIndex;
+    function evaluateForeignCallForRulePlaceholderValues(ForeignCall memory fc, bytes[] memory retVals, ForeignCallEncodedIndex[] memory metadata, bytes memory encodedCall, uint256 lengthToAppend, uint256 i, bytes memory dynamicData) public view returns (bytes memory, uint256, bytes memory) {
         ParamTypes argType = fc.parameterTypes[i];
         uint256 index = fc.encodedIndices[i].index;
+        // Handle global variables separately
+        {
+            EncodedIndexType eType = fc.encodedIndices[i].eType;
+            if (eType == EncodedIndexType.GLOBAL_VAR) {
+            return _handleGlobalVarForForeignCall(fc, argType, uint8(index), encodedCall, lengthToAppend, dynamicData);
+            }
+        }
+        uint256 retValIndex;
         uint256 iter = 0;
         for(uint256 j = 0; j < metadata.length; j++) {
             if(metadata[j].index == index && metadata[j].eType == fc.encodedIndices[i].eType) {
@@ -175,7 +174,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
                 iter += 1;
             }
         }
-
+        
         if (argType == ParamTypes.STR || argType == ParamTypes.BYTES) {
             encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
             bytes memory stringData = ProcessorLib._extractStringData(retVals[retValIndex]);
@@ -194,107 +193,72 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             encodedCall = bytes.concat(encodedCall, retVals[retValIndex]);
         }
         return (encodedCall, lengthToAppend, dynamicData);
-            }
-            // Group all global variable handling together
-            else if (fc.typeSpecificIndices[i] == GLOBAL_VAR_MSG_DATA) {
-                if (argType == ParamTypes.STR || argType == ParamTypes.BYTES) {
-                    encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
-                
-                    // functionArguments doesn't contain the selector, but we need to preserve it exactly as received
-                    bytes memory encodedMsgData = new bytes(msg.data.length + 32);
-                
-                    // Write length to first 32 bytes
-                    uint256 msgDataLength = msg.data.length;
-                    assembly {
-                        mstore(add(encodedMsgData, 32), msgDataLength)
-                    }
-                
-                    // Copy the FULL msg.data including selector
-                    for (uint256 j = 0; j < msg.data.length; j++) {
-                        encodedMsgData[j + 32] = msg.data[j];
-                    }
-                
-                    dynamicData = bytes.concat(dynamicData, encodedMsgData);
-                    lengthToAppend += encodedMsgData.length;
-                } else {
-                    revert("MSG_DATA can only be used with bytes or string types");
-                }
-            }
-            else if (fc.typeSpecificIndices[i] == GLOBAL_MSG_SENDER_INDEX) {
-                // Handle msg.sender
-                if (argType == ParamTypes.ADDR) {
-                    value = bytes32(uint256(uint160(msg.sender)));
-                    encodedCall = bytes.concat(encodedCall, value);
-                } else {
-                    revert("MSG_SENDER can only be used with address type");
-                }
-            }
-            else if (fc.typeSpecificIndices[i] == GLOBAL_BLOCK_TIMESTAMP_INDEX) {
-                // Handle block.timestamp
-                if (argType == ParamTypes.UINT) {
-                    value = bytes32(block.timestamp);
-                    encodedCall = bytes.concat(encodedCall, value);
-                } else {
-                    revert("BLOCK_TIMESTAMP can only be used with uint type");
-                }
-            }
-            else if (fc.typeSpecificIndices[i] == GLOBAL_BLOCK_NUMBER_INDEX) {
-                // Handle block.number
-                if (argType == ParamTypes.UINT) {
-                    value = bytes32(block.number);
-                    encodedCall = bytes.concat(encodedCall, value);
-                } else {
-                    revert("BLOCK_NUMBER can only be used with uint type");
-                }
-            }
-            else if (fc.typeSpecificIndices[i] == GLOBAL_TX_ORIGIN_INDEX) {
-                // Handle tx.origin
-                if (argType == ParamTypes.ADDR) {
-                    value = bytes32(uint256(uint160(tx.origin)));
-                    encodedCall = bytes.concat(encodedCall, value);
-                } else {
-                    revert("TX_ORIGIN can only be used with address type");
-                }
-            }
-            // Handle regular negative indices (return values)
-            else {
-                // Standard return value handling for other negative indices
-                typeSpecificIndex = _getAbsoluteAssembly(fc.typeSpecificIndices[i]) - 1; // -1 because retVals is 0 indexed
+    }
 
-                isRetVal = true;
-                value = bytes32(retVals[typeSpecificIndex]);
-                if (argType == ParamTypes.STR || argType == ParamTypes.BYTES) {
-                    encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
-                    bytes memory stringData = ProcessorLib._extractStringData(retVals[typeSpecificIndex]);
-                    dynamicData = bytes.concat(
-                        dynamicData,
-                        stringData      // data (already padded)
-                    );
-                    lengthToAppend += stringData.length;
-                } else if (argType == ParamTypes.STATIC_TYPE_ARRAY || argType == ParamTypes.DYNAMIC_TYPE_ARRAY) {
-                    // encode the static offset
-                    encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
-                    bytes memory arrayData = ProcessorLib._extractDynamicArrayData(retVals[typeSpecificIndex]);
-                    dynamicData = bytes.concat(dynamicData, arrayData);
-                    lengthToAppend += arrayData.length;
-                } else {
-                    encodedCall = bytes.concat(encodedCall, value);
-                }
+    function _handleGlobalVarForForeignCall(
+        ForeignCall memory fc, 
+        ParamTypes argType, 
+        uint8 globalVarType, 
+        bytes memory encodedCall, 
+        uint256 lengthToAppend, 
+        bytes memory dynamicData
+    ) private view returns (bytes memory, uint256, bytes memory) {
+        if (globalVarType == GLOBAL_MSG_SENDER) {
+            if (argType == ParamTypes.ADDR) {
+                bytes32 value = bytes32(uint256(uint160(msg.sender)));
+                encodedCall = bytes.concat(encodedCall, value);
+            } else {
+                revert("MSG_SENDER can only be used with address type");
             }
-        }
-
-        bytes memory callData = bytes.concat(encodedCall, dynamicData);
-
-        // Place the foreign call
-        (bool response, bytes memory data) = fc.foreignCallAddress.call(callData);
-
-        // Verify that the foreign call was successful
-        if(response) {
-            retVal.pType = fc.returnType;
-            retVal.value = data;
+        } else if (globalVarType == GLOBAL_BLOCK_TIMESTAMP) {
+            if (argType == ParamTypes.UINT) {
+                bytes32 value = bytes32(block.timestamp);
+                encodedCall = bytes.concat(encodedCall, value);
+            } else {
+                revert("BLOCK_TIMESTAMP can only be used with uint type");
+            }
+        } else if (globalVarType == GLOBAL_MSG_DATA) {
+            if (argType == ParamTypes.STR || argType == ParamTypes.BYTES) {
+                encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
+            
+                // Create properly encoded msg.data with length prefix
+                bytes memory encodedMsgData = new bytes(msg.data.length + 32);
+            
+                // Store length in first 32 bytes
+                uint256 msgDataLength = msg.data.length;
+                assembly {
+                    mstore(add(encodedMsgData, 32), msgDataLength)
+                }
+            
+                // Copy the actual data
+                for (uint256 j = 0; j < msg.data.length; j++) {
+                    encodedMsgData[j + 32] = msg.data[j];
+                }
+            
+                dynamicData = bytes.concat(dynamicData, encodedMsgData);
+                lengthToAppend += encodedMsgData.length;
+            } else {
+                revert("MSG_DATA can only be used with bytes or string types");
+            }
+        } else if (globalVarType == GLOBAL_BLOCK_NUMBER) {
+            if (argType == ParamTypes.UINT) {
+                bytes32 value = bytes32(block.number);
+                encodedCall = bytes.concat(encodedCall, value);
+            } else {
+                revert("BLOCK_NUMBER can only be used with uint type");
+            }
+        } else if (globalVarType == GLOBAL_TX_ORIGIN) {
+            if (argType == ParamTypes.ADDR) {
+                bytes32 value = bytes32(uint256(uint160(tx.origin)));
+                encodedCall = bytes.concat(encodedCall, value);
+            } else {
+                revert("TX_ORIGIN can only be used with address type");
+            }
+        } else {
+            revert("Unknown global variable type");
         }
     
-        return retVal;
+        return (encodedCall, lengthToAppend, dynamicData);
     }
 
     /**
@@ -379,8 +343,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
             (bool isTrackerValue, bool isForeignCall, uint8 globalVarType) = _extractFlags(placeholder);
 
             if(globalVarType != GLOBAL_NONE) {
-                metadata[placeholderIndex].eType = EncodedIndexType.ENCODED_VALUES;
-                metadata[placeholderIndex].index = 0;
+                metadata[placeholderIndex].eType = EncodedIndexType.GLOBAL_VAR;
+                metadata[placeholderIndex].index = globalVarType;
                 (retVals[placeholderIndex], placeHolders[placeholderIndex].pType) = _handleGlobalVar(globalVarType);
             } else if(isForeignCall) {
                 metadata[placeholderIndex].eType = EncodedIndexType.FOREIGN_CALL;
