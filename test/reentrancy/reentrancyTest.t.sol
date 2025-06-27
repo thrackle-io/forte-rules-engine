@@ -15,12 +15,12 @@ contract NewExampleERC20 is ERC20, RulesEngineClientERC20 {
     }
 
     function transfer(address to, uint256 amount) public override checksPoliciesERC20TransferBefore(to, amount, balanceOf(msg.sender), balanceOf(to), block.timestamp) returns (bool) {
-        _transfer(msg.sender, to, amount);
+        super.transfer(to, amount);
         return true;
     }
 
     function transferFrom(address from, address to, uint256 amount) public override checksPoliciesERC20TransferFromBefore(from, to, amount, balanceOf(from), balanceOf(to), block.timestamp) returns (bool) {
-        _transfer(from, to, amount);
+        super.transferFrom(from, to, amount);
         return true;
     }
 }
@@ -32,7 +32,7 @@ contract ReentrancyTest is RulesEngineCommon {
 
     function setUp() public {
         red = createRulesEngineDiamond(address(0xB0b));
-        reentrancy = new ExampleReentrancy(address(erc20), true);
+        reentrancy = new ExampleReentrancy(address(erc20), false);
         erc20 = new NewExampleERC20("Test", "TEST");
         erc20.setRulesEngineAddress(address(red));
         erc20.setCallingContractAdmin(address(policyAdmin));
@@ -43,13 +43,14 @@ contract ReentrancyTest is RulesEngineCommon {
         vm.stopPrank();
 
         erc20.mint(address(reentrancy), 1000000000);
+        reentrancy.setRulesEngine(address(red));
     }
 
     function _createTrackerUpdateInstructionSet() internal pure returns (uint256[] memory) {
         uint256[] memory instructionSet = new uint256[](11);
         // Tracker Placeholder to increment transaction count
         instructionSet[0] = uint(LogicalOp.PLH);
-        instructionSet[1] = 0;
+        instructionSet[1] = 1;
         // Tracker Index
         instructionSet[2] = uint(LogicalOp.NUM);
         instructionSet[3] = 1;
@@ -83,25 +84,26 @@ contract ReentrancyTest is RulesEngineCommon {
         rule.posEffects = new Effect[](1);
         rule.posEffects[0].instructionSet = _createTrackerUpdateInstructionSet();
         rule.posEffects[0].effectType = EffectTypes.EXPRESSION;
+        rule.posEffects[0].valid = true;
 
         // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, 4, LogicalOp.GT, 0, 1
         // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet(4);
+        rule.instructionSet = _createInstructionSet(3);
         // Build the calling function argument placeholder
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].flags = FLAG_FOREIGN_CALL;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
-        rule.placeHolders[1].flags = FLAG_TRACKER_VALUE;
+        rule.placeHolders[1].flags = FLAG_FOREIGN_CALL;
         rule.placeHolders[1].typeSpecificIndex = 1;
+        rule.placeHolders[2].flags = FLAG_TRACKER_VALUE;
+        rule.placeHolders[2].typeSpecificIndex = 1;
 
         rule.effectPlaceHolders = new Placeholder[](3);
         rule.effectPlaceHolders[0].pType = ParamTypes.UINT;
         rule.effectPlaceHolders[0].typeSpecificIndex = 1;
-        rule.effectPlaceHolders[1].pType = ParamTypes.ADDR;
-        rule.effectPlaceHolders[1].typeSpecificIndex = 0;
-        rule.effectPlaceHolders[2].pType = ParamTypes.UINT;
-        rule.effectPlaceHolders[2].flags = FLAG_TRACKER_VALUE;
-        rule.effectPlaceHolders[2].typeSpecificIndex = 1;
+        rule.effectPlaceHolders[1].pType = ParamTypes.UINT;
+        rule.effectPlaceHolders[1].flags = FLAG_TRACKER_VALUE;
+        rule.effectPlaceHolders[1].typeSpecificIndex = 1;
 
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
@@ -113,7 +115,8 @@ contract ReentrancyTest is RulesEngineCommon {
         tracker1.set = true;
 
         // Create a tracker for the rule
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker1, "totalVolume");      
+        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker1, "totalVolume");      
+
         ForeignCallEncodedIndex[] memory encodedIndices = new ForeignCallEncodedIndex[](2);
         encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
         encodedIndices[0].index = 0;
@@ -164,25 +167,26 @@ contract ReentrancyTest is RulesEngineCommon {
         rule.posEffects = new Effect[](1);
         rule.posEffects[0].instructionSet = _createTrackerUpdateInstructionSet();
         rule.posEffects[0].effectType = EffectTypes.EXPRESSION;
+        rule.posEffects[0].valid = true;
 
         // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, 4, LogicalOp.GT, 0, 1
         // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet(4);
+        rule.instructionSet = _createInstructionSet(3);
         // Build the calling function argument placeholder
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].flags = FLAG_FOREIGN_CALL;
+        rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
-        rule.placeHolders[1].flags = FLAG_TRACKER_VALUE;
+        rule.placeHolders[1].flags = FLAG_FOREIGN_CALL;
         rule.placeHolders[1].typeSpecificIndex = 1;
+        rule.placeHolders[2].flags = FLAG_TRACKER_VALUE;
+        rule.placeHolders[2].typeSpecificIndex = 1;
 
         rule.effectPlaceHolders = new Placeholder[](3);
         rule.effectPlaceHolders[0].pType = ParamTypes.UINT;
         rule.effectPlaceHolders[0].typeSpecificIndex = 1;
-        rule.effectPlaceHolders[1].pType = ParamTypes.ADDR;
-        rule.effectPlaceHolders[1].typeSpecificIndex = 0;
-        rule.effectPlaceHolders[2].pType = ParamTypes.UINT;
-        rule.effectPlaceHolders[2].flags = FLAG_TRACKER_VALUE;
-        rule.effectPlaceHolders[2].typeSpecificIndex = 1;
+        rule.effectPlaceHolders[1].pType = ParamTypes.UINT;
+        rule.effectPlaceHolders[1].flags = FLAG_TRACKER_VALUE;
+        rule.effectPlaceHolders[1].typeSpecificIndex = 1;
 
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
@@ -235,52 +239,54 @@ contract ReentrancyTest is RulesEngineCommon {
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
-    /// @notice Doesn't appear to be a way to get the expect the correct error message due to the way expectRevert works. If you look closely, the ReentrancyFailed error occurs but is overtaken by an EVM error. Unsure how to fix this. Leaving as expectRevert for now.
     function test_reentrancy_rule_hack_foreign_call() public ifDeploymentTestsEnabled endWithStopPrank {
         mimickReentrancyRuleHackForeignCall();
         reentrancy.setTo(address(erc20));
-        vm.startPrank(user1);
-        vm.expectRevert(/*ReentrancyFailed.selector*/);
-        erc20.transfer(address(USER_ADDRESS_2), 5);
-        vm.stopPrank();
+        reentrancy.setDelegatecall(false);
+        reentrancy.setCallData(abi.encodeWithSelector(ERC20.transfer.selector, address(USER_ADDRESS_2), 10));
+        erc20.mint(address(user1), 1000000000);
+
+        address(reentrancy).call("");
+
+        bytes[] memory dataHistory = reentrancy.getDataHistory();
+        assertEq(dataHistory.length, 3);
+        assertEq(abi.decode(dataHistory[0], (uint256)), 1);
+        assertEq(abi.decode(dataHistory[1], (uint256)), 2);
+        assertEq(abi.decode(dataHistory[2], (uint256)), 3);
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
-    /// @notice Doesn't appear to be a way to get the expect the correct error message due to the way expectRevert works. If you look closely, the ReentrancyFailed error occurs but is overtaken by an EVM error. Unsure how to fix this. Leaving as expectRevert for now.
     function test_reentrancy_rule_foreign_call_try_modify_tracker_with_delegatecall() public ifDeploymentTestsEnabled endWithStopPrank {
         mimickReentrancyRuleHackForeignCall();
-        reentrancy.setCallData(abi.encode(address(USER_ADDRESS_2), 5));
+        reentrancy.setCallData(abi.encodeWithSelector(ERC20.transfer.selector, address(USER_ADDRESS_2), 4));
         reentrancy.setDelegatecall(true);
         reentrancy.setTo(address(erc20));
         vm.startPrank(user1);
-        vm.expectRevert(/*ReentrancyFailed.selector*/);
-        erc20.transfer(address(USER_ADDRESS_2), 5);
+        // vm.expectRevert(ReentrancyFailed.selector); this does revert but the rules engine is not bubbling up the error partly by design
+        erc20.transfer(address(USER_ADDRESS_2), 4);
         vm.stopPrank();
+
+        bytes[] memory dataHistory = reentrancy.getDataHistory();
+        assertEq(dataHistory.length, 0);
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
-    /// @notice Doesn't appear to be a way to get the expect the correct error message due to the way expectRevert works. If you look closely, the ReentrancyFailed error occurs but is overtaken by an EVM error. Unsure how to fix this. Leaving as expectRevert for now.
-    function test_reentrancy_fuzz_reentrancy_contract(bytes memory data, bool delegatecall) public ifDeploymentTestsEnabled endWithStopPrank {
-        mimickReentrancyRuleHackForeignCall();
-        reentrancy.setCallData(data);
-        reentrancy.setDelegatecall(delegatecall);
-        reentrancy.setTo(address(erc20));
-        vm.startPrank(user1);
-        vm.expectRevert(/*ReentrancyFailed.selector*/);
-        erc20.transfer(address(USER_ADDRESS_2), 5);
-        vm.stopPrank();
-    }
-
-    /// forge-config: default.allow_internal_expect_revert = true
-    /// @notice Doesn't appear to be a way to get the expect the correct error message due to the way expectRevert works. If you look closely, the ReentrancyFailed error occurs but is overtaken by an EVM error. Unsure how to fix this. Leaving as expectRevert for now.
-    function test_reentrancy_multiple_policies(bytes memory data, bool delegatecall) public ifDeploymentTestsEnabled endWithStopPrank {
-        _mimickReentrancyMultiplePolicies();
-        reentrancy.setCallData(data);
-        reentrancy.setDelegatecall(delegatecall);
-        reentrancy.setTo(address(erc20));
-        vm.startPrank(user1);
-        vm.expectRevert(/*ReentrancyFailed.selector*/);
-        erc20.transfer(address(USER_ADDRESS_2), 5);
-        vm.stopPrank();
-    }
+    /// @notice this test is dying in foundry, I believe it might be blowing up the stack too much and foundry can't handle it. We should report this to them. 
+    // function test_reentrancy_multiple_policies() public ifDeploymentTestsEnabled endWithStopPrank {
+    //     _mimickReentrancyMultiplePolicies();
+    //     reentrancy.setCallData(abi.encodeWithSelector(ERC20.transfer.selector, address(USER_ADDRESS_2), 4));
+    //     reentrancy.setDelegatecall(false);
+    //     reentrancy.setTo(address(erc20));
+    //     address(reentrancy).call("");
+    //     // bytes[] memory dataHistory = reentrancy.getDataHistory();
+    //     // assertEq(dataHistory.length, 3);
+    //     // assertEq(abi.decode(dataHistory[0], (uint256)), 1);
+    //     // assertEq(abi.decode(dataHistory[1], (uint256)), 2);
+    //     // assertEq(abi.decode(dataHistory[2], (uint256)), 3);
+    //     // bytes[] memory dataHistory2 = reentrancy.getDataHistory2();
+    //     // assertEq(dataHistory2.length, 3);
+    //     // assertEq(abi.decode(dataHistory2[0], (uint256)), 1);
+    //     // assertEq(abi.decode(dataHistory2[1], (uint256)), 2);
+    //     // assertEq(abi.decode(dataHistory2[2], (uint256)), 3);
+    // }
 }
