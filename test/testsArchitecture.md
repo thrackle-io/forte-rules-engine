@@ -77,3 +77,13 @@ Negative
         i.e. minBalance rule conditional would execute tests for below the min, at the min and above the min value. 
 
 Any additional executions necessary for that specific directory.
+
+
+Gas Snapshots taken and stored inside of: 
+snapshots
+    RulesEngineUnitTests.json 
+
+These snapshots are used for development and may not reflect real world gas costs. These should only be used as an indicator for changes to gas consuption over time. 
+
+For "real world" gas reporting see test/utils/gasReport/GasReport.t.sol
+

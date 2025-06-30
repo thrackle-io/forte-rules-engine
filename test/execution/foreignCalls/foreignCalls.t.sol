@@ -15,9 +15,11 @@ abstract contract foreignCalls is RulesEngineCommon {
     function testRulesEngine_Unit_checkRule_ForeignCall_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
         // set up the ERC20
         _setup_checkRule_ForeignCall_Positive(ruleValue, userContractAddress);
+        vm.startSnapshotGas("checkRule_ForeignCall");
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly 
         bool response = userContract.transfer(address(0x7654321), transferValue);
         assertTrue(response);
+        uint256 gasUsed = vm.stopSnapshotGas();
     }
 
     function testRulesEngine_Unit_checkRule_ForeignCall_Negative()
@@ -53,8 +55,10 @@ abstract contract foreignCalls is RulesEngineCommon {
     {
         setupRuleWithForeignCallSquaringReferencedTrackerVals(8, EffectTypes.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 3);
+        vm.startSnapshotGas("checkRule_ForeignCall_TrackerValuesUsed");
         uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
+        uint256 gasUsed = vm.stopSnapshotGas();
     }
 
         function testRulesEngine_Unit_createRule_ForeignCall_TrackerValuesUsed_Negative()
@@ -76,8 +80,10 @@ abstract contract foreignCalls is RulesEngineCommon {
     {
         setupRuleWithForeignCallWithSquaredFCValues(EffectTypes.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 3);
+        vm.startSnapshotGas("checkRule_ForeignCall_ForeignCallReferenced");
         uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         assertEq(response, 1);
+        uint256 gasUsed = vm.stopSnapshotGas();
     }
 
 
@@ -233,7 +239,10 @@ abstract contract foreignCalls is RulesEngineCommon {
             uint256 value = 42;
             bytes memory transferCalldata = abi.encodeWithSelector(ExampleUserContract.transferFrom.selector, to, value, abi.encode("TESTER"));
 
+            vm.startSnapshotGas("checkRule_ForeignCall_Bytes");
             RulesEngineProcessorFacet(address(red)).checkPolicies(transferCalldata);
+
+            uint256 gasUsed = vm.stopSnapshotGas();
 
             bytes memory actualMsgData = ExampleUserContract(userContractAddress).msgData();
             assertEq(actualMsgData, transferCalldata, "Foreign call should set msgData to the transfer calldata");
