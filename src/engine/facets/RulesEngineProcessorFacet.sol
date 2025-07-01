@@ -30,9 +30,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @notice Evaluates the conditions associated with all applicable rules and returns the result.
      * @dev Primary entry point for policy checks.
      * @param arguments Function arguments, including the function signature and the arguments to be passed to the function.
-     * @return retVal 1 if all rules pass, 0 if any rule fails.
      */
-    function checkPolicies(bytes calldata arguments) public returns (uint256 retVal) {  
+    function checkPolicies(bytes calldata arguments) public {  
         retVal = 1;
         // Load the calling function data from storage
         PolicyAssociationStorage storage data = lib._getPolicyAssociationStorage();
