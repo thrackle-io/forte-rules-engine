@@ -18,8 +18,8 @@ abstract contract foreignCalls is RulesEngineCommon {
         vm.startSnapshotGas("checkRule_ForeignCall");
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly 
         bool response = userContract.transfer(address(0x7654321), transferValue);
+        vm.stopSnapshotGas();
         assertTrue(response);
-        uint256 gasUsed = vm.stopSnapshotGas();
     }
 
     function testRulesEngine_Unit_checkRule_ForeignCall_Negative()
@@ -57,8 +57,8 @@ abstract contract foreignCalls is RulesEngineCommon {
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 3);
         vm.startSnapshotGas("checkRule_ForeignCall_TrackerValuesUsed");
         uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        vm.stopSnapshotGas();
         assertEq(response, 1);
-        uint256 gasUsed = vm.stopSnapshotGas();
     }
 
         function testRulesEngine_Unit_createRule_ForeignCall_TrackerValuesUsed_Negative()
@@ -82,8 +82,8 @@ abstract contract foreignCalls is RulesEngineCommon {
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 3);
         vm.startSnapshotGas("checkRule_ForeignCall_ForeignCallReferenced");
         uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        vm.stopSnapshotGas();
         assertEq(response, 1);
-        uint256 gasUsed = vm.stopSnapshotGas();
     }
 
 
@@ -241,8 +241,7 @@ abstract contract foreignCalls is RulesEngineCommon {
 
             vm.startSnapshotGas("checkRule_ForeignCall_Bytes");
             RulesEngineProcessorFacet(address(red)).checkPolicies(transferCalldata);
-
-            uint256 gasUsed = vm.stopSnapshotGas();
+            vm.stopSnapshotGas();
 
             bytes memory actualMsgData = ExampleUserContract(userContractAddress).msgData();
             assertEq(actualMsgData, transferCalldata, "Foreign call should set msgData to the transfer calldata");
