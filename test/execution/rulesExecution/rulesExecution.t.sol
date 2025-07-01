@@ -23,8 +23,11 @@ abstract contract rulesExecution is RulesEngineCommon {
         vm.startPrank(policyAdmin);
         setUpRuleSimple();
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 5);
+        vm.startSnapshotGas("CheckRules_Explicit");
         uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        vm.stopSnapshotGas();
         assertEq(response, 1);
+        
     }
 
     function testRulesEngine_Unit_checkRule_simple_Positive()
@@ -33,8 +36,10 @@ abstract contract rulesExecution is RulesEngineCommon {
         endWithStopPrank
     {
         setUpRuleSimple();
+        vm.startSnapshotGas("checkRule_simple_GT");
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly
         bool response = userContract.transfer(address(0x7654321), 47);
+        vm.stopSnapshotGas();
         assertTrue(response);
     }
 
@@ -44,8 +49,10 @@ abstract contract rulesExecution is RulesEngineCommon {
         endWithStopPrank
     {
         setUpRuleSimpleGTEQL();
+        vm.startSnapshotGas("checkRule_simpleGTEQL");
         // test that rule ( amount >= 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly
         bool response = userContract.transfer(address(0x7654321), 4);
+        vm.stopSnapshotGas();
         assertTrue(response);
     }
 
@@ -55,8 +62,11 @@ abstract contract rulesExecution is RulesEngineCommon {
         endWithStopPrank
     {
         setUpRuleSimpleLTEQL();
+        vm.startSnapshotGas("checkRule_simpleLTEQL");
         // test that rule ( ruleValue <= amount -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly
         bool response = userContract.transfer(address(0x7654321), 3);
+        
+        vm.stopSnapshotGas();
         assertTrue(response);
     }
     
@@ -163,8 +173,10 @@ abstract contract rulesExecution is RulesEngineCommon {
         vm.startPrank(callingContractAdmin);
         RulesEnginePolicyFacet(address(red)).applyPolicy(encodingContractAddress, policyIds);
         // test rule processing 
+        vm.startSnapshotGas("Additional_Encoding_Uint_Value");
         bool response = encodingContract.transfer(address(0xacdc), 99);
-        assertTrue(response); 
+        vm.stopSnapshotGas();
+        assertTrue(response);
     }
 
     function testRulesEngine_Unit_TestContractEncoding_AdditionalParamsEncoded_AddressRuleValue() public ifDeploymentTestsEnabled endWithStopPrank {
@@ -236,10 +248,12 @@ abstract contract rulesExecution is RulesEngineCommon {
         vm.startPrank(callingContractAdmin);    
         RulesEnginePolicyFacet(address(red)).applyPolicy(encodingContractAddress, policyIds);
         // // test rule processing 
+        vm.startSnapshotGas("Additional_Encoding_Address_Value");
         // transferFrom in this contract is transferFrom(address,amount) != transferFrom(from,to,amount)
         bool response1 = encodingContract.transferFrom(address(0x1234567), 99);
-        assertTrue(response1); 
-         
+        vm.stopSnapshotGas();
+        assertTrue(response1);
+
         bool response2 = encodingContract.transferFrom(address(0x31337), 75);
         assertTrue(response2);
 
@@ -334,10 +348,12 @@ abstract contract rulesExecution is RulesEngineCommon {
         RulesEnginePolicyFacet(address(red)).applyPolicy(encodingContractAddress, policyIds);
 
         // // test rule processing 
+        vm.startSnapshotGas("Additional_Encoding_ForeignCall_Value");
         // transferFrom in this contract is transferFrom(address,amount) != transferFrom(from,to,amount)
         bool response3 = encodingContract.transferFrom(address(0x1234567), 99);
-        assertTrue(response3); 
-         
+        vm.stopSnapshotGas();
+        assertTrue(response3);
+
         bool response4 = encodingContract.transferFrom(address(0x31337), 75);
         assertTrue(response4);
         
@@ -412,8 +428,10 @@ abstract contract rulesExecution is RulesEngineCommon {
         vm.startPrank(callingContractAdmin);    
         RulesEnginePolicyFacet(address(red)).applyPolicy(encodingContractAddress, policyIds);
         // test rule processing 
+        vm.startSnapshotGas("Additional_Encoding_Bool_Value");
         bool response = encodingContract.transferBool(address(0x1234567), 99);
-        assertTrue(response); 
+        vm.stopSnapshotGas();
+        assertTrue(response);
     }
     // Bytes param test 
     // Test that the rules engine can accept bool params and process != and == operations 
@@ -490,8 +508,11 @@ abstract contract rulesExecution is RulesEngineCommon {
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunctionWithBytes))), address(0x7654321), 99, TEST);
         RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
 
+        vm.startSnapshotGas("Additional_Encoding_Bytes_Value");
         bool response = encodingContract.transferWithBytes(address(0x1234567), 99, TEST);
+        vm.stopSnapshotGas();
         assertTrue(response); 
+        
         response = encodingContract.transferWithBytes(address(0x1234567), 99, bytes("BAD TEST"));
         assertFalse(response); 
 
@@ -651,7 +672,9 @@ abstract contract rulesExecution is RulesEngineCommon {
         vm.startPrank(callingContractAdmin);    
         RulesEnginePolicyFacet(address(red)).applyPolicy(encodingContractAddress, policyIds);
         // test rule processing 
+        vm.startSnapshotGas("Additional_Encoding_String_Value");
         bool response = encodingContract.transferWithString(address(0x1234567), 99, testString);
+        vm.stopSnapshotGas();
         assertTrue(response); 
         response = encodingContract.transferWithString(address(0x1234567), 99, "bad string");
         assertFalse(response); 
@@ -731,7 +754,9 @@ abstract contract rulesExecution is RulesEngineCommon {
         vm.startPrank(callingContractAdmin);    
         RulesEnginePolicyFacet(address(red)).applyPolicy(encodingContractAddress, policyIds);
         // test rule processing 
+        vm.startSnapshotGas("Additional_Encoding_StaticArray_Value");
         bool response = encodingContract.transferArray(address(0x1234567), 99);
+        vm.stopSnapshotGas();
         assertTrue(response); 
     }
 
@@ -809,7 +834,9 @@ abstract contract rulesExecution is RulesEngineCommon {
         vm.startPrank(callingContractAdmin);    
         RulesEnginePolicyFacet(address(red)).applyPolicy(encodingContractAddress, policyIds);
         // test rule processing 
+        vm.startSnapshotGas("Additional_Encoding_DynamicArray_Value");
         bool response = encodingContract.transferDynamicArray(address(0x1234567), 99);
+        vm.stopSnapshotGas();
         assertTrue(response); 
 
     }
@@ -989,9 +1016,11 @@ abstract contract rulesExecution is RulesEngineCommon {
         exampleERC20.transfer(address(0x7654321), 3);
         //warp out of pause window 
         vm.warp(2000000001);
+        vm.startSnapshotGas("PauseRuleRecreation");
         bool response = exampleERC20.transfer(address(0x7654321), 7);
+        vm.stopSnapshotGas();
         assertTrue(response);
-
+       
     }
 
 }
