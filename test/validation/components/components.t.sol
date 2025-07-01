@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "test/utils/RulesEngineCommon.t.sol";
+import "lib/diamond-std/core/DiamondCut/DiamondCutFacet.sol";
 
 abstract contract components is RulesEngineCommon {
     /**
@@ -609,5 +610,77 @@ abstract contract components is RulesEngineCommon {
         vm.expectEmit(true, false, false, false);
         emit TrackerDeleted(policyID, trackerId);
         RulesEngineComponentFacet(address(red)).deleteTracker(policyID, trackerId);
+    }
+
+    function testRulesEngine_unit_RED_Non_Upgradable() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.startPrank(policyAdmin);
+    
+        // Get all current facet addresses to verify diamond state
+        address[] memory facetAddresses = DiamondLoupeFacet(address(red)).facetAddresses();
+    
+        // Verify diamondCut function selector is NOT present in any facet
+        bool diamondCutFound = false;
+        bytes4 diamondCutSelector = DiamondCutFacet.diamondCut.selector;
+    
+        for(uint256 i = 0; i < facetAddresses.length; i++) {
+            bytes4[] memory selectors = DiamondLoupeFacet(address(red)).facetFunctionSelectors(facetAddresses[i]);
+            for(uint256 j = 0; j < selectors.length; j++) {
+                if(selectors[j] == diamondCutSelector) {
+                    diamondCutFound = true;
+                    break;
+                }
+            }
+            if(diamondCutFound) break;
+        }
+    
+        //  Assert that diamondCut selector is not found
+        assertFalse(diamondCutFound, "DiamondCut functionality should not be available");
+    
+        // Verify that calling diamondCut directly on the diamond reverts
+        // Create dummy facet cut data for testing
+        FacetCut[] memory cuts = new FacetCut[](1);
+        cuts[0] = FacetCut({
+            facetAddress: address(0x1337),
+            action: FacetCutAction.Add,
+            functionSelectors: new bytes4[](1)
+        });
+        cuts[0].functionSelectors[0] = bytes4(keccak256("dummyFunction()"));
+    
+        // Attempt to call diamondCut and expect it to fail
+        vm.expectRevert("FunctionNotFound(0xc99346a4)");
+        (bool success,) = address(red).call(
+            abi.encodeWithSelector(diamondCutSelector, cuts, address(0), "")
+        );
+    
+        // Verify NativeFacet doesn't have diamondCut functionality
+        // Check that NativeFacet only has DiamondLoupe and ERC173 functions
+        address nativeFacetAddress = DiamondLoupeFacet(address(red)).facetAddress(
+            DiamondLoupeFacet.facets.selector
+        );
+    
+        bytes4[] memory nativeFacetSelectors = DiamondLoupeFacet(address(red)).facetFunctionSelectors(nativeFacetAddress);
+    
+        // Verify expected selectors are present (loupe + ownership)
+        bool hasFacets = false;
+        bool hasOwner = false;
+    
+        for(uint256 k = 0; k < nativeFacetSelectors.length; k++) {
+            if(nativeFacetSelectors[k] == DiamondLoupeFacet.facets.selector) {
+                hasFacets = true;
+            }
+            if(nativeFacetSelectors[k] == ERC173Facet.owner.selector) {
+                hasOwner = true;
+            }
+            // Ensure no diamondCut selector
+            assertFalse(
+                nativeFacetSelectors[k] == diamondCutSelector,
+                "NativeFacet should not have diamondCut functionality"
+            );
+        }
+    
+        assertTrue(hasFacets, "NativeFacet should have diamond loupe functionality");
+        assertTrue(hasOwner, "NativeFacet should have ownership functionality");
+    
+        vm.stopPrank();
     }
 }
