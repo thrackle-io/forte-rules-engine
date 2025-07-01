@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.24;
 
-import "diamond-std/core/DiamondCut/DiamondCutFacet.sol";
 import {DiamondLoupeFacet} from "diamond-std/core/DiamondLoupe/DiamondLoupeFacet.sol";
 import {ERC173Facet} from "diamond-std/implementations/ERC173/ERC173Facet.sol";
 
@@ -13,4 +12,4 @@ import {ERC173Facet} from "diamond-std/implementations/ERC173/ERC173Facet.sol";
  * @notice This contract is intended to be used as a foundational facet for diamond contracts.
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
-contract NativeFacet is DiamondCutFacet, DiamondLoupeFacet, ERC173Facet {}
+contract NativeFacet is DiamondLoupeFacet, ERC173Facet {}
