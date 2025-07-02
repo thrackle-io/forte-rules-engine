@@ -128,7 +128,7 @@ abstract contract adminRoles is RulesEngineCommon {
         assertFalse(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(newUserContractAddress, callingContractAdmin));
     }
 
-        function testRulesEngine_Unit_ProposeAndConfirm_CallingContractAdmin_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
+    function testRulesEngine_Unit_ProposeAndConfirm_CallingContractAdmin_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
         newUserContract.setCallingContractAdmin(callingContractAdmin);
         assertTrue(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(newUserContractAddress, callingContractAdmin));
         vm.stopPrank();
@@ -140,6 +140,20 @@ abstract contract adminRoles is RulesEngineCommon {
 
         assertTrue(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(newUserContractAddress, user1));
         assertFalse(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(newUserContractAddress, callingContractAdmin));
+    }
+
+    function testRulesEngine_Unit_Confirm_CallingContractAdmin_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        newUserContract.setCallingContractAdmin(callingContractAdmin);
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isCallingContractAdmin(newUserContractAddress, callingContractAdmin));
+        vm.stopPrank();
+        vm.startPrank(callingContractAdmin);
+        RulesEngineAdminRolesFacet(address(red)).proposeNewCallingContractAdmin(newUserContractAddress, user1);
+        vm.stopPrank();
+        vm.startPrank(user1);
+        // This expected error is due to getRoleMember - the argument address doesnt exist in _roleMembers
+        vm.expectRevert("panic: array out-of-bounds access (0x32)");
+        // Confirm with a non-proposed address
+        RulesEngineAdminRolesFacet(address(red)).confirmNewCallingContractAdmin(address(0x1337)); 
     }
 
     function testRulesEngine_Unit_ProposeAndConfirm_CallingContractAdmin_Negative() public ifDeploymentTestsEnabled endWithStopPrank {

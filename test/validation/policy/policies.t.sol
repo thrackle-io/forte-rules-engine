@@ -276,6 +276,25 @@ abstract contract policies is RulesEngineCommon {
         assertFalse(RulesEnginePolicyFacet(address(red)).isClosedPolicy(policyId));
     }
 
+    function testRulesEngine_Unit_OpenPolicy_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        assertTrue(RulesEnginePolicyFacet(address(red)).isClosedPolicy(policyId));
+        RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
+
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEnginePolicyFacet(address(red)).openPolicy(policyId);
+    }
+
+    function testRulesEngine_Unit_OpenPolicy_Negative_Non_PolicyAdmin() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        assertTrue(RulesEnginePolicyFacet(address(red)).isClosedPolicy(policyId));
+        
+        // Prank a random, non-policy admin address
+        vm.startPrank(address(0x1337));
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEnginePolicyFacet(address(red)).openPolicy(policyId);
+    }
+
     function testRulesEngine_Unit_ApplyPolicy_OpenPolicy_NotSubscriber() public ifDeploymentTestsEnabled endWithStopPrank {
         
         uint256 policyId = _createBlankPolicy();
@@ -316,10 +335,30 @@ abstract contract policies is RulesEngineCommon {
         RulesEnginePolicyFacet(address(red)).updatePolicy(policyId, blankcallingFunctions, blankcallingFunctionIds, blankRuleIds, PolicyType.CLOSED_POLICY);
     }
 
+    function testRulesEngine_Unit_UpdatePolicy_Negative_Non_PolicyAdmin() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory blankcallingFunctions = new bytes4[](0);
+        uint256[] memory blankcallingFunctionIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+
+        // Prank a random, non-policy admin address
+        vm.startPrank(address(0x1337));
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyId, blankcallingFunctions, blankcallingFunctionIds, blankRuleIds, PolicyType.CLOSED_POLICY);
+    }
+
     function testRulesEngine_Unit_DeletePolicy_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
         uint256 policyId = _createBlankPolicy();
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
         vm.expectRevert("Not allowed for cemented policy");
+        RulesEnginePolicyFacet(address(red)).deletePolicy(policyId);
+    }
+
+    function testRulesEngine_Unit_DeletePolicy_Negative_Non_PolicyAdmin() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        // Prank a random, non-policy admin address
+        vm.startPrank(address(0x1337));
+        vm.expectRevert("Not Authorized To Policy");
         RulesEnginePolicyFacet(address(red)).deletePolicy(policyId);
     }
 
@@ -340,7 +379,24 @@ abstract contract policies is RulesEngineCommon {
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
-        function testRulesEngine_Unit_UnapplyPolicy_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
+    function testRulesEngine_Unit_ApplyPolicy_Negative_Non_CallingContractAdmin() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory blankcallingFunctions = new bytes4[](0);
+        uint256[] memory blankcallingFunctionIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyId, blankcallingFunctions, blankcallingFunctionIds, blankRuleIds, PolicyType.OPEN_POLICY);
+        
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = policyId;
+        vm.stopPrank();
+
+        // Prank a random, non-calling contract admin address
+        vm.startPrank(address(0x1337));
+        vm.expectRevert("Not Authorized Admin");
+        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+    }
+
+    function testRulesEngine_Unit_UnapplyPolicy_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
         uint256 policyId = _createBlankPolicy();
         bytes4[] memory blankSignatures = new bytes4[](0);
         uint256[] memory blankFunctionSignatureIds = new uint256[](0);
@@ -411,6 +467,23 @@ abstract contract policies is RulesEngineCommon {
         vm.startPrank(policyAdmin);
         vm.expectRevert("Not Authorized Admin");
         RulesEnginePolicyFacet(address(red)).unapplyPolicy(address(userContract), policyIds);
+    }
+
+    function testRulesEngine_Unit_CementedPolicy_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
+
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
+    }
+
+    function testRulesEngine_Unit_CementedPolicy_Negative_Non_PolicyAdmin() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+
+        // Prank a random, non-policy admin address
+        vm.startPrank(address(0x1337));
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
     }
 
 
@@ -484,6 +557,39 @@ abstract contract policies is RulesEngineCommon {
         emit PolicyClosed(policyId); 
         RulesEnginePolicyFacet(address(red)).closePolicy(policyId);
     }
+
+    function testRulesEngine_Unit_ClosePolicy_Negative_CemetedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEnginePolicyFacet(address(red)).closePolicy(policyId);
+    }
+
+    function testRulesEngine_Unit_ClosePolicy_Negative_Non_PolicyAdmin() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+
+        // Prank a random, non-policy admin address
+        vm.startPrank(address(0x1337));
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEnginePolicyFacet(address(red)).closePolicy(policyId);
+    }
+
+    function testRulesEngine_Unit_DisablePolicy_Negative_CemetedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEnginePolicyFacet(address(red)).disablePolicy(policyId);
+    }
+
+    function testRulesEngine_Unit_DisablePolicy_Negative_Non_PolicyAdmin() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+
+        // Prank a random, non-policy admin address
+        vm.startPrank(address(0x1337));
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEnginePolicyFacet(address(red)).disablePolicy(policyId);
+    }
+
 
     function testRulesEngine_Unit_ClosedPolicySubscriber_AddRemove_Events() public ifDeploymentTestsEnabled endWithStopPrank {
         uint256 policyId = _createBlankPolicy();
