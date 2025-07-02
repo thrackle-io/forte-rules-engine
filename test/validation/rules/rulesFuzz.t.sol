@@ -57,7 +57,7 @@ function testRulesEngine_Fuzz_createRule_simple(uint256 _ruleValue, uint256 _tra
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly 
         vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), _transferValue);
-        if (_ruleValue > _transferValue) vm.expectRevert();
+        if (_ruleValue >= _transferValue) vm.expectRevert();
         RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 

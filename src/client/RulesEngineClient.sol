@@ -39,11 +39,8 @@ abstract contract RulesEngineClient {
      *      The `encoded` parameter must be properly encoded using `abi.encodeWithSelector`.
      *      Example: `bytes memory encoded = abi.encodeWithSelector(msg.sig, to, value, msg.sender);`
      * @param _encoded The encoded data to be passed to the Rules Engine.
-     * @return _retval The return value from the Rules Engine, representing the result of the policy evaluation.
      */
-    function _invokeRulesEngine(bytes memory _encoded) internal returns (uint256 _retval) {
-        if (rulesEngineAddress != address(0)) {
-            return IRulesEngine(rulesEngineAddress).checkPolicies(_encoded);
-        }
+    function _invokeRulesEngine(bytes memory _encoded) internal {
+        if (rulesEngineAddress != address(0)) IRulesEngine(rulesEngineAddress).checkPolicies(_encoded);
     }
 }

@@ -53,12 +53,12 @@ abstract contract foreignCalls is RulesEngineCommon {
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        setupRuleWithForeignCallSquaringReferencedTrackerVals(8, EffectTypes.REVERT, false);
+        setupRuleWithForeignCallSquaringReferencedTrackerVals(2, EffectTypes.REVERT, false); // rule's lower limit is 2
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 3);
         vm.startSnapshotGas("checkRule_ForeignCall_TrackerValuesUsed");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        vm.startPrank(address(userContract));
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         vm.stopSnapshotGas();
-        assertEq(response, 1);
     }
 
         function testRulesEngine_Unit_createRule_ForeignCall_TrackerValuesUsed_Negative()
@@ -79,11 +79,11 @@ abstract contract foreignCalls is RulesEngineCommon {
         endWithStopPrank
     {
         setupRuleWithForeignCallWithSquaredFCValues(EffectTypes.REVERT, false);
-        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 3);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 2); // rule's lower limit is 2
         vm.startSnapshotGas("checkRule_ForeignCall_ForeignCallReferenced");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        vm.startPrank(address(userContract));
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         vm.stopSnapshotGas();
-        assertEq(response, 1);
     }
 
 
@@ -99,15 +99,16 @@ abstract contract foreignCalls is RulesEngineCommon {
         RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
-    function testRulesEngine_Unit_CheckRules_Explicit_WithForeignCall_Positive()
+    function testRulesEngine_Unit_CheckRules_Explicit_WithForeignCall_Negative()
         public
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
         setupRuleWithForeignCall(4, EffectTypes.REVERT, false);
-        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 5);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 1);
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1);
+        vm.startPrank(address(userContract));
+        vm.expectRevert(abi.encodePacked(revert_text));
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     function testRulesEngine_Unit_CheckRules_Explicit_WithForeignCallEffect()

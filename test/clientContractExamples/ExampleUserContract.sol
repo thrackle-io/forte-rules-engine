@@ -24,20 +24,18 @@ contract ExampleUserContract is RulesEngineClient {
      * @return bool True if the transfer is allowed by the Rules Engine, false otherwise.
      */
     function transfer(address to, uint256 value) public returns (bool) {
-        uint256 retval = _invokeRulesEngine(msg.data);
+        _invokeRulesEngine(msg.data);
         to;
         value;
-        if (retval > 0) return true;
-        else return false; 
+        return true;
     }
 
     function transferFrom(address to, uint256 value, bytes memory _bytes) public returns (bool) {
-        uint256 retval = _invokeRulesEngine(msg.data);
+        _invokeRulesEngine(msg.data);
         to; // added to silence compiler warnings
         value; // added to silence compiler warnings
         _bytes; // added to silence compiler warnings 
-        if (retval > 0) return true;
-        else return false; 
+        true;
     }
 
 
@@ -76,11 +74,10 @@ contract ExampleUserContractExtraParams is RulesEngineClient {
      * @return bool True if the transfer is allowed by the Rules Engine, false otherwise.
      */
     function transfer(address to, uint256 value) public returns (bool) {
-        uint256 retval = _invokeRulesEngine(abi.encode(msg.data, msg.sender));
+        _invokeRulesEngine(abi.encode(msg.data, msg.sender));
         to;
         value;
-        if (retval > 0) return true;
-        else return false; 
+        return true;
     }
 
 }

@@ -1461,7 +1461,6 @@ abstract contract rules is RulesEngineCommon {
             5
         );
         RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        // assertEq(response, 1, "Rule should pass");
         vm.stopPrank();
 
         // Check if tracker was updated with the block timestamp

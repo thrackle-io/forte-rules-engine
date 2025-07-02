@@ -32,16 +32,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      * @param arguments Function arguments, including the function signature and the arguments to be passed to the function.
      */
     function checkPolicies(bytes calldata arguments) public {  
-        retVal = 1;
         // Load the calling function data from storage
         PolicyAssociationStorage storage data = lib._getPolicyAssociationStorage();
         uint256[] memory policyIds = data.contractPolicyIdMap[msg.sender];
         // loop through all the active policies
-        for(uint256 policyIdx = 0; policyIdx < policyIds.length; policyIdx++) {
-            if(!_checkPolicy(policyIds[policyIdx], msg.sender, arguments)) {
-                retVal = 0;
-            }
-        }
+        for(uint256 policyIdx = 0; policyIdx < policyIds.length; policyIdx++) _checkPolicy(policyIds[policyIdx], msg.sender, arguments);
     }
 
     /**

@@ -34,11 +34,10 @@ contract ExampleUserAccessControl is RulesEngineClient, AccessControl {
      * @return bool True if the transfer is allowed by the Rules Engine, false otherwise.
      */
     function transfer(address to, uint256 value) public returns (bool) {
-        uint256 retval = _invokeRulesEngine(msg.data);
+        _invokeRulesEngine(msg.data);
         to;
         value;
-        if (retval > 0) return true;
-        else return false; 
+        return true;
     }
 
 }
