@@ -730,7 +730,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     function _handleTrackerValue(uint256 _policyId, Placeholder memory placeholder) internal view returns (bytes memory) {
         Trackers memory tracker = lib._getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex];
         if (tracker.mapped) {
-            return lib._getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][placeholder.mappedTrackerKey];
+            if (tracker.trackerKeyType == ParamTypes.BYTES || tracker.trackerKeyType == ParamTypes.STR) {
+                return lib._getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][abi.encode(keccak256(placeholder.mappedTrackerKey))];
+            } else {
+                return lib._getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][placeholder.mappedTrackerKey];
+            }
         }
         return tracker.trackerValue;
     }
