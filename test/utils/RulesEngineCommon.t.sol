@@ -1507,6 +1507,11 @@ contract RulesEngineCommon is DiamondMine, Test {
     function _setupRuleWithMappedTrackerInstructionSetCompare(
         uint256 _policyId, 
         Trackers memory tracker,
+        ParamTypes placeHolderValueType,
+        ParamTypes placeHolderValueType2,
+        ParamTypes trackerValueType,
+        uint128 placeHolderTypeSpecificIndex,
+        uint128 placeHolderTypeSpecificIndex2,
         bytes[] memory trackerKeys,
         bytes[] memory trackerValues,
         string memory trackerName
@@ -1520,16 +1525,36 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
 
-        // Instruction set: LogicalOp.PLH, 0, LogicalOp.PLH, 1, LogicalOp.EQ, 0, 1
+            // instructionSet[0] = uint(LogicalOp.PLH);
+            // instructionSet[1] = 0;
+            // instructionSet[2] = uint(LogicalOp.PLHM);
+            // instructionSet[3] = 1;
+            // instructionSet[4] = 0;
+            // instructionSet[5] = uint(LogicalOp.PLH);
+            // instructionSet[6] = 1;
+            // instructionSet[7] = uint(LogicalOp.EQ);
+            // instructionSet[8] = 1;
+            // instructionSet[9] = 2;
+            // instructionSet[1] = 0;
+            // instructionSet[2] = uint(LogicalOp.PLHM);
+            // instructionSet[3] = 1;
+            // instructionSet[4] = 0;
+            // instructionSet[5] = uint(LogicalOp.PLH);
+            // instructionSet[6] = 1;
+            // instructionSet[7] = uint(LogicalOp.EQ);
+            // instructionSet[8] = 1;
+            // instructionSet[9] = 2;
         rule.instructionSet = _createInstructionSetMappedTracker();
 
-        rule.placeHolders = new Placeholder[](2);
-        rule.placeHolders[0].pType = ADDRESS;
-        rule.placeHolders[0].typeSpecificIndex = 0;
-        rule.placeHolders[1].pType = ParamTypes.UINT;
-        rule.placeHolders[1].flags = FLAG_TRACKER_VALUE;
-        rule.placeHolders[1].typeSpecificIndex = 1;
-        rule.placeHolders[1].mappedTrackerKey = abi.encodePacked(trackerKeys[0]);
+        rule.placeHolders = new Placeholder[](3);
+        rule.placeHolders[0].pType = placeHolderValueType;
+        rule.placeHolders[0].typeSpecificIndex = placeHolderTypeSpecificIndex;
+        rule.placeHolders[1].pType = placeHolderValueType2;
+        rule.placeHolders[1].typeSpecificIndex = placeHolderTypeSpecificIndex2;
+        rule.placeHolders[2].pType = trackerValueType;
+        rule.placeHolders[2].flags = FLAG_TRACKER_VALUE;
+        rule.placeHolders[2].typeSpecificIndex = 1;
+        rule.placeHolders[2].mappedTrackerKey = abi.encodePacked(trackerKeys[0]);
 
         rule.effectPlaceHolders = new Placeholder[](1);
         rule.effectPlaceHolders[0].pType = ParamTypes.BYTES;
@@ -2345,12 +2370,17 @@ contract RulesEngineCommon is DiamondMine, Test {
     }
 
     function _createInstructionSetMappedTracker() public pure returns (uint256[] memory instructionSet) {
-        instructionSet = new uint256[](5);
+        instructionSet = new uint256[](10);
         instructionSet[0] = uint(LogicalOp.PLH);
-        instructionSet[1] = 1;
+        instructionSet[1] = 0;
         instructionSet[2] = uint(LogicalOp.PLHM);
-        instructionSet[3] = 0;
+        instructionSet[3] = 1;
         instructionSet[4] = 0;
+        instructionSet[5] = uint(LogicalOp.PLH);
+        instructionSet[6] = 1;
+        instructionSet[7] = uint(LogicalOp.EQ);
+        instructionSet[8] = 1;
+        instructionSet[9] = 2;
     }
 
     function _setup_checkRule_ForeignCall_Positive(uint256 _transferValue, address _userContractAddr) public ifDeploymentTestsEnabled endWithStopPrank returns(uint256 _policyId) {
