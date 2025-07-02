@@ -244,9 +244,8 @@ abstract contract trackers is RulesEngineCommon {
         
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000);
         vm.startSnapshotGas("MappedTrackerAsConditional_Uint_Positive");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         vm.stopSnapshotGas();
-        assertEq(response, 1);
 
     }
 
@@ -346,9 +345,8 @@ abstract contract trackers is RulesEngineCommon {
         vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000);
         vm.startSnapshotGas("MappedTrackerAsConditional_UintToAddress");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         vm.stopSnapshotGas();
-        assertEq(response, 1);
     }
 
     function testRulesEngine_Unit_MappedTrackerAsConditional_UintToAddress_Negative() public ifDeploymentTestsEnabled resetsGlobalVariables {
@@ -446,9 +444,8 @@ abstract contract trackers is RulesEngineCommon {
         // address to uint mapped tracker (is the amount to allowed for address)
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1);
         vm.startSnapshotGas("MappedTrackerAsConditional_AddressToUint");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         vm.stopSnapshotGas();
-        assertEq(response, 1);
 
     }
 
@@ -547,9 +544,8 @@ abstract contract trackers is RulesEngineCommon {
         // address to Address mapped tracker (Tracked addresses can only transfer to address(0x7654321)); 
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1);
         vm.startSnapshotGas("MappedTrackerAsConditional_AddressToAddress");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         vm.stopSnapshotGas();
-        assertEq(response, 1);
 
     }
 
@@ -697,9 +693,8 @@ abstract contract trackers is RulesEngineCommon {
         vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1, true);
         vm.startSnapshotGas("MappedTrackerAsConditional_UintToBool");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         vm.stopSnapshotGas();
-        assertEq(response, 1);
     }
 
     // Bool to Uint 
@@ -796,9 +791,8 @@ abstract contract trackers is RulesEngineCommon {
         vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1, true);
         vm.startSnapshotGas("MappedTrackerAsConditional_BoolToUint");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         vm.stopSnapshotGas();
-        assertEq(response, 1);
     }
 
     // address to bool 
@@ -895,9 +889,8 @@ abstract contract trackers is RulesEngineCommon {
         vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1, true);
         vm.startSnapshotGas("MappedTrackerAsConditional_AddressToBool");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         vm.stopSnapshotGas();
-        assertEq(response, 1);
     }
 
     // Bool To Address
@@ -994,9 +987,8 @@ abstract contract trackers is RulesEngineCommon {
         vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1, true);
         vm.startSnapshotGas("MappedTrackerAsConditional_BoolToAddress");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         vm.stopSnapshotGas();
-        assertEq(response, 1);
     }
 
     // Address to String 
@@ -1094,9 +1086,8 @@ abstract contract trackers is RulesEngineCommon {
         
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1, "trackerValue1");
         vm.startSnapshotGas("MappedTrackerAsConditional_AddressToString");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         vm.stopSnapshotGas();
-        assertEq(response, 1);
     }
 
     // string to address 
@@ -1195,9 +1186,8 @@ abstract contract trackers is RulesEngineCommon {
         
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1, string("trackerValue1"));
         vm.startSnapshotGas("MappedTrackerAsConditional_StringToAddress");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         vm.stopSnapshotGas();
-        assertEq(response, 1);
     }
 
 
@@ -1244,9 +1234,8 @@ abstract contract trackers is RulesEngineCommon {
         vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, 100);
         vm.startSnapshotGas("MappedTrackerUpdatedFromEffects_UintToUint");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         vm.stopSnapshotGas();
-        assertEq(response, 1);
 
         // check that the tracker was updated from the effect
         bytes memory updatedValue = RulesEngineComponentFacet(address(red)).getMappedTrackerValue(policyId, 1, abi.encode(1));
@@ -1293,8 +1282,7 @@ abstract contract trackers is RulesEngineCommon {
         /// validate tracker is checked as conditional 
         vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, 100);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 1);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
 
         // check that the tracker was updated from the effect
         bytes memory updatedValue = RulesEngineComponentFacet(address(red)).getMappedTrackerValue(policyId, 1, abi.encode(1));
@@ -1342,8 +1330,7 @@ abstract contract trackers is RulesEngineCommon {
         /// validate tracker is checked as conditional 
         vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, address(0x7654321));
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 1);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
 
         // check that the tracker was updated from the effect
         bytes memory updatedValue = RulesEngineComponentFacet(address(red)).getMappedTrackerValue(policyId, 1, abi.encode(1));
@@ -1390,8 +1377,7 @@ abstract contract trackers is RulesEngineCommon {
         /// validate tracker is checked as conditional 
         vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, address(0x7654321));
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 1);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
 
         // check that the tracker was updated from the effect
         bytes memory updatedValue = RulesEngineComponentFacet(address(red)).getMappedTrackerValue(policyId, 1, abi.encode(1));
@@ -1441,9 +1427,8 @@ abstract contract trackers is RulesEngineCommon {
         
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, 20000);
         vm.startSnapshotGas("MappedTrackerUpdatedFromEffects_AddressToUint");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         vm.stopSnapshotGas();
-        assertEq(response, 1);
 
         // check that the tracker was updated from the effect
         bytes memory updatedValue = RulesEngineComponentFacet(address(red)).getMappedTrackerValue(policyId, 1, abi.encode(address(0x7654321)));
@@ -1490,8 +1475,7 @@ abstract contract trackers is RulesEngineCommon {
         /// validate tracker is checked as conditional 
         vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, 20000);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 1);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
 
         // check that the tracker was updated from the effect
         bytes memory updatedValue = RulesEngineComponentFacet(address(red)).getMappedTrackerValue(policyId, 1, abi.encode(address(0x7654321)));
@@ -1542,9 +1526,8 @@ abstract contract trackers is RulesEngineCommon {
         
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, address(0x7777));
         vm.startSnapshotGas("MappedTrackerUpdatedFromEffects_AddressToAddress");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         vm.stopSnapshotGas();
-        assertEq(response, 1);
 
         // check that the tracker was updated from the effect
         bytes memory updatedValue = RulesEngineComponentFacet(address(red)).getMappedTrackerValue(policyId, 1, abi.encode(address(0x7654321)));
@@ -1590,8 +1573,7 @@ abstract contract trackers is RulesEngineCommon {
         /// validate tracker is checked as conditional 
         vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, address(0x7777));
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 1);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
 
         // check that the tracker was updated from the effect
         bytes memory updatedValue = RulesEngineComponentFacet(address(red)).getMappedTrackerValue(policyId, 1, abi.encode(address(0x7654321)));
@@ -1641,9 +1623,8 @@ abstract contract trackers is RulesEngineCommon {
         
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, true);
         vm.startSnapshotGas("MappedTrackerUpdatedFromEffects_AddressToBool");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         vm.stopSnapshotGas();
-        assertEq(response, 1);
 
         // check that the tracker was updated from the effect
         bytes memory updatedValue = RulesEngineComponentFacet(address(red)).getMappedTrackerValue(policyId, 1, abi.encode(address(0x7654321)));
@@ -1690,8 +1671,7 @@ abstract contract trackers is RulesEngineCommon {
         /// validate tracker is checked as conditional 
         vm.startPrank(userContractAddress);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, true);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 1);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
 
         // check that the tracker was updated from the effect
         bytes memory updatedValue = RulesEngineComponentFacet(address(red)).getMappedTrackerValue(policyId, 1, abi.encode(address(0x7654321)));
