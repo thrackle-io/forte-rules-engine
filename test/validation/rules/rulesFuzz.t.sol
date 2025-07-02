@@ -14,18 +14,22 @@ abstract contract rulesFuzz is RulesEngineCommon {
     */
 
 
-function testRulesEngine_Fuzz_createRule_simple(uint256 ruleValue, uint256 transferValue) public {
+function testRulesEngine_Fuzz_createRule_simple(uint256 _ruleValue, uint256 _transferValue) public {
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+
+        // _createAllEffects();
         Rule memory rule;
         uint256 response;
         uint256[] memory policyIds = new uint256[](1); 
         policyIds[0] = _createBlankPolicy();
         // Build the instruction set for the rule (including placeholders)
-        rule.instructionSet = _createInstructionSet(ruleValue);
+        rule.instructionSet = _createInstructionSet(_ruleValue);
         // Build the calling function argument placeholder 
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.negEffects = new Effect[](1);
+        rule.negEffects[0] = effectId_revert;
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
@@ -52,14 +56,9 @@ function testRulesEngine_Fuzz_createRule_simple(uint256 ruleValue, uint256 trans
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly 
         vm.startPrank(userContractAddress);
-        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), transferValue);
-        if (ruleValue < transferValue) {
-            response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-            assertEq(response, 1);
-        } else if (ruleValue > transferValue){ 
-            response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-            assertFalse(response == 1);
-        }
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), _transferValue);
+        if (_ruleValue > _transferValue) vm.expectRevert();
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
 }
