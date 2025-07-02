@@ -7,7 +7,6 @@ import "@openzeppelin/access/extensions/AccessControlEnumerable.sol";
 import "@openzeppelin/access/IAccessControl.sol";
 import "@openzeppelin/access/Ownable.sol";
 import "@openzeppelin/utils/ReentrancyGuard.sol";
-import "dependencies/forge-std-1.9.7/src/console2.sol";
 
 /**
  * @title Rules Engine Admin Roles Facet
