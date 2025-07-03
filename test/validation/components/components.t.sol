@@ -179,8 +179,9 @@ abstract contract components is RulesEngineCommon {
         // create rule and set rule to user contract 
         setUpRuleSimple();
         // test rule works for user contract 
-        bool response = userContract.transfer(address(0x7654321), 3);
-        assertFalse(response);
+
+        vm.expectRevert(abi.encodePacked(revert_text));
+       userContract.transfer(address(0x7654321), 3);
         // create pTypes array for new contract + new transfer function 
         ParamTypes[] memory pTypes = new ParamTypes[](3);
         pTypes[0] = ParamTypes.ADDR;
@@ -192,11 +193,11 @@ abstract contract components is RulesEngineCommon {
         RulesEngineComponentFacet(address(red)).updateCallingFunction(1, 1, bytes4(keccak256(bytes(callingFunction))), pTypes);
         assertEq(sig.set, true);
         // ensure orignal contract rule check works 
-        bool ruleCheck = userContract.transfer(address(0x7654321), 3);
-        assertFalse(ruleCheck);
+        vm.expectRevert(abi.encodePacked(revert_text));
+        userContract.transfer(address(0x7654321), 3);
         // test new contract rule check works 
-        bool secondRuleCheck = userContract.transfer(address(0x7654321), 3);
-        assertFalse(secondRuleCheck);
+        vm.expectRevert(abi.encodePacked(revert_text));
+        userContract.transfer(address(0x7654321), 3);
     }
 
     function testRulesEngine_Unit_updateCallingFunction_Positive()
@@ -346,8 +347,8 @@ abstract contract components is RulesEngineCommon {
         // create rule and set rule to user contract 
         setupRuleWithoutForeignCall();
         // test rule works for user contract 
-        bool response = userContract.transfer(address(0x7654321), 3);
-        assertFalse(response);
+        vm.expectRevert(abi.encodePacked(revert_text));
+        userContract.transfer(address(0x7654321), 3);
         // create pTypes array for new contract + new transfer function 
         ParamTypes[] memory pTypes = new ParamTypes[](3);
         pTypes[0] = ParamTypes.ADDR;
@@ -770,6 +771,7 @@ abstract contract components is RulesEngineCommon {
         (bool success,) = address(red).call(
             abi.encodeWithSelector(diamondCutSelector, cuts, address(0), "")
         );
+        success; // This line is just to avoid compiler warning
     
         // Verify NativeFacet doesn't have diamondCut functionality
         // Check that NativeFacet only has DiamondLoupe and ERC173 functions

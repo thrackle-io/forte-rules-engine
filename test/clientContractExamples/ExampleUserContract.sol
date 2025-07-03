@@ -35,7 +35,7 @@ contract ExampleUserContract is RulesEngineClient {
         to; // added to silence compiler warnings
         value; // added to silence compiler warnings
         _bytes; // added to silence compiler warnings 
-        true;
+        return true;
     }
 
 

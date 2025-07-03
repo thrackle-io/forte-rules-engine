@@ -89,22 +89,22 @@ abstract contract rulesExecution is RulesEngineCommon {
     function testRulesEngine_Unit_checkRule_simple_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
         setUpRuleSimple();
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly
-        bool response = userContract.transfer(address(0x7654321), 3);
-        assertFalse(response);
+        vm.expectRevert(abi.encodePacked(revert_text));
+        userContract.transfer(address(0x7654321), 3);
     }
 
     function testRulesEngine_Unit_checkRule_simpleGTEQL_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
         setUpRuleSimpleGTEQL();
         // test that rule ( ruleValue >= amount -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly
-        bool response = userContract.transfer(address(0x7654321), 3);
-        assertFalse(response);
+        vm.expectRevert(abi.encodePacked(revert_text));
+        userContract.transfer(address(0x7654321), 3);
     }
 
     function testRulesEngine_Unit_checkRule_simpleLTEQL_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
         setUpRuleSimpleLTEQL();
         // test that rule ( ruleValue <= amount -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly
-        bool response = userContract.transfer(address(0x7654321), 5);
-        assertFalse(response);
+        vm.expectRevert(abi.encodePacked(revert_text));
+        userContract.transfer(address(0x7654321), 5);
     }
 
         /////////////////////////////// additional data encoding tests 
@@ -938,7 +938,7 @@ abstract contract rulesExecution is RulesEngineCommon {
         RulesEnginePolicyFacet(address(red)).applyPolicy(encodingContractAddress, policyIds);
         // test rule processing 
         vm.expectRevert(abi.encodePacked(revert_text));
-        bool response = encodingContract.transferDynamicArray(address(0x1234567), 99);
+        encodingContract.transferDynamicArray(address(0x1234567), 99);
 
     }
 

@@ -19,7 +19,6 @@ function testRulesEngine_Fuzz_createRule_simple(uint256 _ruleValue, uint256 _tra
 
         // _createAllEffects();
         Rule memory rule;
-        uint256 response;
         uint256[] memory policyIds = new uint256[](1); 
         policyIds[0] = _createBlankPolicy();
         // Build the instruction set for the rule (including placeholders)
