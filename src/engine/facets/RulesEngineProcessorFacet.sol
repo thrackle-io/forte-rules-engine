@@ -514,9 +514,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 } else if(typ == ParamTypes.STATIC_TYPE_ARRAY || typ == ParamTypes.DYNAMIC_TYPE_ARRAY) {
                     // length of array for direct comparison using == and != operations
                     v = abi.decode(value, (uint256));
-                } else if (typ == ParamTypes.VOID) {
-                    // v = 0; but already set to 0 above no need to do anything
-                    v = 0;
                 }
 
                 if(op == LogicalOp.PLHM) {
