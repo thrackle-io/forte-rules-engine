@@ -6,13 +6,12 @@ import "./IRulesEngine.sol";
 /**
  * @title Rules Engine Client
  * @dev Abstract contract that provides functionality to connect and interact with the Rules Engine.
- *      This contract includes methods to set the Rules Engine address, invoke the Rules Engine, 
+ *      This contract includes methods to set the Rules Engine address, invoke the Rules Engine,
  *      and manage calling contract admin roles.
  * @notice This contract is intended to be inherited by other contracts that require Rules Engine integration.
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 abstract contract RulesEngineClient {
-
     /// @notice Address of the Rules Engine contract
     address public rulesEngineAddress;
 
@@ -21,7 +20,7 @@ abstract contract RulesEngineClient {
      * @dev This function assigns the admin role for the calling contract to the specified address.
      * @param callingContractAdmin The address to be assigned as the admin for the calling contract.
      */
-    function setCallingContractAdmin(address callingContractAdmin) external {
+    function setCallingContractAdmin(address callingContractAdmin) external virtual {
         IRulesEngine(rulesEngineAddress).grantCallingContractRole(address(this), callingContractAdmin);
     }
 
@@ -36,7 +35,7 @@ abstract contract RulesEngineClient {
 
     /**
      * @notice Invokes the Rules Engine to evaluate policies.
-     * @dev This function calls the `checkPolicies` function of the Rules Engine. 
+     * @dev This function calls the `checkPolicies` function of the Rules Engine.
      *      The `encoded` parameter must be properly encoded using `abi.encodeWithSelector`.
      *      Example: `bytes memory encoded = abi.encodeWithSelector(msg.sig, to, value, msg.sender);`
      * @param _encoded The encoded data to be passed to the Rules Engine.
