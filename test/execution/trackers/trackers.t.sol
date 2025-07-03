@@ -1725,19 +1725,18 @@ abstract contract trackers is RulesEngineCommon {
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x1234567), 1000);
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, event_text);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 1);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
 
         bytes memory arguments2 = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 2000);
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, event_text);
-        response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments2);
-        assertEq(response, 1);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments2);
+
 
         bytes memory arguments3 = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000);
         vm.expectRevert(abi.encodePacked(revert_text));
-        response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments3);
-        assertEq(response, 0);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments3);
+
     }
 
     function testRulesEngine_Unit_MappedTrackerInstructionSetCompare_Bytes() public ifDeploymentTestsEnabled resetsGlobalVariables {
@@ -1786,23 +1785,19 @@ abstract contract trackers is RulesEngineCommon {
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x1234567), 2000, bytes("king of the hill"));
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, event_text);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 1);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         
         bytes memory arguments2 = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 2000, bytes("regular player"));
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, event_text);
-        uint256 response2 = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments2);
-        assertEq(response, 1);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments2);
 
         bytes memory arguments3 = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 2000, bytes("king of the hill"));
         vm.expectRevert(abi.encodePacked(revert_text));
-        uint256 response3 = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments3);
-        assertEq(response3, 0);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments3);
 
         bytes memory arguments4 = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x1234567), 2000, bytes("regular player"));
         vm.expectRevert(abi.encodePacked(revert_text));
-        uint256 response4 = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments4);
-        assertEq(response4, 0);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments4);
     }
 }
