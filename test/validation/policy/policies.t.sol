@@ -645,28 +645,27 @@ abstract contract policies is RulesEngineCommon {
         );
     }
 
-    // function testRulesEngine_Unit_CheckPolicies_Explicit_AddressComparison_Positive()
-    //     public
-    //     ifDeploymentTestsEnabled
-    //     endWithStopPrank
-    // {
-    //     setupRuleWithAddressComparison();
-    //     bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction2))), address(0x1234567), "test");
-    //     uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-    //     assertEq(response, 1);
-    // }
+    function testRulesEngine_Unit_CheckPolicies_Explicit_AddressComparison_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        setupRuleWithAddressComparison();
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction2))), address(0x1234567), "test");
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+    }
 
-    // function testRulesEngine_Unit_CheckPolicies_Explicit_AddressComparison_Negative()
-    //     public
-    //     ifDeploymentTestsEnabled
-    //     endWithStopPrank
-    // {
-    //     setupRuleWithAddressComparison();
-    //     bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction2))), address(0x7654321), "test");
-    //     vm.startPrank(address(userContract));
-    //     uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-    //     assertEq(response, 0);
-    // }
+    function testRulesEngine_Unit_CheckPolicies_Explicit_AddressComparison_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        setupRuleWithAddressComparison();
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction2))), address(0x7654321), "test");
+        vm.startPrank(address(userContract));
+        vm.expectRevert(abi.encodePacked(revert_text));
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+    }
 
     function testRulesEngine_Unit_RetrieveRawAddressFromInstructionSet()
         public
