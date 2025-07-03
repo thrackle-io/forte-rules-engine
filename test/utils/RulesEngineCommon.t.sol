@@ -1525,25 +1525,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
 
-            // instructionSet[0] = uint(LogicalOp.PLH);
-            // instructionSet[1] = 0;
-            // instructionSet[2] = uint(LogicalOp.PLHM);
-            // instructionSet[3] = 1;
-            // instructionSet[4] = 0;
-            // instructionSet[5] = uint(LogicalOp.PLH);
-            // instructionSet[6] = 1;
-            // instructionSet[7] = uint(LogicalOp.EQ);
-            // instructionSet[8] = 1;
-            // instructionSet[9] = 2;
-            // instructionSet[1] = 0;
-            // instructionSet[2] = uint(LogicalOp.PLHM);
-            // instructionSet[3] = 1;
-            // instructionSet[4] = 0;
-            // instructionSet[5] = uint(LogicalOp.PLH);
-            // instructionSet[6] = 1;
-            // instructionSet[7] = uint(LogicalOp.EQ);
-            // instructionSet[8] = 1;
-            // instructionSet[9] = 2;
+        // PLH, 0, PLHM, 1, 0, PLH, 1, EQ, 1, 2
         rule.instructionSet = _createInstructionSetMappedTracker();
 
         rule.placeHolders = new Placeholder[](3);
