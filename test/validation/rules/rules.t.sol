@@ -22,8 +22,7 @@ abstract contract rules is RulesEngineCommon {
     {
         setupRuleWithForeignCall(4, EffectTypes.REVERT, false);
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), transferValue);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 1);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     function testRulesEngine_Unit_createRule_ForeignCall_Negative()
@@ -50,8 +49,7 @@ abstract contract rules is RulesEngineCommon {
 
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), transferValue);
 
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 1);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     function testRulesEngine_Unit_createRule_Tracker_Negative()
@@ -407,13 +405,11 @@ abstract contract rules is RulesEngineCommon {
 
         // block.timestamp == 1000 should pass
         vm.warp(1000);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 1);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     
         // block.timestamp > 1000 should pass
         vm.warp(1100);
-        response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 1);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     function testRulesEngine_Unit_GlobalVariable_BlockNumber() public ifDeploymentTestsEnabled resetsGlobalVariables {
@@ -497,13 +493,11 @@ abstract contract rules is RulesEngineCommon {
 
         // block.number == 1000 should pass
         vm.roll(1000);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 1);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
 
         // block.number > 1000 should pass
         vm.roll(1100);
-        response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 1);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     function testRulesEngine_Unit_GlobalVariable_MsgSender() public ifDeploymentTestsEnabled resetsGlobalVariables {
@@ -581,8 +575,7 @@ abstract contract rules is RulesEngineCommon {
         // Call from correct address - should pass
         vm.stopPrank();
         vm.startPrank(expectedAddress);
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 1);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     function testRulesEngine_Unit_GlobalVariable_TxOrigin() public ifDeploymentTestsEnabled resetsGlobalVariables {
@@ -660,8 +653,7 @@ abstract contract rules is RulesEngineCommon {
         // Call from correct tx.origin - should pass
         vm.stopPrank();
         vm.startPrank(userContractAddress, expectedAddress);  // Second parameter is tx.origin
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 1);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     function testRulesEngine_Unit_ForeignCall_Bytes_Param() public ifDeploymentTestsEnabled resetsGlobalVariables {
@@ -1468,8 +1460,7 @@ abstract contract rules is RulesEngineCommon {
             address(0x7654321), 
             5
         );
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 1, "Rule should pass");
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         vm.stopPrank();
 
         // Check if tracker was updated with the block timestamp

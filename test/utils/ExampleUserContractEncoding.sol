@@ -22,75 +22,57 @@ contract ExampleUserContractEncoding is RulesEngineClient {
     // Use Uint Param for encoding testing 
     function transfer(address _to, uint256 _amount) public returns (bool _return) {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, _to, _amount, uintParam, msg.sender);
-        if (_invokeRulesEngine(encoded) == 1) {
-            return true;
-        }
-       return false;
+        _invokeRulesEngine(encoded);
+        return true;
     }
 
     // use TranferFrom to use address param for encoding testing 
     function transferFrom(address _to, uint256 _amount) public returns (bool _return) {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, _to, _amount, addressParam, msg.sender);
-        if (_invokeRulesEngine(encoded) == 1) {
-            return true;
-        }
-       return false;
+        _invokeRulesEngine(encoded);
+        return true;
     }
 
     function transferWithBytes(address _to, uint256 _amount, bytes memory _bytes) public returns (bool _return) {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, _to, _amount, _bytes);
-        if (_invokeRulesEngine(encoded) == 1) {
-            return true;
-        }
-       return false;
+        _invokeRulesEngine(encoded);
+        return true;
     }
 
     function transferBytes(address _to, uint256 _amount) public returns (bool _return) {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, _to, _amount, bytesParam, msg.sender);
-        if (_invokeRulesEngine(encoded) == 1) {
-            return true;
-        }
-       return false;
+        _invokeRulesEngine(encoded);
+        return true;
     }
 
     function transferString(address _to, uint256 _amount) public returns (bool _return) {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, _to, _amount, stringParam, msg.sender);
-        if (_invokeRulesEngine(encoded) == 1) {
-            return true;
-        }
-       return false;
+        _invokeRulesEngine(encoded);
+        return true;
     }
 
     function transferWithString(address _to, uint256 _amount, string memory _string) public returns (bool _return) {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, _to, _amount, _string);
-        if (_invokeRulesEngine(encoded) == 1) {
-            return true;
-        }
-       return false;
+        _invokeRulesEngine(encoded);
+        return true;
     }
 
     function transferBool(address _to, uint256 _amount) public returns (bool _return) {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, _to, _amount, boolParam, msg.sender);
-        if (_invokeRulesEngine(encoded) == 1) {
-            return true;
-        }
-       return false;
+        _invokeRulesEngine(encoded);
+        return true;
     }
 
     function transferArray(address _to, uint256 _amount) public returns (bool _return) {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, _to, _amount, uintArray, msg.sender);
-        if (_invokeRulesEngine(encoded) == 1) {
-            return true;
-        }
-       return false;
+        _invokeRulesEngine(encoded);
+        return true;
     }
 
     function transferDynamicArray(address _to, uint256 _amount) public returns (bool _return) {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, _to, _amount, dynamicArray, msg.sender);
-        if (_invokeRulesEngine(encoded) == 1) {
-            return true;
-        }
-       return false;
+        _invokeRulesEngine(encoded);
+        return true;
     }
 
     // Use this function to encode new data that will be used by a rule for processing. 
