@@ -497,20 +497,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                     value = _arguments[pli];
                     typ = _placeHolders[pli].pType;
                 }
-                if(typ == ParamTypes.UINT) {
+                if(typ == ParamTypes.UINT || typ == ParamTypes.ADDR || typ == ParamTypes.BOOL) {
                     v = abi.decode(value, (uint256));
-                } else if(typ == ParamTypes.ADDR) {
-                    // Convert address to uint256 for direct comparison using == and != operations
-                    v = uint256(uint160(address(abi.decode(value, (address)))));
-                } else if(typ == ParamTypes.STR) {
+                } else if(typ == ParamTypes.STR || typ == ParamTypes.BYTES) {
                     // Convert string to uint256 for direct comparison using == and != operations
-                    v = uint256(keccak256(abi.encode(abi.decode(value, (string)))));
-                } else if(typ == ParamTypes.BOOL) {
-                    // Convert bool to uint256 for direct comparison using == and != operations
-                    v = uint256(ProcessorLib._boolToUint((abi.decode(value, (bool)))));
-                } else if(typ == ParamTypes.BYTES) {
-                    // Convert bytes to uint256 for direct comparison using == and != operations
-                    v = uint256(keccak256(abi.encode(abi.decode(value, (bytes)))));
+                    v = uint256(keccak256(value));
                 } else if(typ == ParamTypes.STATIC_TYPE_ARRAY || typ == ParamTypes.DYNAMIC_TYPE_ARRAY) {
                     // length of array for direct comparison using == and != operations
                     v = abi.decode(value, (uint256));
@@ -614,13 +605,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
     function _updateTrackerValue(uint256 _policyId, uint256 _trackerId, uint256 _trackerValue) internal {
         // retrieve the tracker
         Trackers storage trk = lib._getTrackerStorage().trackers[_policyId][_trackerId];
-        if (trk.pType == ParamTypes.UINT) {
+        if(trk.pType == ParamTypes.UINT || trk.pType == ParamTypes.ADDR || trk.pType == ParamTypes.BOOL) {
             trk.trackerValue = abi.encode(_trackerValue);
-        } else if (trk.pType == ParamTypes.ADDR) {
-            trk.trackerValue = abi.encode(ProcessorLib._uintToAddr(_trackerValue));
-        } else if (trk.pType == ParamTypes.BOOL) {
-            trk.trackerValue = abi.encode(ProcessorLib._uintToBool(_trackerValue));
-        } else if (trk.pType == ParamTypes.BYTES) {
+        } else if(trk.pType == ParamTypes.BYTES || trk.pType == ParamTypes.STR) {
             trk.trackerValue = ProcessorLib._uintToBytes(_trackerValue);
         } else {
             revert("Invalid tracker type for updates");
@@ -698,13 +685,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         // retrieve the tracker
         Trackers storage trk = lib._getTrackerStorage().trackers[_policyId][_trackerId];
         bytes memory encodedKey;
-        // encode uint key to type
-        if (trk.trackerKeyType == ParamTypes.UINT) {
+        // encode uint key to type 
+        if(trk.trackerKeyType == ParamTypes.UINT || trk.trackerKeyType == ParamTypes.ADDR || trk.trackerKeyType == ParamTypes.BOOL) {
             encodedKey = abi.encode(_mappedTrackerKey);
-        } else if (trk.trackerKeyType == ParamTypes.ADDR) {
-            encodedKey = abi.encode(ProcessorLib._uintToAddr(_mappedTrackerKey));
-        } else if (trk.trackerKeyType == ParamTypes.BOOL) {
-            encodedKey = abi.encode(ProcessorLib._uintToBool(_mappedTrackerKey));
         } else if (trk.trackerKeyType == ParamTypes.BYTES || trk.trackerKeyType == ParamTypes.STR) {
             encodedKey = ProcessorLib._uintToBytes(_mappedTrackerKey);
         } else {
