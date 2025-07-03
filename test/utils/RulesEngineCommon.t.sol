@@ -338,6 +338,8 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType = ParamTypes.STR;
         rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.negEffects = new Effect[](1);
+        rule.negEffects[0] = effectId_revert;
         // Save the rule
         ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyIds[0], 0, rule);
 
