@@ -27,7 +27,8 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      */
     function createForeignCall(
         uint256 _policyId, 
-        ForeignCall calldata _foreignCall, string calldata foreignCallName
+        ForeignCall calldata _foreignCall, 
+        string calldata foreignCallName
     ) external returns (uint256) {
         _policyAdminOnly(_policyId, msg.sender);
         _notCemented(_policyId);
@@ -440,6 +441,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         Trackers calldata tracker
     ) external {
         _policyAdminOnly(policyId, msg.sender);
+        _notCemented(policyId);
         // Load the Tracker data from storage
         TrackerStorage storage data = lib._getTrackerStorage();
         _storeTracker(data, policyId, trackerIndex, tracker);
@@ -463,6 +465,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         bytes calldata _trackerValue
     ) external  {
         _policyAdminOnly(_policyId, msg.sender);
+        _notCemented(_policyId);
         // Load the Tracker data from storage
         TrackerStorage storage data = lib._getTrackerStorage();
         _storeTrackerMapping(data, _policyId, _trackerIndex, _tracker, _trackerKey, _trackerValue);

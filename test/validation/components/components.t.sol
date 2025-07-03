@@ -32,7 +32,7 @@ abstract contract components is RulesEngineCommon {
         assertEq(uint8(sig.parameterTypes[1]), uint8(ParamTypes.UINT));
     }
 
-    function testRulesEngine_Unit_createCallingFunction_Negative()
+    function testRulesEngine_Unit_createCallingFunction_Negative_Non_PolicyAdmin()
         public
         ifDeploymentTestsEnabled
         endWithStopPrank
@@ -321,7 +321,7 @@ abstract contract components is RulesEngineCommon {
 
     }
 
-    function testRulesEngine_Unit_deleteCallingFunction_Negative()
+    function testRulesEngine_Unit_deleteCallingFunction_Negative_Non_PolicyAdmin()
         public
         ifDeploymentTestsEnabled
         endWithStopPrank
@@ -409,6 +409,20 @@ abstract contract components is RulesEngineCommon {
         RulesEngineComponentFacet(address(red)).createForeignCall(policyId, fc, "simpleCheck(uint256)");
     }
 
+    function testRulesEngine_Unit_CreateForeignCall_Negative_Non_PolicyAdmin() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory blankcallingFunctions = new bytes4[](0);
+        uint256[] memory blankcallingFunctionIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyId, blankcallingFunctions, blankcallingFunctionIds, blankRuleIds, PolicyType.OPEN_POLICY);
+
+        ForeignCall memory fc;
+        // prank a random, non-policy admin address
+        vm.startPrank(address(0x1337));
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).createForeignCall(policyId, fc, "simpleCheck(uint256)");
+    }
+
     function testRulesEngine_unit_CreateForeignCall_Event() public ifDeploymentTestsEnabled endWithStopPrank {
         vm.startPrank(policyAdmin);
         uint256 policyID = _createBlankPolicy();
@@ -446,6 +460,25 @@ abstract contract components is RulesEngineCommon {
         RulesEngineComponentFacet(address(red)).updateForeignCall(policyID, foreignCallId, fc);
     }
 
+    function testRulesEngine_unit_UpdateForeignCall_Negative_Non_PolicyAdmin()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        ForeignCall memory fc;
+        fc = _setUpForeignCallSimple(policyID);
+
+        uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(policyID, fc, "simpleCheck(uint256)");
+        fc.foreignCallAddress = address(userContractAddress);
+
+        //Prank a random, non-policy admin address
+        vm.startPrank(address(0x1337));
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).updateForeignCall(policyID, foreignCallId, fc);
+    }
+
     // Delete Foreign Calls
     function testRulesEngine_Unit_DeleteForeignCall_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
 
@@ -455,6 +488,18 @@ abstract contract components is RulesEngineCommon {
         vm.startPrank(policyAdmin);
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
         vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineComponentFacet(address(red)).deleteForeignCall(policyId,0);
+    }
+
+    function testRulesEngine_Unit_DeleteForeignCall_Negative_Non_PolicyAdmin() public ifDeploymentTestsEnabled endWithStopPrank {
+
+        // set up the ERC20
+        uint256 policyId = _setup_checkRule_ForeignCall_Positive(ruleValue, userContractAddress);
+        vm.stopPrank();
+
+        // prank a random, non-policy admin address
+        vm.startPrank(address(0x1337));
+        vm.expectRevert("Not Authorized To Policy");
         RulesEngineComponentFacet(address(red)).deleteForeignCall(policyId,0);
     }
 
@@ -503,6 +548,25 @@ abstract contract components is RulesEngineCommon {
         tracker.pType = ParamTypes.ADDR;
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyID);
         vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
+    }
+
+    function testRulesEngine_unit_CreateTracker_Negative_Non_PolicyAdmin()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = ParamTypes.ADDR;
+
+        // Prank a random, non-policy admin address
+        vm.startPrank(address(0x1337));
+        vm.expectRevert("Not Authorized To Policy");
         RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
     }
 
@@ -565,6 +629,41 @@ abstract contract components is RulesEngineCommon {
     }
 
     // Update Trackers
+    function testRulesEngine_unit_UpdateTracker_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = ParamTypes.ADDR;
+        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
+        tracker.trackerValue = abi.encode(address(userContractAddress));
+        RulesEnginePolicyFacet(address(red)).cementPolicy(policyID);
+        
+        // Prank a random, non-policy admin address
+        vm.startPrank(address(0x1337));
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).updateTracker(policyID, trackerId, tracker);
+    }
+
+    function testRulesEngine_unit_UpdateTracker_Negative_Non_PolicyAdmin() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = ParamTypes.ADDR;
+        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
+        tracker.trackerValue = abi.encode(address(userContractAddress));
+        
+        // Prank a random, non-policy admin address
+        vm.startPrank(address(0x1337));
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).updateTracker(policyID, trackerId, tracker);
+    }
+
     function testRulesEngine_unit_UpdateTracker_Event() public ifDeploymentTestsEnabled endWithStopPrank {
         vm.startPrank(policyAdmin);
         uint256 policyID = _createBlankPolicy();
@@ -596,6 +695,26 @@ abstract contract components is RulesEngineCommon {
         uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyID);
         vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineComponentFacet(address(red)).deleteTracker(policyID, trackerId);
+    }
+
+    function testRulesEngine_unit_DeleteTracker_Negative_Non_PolicyAdmin()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        uint256 policyID = _createBlankPolicy();
+        bool hasAdminRole = RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(policyID, policyAdmin);
+        assertTrue(hasAdminRole);
+        Trackers memory tracker;
+        tracker.trackerValue = abi.encode(address(testContract));
+        tracker.pType = ParamTypes.ADDR;
+        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyID, tracker, "trName");
+
+        // Prank a random, non-policy admin address
+        vm.startPrank(address(0x1337));
+        vm.expectRevert("Not Authorized To Policy");
         RulesEngineComponentFacet(address(red)).deleteTracker(policyID, trackerId);
     }
 

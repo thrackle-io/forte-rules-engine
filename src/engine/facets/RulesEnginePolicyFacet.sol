@@ -73,6 +73,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      * @param policyId The ID of the policy to cement.
      */
     function cementPolicy(uint256 policyId) external policyAdminOnly(policyId, msg.sender) {
+        StorageLib._notCemented(policyId);
         lib._getPolicyStorage().policyStorageSets[policyId].policy.cemented = true;
         emit PolicyCemented(policyId);
     }

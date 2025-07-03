@@ -81,6 +81,44 @@ abstract contract rules is RulesEngineCommon {
         RulesEngineRuleFacet(address(red)).createRule(policyId, rule);
     }
 
+    function testRulesEngine_Unit_createRule_Negative_Non_PolicyAdmin()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+        Rule memory rule;
+
+        // Prank a random, non-policy admin address
+        vm.startPrank(address(0x1337));
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineRuleFacet(address(red)).createRule(policyId, rule);
+    }
+
+    function testRulesEngine_Unit_AddClosedPolicy_Subscriber_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory blankcallingFunctions = new bytes4[](0);
+        uint256[] memory blankcallingFunctionIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyId, blankcallingFunctions, blankcallingFunctionIds, blankRuleIds, PolicyType.CLOSED_POLICY);
+        RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineComponentFacet(address(red)).addClosedPolicySubscriber(policyId, address(1));
+    }
+
+    function testRulesEngine_Unit_AddClosedPolicy_Subscriber_Negative_Non_PolicyAdmin() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory blankcallingFunctions = new bytes4[](0);
+        uint256[] memory blankcallingFunctionIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyId, blankcallingFunctions, blankcallingFunctionIds, blankRuleIds, PolicyType.CLOSED_POLICY);
+
+        // Prank a random, non-policy admin address
+        vm.startPrank(address(0x1337));
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineComponentFacet(address(red)).addClosedPolicySubscriber(policyId, address(1));
+    }
+
     function testRulesEngine_Unit_RemoveClosedPolicy_Subscriber_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
         uint256 policyId = _createBlankPolicy();
         bytes4[] memory blankcallingFunctions = new bytes4[](0);
@@ -90,6 +128,20 @@ abstract contract rules is RulesEngineCommon {
         RulesEngineComponentFacet(address(red)).addClosedPolicySubscriber(policyId, address(1));
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
         vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineComponentFacet(address(red)).removeClosedPolicySubscriber(policyId, address(1));
+    }
+
+    function testRulesEngine_Unit_RemoveClosedPolicy_Subscriber_Negative_Non_PolicyAdmin() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        bytes4[] memory blankcallingFunctions = new bytes4[](0);
+        uint256[] memory blankcallingFunctionIds = new uint256[](0);
+        uint256[][] memory blankRuleIds = new uint256[][](0);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(policyId, blankcallingFunctions, blankcallingFunctionIds, blankRuleIds, PolicyType.CLOSED_POLICY);
+        RulesEngineComponentFacet(address(red)).addClosedPolicySubscriber(policyId, address(1));
+        
+        // Prank a random, non-policy admin address
+        vm.startPrank(address(0x1337));
+        vm.expectRevert("Not Authorized To Policy");
         RulesEngineComponentFacet(address(red)).removeClosedPolicySubscriber(policyId, address(1));
     }
 
@@ -133,6 +185,36 @@ abstract contract rules is RulesEngineCommon {
         RulesEngineRuleFacet(address(red)).updateRule(policyId, ruleId, rule);
     }
 
+    function testRulesEngine_Unit_updateRule_Negative_Non_PolicyAdmin()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+        Rule memory rule;
+
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.PLH, 1, LogicalOp.GT, 0, 1
+        rule.instructionSet = _createInstructionSet(0, 1);
+
+        rule.placeHolders = new Placeholder[](2);
+        rule.placeHolders[0].pType = ParamTypes.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
+        rule.placeHolders[1].flags = FLAG_TRACKER_VALUE;
+        rule.placeHolders[1].typeSpecificIndex = 1;
+        // Add a negative/positive effects
+        rule.negEffects = new Effect[](1);
+        rule.posEffects = new Effect[](1);
+        rule.negEffects[0] = effectId_revert;
+        rule.posEffects[0] = effectId_event;
+
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyId, rule);
+        // Prank a random, non-policy admin address
+        vm.startPrank(address(0x1337));
+        vm.expectRevert("Not Authorized To Policy");
+        RulesEngineRuleFacet(address(red)).updateRule(policyId, ruleId, rule);
+    }
+
     function testRulesEngine_Unit_UpdateRule_Event() public ifDeploymentTestsEnabled endWithStopPrank {
         vm.startPrank(policyAdmin);
         uint256 policyId = _createBlankPolicy();
@@ -166,7 +248,29 @@ abstract contract rules is RulesEngineCommon {
         assertEq(sig.set, false);
     }
 
-    function testRulesEngine_Unit_deleteRule_Negative()
+    function testRulesEngine_Unit_deleteRule_Negative_CementedPolicy()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        uint256 policyId = _createBlankPolicy();
+        Rule memory rule;
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, 4, LogicalOp.GT, 0, 1
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = _createInstructionSet(4);
+        // Build the calling function argument placeholder 
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = ParamTypes.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        // Save the rule
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyId, 0, rule);
+
+        RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
+        vm.expectRevert("Not allowed for cemented policy");
+        RulesEngineRuleFacet(address(red)).deleteRule(policyId, ruleId); 
+    }
+
+    function testRulesEngine_Unit_deleteRule_Negative_Non_PolicyAdmin()
         public
         ifDeploymentTestsEnabled
         endWithStopPrank
