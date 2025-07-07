@@ -78,7 +78,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
 
         uint256 lengthToAppend = 0;
         // calculate sizes
-        // Data validation will alway ensure fc.parameterTypes.length will be less than MAX_LOOP
+        // Data validation will always ensure fc.parameterTypes.length will be less than MAX_LOOP
         for(uint256 i = 0; i < fc.parameterTypes.length; i++) {
             ParamTypes argType = fc.parameterTypes[i];
             
