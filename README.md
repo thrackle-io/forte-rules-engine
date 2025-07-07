@@ -47,6 +47,72 @@ Once everything is ready to go, we'll run the test suite:
 ```bash
  forge test -vv --ffi
 ```
+### Deployment
+
+The following section will run through the deployment process of the Forte Rules Engine, as well as how to utilize a local deployment of the FRE. The main deployment script is located at [`script/deployment/DeployRulesDiamond.s.sol`](script/deployment/DeployRulesDiamond.s.sol).
+
+#### Environment Configuration
+
+Before deploying, configure your environment variables in the `.env` file:
+
+```bash
+# Deployment Configuration
+DEPLOYER_PRIVATE_KEY=0x1234567890abcdef...  # Private key of the deploying account
+DESIRED_DEPLOYMENT_ADDRESS=0x742d35Cc6634C0532925a3b8D400414004C07f5F  # Target deployment address
+ETH_RPC_URL=https://mainnet.infura.io/v3/your-project-id  # RPC URL for target chain
+GAS_NUMBER=20000000000  # Gas price in wei (optional)
+```
+
+**Important**: 
+- Set `DEPLOYER_PRIVATE_KEY` to the private key of the account that will deploy the contracts
+- Set `DESIRED_DEPLOYMENT_ADDRESS` to your preferred deployment address
+- Set `ETH_RPC_URL` to the RPC endpoint of your target blockchain network
+- Ensure the deployer account has sufficient funds for gas fees
+
+#### Local Development with Anvil
+
+For local development and testing, you can use Anvil to create a persistent state:
+
+**Method 1: Manual Anvil State Creation**
+```bash
+# Start Anvil with state dumping
+anvil --dump-state diamondDeployedAnvilState.json
+```
+
+**Method 2: Automated State Generation**
+```bash
+# Use the automated script to deploy and save Anvil state
+./script/deployment/generateAnvilSavedDiamondState.sh
+```
+
+This will:
+1. Start Anvil in the background with `--dump-state diamondDeployedAnvilState.json`
+2. Deploy the Rules Engine Diamond to the local network
+3. Save the deployment state to `diamondDeployedAnvilState.json`
+4. Clean up the Anvil process
+
+**Loading Saved State**
+
+The saved state file contains the complete blockchain state after deployment, allowing you to resume development with pre-deployed contracts.
+
+#### Deployment Methods
+
+```bash
+# Source environment variables
+source .env
+```
+
+**Direct Forge Deployment**
+```bash
+forge script script/deployment/DeployRulesDiamond.s.sol \
+  --ffi \
+  --broadcast \
+  -vvv \
+  --non-interactive \
+  --rpc-url=$ETH_RPC_URL \
+  --gas-price $GAS_NUMBER \
+  --legacy
+```
 
 ## Licensing
 
