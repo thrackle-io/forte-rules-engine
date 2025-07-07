@@ -15,4 +15,6 @@ import "src/engine/RulesEngineErrors.sol";
  * @notice This contract is intended to be inherited by other facet contracts to streamline their implementation.
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
-abstract contract FacetCommonImports is AccessModifiers {}
+abstract contract FacetCommonImports is AccessModifiers {
+    uint constant MAX_LOOP = 10_000;
+}
