@@ -823,7 +823,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     function _fireDynamicEvent(Rule storage _rule, uint256 _policyId, bytes32 _message, bytes calldata _callingFunctionArgs) internal {
         // Build the effect arguments struct for event parameters:  
         (bytes[] memory effectArguments, Placeholder[] memory placeholders) = _buildArguments(_rule, _policyId, _callingFunctionArgs, true);
-        // Data validation will alway ensure effectArguments.length will be less than MAX_LOOP
+        // Data validation will always ensure effectArguments.length will be less than MAX_LOOP
         for(uint256 i = 0; i < effectArguments.length; i++) { 
             // loop through parameter types and set eventParam 
             if (placeholders[i].pType == ParamTypes.UINT) {
