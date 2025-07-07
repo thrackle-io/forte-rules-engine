@@ -16,5 +16,5 @@ import "src/engine/RulesEngineErrors.sol";
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 abstract contract FacetCommonImports is AccessModifiers {
-    uint constant MAX_LOOP = 10_000;
+    uint256 constant MAX_LOOP = 10_000;
 }
