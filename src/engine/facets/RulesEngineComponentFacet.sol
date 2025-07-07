@@ -31,6 +31,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     ) external returns (uint256) {
         _policyAdminOnly(_policyId, msg.sender);
         _notCemented(_policyId);
+        _isForeignCallPermissioned(_foreignCall.foreignCallAddress, _foreignCall.signature);
         if (_foreignCall.foreignCallAddress == address(0)) revert(ZERO_ADDRESS);
 
         // Step 1: Generate the foreign call index
@@ -60,6 +61,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     ) external returns (ForeignCall memory fc) {
         _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
+        _isForeignCallPermissioned(foreignCall.foreignCallAddress, foreignCall.signature);
         fc = foreignCall;
         if (fc.foreignCallAddress == address(0)) revert(ZERO_ADDRESS);
         fc.foreignCallIndex = foreignCallId;
@@ -166,6 +168,116 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      */
     function _storeForeignCallMetadata(uint256 _policyId, uint256 _foreignCallIndex, string calldata _foreignCallName) private {
         lib._getForeignCallMetadataStorage().foreignCallMetadata[_policyId][_foreignCallIndex] = _foreignCallName;
+    }
+
+    function _isForeignCallPermissioned(address _foriegnCallAddress, bytes4 _functionSignature) internal view {
+        // look up the foreign call in the permissioned foreign call storage to see if it is permissioned
+        if (
+            lib._getForeignCallStorage().isPermissionedForeignCall[_foriegnCallAddress][_functionSignature] &&
+            !lib._getForeignCallStorage().permissionedForeignCallAdmins[_foriegnCallAddress][_functionSignature][msg.sender]
+        ) revert(NOT_PERMISSIONED_FOR_FOREIGN_CALL);
+    }
+
+    function addAdminToPermissionList(address foriegnCallAddress, address policyAdminsToAdd, bytes4 selector) external {
+        _foreignCallAdminOnly(foriegnCallAddress, msg.sender, selector);
+        // add single address to the permission list for the foreign call
+        lib._getForeignCallStorage().permissionedForeignCallAdminsList[foriegnCallAddress][selector].push(policyAdminsToAdd);
+        // add single address to the permission mapping
+        lib._getForeignCallStorage().permissionedForeignCallAdmins[foriegnCallAddress][selector][policyAdminsToAdd] = true;
+        // emit event
+        emit AdminAddedToForeignCallPermissions(foriegnCallAddress, selector, policyAdminsToAdd);
+    }
+
+    function updatePermissionList(address foriegnCallAddress, bytes4 selector, address[] memory policyAdminsToAdd) external {
+        _foreignCallAdminOnly(foriegnCallAddress, msg.sender, selector);
+        // reset mappings and arrays to empty
+        delete lib._getForeignCallStorage().permissionedForeignCallAdminsList[foriegnCallAddress][selector];
+        // retreive current list and set all addresses in the current list to false (remove them from the permission list)
+        address[] memory oldAdminList = getForeignCallPermissionList(foriegnCallAddress, selector);
+        for (uint256 i = 0; i < oldAdminList.length; i++) {
+            lib._getForeignCallStorage().permissionedForeignCallAdmins[foriegnCallAddress][selector][oldAdminList[i]] = false;
+        }
+
+        // add all addresses to the permission list for the foreign call
+        for (uint256 i = 0; i < policyAdminsToAdd.length; i++) {
+            lib._getForeignCallStorage().permissionedForeignCallAdminsList[foriegnCallAddress][selector].push(policyAdminsToAdd[i]);
+            lib._getForeignCallStorage().permissionedForeignCallAdmins[foriegnCallAddress][selector][policyAdminsToAdd[i]] = true;
+            // emit event
+            emit AdminAddedToForeignCallPermissions(foriegnCallAddress, selector, policyAdminsToAdd[i]);
+        }
+        // emit list of addresses added to the permission list
+        emit ForeignCallPermissionsListUpdate(foriegnCallAddress, selector, policyAdminsToAdd);
+    }
+
+    function getForeignCallPermissionList(address foriegnCallAddress, bytes4 selector) public view returns (address[] memory) {
+        // return the permissioned foreign call admins for the foreign call address and selector
+        return lib._getForeignCallStorage().permissionedForeignCallAdminsList[foriegnCallAddress][selector];
+    }
+
+    function removeAllFromPermissionList(address foriegnCallAddress, bytes4 selector) external {
+        _foreignCallAdminOnly(foriegnCallAddress, msg.sender, selector);
+        // reset mappings and arrays to empty
+        delete lib._getForeignCallStorage().permissionedForeignCallAdminsList[foriegnCallAddress][selector];
+        address[] memory oldAdminList = getForeignCallPermissionList(foriegnCallAddress, selector);
+        for (uint256 i = 1; i < oldAdminList.length; i++) {
+            // index starts at one to skip the foreign call admin address
+            lib._getForeignCallStorage().permissionedForeignCallAdmins[foriegnCallAddress][selector][oldAdminList[i]] = false;
+        }
+        // re create the Foreign Call admin list with the first admin
+        lib._getForeignCallStorage().permissionedForeignCallAdminsList[foriegnCallAddress][selector].push(msg.sender);
+        // emit event
+        emit ForeignCallPermissionsListReset(foriegnCallAddress, selector);
+    }
+
+    function removeFromPermissionList(address _foriegnCallAddress, bytes4 _selector, address policyAdminToRemove) external {
+        _foreignCallAdminOnly(_foriegnCallAddress, msg.sender, _selector);
+        // remove the address from the permission list for the foreign call
+        lib._getForeignCallStorage().permissionedForeignCallAdmins[_foriegnCallAddress][_selector][policyAdminToRemove] = false;
+        // remove the address from the permissioned foreign call admins list
+        address[] storage adminList = lib._getForeignCallStorage().permissionedForeignCallAdminsList[_foriegnCallAddress][_selector];
+        for (uint256 i = 0; i < adminList.length; i++) {
+            if (adminList[i] == policyAdminToRemove) {
+                adminList[i] = adminList[adminList.length - 1]; // Move last element to current position
+                adminList.pop(); // Remove last element
+                break;
+            }
+        }
+        // emit event
+        emit ForeignCallPermissionsListUpdate(_foriegnCallAddress, _selector, adminList);
+    }
+
+    function removeForeignCallPermissions(address _foriegnCallAddress, bytes4 _selector) external {
+        _foreignCallAdminOnly(_foriegnCallAddress, msg.sender, _selector);
+        // reset mappings and arrays to empty
+        delete lib._getForeignCallStorage().permissionedForeignCallAdminsList[_foriegnCallAddress][_selector];
+        // retreive current list and set all addresses in the current list to false (remove them from the permission list)
+        address[] memory oldAdminList = getForeignCallPermissionList(_foriegnCallAddress, _selector);
+        for (uint256 i = 0; i < oldAdminList.length; i++) {
+            lib._getForeignCallStorage().permissionedForeignCallAdmins[_foriegnCallAddress][_selector][oldAdminList[i]] = false;
+        }
+
+        // remove from permissioned foreign call master list and map
+        lib._getForeignCallStorage().isPermissionedForeignCall[_foriegnCallAddress][_selector] = false;
+        address[] storage pfcAddressList = lib._getPermissionedForeignCallStorage().permissionedForeignCallAddresses;
+        bytes4[] storage pfcSelectorsList = lib._getPermissionedForeignCallStorage().permissionedForeignCallSignatures;
+        for (uint256 i = 0; i < pfcAddressList.length; i++) {
+            if (pfcAddressList[i] == _foriegnCallAddress && pfcSelectorsList[i] == _selector) {
+                // Move last element to current position
+                pfcAddressList[i] = pfcAddressList[pfcAddressList.length - 1];
+                pfcSelectorsList[i] = pfcSelectorsList[pfcSelectorsList.length - 1];
+                // Remove last element
+                pfcAddressList.pop();
+                pfcSelectorsList.pop();
+                break;
+            }
+        }
+
+        // emit event
+        emit ForeignCallPermissionsRemoved(_foriegnCallAddress, _selector);
+    }
+
+    function getAllPermissionedFCs() external pure returns (PermissionedForeignCallStorage memory pfc) {
+        return lib._getPermissionedForeignCallStorage();
     }
 
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -319,11 +431,11 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param _trackerValue The values for the tracker mapping.
      */
     function _storeTrackerMapping(
-        TrackerStorage storage _data, 
-        uint256 _policyId, 
-        uint256 _trackerIndex, 
-        Trackers memory _tracker, 
-        bytes memory _trackerKey, 
+        TrackerStorage storage _data,
+        uint256 _policyId,
+        uint256 _trackerIndex,
+        Trackers memory _tracker,
+        bytes memory _trackerKey,
         bytes calldata _trackerValue
     ) internal {
         _tracker.mapped = true;
@@ -333,7 +445,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         if (_tracker.trackerKeyType == ParamTypes.BYTES || _tracker.trackerKeyType == ParamTypes.STR) {
             _trackerKey = abi.encode(keccak256(_trackerKey));
         }
-        // use trackerKey and assign value  
+        // use trackerKey and assign value
         _data.mappedTrackerValues[_policyId][_trackerIndex][_trackerKey] = _trackerValue;
     }
 
@@ -398,11 +510,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param index The index of the tracker to retrieve.
      * @return tracker The tracker data.
      */
-    function getMappedTrackerValue(
-        uint256 policyId,
-        uint256 index,
-        bytes memory trackerKey
-    ) public view returns (bytes memory) {
+    function getMappedTrackerValue(uint256 policyId, uint256 index, bytes memory trackerKey) public view returns (bytes memory) {
         // Load the Tracker data from storage
         TrackerStorage storage data = lib._getTrackerStorage();
         ParamTypes trackerKeyType = data.trackers[policyId][index].trackerKeyType;
@@ -749,6 +857,32 @@ contract RulesEngineComponentFacet is FacetCommonImports {
             }
             // returned false so revert with error
             if (!returnBool) revert("Not Authorized To Policy");
+        }
+    }
+
+    /**
+     * @notice Checks that the caller is a policy admin
+     * @param _foreignCallAddr The ID of the foreign call.
+     * @param _address The address to check for policy admin status.
+     * @param _functionSelector The function selector to check for policy admin status.
+     */
+    function _foreignCallAdminOnly(address _foreignCallAddr, address _address, bytes4 _functionSelector) internal {
+        // 0x41a2b7ae = isForeignCallAdmin(address,address,bytes4)
+        (bool success, bytes memory res) = _callAnotherFacet(
+            0x41a2b7ae,
+            abi.encodeWithSignature("isForeignCallAdmin(address,address,bytes4)", _foreignCallAddr, _address, _functionSelector)
+        );
+        bool returnBool;
+        if (success) {
+            if (res.length >= 4) {
+                assembly {
+                    returnBool := mload(add(res, 32))
+                }
+            } else {
+                returnBool = false;
+            }
+            // returned false so revert with error
+            if (!returnBool) revert("Not An Authorized Foreign Call Admin");
         }
     }
 }

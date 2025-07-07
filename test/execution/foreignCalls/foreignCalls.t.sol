@@ -249,4 +249,338 @@ abstract contract foreignCalls is RulesEngineCommon {
             vm.stopPrank();
         }
     }
+
+    /////////////////////////////////////////////////////////////////////////
+    // PERMISSIONED FOREIGN CALL TESTS
+    ////////////////////////////////////////////////////////////////////////
+
+    function testRulesEngine_Unit_PermissionedForeignCall_SetAdmin_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {   
+        // start test as address 0x55556666
+        vm.startPrank(address(0x55556666));
+        // set the selector from the permissioned foreign call contract
+        bytes4 foreignCallSelector = PermissionedForeignCallTestContract.simpleCheck.selector;
+        permissionedForeignCallContract.setForeignCallAdmin(address(0x55556666), foreignCallSelector);
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isForeignCallAdmin(address(permissionedForeignCallContract), address(0x55556666), foreignCallSelector));
+    }
+
+    function testRulesEngine_Unit_PermissionedForeignCall_SetAdmin_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {   
+        // start test as address 0x55556666
+        vm.startPrank(address(0x55556666));
+        // set the selector from the permissioned foreign call contract
+        bytes4 foreignCallSelector = PermissionedForeignCallTestContract.simpleCheck.selector;
+        permissionedForeignCallContract.setForeignCallAdmin(address(0x55556666), foreignCallSelector);
+        assertFalse(RulesEngineAdminRolesFacet(address(red)).isForeignCallAdmin(address(permissionedForeignCallContract), address(0x6666666), foreignCallSelector));
+    }
+
+    function testRulesEngine_Unit_PermissionedForeignCall_SetAdminByCallingFacetDirectly_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {   
+        // start test as address 0x55556666
+        vm.startPrank(address(0x55556666));
+        // set the selector from the permissioned foreign call contract
+        bytes4 foreignCallSelector = PermissionedForeignCallTestContract.simpleCheck.selector;
+        vm.expectRevert("Only Foreign Call Contract Can Create Admin Role");
+        RulesEngineAdminRolesFacet(address(red)).grantForeignCallAdminRole(pfcContractAddress, address(0x55556666), foreignCallSelector);
+    }
+
+    function testRulesEngine_Unit_PermissionedForeignCall_AddAdminsToList_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {   
+        // start test as address 0x55556666
+        vm.startPrank(address(0x55556666));
+        // set the selector from the permissioned foreign call contract
+        bytes4 foreignCallSelector = PermissionedForeignCallTestContract.simpleCheck.selector;
+        permissionedForeignCallContract.setForeignCallAdmin(address(0x55556666), foreignCallSelector);
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isForeignCallAdmin(address(permissionedForeignCallContract), address(0x55556666), foreignCallSelector));
+
+        // add multiple admins to the permissions list 
+        RulesEngineComponentFacet(address(red)).addAdminToPermissionList(
+            pfcContractAddress,
+            address(0x66666666),
+            foreignCallSelector
+        );
+        RulesEngineComponentFacet(address(red)).addAdminToPermissionList(
+            pfcContractAddress,
+            address(0x77777777),
+            foreignCallSelector
+        );
+        RulesEngineComponentFacet(address(red)).addAdminToPermissionList(
+            pfcContractAddress,
+            address(0x88888888),
+            foreignCallSelector
+        );
+
+        address[] memory pfcStorage = RulesEngineComponentFacet(address(red)).getForeignCallPermissionList(pfcContractAddress, foreignCallSelector);
+        assertTrue(pfcStorage.length == 4, "There should be four permissioned foreign call admins");
+    }
+
+    function testRulesEngine_Unit_PermissionedForeignCall_AddAdminsToList_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {   
+        // start test as address 0x55556666
+        vm.startPrank(address(0x55556666));
+        // set the selector from the permissioned foreign call contract
+        bytes4 foreignCallSelector = PermissionedForeignCallTestContract.simpleCheck.selector;
+        bytes4 foreignCallSelector2 = PermissionedForeignCallTestContract.square.selector;
+        permissionedForeignCallContract.setForeignCallAdmin(address(0x55556666), foreignCallSelector);
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isForeignCallAdmin(address(permissionedForeignCallContract), address(0x55556666), foreignCallSelector));
+
+        vm.expectRevert("Not An Authorized Foreign Call Admin"); 
+        RulesEngineComponentFacet(address(red)).addAdminToPermissionList(
+            pfcContractAddress,
+            address(0x66666666),
+            foreignCallSelector2
+        );
+
+
+        address[] memory pfcStorage = RulesEngineComponentFacet(address(red)).getForeignCallPermissionList(pfcContractAddress, foreignCallSelector);
+        assertTrue(pfcStorage.length == 1, "There should be one permissioned foreign call admins");
+    }
+
+    function testRulesEngine_Unit_PermissionedForeignCall_RemoveForeignCall_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {   
+        // start test as address 0x55556666
+        vm.startPrank(address(0x55556666));
+        // set the selector from the permissioned foreign call contract
+        bytes4 foreignCallSelector = PermissionedForeignCallTestContract.simpleCheck.selector;
+        permissionedForeignCallContract.setForeignCallAdmin(address(0x55556666), foreignCallSelector);
+        
+        // add multiple foreign calls to the master list 
+        bytes4 foreignCallSelector2 = PermissionedForeignCallTestContract.square.selector;
+        permissionedForeignCallContract.setForeignCallAdmin(address(0x55556666), foreignCallSelector2);
+        bytes4 foreignCallSelector3 = PermissionedForeignCallTestContract.getInternalValue.selector;
+        permissionedForeignCallContract.setForeignCallAdmin(address(0x55556666), foreignCallSelector3);
+
+        PermissionedForeignCallStorage memory pfcStorage = RulesEngineComponentFacet(address(red)).getAllPermissionedFCs();
+        assertEq(pfcStorage.permissionedForeignCallAddresses.length, 3, "There should be three permissioned foreign calls");
+        assertEq(pfcStorage.permissionedForeignCallSignatures.length, 3, "There should be three permissioned foreign call signatures");
+
+        // remove the foreign call from the master list
+        RulesEngineComponentFacet(address(red)).removeForeignCallPermissions(pfcContractAddress, foreignCallSelector2);
+        pfcStorage = RulesEngineComponentFacet(address(red)).getAllPermissionedFCs();
+        assertEq(pfcStorage.permissionedForeignCallAddresses.length, 2, "There should be two permissioned foreign calls");
+        assertEq(pfcStorage.permissionedForeignCallSignatures.length, 2, "There should be two permissioned foreign call signatures");
+        // check that the foreign call is no longer in the master list
+        assertEq(pfcStorage.permissionedForeignCallSignatures[0], foreignCallSelector, "The first foreign call signature should be the simpleCheck");
+        assertEq(pfcStorage.permissionedForeignCallSignatures[1], foreignCallSelector3, "The second foreign call signature should be the getInternalValue");
+    }
+
+    function testRulesEngine_Unit_PermissionedForeignCall_GetAllForeignCalls_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {   
+        // start test as address 0x55556666
+        vm.startPrank(address(0x55556666));
+        // set the selector from the permissioned foreign call contract
+        bytes4 foreignCallSelector = PermissionedForeignCallTestContract.simpleCheck.selector;
+        permissionedForeignCallContract.setForeignCallAdmin(address(0x55556666), foreignCallSelector);
+        
+        // add multiple foreign calls to the master list 
+        bytes4 foreignCallSelector2 = PermissionedForeignCallTestContract.square.selector;
+        permissionedForeignCallContract.setForeignCallAdmin(address(0x55556666), foreignCallSelector2);
+        bytes4 foreignCallSelector3 = PermissionedForeignCallTestContract.getInternalValue.selector;
+        permissionedForeignCallContract.setForeignCallAdmin(address(0x55556666), foreignCallSelector3);
+
+        PermissionedForeignCallStorage memory pfcStorage = RulesEngineComponentFacet(address(red)).getAllPermissionedFCs();
+        assertEq(pfcStorage.permissionedForeignCallAddresses.length, 3, "There should be three permissioned foreign calls");
+        assertEq(pfcStorage.permissionedForeignCallSignatures.length, 3, "There should be three permissioned foreign call signatures");
+    }
+
+    function testRulesEngine_Unit_PermissionedForeignCall_AddPermissionedFCToPolicy_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {   
+        // start test as address 0x55556666
+        vm.startPrank(address(0x55556666));
+        // set the selector from the permissioned foreign call contract
+        bytes4 foreignCallSelector = PermissionedForeignCallTestContract.simpleCheck.selector;
+        permissionedForeignCallContract.setForeignCallAdmin(address(0x55556666), foreignCallSelector);
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isForeignCallAdmin(address(permissionedForeignCallContract), address(0x55556666), foreignCallSelector));
+
+        RulesEngineComponentFacet(address(red)).addAdminToPermissionList(
+            pfcContractAddress,
+            address(policyAdmin),
+            foreignCallSelector
+        );
+
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
+        // add the permissioned foreign call to the policy
+        uint256 policyId = _createBlankPolicy();
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.UINT;
+        ForeignCall memory fc;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = address(pfcContractAddress);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.returnType = ParamTypes.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineComponentFacet(address(red)).createForeignCall(policyId, fc, "simpleCheck(uint256)");
+
+    }
+
+    function testRulesEngine_Unit_PermissionedForeignCall_AddPermissionedFCToPolicy_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {   
+        // start test as address 0x55556666
+        vm.startPrank(address(0x55556666));
+        // set the selector from the permissioned foreign call contract
+        bytes4 foreignCallSelector = PermissionedForeignCallTestContract.simpleCheck.selector;
+        permissionedForeignCallContract.setForeignCallAdmin(address(0x55556666), foreignCallSelector);
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isForeignCallAdmin(address(permissionedForeignCallContract), address(0x55556666), foreignCallSelector));
+
+        RulesEngineComponentFacet(address(red)).addAdminToPermissionList(
+            pfcContractAddress,
+            address(address(0x66666666)),
+            foreignCallSelector
+        );
+
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
+        // add the permissioned foreign call to the policy
+        uint256 policyId = _createBlankPolicy();
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.UINT;
+        ForeignCall memory fc;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = address(pfcContractAddress);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.returnType = ParamTypes.UINT;
+        fc.foreignCallIndex = 0;
+        vm.expectRevert("Not Permissioned For Foreign Call");
+        RulesEngineComponentFacet(address(red)).createForeignCall(policyId, fc, "simpleCheck(uint256)");
+
+    }
+
+    function testRulesEngine_Unit_PermissionedForeignCall_UpdatePermissionedFC_NewPolicyAdmin_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {   
+        // start test as address 0x55556666
+        vm.startPrank(address(0x55556666));
+        // set the selector from the permissioned foreign call contract
+        bytes4 foreignCallSelector = PermissionedForeignCallTestContract.simpleCheck.selector;
+        permissionedForeignCallContract.setForeignCallAdmin(address(0x55556666), foreignCallSelector);
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isForeignCallAdmin(address(permissionedForeignCallContract), address(0x55556666), foreignCallSelector));
+
+        RulesEngineComponentFacet(address(red)).addAdminToPermissionList(
+            pfcContractAddress,
+            address(policyAdmin),
+            foreignCallSelector
+        );
+
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
+        // add the permissioned foreign call to the policy
+        uint256 policyId = _createBlankPolicy();
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.UINT;
+        ForeignCall memory fc;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = address(pfcContractAddress);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.returnType = ParamTypes.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineComponentFacet(address(red)).createForeignCall(policyId, fc, "simpleCheck(uint256)");
+
+        // transfer policyAdmin role to new, non permissioned address and test update fails as expected 
+        RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyId);
+        vm.stopPrank();
+        vm.startPrank(newPolicyAdmin);
+        RulesEngineAdminRolesFacet(address(red)).confirmNewPolicyAdmin(policyId);
+
+        vm.expectRevert("Not Permissioned For Foreign Call");
+        RulesEngineComponentFacet(address(red)).updateForeignCall(
+            policyId,
+            0, // foreign call index
+            fc
+        );
+
+    }
+
+
+    function testRulesEngine_Unit_PermissionedForeignCall_removeAll_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {   
+        // start test as address 0x55556666
+        vm.startPrank(address(0x55556666));
+        // set the selector from the permissioned foreign call contract
+        bytes4 foreignCallSelector = PermissionedForeignCallTestContract.simpleCheck.selector;
+        permissionedForeignCallContract.setForeignCallAdmin(address(0x55556666), foreignCallSelector);
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isForeignCallAdmin(address(permissionedForeignCallContract), address(0x55556666), foreignCallSelector));
+
+        // add multiple admins to the permissions list 
+        RulesEngineComponentFacet(address(red)).addAdminToPermissionList(
+            pfcContractAddress,
+            address(0x66666666),
+            foreignCallSelector
+        );
+        RulesEngineComponentFacet(address(red)).addAdminToPermissionList(
+            pfcContractAddress,
+            address(0x77777777),
+            foreignCallSelector
+        );
+        RulesEngineComponentFacet(address(red)).addAdminToPermissionList(
+            pfcContractAddress,
+            address(0x88888888),
+            foreignCallSelector
+        );
+        RulesEngineComponentFacet(address(red)).removeAllFromPermissionList(pfcContractAddress, foreignCallSelector);
+        address[] memory pfcStorage = RulesEngineComponentFacet(address(red)).getForeignCallPermissionList(pfcContractAddress, foreignCallSelector);
+        assertTrue(pfcStorage.length == 1, "There should be only be the original foreign call admin");
+    }
+
+    function testRulesEngine_Unit_PermissionedForeignCall_removeAllWithOnlyOneAdmin_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {   
+        // start test as address 0x55556666
+        vm.startPrank(address(0x55556666));
+        // set the selector from the permissioned foreign call contract
+        bytes4 foreignCallSelector = PermissionedForeignCallTestContract.simpleCheck.selector;
+        permissionedForeignCallContract.setForeignCallAdmin(address(0x55556666), foreignCallSelector);
+        assertTrue(RulesEngineAdminRolesFacet(address(red)).isForeignCallAdmin(address(permissionedForeignCallContract), address(0x55556666), foreignCallSelector));
+
+        // test remove with only one admin 
+        RulesEngineComponentFacet(address(red)).removeAllFromPermissionList(pfcContractAddress, foreignCallSelector);
+        address[] memory pfcStorage = RulesEngineComponentFacet(address(red)).getForeignCallPermissionList(pfcContractAddress, foreignCallSelector);
+        assertTrue(pfcStorage.length == 1, "There should be only be the original foreign call admin");
+    }
 }

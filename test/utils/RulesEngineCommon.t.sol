@@ -7,6 +7,7 @@ import "forge-std/src/console2.sol";
 import "test/utils/ForeignCallTestCommon.sol";
 import "test/utils/ExampleUserContractEncoding.sol";
 import "src/utils/DiamondMine.sol";
+import "test/utils/PermissionedForeignCalls.sol";
 
 import "src/engine/facets/RulesEngineComponentFacet.sol";
 import "src/engine/facets/RulesEngineComponentFacet.sol";
@@ -39,7 +40,7 @@ contract RulesEngineCommon is DiamondMine, Test {
     ExampleERC20 userContractERC20;
     ExampleERC1155 userContract1155;
 
-    
+    PermissionedForeignCallTestContract permissionedForeignCallContract; 
 
     // strings 
     string callingFunction = "transfer(address,uint256)";
@@ -122,6 +123,7 @@ contract RulesEngineCommon is DiamondMine, Test {
     address userContract721AAddress;
     address userContract721Address; 
     address userContractERC20Address;
+    address pfcContractAddress;
 
     //test modifiers 
     modifier ifDeploymentTestsEnabled() {
@@ -618,7 +620,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
 
-
+ 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0]= ruleId;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);       

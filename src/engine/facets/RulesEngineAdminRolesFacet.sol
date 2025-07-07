@@ -241,10 +241,125 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
      * @return bytes32 The generated admin role identifier.
      */
     function _generateCallingContractAdminRoleId(address _callingContract, bytes32 _adminRole) internal pure returns (bytes32) {
-        // Create Admin Role for Policy: concat the policyId and adminRole strings together and keccak them. Cast to bytes32 for Admin Role identifier
+        // Create Admin Role for Policy: concat the calling contract address and adminRole strings together and keccak them. Cast to bytes32 for Admin Role identifier
         return
             bytes32(
                 abi.encodePacked(keccak256(bytes(string.concat(string(abi.encode(_callingContract)), string(abi.encode(_adminRole))))))
+            );
+    }
+
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+    // Foreign Call Admin Functions
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * @notice Checks if an address is the foreign call admin for a specific contract.
+     * @param _foreignCallContract The address of the foreign call contract.
+     * @param _account The address to check for the foreign call admin role.
+     * @param _functionSignature The function signature for which the foreign call admin role is being checked.
+     * @return bool True if the address has the foreign admin role, false otherwise.
+     */
+    function isForeignCallAdmin(address _foreignCallContract, address _account, bytes4 _functionSignature) public view returns (bool) {
+        return hasRole(_generateForeignCallAdminRoleId(_foreignCallContract, _functionSignature, FOREIGN_CALL_ADMIN), _account);
+    }
+
+    /**
+     * @notice Grants the foreign call admin role to an address.
+     * @dev Call this function from your contract to set the foreign call admin.
+     * @param _foreignCallContract The address of the foreign call.
+     * @param _account The address to assign the foreign call admin role.
+     * @return bytes32 The generated admin role identifier.
+     */
+    function grantForeignCallAdminRole(
+        address _foreignCallContract,
+        address _account,
+        bytes4 _functionSignature
+    ) public nonReentrant returns (bytes32) {
+        if (_account == address(0)) revert(ZERO_ADDRESS);
+        if (msg.sender != _foreignCallContract) revert(ONLY_FOREIGN_CALL_CONTRACT);
+        if (_foreignCallContract.code.length == 0) revert(ONLY_FOREIGN_CALL_CONTRACT);
+        if (_functionSignature == bytes4(0)) revert(FOREIGN_CALL_SELECTOR_NOT_SET);
+        // Create Admin Role for Foreign Call Admin Role: concat the calling contract address and adminRole key together and keccak them. Cast to bytes32 for Admin Role identifier
+        bytes32 adminRoleId = _generateForeignCallAdminRoleId(_foreignCallContract, _functionSignature, FOREIGN_CALL_ADMIN);
+        if (hasRole(adminRoleId, _account)) revert(FOREIGN_CALL_ADMIN_ALREADY_GRANTED);
+        // grant the admin role to the calling address of the createPolicy function from RulesEnginePolicyFacet
+        _grantRole(adminRoleId, _account);
+        // set up FC register lists
+        // first add to master Permissioned FC map and list
+        ForeignCallStorage storage foreignCallData = lib._getForeignCallStorage();
+        foreignCallData.isPermissionedForeignCall[_foreignCallContract][_functionSignature] = true;
+
+        PermissionedForeignCallStorage storage permissionedForeignCallData = lib._getPermissionedForeignCallStorage();
+        permissionedForeignCallData.permissionedForeignCallAddresses.push(_foreignCallContract);
+        permissionedForeignCallData.permissionedForeignCallSignatures.push(_functionSignature);
+
+        // second add to the specific PFC lists and maps
+        foreignCallData.permissionedForeignCallAdminsList[_foreignCallContract][_functionSignature].push(_account);
+        foreignCallData.permissionedForeignCallAdmins[_foreignCallContract][_functionSignature][_account] = true;
+        emit ForeignCallAdminRoleGranted(_foreignCallContract, _account);
+        return adminRoleId;
+    }
+
+    /**
+     * @dev This function grants the proposed admin role to the foreignCall Admin address
+     * @dev Foreign Call Admin does not have a revoke or renounce function. Only Use Propose and Confirm to transfer Role.
+     * @notice There can only ever be one Foreign Call Admin per foriegn call contract
+     * @param foreignCallContract address of the foreign call contract.
+     * @param newForeignCallContractAdmin address of new admin.
+     */
+    function proposeNewForeignCallAdmin(address foreignCallContract, address newForeignCallContractAdmin, bytes4 functionSignature) public {
+        if (!isCallingContractAdmin(foreignCallContract, msg.sender)) revert(NOT_FOREIGN_CALL_ADMIN);
+        if (newForeignCallContractAdmin == address(0)) revert(ZERO_ADDRESS);
+        // grant proposed role to new admin address
+        _grantRole(
+            _generateForeignCallAdminRoleId(foreignCallContract, functionSignature, PROPOSED_FOREIGN_CALL_ADMIN),
+            newForeignCallContractAdmin
+        );
+        emit ForeignCallAdminRoleProposed(foreignCallContract, newForeignCallContractAdmin);
+    }
+
+    /**
+     * @dev This function confirms the proposed admin role
+     * @param foreignCallContract address of the calling contract.
+     */
+    function confirmNewForeignCallAdmin(address foreignCallContract, bytes4 functionSignature) public {
+        address oldForeignCallAdmin = getRoleMember(
+            _generateForeignCallAdminRoleId(foreignCallContract, functionSignature, FOREIGN_CALL_ADMIN),
+            0
+        );
+        if (!hasRole(_generateForeignCallAdminRoleId(foreignCallContract, functionSignature, PROPOSED_FOREIGN_CALL_ADMIN), msg.sender))
+            revert(NOT_PROPOSED_FOREIGN_CALL_ADMIN);
+        _revokeRole(_generateForeignCallAdminRoleId(foreignCallContract, functionSignature, PROPOSED_FOREIGN_CALL_ADMIN), msg.sender);
+        _revokeRole(_generateForeignCallAdminRoleId(foreignCallContract, functionSignature, FOREIGN_CALL_ADMIN), oldForeignCallAdmin);
+        _grantRole(_generateForeignCallAdminRoleId(foreignCallContract, functionSignature, FOREIGN_CALL_ADMIN), msg.sender);
+        emit ForeignCallAdminRoleConfirmed(foreignCallContract, msg.sender);
+    }
+
+    /**
+     * @notice Generates a unique identifier for a foreign call admin role.
+     * @param _foreignCallContract The address of the foreign call contract.
+     * @param _adminRole The role constant identifier.
+     * @return bytes32 The generated admin role identifier.
+     */
+    function _generateForeignCallAdminRoleId(
+        address _foreignCallContract,
+        bytes4 _functionSignature,
+        bytes32 _adminRole
+    ) internal pure returns (bytes32) {
+        // Create Admin Role for Policy: concat the foreign call contract address and adminRole strings together and keccak them. Cast to bytes32 for Admin Role identifier
+        return
+            bytes32(
+                abi.encodePacked(
+                    keccak256(
+                        bytes(
+                            string.concat(
+                                string(abi.encode(_foreignCallContract)),
+                                string(abi.encode(_functionSignature)),
+                                string(abi.encode(_adminRole))
+                            )
+                        )
+                    )
+                )
             );
     }
 

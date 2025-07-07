@@ -162,7 +162,7 @@ contract DiamondMine is Script {
             selectors[7] = RulesEngineComponentFacet.getAllTrackers.selector;
             return selectors;
         } else if (keccak256(abi.encodePacked(facet)) == keccak256(abi.encodePacked("RulesEngineAdminRolesFacet"))) {
-            bytes4[] memory selectors = new bytes4[](12); // Only create enough slots for actual selectors
+            bytes4[] memory selectors = new bytes4[](16); // Only create enough slots for actual selectors
             selectors[0] = RulesEngineAdminRolesFacet.proposeNewPolicyAdmin.selector;
             selectors[1] = RulesEngineAdminRolesFacet.confirmNewPolicyAdmin.selector;
             selectors[2] = RulesEngineAdminRolesFacet.isPolicyAdmin.selector;
@@ -173,8 +173,12 @@ contract DiamondMine is Script {
             selectors[7] = RulesEngineAdminRolesFacet.grantCallingContractRole.selector;
             selectors[8] = RulesEngineAdminRolesFacet.grantCallingContractRoleAccessControl.selector;
             selectors[9] = RulesEngineAdminRolesFacet.grantCallingContractRoleOwnable.selector;
-            selectors[10] = AccessControlEnumerable.getRoleMemberCount.selector;
-            selectors[11] = AccessControl.hasRole.selector;
+            selectors[10] = RulesEngineAdminRolesFacet.grantForeignCallAdminRole.selector;
+            selectors[11] = RulesEngineAdminRolesFacet.isForeignCallAdmin.selector;
+            selectors[12] = RulesEngineAdminRolesFacet.proposeNewForeignCallAdmin.selector;
+            selectors[13] = RulesEngineAdminRolesFacet.confirmNewForeignCallAdmin.selector;
+            selectors[14] = AccessControlEnumerable.getRoleMemberCount.selector;
+            selectors[15] = AccessControl.hasRole.selector;
             return selectors;
         } else if (keccak256(abi.encodePacked(facet)) == keccak256(abi.encodePacked("RulesEngineInitialFacet"))) {
             bytes4[] memory selectors = new bytes4[](1);

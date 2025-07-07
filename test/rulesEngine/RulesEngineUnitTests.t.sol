@@ -55,6 +55,12 @@ contract RulesEngineUnitTests is
         newUserContract = new ExampleUserContract();
         newUserContractAddress = address(newUserContract);
         newUserContract.setRulesEngineAddress(address(red));
+
+        //create permissioned foreign call test contract and set address 
+        permissionedForeignCallContract = new PermissionedForeignCallTestContract();
+        permissionedForeignCallContract.setRulesEngineAddress(address(red));
+        pfcContractAddress = address(permissionedForeignCallContract);
+
         _setupEffectProcessor();        
     }
 

@@ -15,6 +15,7 @@ library RulesEngineStoragePositionLib {
     bytes32 constant DIAMOND_CUT_STORAGE_ENGINE_POS = bytes32(uint256(keccak256("diamond-cut.storage-engine")) - 1);
     bytes32 constant INITIALIZED_POSITION = bytes32(uint256(keccak256("initialized-position")) - 1);
     bytes32 constant FOREIGN_CALL_POSITION = bytes32(uint256(keccak256("foreign-call-position")) - 1);
+    bytes32 constant PERMISSIONED_FOREIGN_CALL_POSITION = bytes32(uint256(keccak256("permissioned-foreign-call-position")) - 1);
     bytes32 constant TRACKER_POSITION = bytes32(uint256(keccak256("tracker-position")) - 1);
     bytes32 constant CALLING_FUNCTION_POSITION = bytes32(uint256(keccak256("calling-function-position")) - 1);
     bytes32 constant RULE_POSITION = bytes32(uint256(keccak256("rule-position")) - 1);
@@ -43,6 +44,18 @@ library RulesEngineStoragePositionLib {
      */
     function _getForeignCallStorage() internal pure returns (ForeignCallStorage storage _ds) {
         bytes32 position = FOREIGN_CALL_POSITION;
+        assembly {
+            _ds.slot := position
+        }
+    }
+
+    /**
+     * @notice Retrieves the storage for permissioned foreign calls.
+     * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
+     * @return _ds The storage structure for the foreign call map.
+     */
+    function _getPermissionedForeignCallStorage() internal pure returns (PermissionedForeignCallStorage storage _ds) {
+        bytes32 position = PERMISSIONED_FOREIGN_CALL_POSITION;
         assembly {
             _ds.slot := position
         }
