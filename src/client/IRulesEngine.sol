@@ -13,9 +13,8 @@ interface IRulesEngine {
      * @notice Evaluates the conditions associated with all applicable rules and returns the result.
      * @dev This function checks the rules associated with the provided contract address and arguments.
      * @param arguments Additional context and global variables to pass in for evaluation, similar to `msg.data`.
-     * @return uint256 The result of the rules evaluation.
      */
-    function checkPolicies(bytes calldata arguments) external returns (uint256);
+    function checkPolicies(bytes calldata arguments) external;
 
     /**
      * @notice Grants the calling contract admin role to a specified account.

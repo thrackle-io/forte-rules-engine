@@ -29,19 +29,13 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
      * @notice Evaluates the conditions associated with all applicable rules and returns the result.
      * @dev Primary entry point for policy checks.
      * @param arguments Function arguments, including the function signature and the arguments to be passed to the function.
-     * @return retVal 1 if all rules pass, 0 if any rule fails.
      */
-    function checkPolicies(bytes calldata arguments) public returns (uint256 retVal) {
-        retVal = 1;
+    function checkPolicies(bytes calldata arguments) public {  
         // Load the calling function data from storage
         PolicyAssociationStorage storage data = lib._getPolicyAssociationStorage();
         uint256[] memory policyIds = data.contractPolicyIdMap[msg.sender];
         // loop through all the active policies
-        for (uint256 policyIdx = 0; policyIdx < policyIds.length; policyIdx++) {
-            if (!_checkPolicy(policyIds[policyIdx], msg.sender, arguments)) {
-                retVal = 0;
-            }
-        }
+        for(uint256 policyIdx = 0; policyIdx < policyIds.length; policyIdx++) _checkPolicy(policyIds[policyIdx], msg.sender, arguments);
     }
 
     /**
@@ -479,39 +473,46 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         uint256[90] memory mem;
         uint256 idx = 0;
         uint256 opi = 0;
+
         while (idx < _prog.length) {
             uint256 v = 0;
             LogicalOp op = LogicalOp(_prog[idx]);
 
-            if (op == LogicalOp.PLH) {
+            if(op == LogicalOp.PLH || op == LogicalOp.PLHM) {
                 // Placeholder format is: get the index of the argument in the array. For example, PLH 0 is the first argument in the arguments array and its type and value
-                uint256 pli = _prog[idx + 1];
-                ParamTypes typ = _placeHolders[pli].pType;
-                if (typ == ParamTypes.UINT) {
-                    v = abi.decode(_arguments[pli], (uint256));
-                    idx += 2;
-                } else if (typ == ParamTypes.ADDR) {
+                uint256 pli;
+                bytes memory value;
+                ParamTypes typ;
+                if(op == LogicalOp.PLHM) {
+                    uint256 key = mem[_prog[idx+2]];
+                    (value, typ) = _getMappedTrackerValue(_policyId, _prog[idx+1], key);
+                } else {
+                    pli = _prog[idx+1];
+                    value = _arguments[pli];
+                    typ = _placeHolders[pli].pType;
+                }
+                if(typ == ParamTypes.UINT) {
+                    v = abi.decode(value, (uint256));
+                } else if(typ == ParamTypes.ADDR) {
                     // Convert address to uint256 for direct comparison using == and != operations
-                    v = uint256(uint160(address(abi.decode(_arguments[pli], (address)))));
-                    idx += 2;
-                } else if (typ == ParamTypes.STR) {
+                    v = uint256(uint160(address(abi.decode(value, (address)))));
+                } else if(typ == ParamTypes.STR) {
                     // Convert string to uint256 for direct comparison using == and != operations
-                    v = uint256(keccak256(abi.encode(abi.decode(_arguments[pli], (string)))));
-                    idx += 2;
-                } else if (typ == ParamTypes.BOOL) {
+                    v = uint256(keccak256(abi.encode(abi.decode(value, (string)))));
+                } else if(typ == ParamTypes.BOOL) {
                     // Convert bool to uint256 for direct comparison using == and != operations
-                    v = uint256(ProcessorLib._boolToUint((abi.decode(_arguments[pli], (bool)))));
-                    idx += 2;
-                } else if (typ == ParamTypes.BYTES) {
+                    v = uint256(ProcessorLib._boolToUint((abi.decode(value, (bool)))));
+                } else if(typ == ParamTypes.BYTES) {
                     // Convert bytes to uint256 for direct comparison using == and != operations
-                    v = uint256(keccak256(abi.encode(abi.decode(_arguments[pli], (bytes)))));
-                    idx += 2;
-                } else if (typ == ParamTypes.STATIC_TYPE_ARRAY || typ == ParamTypes.DYNAMIC_TYPE_ARRAY) {
+                    v = uint256(keccak256(abi.encode(abi.decode(value, (bytes)))));
+                } else if(typ == ParamTypes.STATIC_TYPE_ARRAY || typ == ParamTypes.DYNAMIC_TYPE_ARRAY) {
                     // length of array for direct comparison using == and != operations
-                    v = abi.decode(_arguments[pli], (uint256));
-                    idx += 2;
-                } else if (typ == ParamTypes.VOID) {
-                    // v = 0; but already set to 0 above no need to do anything
+                    v = abi.decode(value, (uint256));
+                }
+
+                if(op == LogicalOp.PLHM) {
+                    idx += 3;
+                } else {
                     idx += 2;
                 }
             } else if (op == LogicalOp.TRU) {
@@ -670,6 +671,13 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         lib._getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][encodedKey] = encodedValue;
     }
 
+    function _getMappedTrackerValue(uint256 _policyId, uint256 _trackerId, uint256 _mappedTrackerKey) internal view returns (bytes memory, ParamTypes) {
+        assert(lib._getTrackerStorage().trackers[_policyId][_trackerId].mapped);
+        ParamTypes keyType = lib._getTrackerStorage().trackers[_policyId][_trackerId].pType;
+        bytes memory value = lib._getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][abi.encode(_mappedTrackerKey)];
+        return (value, keyType);
+    }
+
     /**
      * @dev Internal function to update the value of a mapped tracker associated with a specific policy.
      * @param _policyId The ID of the policy to which the tracker belongs.
@@ -826,7 +834,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
     function _handleTrackerValue(uint256 _policyId, Placeholder memory placeholder) internal view returns (bytes memory) {
         Trackers memory tracker = lib._getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex];
         if (tracker.mapped) {
-            return lib._getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][placeholder.mappedTrackerKey];
+            if (tracker.trackerKeyType == ParamTypes.BYTES || tracker.trackerKeyType == ParamTypes.STR) {
+                return lib._getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][abi.encode(keccak256(placeholder.mappedTrackerKey))];
+            } else {
+                return lib._getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][placeholder.mappedTrackerKey];
+            }
         }
         return tracker.trackerValue;
     }

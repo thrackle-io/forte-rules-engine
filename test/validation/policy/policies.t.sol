@@ -614,8 +614,8 @@ abstract contract policies is RulesEngineCommon {
     {
         setupRuleWithStringComparison();
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction2))), address(0x7654321), "Bad Info");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 1);
+        vm.startPrank(address(userContract));
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     function testRulesEngine_Unit_CheckPolicies_Explicit_StringComparison_Negative()
@@ -626,8 +626,8 @@ abstract contract policies is RulesEngineCommon {
         setupRuleWithStringComparison();
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction2))), address(0x7654321), "test");
         vm.startPrank(address(userContract));
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 0);
+        vm.expectRevert(abi.encodePacked(revert_text));
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     function testRulesEngine_Unit_RetrieveRawStringFromInstructionSet()
@@ -652,8 +652,7 @@ abstract contract policies is RulesEngineCommon {
     {
         setupRuleWithAddressComparison();
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction2))), address(0x1234567), "test");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 1);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     function testRulesEngine_Unit_CheckPolicies_Explicit_AddressComparison_Negative()
@@ -664,8 +663,8 @@ abstract contract policies is RulesEngineCommon {
         setupRuleWithAddressComparison();
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction2))), address(0x7654321), "test");
         vm.startPrank(address(userContract));
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        assertEq(response, 0);
+        vm.expectRevert(abi.encodePacked(revert_text));
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
     function testRulesEngine_Unit_RetrieveRawAddressFromInstructionSet()

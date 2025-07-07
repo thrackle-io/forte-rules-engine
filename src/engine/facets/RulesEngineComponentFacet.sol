@@ -316,18 +316,21 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param _trackerValue The values for the tracker mapping.
      */
     function _storeTrackerMapping(
-        TrackerStorage storage _data,
-        uint256 _policyId,
-        uint256 _trackerIndex,
-        Trackers memory _tracker,
-        bytes calldata _trackerKey,
+        TrackerStorage storage _data, 
+        uint256 _policyId, 
+        uint256 _trackerIndex, 
+        Trackers memory _tracker, 
+        bytes memory _trackerKey, 
         bytes calldata _trackerValue
     ) internal {
         _tracker.mapped = true;
         _tracker.set = true;
         _tracker.trackerIndex = _trackerIndex;
         _data.trackers[_policyId][_trackerIndex] = _tracker;
-        // use trackerKey and assign value
+        if (_tracker.trackerKeyType == ParamTypes.BYTES || _tracker.trackerKeyType == ParamTypes.STR) {
+            _trackerKey = abi.encode(keccak256(_trackerKey));
+        }
+        // use trackerKey and assign value  
         _data.mappedTrackerValues[_policyId][_trackerIndex][_trackerKey] = _trackerValue;
     }
 
@@ -391,9 +394,17 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param index The index of the tracker to retrieve.
      * @return tracker The tracker data.
      */
-    function getMappedTrackerValue(uint256 policyId, uint256 index, bytes calldata trackerKey) public view returns (bytes memory) {
+    function getMappedTrackerValue(
+        uint256 policyId,
+        uint256 index,
+        bytes memory trackerKey
+    ) public view returns (bytes memory) {
         // Load the Tracker data from storage
         TrackerStorage storage data = lib._getTrackerStorage();
+        ParamTypes trackerKeyType = data.trackers[policyId][index].trackerKeyType;
+        if (trackerKeyType == ParamTypes.BYTES || trackerKeyType == ParamTypes.STR) {
+            trackerKey = abi.encode(keccak256(trackerKey));
+        }
         // return trackers for contract address at speficic index
         return data.mappedTrackerValues[policyId][index][trackerKey];
     }

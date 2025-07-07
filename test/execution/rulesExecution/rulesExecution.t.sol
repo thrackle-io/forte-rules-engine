@@ -15,7 +15,7 @@ abstract contract rulesExecution is RulesEngineCommon {
     *
     *
     */
-    function testRulesEngine_Unit_CheckRules_Explicit()
+    function testRulesEngine_Unit_CheckRules_Explicit_Positive()
         public
         ifDeploymentTestsEnabled
         endWithStopPrank
@@ -23,10 +23,26 @@ abstract contract rulesExecution is RulesEngineCommon {
         vm.startPrank(policyAdmin);
         setUpRuleSimple();
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 5);
+        vm.startPrank(address(userContract));
         vm.startSnapshotGas("CheckRules_Explicit");
-        uint256 response = RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
         vm.stopSnapshotGas();
-        assertEq(response, 1);
+        
+    }
+
+    function testRulesEngine_Unit_CheckRules_Explicit_Negative()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        vm.startPrank(policyAdmin);
+        setUpRuleSimple();
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 0);
+        vm.startPrank(address(userContract));
+        vm.startSnapshotGas("CheckRules_Explicit");
+        vm.expectRevert(abi.encodePacked(revert_text));
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        vm.stopSnapshotGas();
         
     }
 
@@ -73,22 +89,22 @@ abstract contract rulesExecution is RulesEngineCommon {
     function testRulesEngine_Unit_checkRule_simple_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
         setUpRuleSimple();
         // test that rule ( amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly
-        bool response = userContract.transfer(address(0x7654321), 3);
-        assertFalse(response);
+        vm.expectRevert(abi.encodePacked(revert_text));
+        userContract.transfer(address(0x7654321), 3);
     }
 
     function testRulesEngine_Unit_checkRule_simpleGTEQL_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
         setUpRuleSimpleGTEQL();
         // test that rule ( ruleValue >= amount -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly
-        bool response = userContract.transfer(address(0x7654321), 3);
-        assertFalse(response);
+        vm.expectRevert(abi.encodePacked(revert_text));
+        userContract.transfer(address(0x7654321), 3);
     }
 
     function testRulesEngine_Unit_checkRule_simpleLTEQL_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
         setUpRuleSimpleLTEQL();
         // test that rule ( ruleValue <= amount -> revert -> transfer(address _to, uint256 amount) returns (bool)" ) processes correctly
-        bool response = userContract.transfer(address(0x7654321), 5);
-        assertFalse(response);
+        vm.expectRevert(abi.encodePacked(revert_text));
+        userContract.transfer(address(0x7654321), 5);
     }
 
         /////////////////////////////// additional data encoding tests 
@@ -163,6 +179,7 @@ abstract contract rulesExecution is RulesEngineCommon {
 
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
+        rule.negEffects[0] = effectId_revert;
         rule.posEffects = new Effect[](1);
 
         uint256 ruleID = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
@@ -228,6 +245,7 @@ abstract contract rulesExecution is RulesEngineCommon {
 
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
+        rule.negEffects[0] = effectId_revert;
         rule.posEffects = new Effect[](1);
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
         // Save the calling Function
@@ -481,6 +499,7 @@ abstract contract rulesExecution is RulesEngineCommon {
 
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
+        rule.negEffects[0] = effectId_revert;
         rule.posEffects = new Effect[](1);
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
         // Save the calling Function
@@ -512,9 +531,8 @@ abstract contract rulesExecution is RulesEngineCommon {
         bool response = encodingContract.transferWithBytes(address(0x1234567), 99, TEST);
         vm.stopSnapshotGas();
         assertTrue(response); 
-        
+        vm.expectRevert(abi.encodePacked(revert_text));
         response = encodingContract.transferWithBytes(address(0x1234567), 99, bytes("BAD TEST"));
-        assertFalse(response); 
 
     }
 
@@ -567,6 +585,7 @@ abstract contract rulesExecution is RulesEngineCommon {
 
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
+        rule.negEffects[0] = effectId_revert;
         rule.posEffects = new Effect[](1);
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
         // Save the calling Function
@@ -595,8 +614,8 @@ abstract contract rulesExecution is RulesEngineCommon {
         assertTrue(response); 
 
         encodingContract.writeNewBytesData(bytes("BAD TEST INFO"));
+        vm.expectRevert(abi.encodePacked(revert_text));
         response = encodingContract.transferBytes(address(0x1234567), 99);
-        assertFalse(response); 
 
     }
 
@@ -647,6 +666,7 @@ abstract contract rulesExecution is RulesEngineCommon {
 
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
+        rule.negEffects[0] = effectId_revert;
         rule.posEffects = new Effect[](1);
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
         // Save the calling Function
@@ -676,8 +696,8 @@ abstract contract rulesExecution is RulesEngineCommon {
         bool response = encodingContract.transferWithString(address(0x1234567), 99, testString);
         vm.stopSnapshotGas();
         assertTrue(response); 
+        vm.expectRevert(abi.encodePacked(revert_text));
         response = encodingContract.transferWithString(address(0x1234567), 99, "bad string");
-        assertFalse(response); 
 
     }
 
@@ -892,6 +912,7 @@ abstract contract rulesExecution is RulesEngineCommon {
 
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
+        rule.negEffects[0] = effectId_revert;
         rule.posEffects = new Effect[](1);
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
         // Save the calling Function
@@ -916,8 +937,8 @@ abstract contract rulesExecution is RulesEngineCommon {
         vm.startPrank(callingContractAdmin);    
         RulesEnginePolicyFacet(address(red)).applyPolicy(encodingContractAddress, policyIds);
         // test rule processing 
-        bool response = encodingContract.transferDynamicArray(address(0x1234567), 99);
-        assertFalse(response); 
+        vm.expectRevert(abi.encodePacked(revert_text));
+        encodingContract.transferDynamicArray(address(0x1234567), 99);
 
     }
 

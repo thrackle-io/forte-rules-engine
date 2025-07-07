@@ -18,7 +18,7 @@ while IFS= read -r line; do
         contract=${clean_line:2:44}
         contract="${contract%"${contract##*[![:space:]]}"}"
         # echo $contract
-        if (( num > 24000 )); then
+        if (( num > 24576 )); then
             printf "${RED} FAIL ${NC} Contract found that exceeds the max size of 24Kb! ${RED} $contract ${NC} \n"
             printf "       Its size is: ${RED} $num ${NC} \n"
             should_fail="true"

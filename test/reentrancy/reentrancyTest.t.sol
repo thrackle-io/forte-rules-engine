@@ -115,7 +115,7 @@ contract ReentrancyTest is RulesEngineCommon {
         tracker1.set = true;
 
         // Create a tracker for the rule
-        uint256 trackerId = RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker1, "totalVolume");      
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker1, "totalVolume");      
 
         ForeignCallEncodedIndex[] memory encodedIndices = new ForeignCallEncodedIndex[](2);
         encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
@@ -160,7 +160,7 @@ contract ReentrancyTest is RulesEngineCommon {
         pTypes[0] = ParamTypes.ADDR;
         pTypes[1] = ParamTypes.UINT;
         uint256 callingFunctionId1 = _addCallingFunctionToPolicy(policyIds[0]);
-        uint256 callingFunctionId2 = _addCallingFunctionToPolicy(policyIds[1]);
+        _addCallingFunctionToPolicy(policyIds[1]);
         // Rule: amount > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"
         Rule memory rule;
 
@@ -190,7 +190,7 @@ contract ReentrancyTest is RulesEngineCommon {
 
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-        uint256 ruleId2 = RulesEngineRuleFacet(address(red)).createRule(policyIds[1], rule);
+        RulesEngineRuleFacet(address(red)).createRule(policyIds[1], rule);
 
         Trackers memory tracker1;
         tracker1.pType = ParamTypes.UINT;
@@ -244,7 +244,8 @@ contract ReentrancyTest is RulesEngineCommon {
         reentrancy.setCallData(abi.encodeWithSelector(ERC20.transfer.selector, address(USER_ADDRESS_2), 10));
         erc20.mint(address(user1), 1000000000);
 
-        address(reentrancy).call("");
+        (bool success, bytes memory data) = address(reentrancy).call("");
+        (success, data);
 
         bytes[] memory dataHistory = reentrancy.getDataHistory();
         assertEq(dataHistory.length, 3);

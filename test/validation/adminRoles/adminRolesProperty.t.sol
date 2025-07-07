@@ -138,7 +138,7 @@ contract RulesEngineAdminRolesTest is RulesEngineCommon, RulesEngineAdminRolesFa
     
     // PROPERTY: Zero address is never an admin
     function property_ZeroAddressIsNeverAdmin() public ensureInitialized returns (bool) {
-        bytes32 adminRoleId = _generatePolicyAdminRoleId(testPolicyId, POLICY_ADMIN);
+        _generatePolicyAdminRoleId(testPolicyId, POLICY_ADMIN);
         // False is expected on this call, will cause the property to fail without the bang
         return !RulesEngineAdminRolesFacet(address(red)).isPolicyAdmin(testPolicyId, address(0));
     }

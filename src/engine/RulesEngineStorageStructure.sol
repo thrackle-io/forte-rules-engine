@@ -51,7 +51,8 @@ enum LogicalOp {
     GTEQL,
     LTEQL,
     NOTEQ,
-    TRUM
+    TRUM,
+    PLHM
 }
 
 // Supported Parameter Types
