@@ -68,7 +68,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         Policy storage data = lib._getPolicyStorage().policyStorageSets[policyId].policy;
         bytes4[] memory callingFunctions = data.callingFunctions;
         Rule[][] memory rules = new Rule[][](callingFunctions.length);
-        // Data validation will alway ensure signatures.length will be less than MAX_LOOP 
+        // Data validation will always ensure callingFunctions.length will be less than MAX_LOOP 
         for (uint256 i = 0; i < callingFunctions.length; i++) {
             uint256[] memory ruleIds = data.callingFunctionsToRuleIds[callingFunctions[i]];
             rules[i] = new Rule[](ruleIds.length);
