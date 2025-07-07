@@ -33,7 +33,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
      */
     function checkPolicies(bytes calldata arguments) public {  
         // Load the calling function data from storage
-        // Data validation will alway ensure policyIds.length will be less than MAX_LOOP 
+        // Data validation will always ensure policyIds.length will be less than MAX_LOOP 
         PolicyAssociationStorage storage data = lib._getPolicyAssociationStorage();
         uint256[] memory policyIds = data.contractPolicyIdMap[msg.sender];
         // loop through all the active policies
