@@ -328,7 +328,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     function _evaluateRulesAndExecuteEffects(mapping(uint256 ruleId => RuleStorageSet) storage _ruleData, uint256 _policyId, uint256[] memory _applicableRules, bytes calldata _callingFunctionArgs) internal returns (bool _retVal) {
         _retVal = true;
         uint256 ruleCount = _applicableRules.length;
-        // Data validation will alway ensure ruleCount will be less than MAX_LOOP 
+        // Data validation will always ensure ruleCount will be less than MAX_LOOP 
         for(uint256 i = 0; i < ruleCount; i++) { 
             Rule storage rule = _ruleData[_applicableRules[i]].rule;
             if(!_evaluateIndividualRule(rule, _policyId, _callingFunctionArgs)) {
