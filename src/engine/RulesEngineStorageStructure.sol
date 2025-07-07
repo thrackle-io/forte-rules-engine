@@ -89,7 +89,7 @@ struct Placeholder {
     // - Bit 0: foreignCall flag
     // - Bit 1: trackerValue flag
     // - Bits 2-4: Global variable type (0-7)
-    uint8 flags; 
+    uint8 flags; // TODO: relocating this in the struct might save some space in the contract
 }
 
 /**
@@ -168,7 +168,7 @@ struct ForeignCall {
     bool set;
     // Address of the contract to make the call to
     address foreignCallAddress;
-    // The function signature of the foreign call
+    // The function selector of the foreign call
     bytes4 signature;
     // The parameter type of the foreign calls return
     ParamTypes returnType;
