@@ -772,7 +772,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
     function _doEffects(Rule storage _rule, uint256 _policyId, Effect[] memory _effects, bytes calldata _callingFunctionArgs) internal {
 
         // Load the Effect data from storage
-        // Data validation will alway ensure _effects.length will be less than MAX_LOOP
+        // Data validation will always ensure _effects.length will be less than MAX_LOOP
         for(uint256 i = 0; i < _effects.length; i++) {
             Effect memory effect = _effects[i];
             if(effect.valid) {
