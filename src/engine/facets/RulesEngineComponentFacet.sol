@@ -392,7 +392,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         uint256 trackerCount = data.trackerIndexCounter[policyId];
         Trackers[] memory trackers = new Trackers[](trackerCount);
         uint256 j = 0;
-        // Loop through all the tracker and load for return. Data entry validation will never let trackerCount be > MAX_LOOP
+        // Loop through all the trackers and load for return. Data entry validation will never let trackerCount be > MAX_LOOP
         for (uint256 i = 1; i <= trackerCount; i++) {
             if (data.trackers[policyId][i].set) {
                 trackers[j] = data.trackers[policyId][i];
