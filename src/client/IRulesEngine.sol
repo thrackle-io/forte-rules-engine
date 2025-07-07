@@ -3,13 +3,12 @@ pragma solidity ^0.8.24;
 
 /**
  * @title IRulesEngine
- * @dev Interface for the Rules Engine Run Logic. This interface defines the core functions and data types 
+ * @dev Interface for the Rules Engine Run Logic. This interface defines the core functions and data types
  *      required for evaluating rules and managing roles in a rules-enabled contract.
  * @notice This interface is intended to be implemented by contracts that require rules evaluation and role management.
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 interface IRulesEngine {
-    
     /**
      * @notice Evaluates the conditions associated with all applicable rules and returns the result.
      * @dev This function checks the rules associated with the provided contract address and arguments.

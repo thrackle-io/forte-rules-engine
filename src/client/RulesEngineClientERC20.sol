@@ -11,7 +11,6 @@ import "./RulesEngineClient.sol";
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 abstract contract RulesEngineClientERC20 is RulesEngineClient {
-
     /**
      * @notice Modifier for checking policies before executing the `transfer` function.
      * @dev Calls the `_checksPoliciesERC20Transfer` function to evaluate policies.
@@ -21,7 +20,13 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
      * @param balanceTo The receiver's balance before the transfer.
      * @param blockTime The current block timestamp.
      */
-    modifier checksPoliciesERC20TransferBefore(address to, uint256 value, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) {
+    modifier checksPoliciesERC20TransferBefore(
+        address to,
+        uint256 value,
+        uint256 balanceFrom,
+        uint256 balanceTo,
+        uint256 blockTime
+    ) {
         _checksPoliciesERC20Transfer(to, value, balanceFrom, balanceTo, blockTime);
         _;
     }
@@ -35,7 +40,13 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
      * @param balanceTo The receiver's balance after the transfer.
      * @param blockTime The current block timestamp.
      */
-    modifier checksPoliciesERC20TransferAfter(address to, uint256 value, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) {
+    modifier checksPoliciesERC20TransferAfter(
+        address to,
+        uint256 value,
+        uint256 balanceFrom,
+        uint256 balanceTo,
+        uint256 blockTime
+    ) {
         _;
         _checksPoliciesERC20Transfer(to, value, balanceFrom, balanceTo, blockTime);
     }
@@ -50,7 +61,14 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
      * @param balanceTo The receiver's balance before the transfer.
      * @param blockTime The current block timestamp.
      */
-    modifier checksPoliciesERC20TransferFromBefore(address from, address to, uint256 value, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) {
+    modifier checksPoliciesERC20TransferFromBefore(
+        address from,
+        address to,
+        uint256 value,
+        uint256 balanceFrom,
+        uint256 balanceTo,
+        uint256 blockTime
+    ) {
         _checksPoliciesERC20TransferFrom(from, to, value, balanceFrom, balanceTo, blockTime);
         _;
     }
@@ -65,7 +83,14 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
      * @param balanceTo The receiver's balance after the transfer.
      * @param blockTime The current block timestamp.
      */
-    modifier checksPoliciesERC20TransferFromAfter(address from, address to, uint256 value, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) {
+    modifier checksPoliciesERC20TransferFromAfter(
+        address from,
+        address to,
+        uint256 value,
+        uint256 balanceFrom,
+        uint256 balanceTo,
+        uint256 blockTime
+    ) {
         _;
         _checksPoliciesERC20TransferFrom(from, to, value, balanceFrom, balanceTo, blockTime);
     }
@@ -79,7 +104,13 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
      * @param balanceTo The receiver's balance before the mint.
      * @param blockTime The current block timestamp.
      */
-    modifier checksPoliciesERC20MintBefore(address to, uint256 amount, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) {
+    modifier checksPoliciesERC20MintBefore(
+        address to,
+        uint256 amount,
+        uint256 balanceFrom,
+        uint256 balanceTo,
+        uint256 blockTime
+    ) {
         _checksPoliciesERC20Mint(to, amount, balanceFrom, balanceTo, blockTime);
         _;
     }
@@ -93,7 +124,13 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
      * @param balanceTo The receiver's balance after the mint.
      * @param blockTime The current block timestamp.
      */
-    modifier checksPoliciesERC20MintAfter(address to, uint256 amount, uint256 balanceFrom, uint256 balanceTo, uint256 blockTime) {
+    modifier checksPoliciesERC20MintAfter(
+        address to,
+        uint256 amount,
+        uint256 balanceFrom,
+        uint256 balanceTo,
+        uint256 blockTime
+    ) {
         _;
         _checksPoliciesERC20Mint(to, amount, balanceFrom, balanceTo, blockTime);
     }
@@ -107,7 +144,13 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
      * @param _balanceTo The receiver's balance.
      * @param _blockTime The current block timestamp.
      */
-    function _checksPoliciesERC20Transfer(address _to, uint256 _value, uint256 _balanceFrom, uint256 _balanceTo, uint256 _blockTime) internal {
+    function _checksPoliciesERC20Transfer(
+        address _to,
+        uint256 _value,
+        uint256 _balanceFrom,
+        uint256 _balanceTo,
+        uint256 _blockTime
+    ) internal {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, _to, _value, msg.sender, _balanceFrom, _balanceTo, _blockTime);
         _invokeRulesEngine(encoded);
     }
@@ -122,7 +165,14 @@ abstract contract RulesEngineClientERC20 is RulesEngineClient {
      * @param _balanceTo The receiver's balance.
      * @param _blockTime The current block timestamp.
      */
-    function _checksPoliciesERC20TransferFrom(address _from, address _to, uint256 _value, uint256 _balanceFrom, uint256 _balanceTo, uint256 _blockTime) internal {
+    function _checksPoliciesERC20TransferFrom(
+        address _from,
+        address _to,
+        uint256 _value,
+        uint256 _balanceFrom,
+        uint256 _balanceTo,
+        uint256 _blockTime
+    ) internal {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, _from, _to, _value, msg.sender, _balanceFrom, _balanceTo, _blockTime);
         _invokeRulesEngine(encoded);
     }

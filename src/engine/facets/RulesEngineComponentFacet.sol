@@ -13,7 +13,6 @@ import "src/engine/facets/FacetCommonImports.sol";
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 contract RulesEngineComponentFacet is FacetCommonImports {
-    
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
     // Foreign Call Management
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -26,8 +25,8 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @return The index of the created foreign call.
      */
     function createForeignCall(
-        uint256 _policyId, 
-        ForeignCall calldata _foreignCall, 
+        uint256 _policyId,
+        ForeignCall calldata _foreignCall,
         string calldata foreignCallName
     ) external returns (uint256) {
         _policyAdminOnly(_policyId, msg.sender);
@@ -54,7 +53,11 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param foreignCall The updated foreign call structure.
      * @return fc The updated foreign call structure.
      */
-    function updateForeignCall(uint256 policyId, uint256 foreignCallId, ForeignCall calldata foreignCall) external returns (ForeignCall memory fc) {
+    function updateForeignCall(
+        uint256 policyId,
+        uint256 foreignCallId,
+        ForeignCall calldata foreignCall
+    ) external returns (ForeignCall memory fc) {
         _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
         fc = foreignCall;
@@ -78,7 +81,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     }
 
     /**
-     * @dev Retrieve Foreign Call Set from storage 
+     * @dev Retrieve Foreign Call Set from storage
      * @param policyId the policy Id of the foreign call to retrieve
      * @return fc the foreign call set structure
      */
@@ -102,10 +105,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param foreignCallId The ID of the foreign call to retrieve.
      * @return fc The foreign call structure.
      */
-    function getForeignCall(
-        uint256 policyId,
-        uint256 foreignCallId
-    ) public view returns (ForeignCall memory fc) {
+    function getForeignCall(uint256 policyId, uint256 foreignCallId) public view returns (ForeignCall memory fc) {
         // Load the Foreign Call data from storage
         return lib._getForeignCallStorage().foreignCalls[policyId][foreignCallId];
     }
@@ -116,10 +116,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param foreignCallId The identifier for the foreign call
      * @return fcMeta the metadata for the foreign call
      */
-    function getForeignCallMetadata(
-        uint256 policyId,
-        uint256 foreignCallId
-    ) public view returns (string memory fcMeta) {
+    function getForeignCallMetadata(uint256 policyId, uint256 foreignCallId) public view returns (string memory fcMeta) {
         return lib._getForeignCallMetadataStorage().foreignCallMetadata[policyId][foreignCallId];
     }
 
@@ -136,7 +133,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         lib._getForeignCallStorage().foreignCalls[_policyId][_foreignCallIndex].foreignCallIndex = _foreignCallIndex;
     }
 
-    /** 
+    /**
      * @dev Helper function to increment the foreign call index
      * @dev Ensures the foreign call is properly set before storing it.
      * @param _policyId The policy ID the foreign call is associated with.
@@ -146,18 +143,14 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         return ++data.foreignCallIdxCounter[_policyId];
     }
 
-    /** 
+    /**
      * @dev Helper function to store the foreign call data
      * @dev Ensures the foreign call is properly set before storing it.
      * @param _policyId The policy ID the foreign call is associated with.
      * @param _foreignCall The foreign call to store.
      * @param _foreignCallIndex The index of the foreign call.
      */
-    function _storeForeignCallData(
-        uint256 _policyId,
-        ForeignCall calldata _foreignCall,
-        uint256 _foreignCallIndex
-    ) private {
+    function _storeForeignCallData(uint256 _policyId, ForeignCall calldata _foreignCall, uint256 _foreignCallIndex) private {
         ForeignCallStorage storage data = lib._getForeignCallStorage();
         _storeForeignCall(_policyId, _foreignCall, _foreignCallIndex);
         data.foreignCallIdxCounter[_policyId] = _foreignCallIndex;
@@ -169,11 +162,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param _foreignCallIndex The index of the foreign call.
      * @param _foreignCallName The name of the foreign call.
      */
-    function _storeForeignCallMetadata(
-        uint256 _policyId,
-        uint256 _foreignCallIndex,
-        string calldata _foreignCallName
-    ) private {
+    function _storeForeignCallMetadata(uint256 _policyId, uint256 _foreignCallIndex, string calldata _foreignCallName) private {
         lib._getForeignCallMetadataStorage().foreignCallMetadata[_policyId][_foreignCallIndex] = _foreignCallName;
     }
 
@@ -189,11 +178,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param trackerName Name of the tracker
      * @return trackerIndex The index of the created tracker.
      */
-    function createTracker(
-        uint256 policyId,
-        Trackers calldata tracker,
-        string calldata trackerName
-    ) external returns (uint256) {
+    function createTracker(uint256 policyId, Trackers calldata tracker, string calldata trackerName) external returns (uint256) {
         _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
         _validateTrackerType(tracker);
@@ -211,7 +196,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
 
     /**
      * @notice Adds a mapped tracker to tracker storage.
-     * @dev Creates a new tracker and associates it with the specified policy ID and assigns the tracker to addresses. 
+     * @dev Creates a new tracker and associates it with the specified policy ID and assigns the tracker to addresses.
      * @param policyId The policy ID the tracker is associated with.
      * @param tracker The tracker to add.
      * @param trackerName Names of the trackers
@@ -227,37 +212,40 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
         _validateTrackerType(tracker);
-        if (trackerKeys.length == 0 || trackerValues.length == 0) revert ("Tracker keys and values cannot be empty");
+        if (trackerKeys.length == 0 || trackerValues.length == 0) revert("Tracker keys and values cannot be empty");
         if (trackerKeys.length != trackerValues.length) revert("Tracker keys and values must have the same length");
         uint256 trackerIndex = lib._getTrackerStorage().trackerIndexCounter[policyId];
         trackerIndex = _incrementTrackerIndex(policyId);
         for (uint256 i = 0; i < trackerKeys.length; i++) {
-            // Step 2: Store tracker data 
+            // Step 2: Store tracker data
             _storeTrackerData(policyId, trackerIndex, tracker, trackerKeys[i], trackerValues[i]);
         }
         // Step 3: Store tracker metadata
         _storeTrackerMetadata(policyId, trackerIndex, trackerName);
         // return the final tracker index and the created tracker array
         return trackerIndex;
-
     }
 
     function _validateTrackerType(Trackers calldata _tracker) internal pure {
         // Ensure tracker value pType is a valid type
-        require(_tracker.pType == ParamTypes.STR || 
-                _tracker.pType == ParamTypes.UINT || 
+        require(
+            _tracker.pType == ParamTypes.STR ||
+                _tracker.pType == ParamTypes.UINT ||
                 _tracker.pType == ParamTypes.BOOL ||
                 _tracker.pType == ParamTypes.BYTES ||
                 _tracker.pType == ParamTypes.ADDR,
-                "Invalid tracker type");
-        // Ensure the tracker key is of a valid type 
+            "Invalid tracker type"
+        );
+        // Ensure the tracker key is of a valid type
         if (_tracker.mapped) {
-            require(_tracker.trackerKeyType == ParamTypes.STR || 
-                    _tracker.trackerKeyType == ParamTypes.UINT || 
+            require(
+                _tracker.trackerKeyType == ParamTypes.STR ||
+                    _tracker.trackerKeyType == ParamTypes.UINT ||
                     _tracker.trackerKeyType == ParamTypes.BOOL ||
                     _tracker.trackerKeyType == ParamTypes.BYTES ||
                     _tracker.trackerKeyType == ParamTypes.ADDR,
-                    "Invalid tracker key type");
+                "Invalid tracker key type"
+            );
         }
     }
 
@@ -273,7 +261,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     /**
      * @dev Helper function to store tracker data
      * @param _policyId The policy ID the tracker is associated with.
-     * @param _trackerIndex The index of the tracker to store 
+     * @param _trackerIndex The index of the tracker to store
      * @param _tracker The tracker to store.
      * @param _trackerKey The key for the tracker mapping.
      * @param _trackerValue The value for the tracker mapping.
@@ -286,20 +274,16 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         bytes calldata _trackerValue
     ) internal {
         TrackerStorage storage data = lib._getTrackerStorage();
-        _storeTrackerMapping(data, _policyId, _trackerIndex,  _tracker, _trackerKey, _trackerValue);
+        _storeTrackerMapping(data, _policyId, _trackerIndex, _tracker, _trackerKey, _trackerValue);
     }
 
     /**
      * @dev Helper function to store tracker metadata
      * @param _policyId The policy ID the tracker is associated with.
      * @param _trackerIndex The index of the tracker
-     * @param _trackerName Name of the tracker 
+     * @param _trackerName Name of the tracker
      */
-    function _storeTrackerMetadata(
-        uint256 _policyId,
-        uint256 _trackerIndex,
-        string calldata _trackerName
-    ) internal {
+    function _storeTrackerMetadata(uint256 _policyId, uint256 _trackerIndex, string calldata _trackerName) internal {
         lib._getTrackerMetadataStorage().trackerMetadata[_policyId][_trackerIndex] = _trackerName;
         // Event emission moved here to avoid stack too deep errors
         // Emit event
@@ -332,31 +316,27 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param _trackerValue The values for the tracker mapping.
      */
     function _storeTrackerMapping(
-        TrackerStorage storage _data, 
-        uint256 _policyId, 
-        uint256 _trackerIndex, 
-        Trackers memory _tracker, 
-        bytes calldata _trackerKey, 
+        TrackerStorage storage _data,
+        uint256 _policyId,
+        uint256 _trackerIndex,
+        Trackers memory _tracker,
+        bytes calldata _trackerKey,
         bytes calldata _trackerValue
-        ) internal {
+    ) internal {
         _tracker.mapped = true;
         _tracker.set = true;
         _tracker.trackerIndex = _trackerIndex;
         _data.trackers[_policyId][_trackerIndex] = _tracker;
-        // use trackerKey and assign value  
+        // use trackerKey and assign value
         _data.mappedTrackerValues[_policyId][_trackerIndex][_trackerKey] = _trackerValue;
     }
 
     /**
      * @dev Helper function to store tracker data
      * @param _policyId The policy ID the tracker is associated with.
-     * @param _trackerIndex The index of the tracker to store 
+     * @param _trackerIndex The index of the tracker to store
      */
-    function _storeTrackerData(
-        uint256 _policyId,
-        uint256 _trackerIndex,
-        Trackers calldata _tracker
-    ) internal {
+    function _storeTrackerData(uint256 _policyId, uint256 _trackerIndex, Trackers calldata _tracker) internal {
         TrackerStorage storage data = lib._getTrackerStorage();
         _storeTracker(data, _policyId, _trackerIndex, _tracker);
     }
@@ -367,10 +347,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param trackerId The identifier for the tracker
      * @return trMeta the metadata for the tracker
      */
-    function getTrackerMetadata(
-        uint256 policyId,
-        uint256 trackerId
-    ) public view returns (string memory trMeta) {
+    function getTrackerMetadata(uint256 policyId, uint256 trackerId) public view returns (string memory trMeta) {
         return lib._getTrackerMetadataStorage().trackerMetadata[policyId][trackerId];
     }
 
@@ -401,10 +378,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param index The index of the tracker to retrieve.
      * @return tracker The tracker data.
      */
-    function getTracker(
-        uint256 policyId,
-        uint256 index
-    ) public view returns (Trackers memory tracker) {
+    function getTracker(uint256 policyId, uint256 index) public view returns (Trackers memory tracker) {
         // Load the Tracker data from storage
         TrackerStorage storage data = lib._getTrackerStorage();
         // return trackers for contract address at speficic index
@@ -417,11 +391,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param index The index of the tracker to retrieve.
      * @return tracker The tracker data.
      */
-    function getMappedTrackerValue(
-        uint256 policyId,
-        uint256 index,
-        bytes calldata trackerKey
-    ) public view returns (bytes memory) {
+    function getMappedTrackerValue(uint256 policyId, uint256 index, bytes calldata trackerKey) public view returns (bytes memory) {
         // Load the Tracker data from storage
         TrackerStorage storage data = lib._getTrackerStorage();
         // return trackers for contract address at speficic index
@@ -435,17 +405,13 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param trackerIndex The index of the tracker to update.
      * @param tracker The updated tracker data.
      */
-    function updateTracker(
-        uint256 policyId,
-        uint256 trackerIndex,
-        Trackers calldata tracker
-    ) external {
+    function updateTracker(uint256 policyId, uint256 trackerIndex, Trackers calldata tracker) external {
         _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
         // Load the Tracker data from storage
         TrackerStorage storage data = lib._getTrackerStorage();
         _storeTracker(data, policyId, trackerIndex, tracker);
-        emit TrackerUpdated(policyId, trackerIndex); 
+        emit TrackerUpdated(policyId, trackerIndex);
     }
 
     /**
@@ -463,26 +429,26 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         Trackers calldata _tracker,
         bytes calldata _trackerKey,
         bytes calldata _trackerValue
-    ) external  {
+    ) external {
         _policyAdminOnly(_policyId, msg.sender);
         _notCemented(_policyId);
         // Load the Tracker data from storage
         TrackerStorage storage data = lib._getTrackerStorage();
         _storeTrackerMapping(data, _policyId, _trackerIndex, _tracker, _trackerKey, _trackerValue);
-        emit TrackerUpdated(_policyId, _trackerIndex); 
+        emit TrackerUpdated(_policyId, _trackerIndex);
     }
 
     /**
      * @dev Helper function to store tracker data
-     * @notice Tracker mappings are not deleted, since trackerIds are not reused that data will never clash with new trackers. 
+     * @notice Tracker mappings are not deleted, since trackerIds are not reused that data will never clash with new trackers.
      * @param policyId The policy ID the tracker is associated with.
-     * @param trackerIndex The index of the tracker to store 
+     * @param trackerIndex The index of the tracker to store
      */
-    function deleteTracker(uint256 policyId, uint256 trackerIndex) external  {
+    function deleteTracker(uint256 policyId, uint256 trackerIndex) external {
         _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
         delete lib._getTrackerStorage().trackers[policyId][trackerIndex];
-        emit TrackerDeleted(policyId, trackerIndex); 
+        emit TrackerDeleted(policyId, trackerIndex);
     }
 
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -498,7 +464,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param callingFunctionName the name of the calling function (to be stored in metadata)
      * @param encodedValues the string representation of the values encoded with the calling function (to be stored in metadata)
      * @return functionId The index of the created calling function.
-     */    
+     */
     function createCallingFunction(
         uint256 policyId,
         bytes4 functionSignature,
@@ -537,7 +503,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         uint256 callingFunctionID,
         bytes4 functionSignature,
         ParamTypes[] memory pTypes
-    ) external  returns (uint256) {
+    ) external returns (uint256) {
         _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
         // Load the calling function data from storage
@@ -545,7 +511,10 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         // increment the callingFunctionId if necessary
         CallingFunctionStorageSet storage callingFunction = data.callingFunctionStorageSets[policyId][callingFunctionID];
         require(callingFunction.signature == functionSignature, "Delete calling function before updating to a new one");
-        require(callingFunction.parameterTypes.length <= pTypes.length, "New parameter types must be of greater or equal length to the original");
+        require(
+            callingFunction.parameterTypes.length <= pTypes.length,
+            "New parameter types must be of greater or equal length to the original"
+        );
         for (uint256 i = 0; i < callingFunction.parameterTypes.length; i++) {
             require(pTypes[i] == callingFunction.parameterTypes[i], "New parameter types must be of the same type as the original");
         }
@@ -567,29 +536,29 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     function deleteCallingFunction(uint256 policyId, uint256 callingFunctionId) external {
         _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
-        // retrieve policy from storage 
+        // retrieve policy from storage
         PolicyStorageSet storage data = lib._getPolicyStorage().policyStorageSets[policyId];
-        // retrieve calling function to delete  
-        bytes4 signature = lib._getCallingFunctionStorage().callingFunctionStorageSets[policyId][callingFunctionId].signature;  
-        // delete the calling function storage set struct 
+        // retrieve calling function to delete
+        bytes4 signature = lib._getCallingFunctionStorage().callingFunctionStorageSets[policyId][callingFunctionId].signature;
+        // delete the calling function storage set struct
         delete lib._getCallingFunctionStorage().callingFunctionStorageSets[policyId][callingFunctionId];
-        // delete calling function array from policy 
+        // delete calling function array from policy
         delete data.policy.callingFunctions;
-        // delete calling function to id map 
+        // delete calling function to id map
         delete data.policy.callingFunctionIdMap[signature];
-        // delete rule structures associated to calling function 
-        for(uint256 i; i < data.policy.callingFunctionsToRuleIds[signature].length; i++) {
-            // delete rules from storage 
+        // delete rule structures associated to calling function
+        for (uint256 i; i < data.policy.callingFunctionsToRuleIds[signature].length; i++) {
+            // delete rules from storage
             delete lib._getRuleStorage().ruleStorageSets[policyId][i];
             emit AssociatedRuleDeleted(policyId, callingFunctionId);
         }
-        // delete calling function to rule Ids mapping  
+        // delete calling function to rule Ids mapping
         delete data.policy.callingFunctionsToRuleIds[signature];
-        // retrieve remaining calling function structs from storage that were not removed   
+        // retrieve remaining calling function structs from storage that were not removed
         CallingFunctionStorageSet[] memory callingFunctionStructs = getAllCallingFunctions(policyId);
         // reset calling function array for policy
-        for(uint256 j; j < callingFunctionStructs.length; j++) {
-            if(callingFunctionStructs[j].set) {
+        for (uint256 j; j < callingFunctionStructs.length; j++) {
+            if (callingFunctionStructs[j].set) {
                 data.policy.callingFunctions.push(callingFunctionStructs[j].signature);
             }
         }
@@ -602,13 +571,9 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param callingFunctionId The ID of the calling function to retrieve.
      * @return CallngFunctionStorageSet The calling function data.
      */
-    function getCallingFunction(
-        uint256 policyId,
-        uint256 callingFunctionId
-    ) public view returns (CallingFunctionStorageSet memory) {
+    function getCallingFunction(uint256 policyId, uint256 callingFunctionId) public view returns (CallingFunctionStorageSet memory) {
         // Load the calling function data from storage
-        return
-            lib._getCallingFunctionStorage().callingFunctionStorageSets[policyId][callingFunctionId];
+        return lib._getCallingFunctionStorage().callingFunctionStorageSets[policyId][callingFunctionId];
     }
 
     /**
@@ -645,7 +610,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     }
 
     /**
-     * @dev Helper function to increment function ID 
+     * @dev Helper function to increment function ID
      * @param _policyId The policy ID the calling function is associated with.
      */
     function _incrementFunctionId(uint256 _policyId) private returns (uint256) {
@@ -654,9 +619,9 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     }
 
     /**
-     * @dev Helper function to store calling function data 
+     * @dev Helper function to store calling function data
      * @param _policyId The policy ID the calling function is associated with.
-     * @param _functionId The ID of the function 
+     * @param _functionId The ID of the function
      * @param _functionSignature The function signature of the calling function
      * @param _pTypes The parameter types for the calling function.
      */
@@ -672,13 +637,13 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         data.callingFunctionStorageSets[_policyId][_functionId].parameterTypes = _pTypes;
     }
 
-    /** 
+    /**
      * @dev Helper function to store calling function metadata
      * @param _policyId The policy ID the calling function is associated with.
-     * @param _functionId The ID of the function 
-     * @param _functionSignature The function signature of the calling function 
+     * @param _functionId The ID of the function
+     * @param _functionSignature The function signature of the calling function
      * @param _callingFunctionName Name of the calling function
-     * @param _encodedValues Arguments to be encoded 
+     * @param _encodedValues Arguments to be encoded
      */
     function _storeCallingFunctionMetadata(
         uint256 _policyId,
@@ -706,7 +671,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
     function addClosedPolicySubscriber(uint256 policyId, address subscriber) external {
         _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
-        if (subscriber == address(0)) revert(ZERO_ADDRESS); 
+        if (subscriber == address(0)) revert(ZERO_ADDRESS);
         lib._getPolicyStorage().policyStorageSets[policyId].policy.closedPolicySubscribers[subscriber] = true;
         emit PolicySubsciberAdded(policyId, subscriber);
     }
@@ -717,7 +682,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param policyId The ID of the policy.
      * @param subscriber The address to remove from the policy subscription.
      */
-    function removeClosedPolicySubscriber(uint256 policyId, address subscriber) external  {
+    function removeClosedPolicySubscriber(uint256 policyId, address subscriber) external {
         _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
         if (subscriber == address(0)) revert(ZERO_ADDRESS);
@@ -725,7 +690,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         emit PolicySubsciberRemoved(policyId, subscriber);
     }
 
-   /**
+    /**
      * @notice Checks if an address is a subscriber of the specified policy.
      * @param policyId The ID of the policy.
      * @param subscriber The address to check for policy subscription.
@@ -744,17 +709,20 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param _policyId The ID of the policy.
      */
     function _notCemented(uint256 _policyId) internal view {
-        if(lib._getPolicyStorage().policyStorageSets[_policyId].policy.cemented) revert ("Not allowed for cemented policy");
+        if (lib._getPolicyStorage().policyStorageSets[_policyId].policy.cemented) revert("Not allowed for cemented policy");
     }
 
     /**
-     * @notice Checks that the caller is a policy admin 
+     * @notice Checks that the caller is a policy admin
      * @param _policyId The ID of the policy.
      * @param _address The address to check for policy admin status.
      */
-    function _policyAdminOnly(uint256 _policyId, address _address) internal {   
-        // 0x901cee11 = isPolicyAdmin(uint256,address)   
-        (bool success, bytes memory res) = _callAnotherFacet(0x901cee11, abi.encodeWithSignature("isPolicyAdmin(uint256,address)", _policyId, _address));   
+    function _policyAdminOnly(uint256 _policyId, address _address) internal {
+        // 0x901cee11 = isPolicyAdmin(uint256,address)
+        (bool success, bytes memory res) = _callAnotherFacet(
+            0x901cee11,
+            abi.encodeWithSignature("isPolicyAdmin(uint256,address)", _policyId, _address)
+        );
         bool returnBool;
         if (success) {
             if (res.length >= 4) {
@@ -765,11 +733,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
                 returnBool = false;
             }
             // returned false so revert with error
-            if (!returnBool) revert("Not Authorized To Policy");                        
-        }          
+            if (!returnBool) revert("Not Authorized To Policy");
+        }
     }
-    
 }
-
-
-

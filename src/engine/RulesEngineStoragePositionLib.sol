@@ -5,8 +5,8 @@ import "src/engine/RulesEngineStorageStructure.sol";
 /**
  * @title Rules Engine Storage Position Library
  * @dev This library provides functions to access and manage storage positions for various components of the Rules Engine.
- *      It defines fixed storage slots for initialized flags, foreign calls, trackers, calling functions, rules, policies, 
- *      and policy associations. These storage slots are used to ensure consistent and conflict-free storage management 
+ *      It defines fixed storage slots for initialized flags, foreign calls, trackers, calling functions, rules, policies,
+ *      and policy associations. These storage slots are used to ensure consistent and conflict-free storage management
  *      across the diamond proxy pattern.
  * @notice This library is a critical component of the Rules Engine, enabling modular and efficient storage management.
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
@@ -143,5 +143,4 @@ library RulesEngineStoragePositionLib {
             _ds.slot := position
         }
     }
-
 }

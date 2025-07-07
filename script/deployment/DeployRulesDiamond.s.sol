@@ -20,7 +20,6 @@ import {IERC173} from "lib/diamond-std/implementations/ERC173/IERC173.sol";
  * Additionally, it updates environment variables with the deployed contract addresses.
  */
 contract DeployRulesDiamond is DiamondMine {
-
     /**
      * @notice Deploys the RulesEngineDiamond and ExampleUserContract, and sets up the environment variables.
      * @dev Uses environment variables for deployment owner address and private key.
@@ -28,26 +27,26 @@ contract DeployRulesDiamond is DiamondMine {
     function run() external {
         // Validate environment before deployment
         validateEnvironment();
-    
+
         address owner = vm.envAddress("DEPLOYMENT_OWNER");
         uint256 privateKey = vm.envUint("DEPLOYMENT_OWNER_KEY");
-    
+
         console.log("Starting deployment with owner:", owner);
-    
+
         vm.startBroadcast(privateKey);
 
         // Deploy the RulesEngineDiamond contract
         RulesEngineDiamond diamond = createRulesEngineDiamond(owner);
-    
+
         vm.stopBroadcast();
-    
+
         // Verify deployment
         verifyDeployment(address(diamond), owner);
-    
+
         // Update environment variables
         string memory diamondAddress = vm.toString(address(diamond));
         setENVAddress("DIAMOND_ADDRESS", diamondAddress);
-    
+
         console.log("Deployment completed successfully");
         console.log("Diamond address:", diamondAddress);
     }
@@ -89,14 +88,14 @@ contract DeployRulesDiamond is DiamondMine {
         // Verify diamond is deployed
         require(diamond != address(0), "Diamond not deployed");
         require(diamond.code.length > 0, "Diamond has no code");
-    
+
         // Verify owner is set correctly
         require(IERC173(diamond).owner() == expectedOwner, "Owner mismatch");
-    
+
         // Verify facets are properly installed
         IDiamondLoupe.Facet[] memory facets = IDiamondLoupe(diamond).facets();
         require(facets.length > 0, "No facets installed");
-    
+
         console.log("Deployment verified successfully");
         console.log("Facets installed:", facets.length);
     }

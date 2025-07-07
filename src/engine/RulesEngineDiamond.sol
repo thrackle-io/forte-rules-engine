@@ -21,15 +21,15 @@ struct RulesEngineDiamondArgs {
 
 /**
  * @title Rules Engine Diamond Contract
- * @dev This contract implements the diamond proxy pattern for the Rules Engine. It is responsible for managing facets, 
+ * @dev This contract implements the diamond proxy pattern for the Rules Engine. It is responsible for managing facets,
  *      handling token rule configurations, and facilitating communication between the application and protocol.
  * @notice The diamond inherits ERC173 for ownership management and supports batch operations for efficiency.
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 contract RulesEngineDiamond is ERC173 {
     event EngineDeployed();
-    
-     /**
+
+    /**
      * @notice Constructor for the Rules Engine Diamond.
      * @dev Initializes the diamond by performing a diamond cut operation to set up facets.
      * @param diamondCut Array of facets to be created at deployment.
@@ -121,7 +121,7 @@ contract RulesEngineDiamond is ERC173 {
      * @dev If the returned data is malformed or not correctly ABI-encoded, this function reverts with a `BatchError`.
      * @param _returnData The returned data from the failed call.
      */
-    function _getRevertMsg(bytes memory _returnData) internal pure{
+    function _getRevertMsg(bytes memory _returnData) internal pure {
         // If the _res length is less than 68, then
         // the transaction failed with custom error or silently (without a revert message)
         if (_returnData.length < 68) revert BatchError(_returnData);

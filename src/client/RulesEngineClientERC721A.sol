@@ -18,8 +18,12 @@ abstract contract RulesEngineClientERC721A is RulesEngineClient {
      * @param to The receiving address.
      * @param tokenId The token identifier.
      */
-    modifier checksPoliciesERC721ASafeTransferFromBefore(address from, address to, uint256 tokenId) {
-       _checkPoliciesERC721ASafeTransferFrom(from, to, tokenId);
+    modifier checksPoliciesERC721ASafeTransferFromBefore(
+        address from,
+        address to,
+        uint256 tokenId
+    ) {
+        _checkPoliciesERC721ASafeTransferFrom(from, to, tokenId);
         _;
     }
 
@@ -30,7 +34,11 @@ abstract contract RulesEngineClientERC721A is RulesEngineClient {
      * @param to The receiving address.
      * @param tokenId The token identifier.
      */
-    modifier checksPoliciesERC721ASafeTransferFromAfter(address from, address to, uint256 tokenId) {
+    modifier checksPoliciesERC721ASafeTransferFromAfter(
+        address from,
+        address to,
+        uint256 tokenId
+    ) {
         _;
         _checkPoliciesERC721ASafeTransferFrom(from, to, tokenId);
     }
@@ -44,8 +52,14 @@ abstract contract RulesEngineClientERC721A is RulesEngineClient {
      * @param tokenIds The token identifiers.
      * @param data Generic data to pass along with the transfer.
      */
-    modifier checksPoliciesERC721ASafeBatchTransferFromBefore(address by, address from, address to, uint256[] memory tokenIds, bytes memory data) {
-       _checkPoliciesERC721ASafeBatchTransferFrom(by, from, to, tokenIds, data);
+    modifier checksPoliciesERC721ASafeBatchTransferFromBefore(
+        address by,
+        address from,
+        address to,
+        uint256[] memory tokenIds,
+        bytes memory data
+    ) {
+        _checkPoliciesERC721ASafeBatchTransferFrom(by, from, to, tokenIds, data);
         _;
     }
 
@@ -58,7 +72,13 @@ abstract contract RulesEngineClientERC721A is RulesEngineClient {
      * @param tokenIds The token identifiers.
      * @param data Generic data to pass along with the transfer.
      */
-    modifier checksPoliciesERC721ASafeBatchTransferFromAfter(address by, address from, address to, uint256[] memory tokenIds, bytes memory data) {
+    modifier checksPoliciesERC721ASafeBatchTransferFromAfter(
+        address by,
+        address from,
+        address to,
+        uint256[] memory tokenIds,
+        bytes memory data
+    ) {
         _;
         _checkPoliciesERC721ASafeBatchTransferFrom(by, from, to, tokenIds, data);
     }
@@ -105,7 +125,13 @@ abstract contract RulesEngineClientERC721A is RulesEngineClient {
      * @param _tokenIds The token identifiers.
      * @param _data Generic data to pass along with the transfer.
      */
-    function _checkPoliciesERC721ASafeBatchTransferFrom(address _by, address _from, address _to, uint256[] memory _tokenIds, bytes memory _data) internal {
+    function _checkPoliciesERC721ASafeBatchTransferFrom(
+        address _by,
+        address _from,
+        address _to,
+        uint256[] memory _tokenIds,
+        bytes memory _data
+    ) internal {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, _by, _from, _to, _tokenIds, _data, msg.sender);
         _invokeRulesEngine(encoded);
     }
