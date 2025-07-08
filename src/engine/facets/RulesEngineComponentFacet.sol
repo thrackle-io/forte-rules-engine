@@ -131,6 +131,8 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      */
     function _storeForeignCall(uint256 _policyId, ForeignCall calldata _foreignCall, uint256 _foreignCallIndex) internal {
         assert(_foreignCall.parameterTypes.length == _foreignCall.encodedIndices.length);
+        require(_foreignCall.foreignCallIndex < MAX_LOOP, "Max foreign calls reached.");
+        require(_foreignCall.parameterTypes.length < MAX_LOOP, "Max foreign parameter types reached.");
         lib._getForeignCallStorage().foreignCalls[_policyId][_foreignCallIndex] = _foreignCall;
         lib._getForeignCallStorage().foreignCalls[_policyId][_foreignCallIndex].set = true;
         lib._getForeignCallStorage().foreignCalls[_policyId][_foreignCallIndex].foreignCallIndex = _foreignCallIndex;
@@ -315,6 +317,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param _tracker The tracker data to store.
      */
     function _storeTracker(TrackerStorage storage _data, uint256 _policyId, uint256 _trackerIndex, Trackers memory _tracker) internal {
+        require(_trackerIndex < MAX_LOOP, "Max trackers reached.");
         _tracker.set = true;
         _tracker.mapped = false;
         _tracker.trackerIndex = _trackerIndex;
@@ -389,6 +392,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         uint256 trackerCount = data.trackerIndexCounter[policyId];
         Trackers[] memory trackers = new Trackers[](trackerCount);
         uint256 j = 0;
+        // Loop through all the trackers and load for return. Data entry validation will never let trackerCount be > MAX_LOOP
         for (uint256 i = 1; i <= trackerCount; i++) {
             if (data.trackers[policyId][i].set) {
                 trackers[j] = data.trackers[policyId][i];
