@@ -1393,7 +1393,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders[2].pType = trackerValueType;
         rule.placeHolders[2].flags = FLAG_TRACKER_VALUE;
         rule.placeHolders[2].typeSpecificIndex = 1;
-        rule.placeHolders[2].mappedTrackerKey = abi.encodePacked(trackerKeys[0]);
 
         rule.effectPlaceHolders = new Placeholder[](1);
         rule.effectPlaceHolders[0].pType = ParamTypes.BYTES;

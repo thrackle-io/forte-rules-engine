@@ -85,7 +85,6 @@ struct Placeholder {
     ParamTypes pType;
     // The index in the specific array for the specified type;
     uint128 typeSpecificIndex;
-    bytes mappedTrackerKey;
     // Packed flags/type:
     // - Bit 0: foreignCall flag
     // - Bit 1: trackerValue flag
