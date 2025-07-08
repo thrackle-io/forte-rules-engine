@@ -413,7 +413,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports{
         uint256 idx = 0;
         uint256 opi = 0;
 
-        require(_prog.length < MAX_LOOP, "Max instruction set data reached.");
         while (idx < _prog.length) {
             uint256 v = 0;
             LogicalOp op = LogicalOp(_prog[idx]);
