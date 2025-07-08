@@ -1675,7 +1675,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Set up some effects.
         _setupEffectProcessor();
         // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, _amount, LogicalOp.GT, 0, 1
-        rule.instructionSet = rule.instructionSet = _createInstructionSet(_amount);
+        rule.instructionSet = _createInstructionSet(_amount);
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;

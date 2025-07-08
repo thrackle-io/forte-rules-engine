@@ -35,6 +35,70 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         return ruleId;
     }
 
+    function _validateInstructionSet(int256[] memory instructionSet) internal pure {
+        // Ensure the instruction set is not empty
+        if (instructionSet.length == 0) revert("Instruction set cannot be empty");
+        // Ensure the rest of the instructions are valid
+        uint memorySize = 90;
+        uint opsSize1 = 3;
+        uint opSizeUpTo2 = 17;
+        uint opSizeUpTo3 = 18;
+        uint opTotalSize = 19;
+        uint expectedDataElements;
+        bool isData;
+        uint instructionSize;
+        
+        assembly{
+            instructionSize := mload(instructionSet)
+            for {let i := 0} lt(i, instructionSize) {i := add(i, 1)}{
+                let instruction := mload(add(mul(0x20,add(1, i)), instructionSet))
+                switch isData
+                    case 1{
+                        if gt(instruction, memorySize){
+                            mstore(0, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                            mstore(0x04,0x20)
+                            mstore(0x24,0xf)
+                            mstore(0x44, MEMORY_OVERFLOW)
+                            revert(0,0x64)
+                        }
+                        expectedDataElements := sub(expectedDataElements, 1)
+                        if iszero(expectedDataElements){
+                            isData := 0
+                        }
+                    }
+                    case 0{
+                        let found := 0
+                        if or(gt(instruction, opTotalSize), eq(instruction, opTotalSize)){
+                             mstore(0, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                            mstore(0x04,0x20)
+                            mstore(0x24,0x13)
+                            mstore(0x44, INVALID_INSTRUCTION)
+                            revert(0,0x64)
+                        }if iszero(instruction){
+                            i := add(i, 1)
+                            found := 1
+                        }if and(iszero(found), lt(instruction, opsSize1)){
+                            expectedDataElements := 1
+                            found := 1
+                            isData := 1
+                        }if and(iszero(found), lt(instruction, opSizeUpTo2)){
+                            expectedDataElements := 2
+                            found := 1
+                            isData := 1
+                        }if and(iszero(found), lt(instruction, opSizeUpTo3)){
+                            expectedDataElements := 3
+                            found := 1
+                            isData := 1
+                        }if iszero(found){
+                            expectedDataElements := 4
+                            isData := 1
+                        }
+                    }
+            }
+        }
+        if(expectedDataElements > 0 || isData) revert("invalid instruction set");
+    }
+
     /**
      * @notice Updates a rule in storage.
      * @dev Modifies an existing rule in the specified policy. Only accessible by policy admins.

@@ -17,6 +17,9 @@ struct InitializedStorage {
 /// Enumerated list of Logical operators used in Rule Engine Run
 /**
  * NUM - a static value will be in the next slot in the instruction set
+ * NOT - perform a logical NOT with the value at the memory address denoted by the next slot in the instruction set
+ * PLH - insert a placeholder value into the next memory slot
+ * PLHM - insert a mapped placeholder value into the next memory slot
  * ADD - add the values at the memory addresses denoted by the next two slots in the instruction set
  * SUB - subtract the values at the memory addresses denoted by the next two slots in the instruction set
  * MUL - multiply the values at the memory addresses denoted by the next two slots in the instruction set
@@ -26,15 +29,18 @@ struct InitializedStorage {
  * EQ - perform a equals comparison with the values at the memory addresses denoted by the next two slots in the instruction set
  * AND - perform a logical AND with the values at the memory addresses denoted by the next two slots in the instruciton set
  * OR - perform a logical OR with the values at the memory addresses denoted by the next two slots in the instruction set
- * NOT - perform a logical NOT with the value at the memory address denoted by the next slot in the instruction set
- * PLH - insert a placeholder value into the next memory slot
- * TRU - perform a tracker update, the next three slots in the instruction set will denote the tracker index and address to update and the memory address of the value to use.
+ * ASSIGN - assign the value at the memory address denoted by the next slot in the instruction set to the memory address denoted by the slot after that
  * GTEQL - perform a greater than or equal to comparison with the values at the memory addresses denoted by the next two slots in the instruction set
  * LTEQL - perform a less than or equal to comparison with the values at the memory addresses denoted by the next two slots in the instruction set
  * NOTEQ - perform a not equal to comparison with the values at the memory addresses denoted by the next two slots in the instruction set
+ * TRU - perform a tracker update, the next three slots in the instruction set will denote the tracker index and address to update and the memory address of the value to use.
+ * TRUM - perform a mapped tracker update, the next four slots in the instruction set will denote the tracker key, index and address to update and the memory address of the value to use.
  */
 enum LogicalOp {
     NUM,
+    NOT,
+    PLH,
+    PLHM,
     ADD,
     SUB,
     MUL,
@@ -44,15 +50,12 @@ enum LogicalOp {
     EQ,
     AND,
     OR,
-    NOT,
-    PLH,
-    TRU,
     ASSIGN,
     GTEQL,
     LTEQL,
     NOTEQ,
-    TRUM,
-    PLHM
+    TRU,
+    TRUM
 }
 
 // Supported Parameter Types
