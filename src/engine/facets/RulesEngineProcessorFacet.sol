@@ -32,6 +32,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
      */
     function checkPolicies(bytes calldata arguments) public {  
         // Load the calling function data from storage
+        // Data validation will always ensure policyIds.length will be less than MAX_LOOP 
         PolicyAssociationStorage storage data = lib._getPolicyAssociationStorage();
         uint256[] memory policyIds = data.contractPolicyIdMap[msg.sender];
         // loop through all the active policies
@@ -81,7 +82,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
 
         uint256 lengthToAppend = 0;
         // calculate sizes
-        for (uint256 i = 0; i < fc.parameterTypes.length; i++) {
+        // Data validation will always ensure fc.parameterTypes.length will be less than MAX_LOOP
+        for(uint256 i = 0; i < fc.parameterTypes.length; i++) {
             ParamTypes argType = fc.parameterTypes[i];
 
             if (fc.encodedIndices[i].eType != EncodedIndexType.ENCODED_VALUES) {
@@ -371,7 +373,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
     ) internal returns (bool _retVal) {
         _retVal = true;
         uint256 ruleCount = _applicableRules.length;
-        for (uint256 i = 0; i < ruleCount; i++) {
+        // Data validation will always ensure ruleCount will be less than MAX_LOOP 
+        for(uint256 i = 0; i < ruleCount; i++) { 
             Rule storage rule = _ruleData[_applicableRules[i]].rule;
             if (!_evaluateIndividualRule(rule, _policyId, _callingFunctionArgs)) {
                 _retVal = false;
@@ -421,6 +424,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
             placeHolders = _rule.placeHolders;
         }
         bytes[] memory retVals = new bytes[](placeHolders.length);
+        // Data validation will alway ensure ruleCount will be less than MAX_LOOP 
         ForeignCallEncodedIndex[] memory metadata = new ForeignCallEncodedIndex[](placeHolders.length);
         for (uint256 placeholderIndex = 0; placeholderIndex < placeHolders.length; placeholderIndex++) {
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
@@ -882,7 +886,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
      */
     function _doEffects(Rule storage _rule, uint256 _policyId, Effect[] memory _effects, bytes calldata _callingFunctionArgs) internal {
         // Load the Effect data from storage
-        for (uint256 i = 0; i < _effects.length; i++) {
+        // Data validation will always ensure _effects.length will be less than MAX_LOOP
+        for(uint256 i = 0; i < _effects.length; i++) {
             Effect memory effect = _effects[i];
             if (effect.valid) {
                 if (effect.effectType == EffectTypes.REVERT) {
@@ -932,8 +937,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
     function _fireDynamicEvent(Rule storage _rule, uint256 _policyId, bytes32 _message, bytes calldata _callingFunctionArgs) internal {
         // Build the effect arguments struct for event parameters:
         (bytes[] memory effectArguments, Placeholder[] memory placeholders) = _buildArguments(_rule, _policyId, _callingFunctionArgs, true);
-        for (uint256 i = 0; i < effectArguments.length; i++) {
-            // loop through parameter types and set eventParam
+        // Data validation will always ensure effectArguments.length will be less than MAX_LOOP
+        for(uint256 i = 0; i < effectArguments.length; i++) { 
+            // loop through parameter types and set eventParam 
             if (placeholders[i].pType == ParamTypes.UINT) {
                 uint256 uintParam = abi.decode(effectArguments[i], (uint));
                 emit RulesEngineEvent(_policyId, _message, uintParam);

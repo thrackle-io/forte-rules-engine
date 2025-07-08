@@ -143,9 +143,9 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         if (contractAddress == address(0)) revert(ZERO_ADDRESS);
         // Load the policy data from storage
         PolicyAssociationStorage storage data = lib._getPolicyAssociationStorage();
-
-        // Check policy type for each policy being applied
-        for (uint256 i = 0; i < policyIds.length; i++) {
+        
+        require(policyIds.length < MAX_LOOP, "Max policies per contract address reached.");
+        for(uint256 i = 0; i < policyIds.length; i++) {
             PolicyStorageSet storage policySet = lib._getPolicyStorage().policyStorageSets[policyIds[i]];
             require(policySet.set, POLICY_DOES_NOT_EXIST);
 
@@ -160,9 +160,10 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
 
         // Apply the policies
         data.contractPolicyIdMap[contractAddress] = new uint256[](policyIds.length);
-        for (uint256 i = 0; i < policyIds.length; i++) {
-            data.contractPolicyIdMap[contractAddress][i] = policyIds[i];
-            data.policyIdContractMap[policyIds[i]].push(contractAddress);
+        // Data validation will alway ensure _policyIds.length will be less than MAX_LOOP
+        for(uint256 i = 0; i < policyIds.length; i++) {
+           data.contractPolicyIdMap[contractAddress][i] = policyIds[i];
+           data.policyIdContractMap[policyIds[i]].push(contractAddress);
         }
         emit PolicyApplied(policyIds, contractAddress);
     }
@@ -280,10 +281,12 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         }
         ruleIds = new uint256[][](policy.callingFunctions.length);
         // Loop through the callng functions and load the return arrays
+        // Data validation will alway ensure policy.signatures.length will be less than MAX_LOOP 
         for (uint256 i = 0; i < policy.callingFunctions.length; i++) {
             callingFunctions[i] = policy.callingFunctions[i];
             callingFunctionIds[i] = policy.callingFunctionIdMap[policy.callingFunctions[i]];
             // Initialize the ruleId return array if necessary
+            // Data validation will alway ensure policy.signatureToRuleIds[policy.callingFunctions[i]].length will be less than MAX_LOOP 
             for (uint256 ruleIndex = 0; ruleIndex < policy.callingFunctionsToRuleIds[policy.callingFunctions[i]].length; ruleIndex++) {
                 // have to allocate the memory array here
                 ruleIds[i] = new uint256[](policy.callingFunctionsToRuleIds[policy.callingFunctions[i]].length);
@@ -316,8 +319,10 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         _processPolicyTypeChange(_policyId, _policyType);
         // clear the iterator array
         delete data.callingFunctions;
+        require(_ruleIds.length < MAX_LOOP, "Max rules count reached.");
         if (_ruleIds.length > 0) {
             // Loop through all the passed in calling functions for the policy
+            require(_callingFunctions.length < MAX_LOOP, "Max function signatures reached.");      
             for (uint256 i = 0; i < _callingFunctions.length; i++) {
                 // make sure that all the calling functions exist
                 if (!StorageLib._isCallingFunctionSet(_policyId, _callingFunctionIds[i])) revert(INVALID_SIGNATURE);
@@ -328,7 +333,8 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
                 // make sure that all the rules attached to each calling function exist
                 for (uint256 j = 0; j < _ruleIds[i].length; j++) {
                     RuleStorageSet memory ruleStore = lib._getRuleStorage().ruleStorageSets[_policyId][_ruleIds[i][j]];
-                    if (!ruleStore.set) revert(INVALID_RULE);
+                    if(!ruleStore.set) revert(INVALID_RULE);
+                    require(ruleStore.rule.placeHolders.length < MAX_LOOP, "Max place holders reached.");
                     for (uint256 k = 0; k < ruleStore.rule.placeHolders.length; k++) {
                         if (FacetUtils._isForeignCall(ruleStore.rule.placeHolders[k])) {
                             // get the foreign call using the type specific index which will be interpreted as a foreign call index since it has foreignCall bool set
@@ -345,6 +351,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
             }
         } else {
             // Solely loop through and add calling functions to the policy
+            require(_callingFunctions.length < MAX_LOOP, "Max function signatures reached.");
             for (uint256 i = 0; i < _callingFunctions.length; i++) {
                 // make sure that all the calling functions exist
                 if (!StorageLib._isCallingFunctionSet(_policyId, _callingFunctionIds[i])) revert(INVALID_SIGNATURE);
@@ -370,7 +377,8 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         if (_policyType == PolicyType.CLOSED_POLICY) {
             // Load the calling function data from storage
             PolicyAssociationStorage storage assocData = lib._getPolicyAssociationStorage();
-            for (uint256 i = 0; i < assocData.policyIdContractMap[_policyId].length; i++) {
+            // Data validation will alway ensure assocData.policyIdContractMap[_policyId].length will be less than MAX_LOOP 
+            for (uint256 i = 0; i < assocData.policyIdContractMap[_policyId].length; i++) { 
                 delete assocData.contractPolicyIdMap[assocData.policyIdContractMap[_policyId][i]];
             }
             delete assocData.policyIdContractMap[_policyId];
