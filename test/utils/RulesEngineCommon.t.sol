@@ -1361,83 +1361,14 @@ contract RulesEngineCommon is DiamondMine, Test {
         return policyIds[0];
     }
 
-    function _setUpRuleWithMappedTracker(
-        uint256 _policyId,
+    function _setupRuleWithMappedTracker(
+        uint256 _policyId, 
         Trackers memory tracker,
-        bytes[] memory trackerKeys,
-        bytes[] memory trackerValues,
-        string memory trackerName,
-        ParamTypes trackerKeyType,
-        ParamTypes ruleParamType,
-        uint128 typeSpecificIndex
-    ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns (uint256 trackerIndex) {
-        // set policyId index 0 to passed ID
-        uint256[] memory policyIds = new uint256[](1);
-        policyIds[0] = _policyId;
-
-        // set function signature
-        _addCallingFunctionToPolicyWithString(policyIds[0]);
-
-        // Rule: amount > TR:minTransfer -> revert -> transfer(address _to, uint256 amount) returns (bool)"
-        Rule memory rule;
-
-        // Instruction set: LogicalOp.PLH, 0, LogicalOp.PLH, 1, LogicalOp.EQ, 0, 1
-        rule.instructionSet = new uint256[](7);
-        rule.instructionSet[0] = uint(LogicalOp.PLH);
-        rule.instructionSet[1] = 0;
-        rule.instructionSet[2] = uint(LogicalOp.PLH);
-        rule.instructionSet[3] = 1;
-        rule.instructionSet[4] = uint(LogicalOp.EQ);
-        rule.instructionSet[5] = 0;
-        rule.instructionSet[6] = 1;
-
-        rule.placeHolders = new Placeholder[](2);
-        rule.placeHolders[0].pType = ruleParamType;
-        rule.placeHolders[0].typeSpecificIndex = typeSpecificIndex;
-        rule.placeHolders[1].pType = trackerKeyType;
-        rule.placeHolders[1].flags = FLAG_TRACKER_VALUE;
-        rule.placeHolders[1].typeSpecificIndex = 1;
-        rule.placeHolders[1].mappedTrackerKey = abi.encodePacked(trackerKeys[0]);
-
-        rule.effectPlaceHolders = new Placeholder[](1);
-        rule.effectPlaceHolders[0].pType = ParamTypes.BYTES;
-        rule.effectPlaceHolders[0].typeSpecificIndex = 2;
-        // Add a negative/positive effects
-        rule.negEffects = new Effect[](1);
-        rule.posEffects = new Effect[](1);
-        rule.negEffects[0] = effectId_revert;
-        rule.posEffects[0] = effectId_event;
-
-        // Add the tracker
-        trackerIndex = RulesEngineComponentFacet(address(red)).createTracker(
-            policyIds[0],
-            tracker,
-            trackerName,
-            trackerKeys,
-            trackerValues
-        );
-        // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-
-        ruleIds.push(new uint256[](1));
-        ruleIds[0][0] = ruleId;
-        _addRuleIdsToPolicy(policyIds[0], ruleIds);
-
-        vm.stopPrank();
-        vm.startPrank(callingContractAdmin);
-        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
-
-        return (trackerIndex);
-    }
-
-    function _setupRuleWithMappedTrackerInstructionSetCompare(
-        uint256 _policyId,
-        Trackers memory tracker,
-        ParamTypes placeHolderValueType,
-        ParamTypes placeHolderValueType2,
+        ParamTypes keyValueType,
+        ParamTypes valueValueType,
         ParamTypes trackerValueType,
-        uint128 placeHolderTypeSpecificIndex,
-        uint128 placeHolderTypeSpecificIndex2,
+        uint128 keyTypeSpecificIndex,
+        uint128 valueTypeSpecificIndex,
         bytes[] memory trackerKeys,
         bytes[] memory trackerValues,
         string memory trackerName
@@ -1455,10 +1386,10 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.instructionSet = _createInstructionSetMappedTracker();
 
         rule.placeHolders = new Placeholder[](3);
-        rule.placeHolders[0].pType = placeHolderValueType;
-        rule.placeHolders[0].typeSpecificIndex = placeHolderTypeSpecificIndex;
-        rule.placeHolders[1].pType = placeHolderValueType2;
-        rule.placeHolders[1].typeSpecificIndex = placeHolderTypeSpecificIndex2;
+        rule.placeHolders[0].pType = keyValueType;
+        rule.placeHolders[0].typeSpecificIndex = keyTypeSpecificIndex;
+        rule.placeHolders[1].pType = valueValueType;
+        rule.placeHolders[1].typeSpecificIndex = valueTypeSpecificIndex;
         rule.placeHolders[2].pType = trackerValueType;
         rule.placeHolders[2].flags = FLAG_TRACKER_VALUE;
         rule.placeHolders[2].typeSpecificIndex = 1;

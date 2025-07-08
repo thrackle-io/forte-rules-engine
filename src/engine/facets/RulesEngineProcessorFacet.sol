@@ -490,12 +490,14 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 bytes memory value;
                 ParamTypes typ;
                 if(op == LogicalOp.PLHM) {
-                    uint256 key = mem[_prog[idx+2]];
+                    uint key = mem[_prog[idx+2]];
                     (value, typ) = _getMappedTrackerValue(_policyId, _prog[idx+1], key);
+                    idx += 3;
                 } else {
                     pli = _prog[idx+1];
                     value = _arguments[pli];
                     typ = _placeHolders[pli].pType;
+                    idx += 2;
                 }
                 if(typ == ParamTypes.UINT || typ == ParamTypes.ADDR || typ == ParamTypes.BOOL) {
                     v = abi.decode(value, (uint256));
@@ -505,12 +507,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 } else if(typ == ParamTypes.STATIC_TYPE_ARRAY || typ == ParamTypes.DYNAMIC_TYPE_ARRAY) {
                     // length of array for direct comparison using == and != operations
                     v = abi.decode(value, (uint256));
-                }
-
-                if(op == LogicalOp.PLHM) {
-                    idx += 3;
-                } else {
-                    idx += 2;
                 }
             } else if(op == LogicalOp.TRU) {
                 // update the tracker value
@@ -638,25 +634,17 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         // store the updated value to the tracker mapping
         bytes memory encodedValue;
         bytes memory encodedKey;
-
-        // encode uint key to type
-        if (trk.trackerKeyType == ParamTypes.UINT) {
+        
+        // encode uint key to type 
+        if(trk.trackerKeyType == ParamTypes.UINT || trk.trackerKeyType == ParamTypes.ADDR || trk.trackerKeyType == ParamTypes.BOOL) {
             encodedKey = abi.encode(_mappedTrackerKey);
-        } else if (trk.trackerKeyType == ParamTypes.ADDR) {
-            encodedKey = abi.encode(ProcessorLib._uintToAddr(_mappedTrackerKey));
-        } else if (trk.trackerKeyType == ParamTypes.BOOL) {
-            encodedKey = abi.encode(ProcessorLib._uintToBool(_mappedTrackerKey));
         } else if (trk.trackerKeyType == ParamTypes.BYTES || trk.trackerKeyType == ParamTypes.STR) {
             encodedKey = ProcessorLib._uintToBytes(_mappedTrackerKey);
         }
 
-        if (trk.pType == ParamTypes.UINT) {
+        if (trk.pType == ParamTypes.UINT || trk.pType == ParamTypes.ADDR || trk.pType == ParamTypes.BOOL) {
             encodedValue = abi.encode(_trackerValue);
-        } else if (trk.pType == ParamTypes.ADDR) {
-            encodedValue = abi.encode(ProcessorLib._uintToAddr(_trackerValue));
-        } else if (trk.pType == ParamTypes.BOOL) {
-            encodedValue = abi.encode(ProcessorLib._uintToBool(_trackerValue));
-        } else if (trk.pType == ParamTypes.BYTES) {
+        } else if (trk.pType == ParamTypes.BYTES || trk.pType == ParamTypes.STR) {
             encodedValue = ProcessorLib._uintToBytes(_trackerValue);
         }
         // re encode as bytes to mapping
@@ -667,6 +655,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         assert(lib._getTrackerStorage().trackers[_policyId][_trackerId].mapped);
         ParamTypes keyType = lib._getTrackerStorage().trackers[_policyId][_trackerId].pType;
         bytes memory value = lib._getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][abi.encode(_mappedTrackerKey)];
+        if (value.length == 0) {
+            return (abi.encode(0), keyType);
+        }
         return (value, keyType);
     }
 
@@ -820,18 +811,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
      * @return bytes The encoded value of the requested tracker
      */
     function _handleTrackerValue(uint256 _policyId, Placeholder memory placeholder) internal view returns (bytes memory) {
-        Trackers memory tracker = lib._getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex];
-        if (tracker.mapped) {
-            if (tracker.trackerKeyType == ParamTypes.BYTES || tracker.trackerKeyType == ParamTypes.STR) {
-                return
-                    lib._getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][
-                        abi.encode(keccak256(placeholder.mappedTrackerKey))
-                    ];
-            } else {
-                return lib._getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][placeholder.mappedTrackerKey];
-            }
-        }
-        return tracker.trackerValue;
+        return lib._getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex].trackerValue;
     }
 
     /**
