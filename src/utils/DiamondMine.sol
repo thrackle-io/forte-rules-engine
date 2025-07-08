@@ -16,8 +16,8 @@ import {FacetCut, FacetCutAction} from "diamond-std/core/DiamondCut/DiamondCutLi
 
 /**
  * @title DiamondMine
- * @dev This contract is an abstract template for deploying and configuring a Rules Engine Diamond. It provides functionality 
- *      to deploy the diamond, initialize it with facets, and set up the Rules Engine. The contract uses the diamond proxy 
+ * @dev This contract is an abstract template for deploying and configuring a Rules Engine Diamond. It provides functionality
+ *      to deploy the diamond, initialize it with facets, and set up the Rules Engine. The contract uses the diamond proxy
  *      pattern to enable modular and dynamic functionality.
  * @notice This contract is intended to be reused in scenarios where a Rules Engine Diamond needs to be deployed and configured.
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
@@ -33,9 +33,7 @@ contract DiamondMine is Script {
      * @param owner The address to be set as the owner of the diamond.
      * @return diamond The fully configured Rules Engine Diamond.
      */
-    function createRulesEngineDiamond(
-        address owner
-    ) public returns (RulesEngineDiamond diamond) {
+    function createRulesEngineDiamond(address owner) public returns (RulesEngineDiamond diamond) {
         delete _ruleProcessorFacetCuts;
         // Start by deploying the DiamonInit contract.
         DiamondInit diamondInit = new DiamondInit();
@@ -114,10 +112,7 @@ contract DiamondMine is Script {
 
         /// Build the diamond
         // Deploy the diamond.
-        RulesEngineDiamond rulesEngineInternal = new RulesEngineDiamond(
-            _ruleProcessorFacetCuts,
-            diamondArgs
-        );
+        RulesEngineDiamond rulesEngineInternal = new RulesEngineDiamond(_ruleProcessorFacetCuts, diamondArgs);
         RulesEngineInitialFacet(address(rulesEngineInternal)).initialize(owner);
         return rulesEngineInternal;
     }
@@ -128,9 +123,7 @@ contract DiamondMine is Script {
      * @param facet The name of the facet for which to generate selectors.
      * @return selectors The array of function selectors for the facet.
      */
-    function createSelectorArray(
-        string memory facet
-    ) public returns (bytes4[] memory selectors) {
+    function createSelectorArray(string memory facet) public returns (bytes4[] memory selectors) {
         string[] memory _inputs = new string[](3);
         _inputs[0] = "python3";
         _inputs[1] = "script/python/get_selectors.py";
@@ -157,8 +150,7 @@ contract DiamondMine is Script {
             selectors[11] = RulesEnginePolicyFacet.openPolicy.selector;
             selectors[12] = RulesEnginePolicyFacet.closePolicy.selector;
             return selectors;
-        }
-        else if (keccak256(abi.encodePacked(facet)) == keccak256(abi.encodePacked("RulesEngineComponentFacet"))) {
+        } else if (keccak256(abi.encodePacked(facet)) == keccak256(abi.encodePacked("RulesEngineComponentFacet"))) {
             bytes4[] memory selectors = new bytes4[](8); // Only create enough slots for actual selectors
             selectors[0] = RulesEngineComponentFacet.createCallingFunction.selector;
             selectors[1] = RulesEngineComponentFacet.updateCallingFunction.selector;
@@ -169,8 +161,7 @@ contract DiamondMine is Script {
             selectors[6] = RulesEngineComponentFacet.deleteTracker.selector;
             selectors[7] = RulesEngineComponentFacet.getAllTrackers.selector;
             return selectors;
-        }
-        else if (keccak256(abi.encodePacked(facet)) == keccak256(abi.encodePacked("RulesEngineAdminRolesFacet"))) {
+        } else if (keccak256(abi.encodePacked(facet)) == keccak256(abi.encodePacked("RulesEngineAdminRolesFacet"))) {
             bytes4[] memory selectors = new bytes4[](12); // Only create enough slots for actual selectors
             selectors[0] = RulesEngineAdminRolesFacet.proposeNewPolicyAdmin.selector;
             selectors[1] = RulesEngineAdminRolesFacet.confirmNewPolicyAdmin.selector;
@@ -185,20 +176,17 @@ contract DiamondMine is Script {
             selectors[10] = AccessControlEnumerable.getRoleMemberCount.selector;
             selectors[11] = AccessControl.hasRole.selector;
             return selectors;
-        }
-        else if (keccak256(abi.encodePacked(facet)) == keccak256(abi.encodePacked("RulesEngineInitialFacet"))) {
+        } else if (keccak256(abi.encodePacked(facet)) == keccak256(abi.encodePacked("RulesEngineInitialFacet"))) {
             bytes4[] memory selectors = new bytes4[](1);
             selectors[0] = RulesEngineInitialFacet.initialize.selector;
             return selectors;
-        }
-        else if (keccak256(abi.encodePacked(facet)) == keccak256(abi.encodePacked("RulesEngineProcessorFacet"))) {
+        } else if (keccak256(abi.encodePacked(facet)) == keccak256(abi.encodePacked("RulesEngineProcessorFacet"))) {
             bytes4[] memory selectors = new bytes4[](3);
             selectors[0] = RulesEngineProcessorFacet.checkPolicies.selector;
             selectors[1] = RulesEngineProcessorFacet.evaluateForeignCalls.selector;
             selectors[2] = RulesEngineProcessorFacet.evaluateForeignCallForRule.selector;
             return selectors;
-        }
-        else if (keccak256(abi.encodePacked(facet)) == keccak256(abi.encodePacked("RulesEngineRuleFacet"))) {
+        } else if (keccak256(abi.encodePacked(facet)) == keccak256(abi.encodePacked("RulesEngineRuleFacet"))) {
             bytes4[] memory selectors = new bytes4[](5);
             selectors[0] = RulesEngineRuleFacet.createRule.selector;
             selectors[1] = RulesEngineRuleFacet.updateRule.selector;
@@ -207,7 +195,7 @@ contract DiamondMine is Script {
             selectors[4] = RulesEngineRuleFacet.getAllRules.selector;
             return selectors;
         }
-    
+
         // Default return for unknown facets - empty array
         return new bytes4[](0);
     }
@@ -225,7 +213,7 @@ contract DiamondMine is Script {
             initCalldata: abi.encode(type(IDiamondInit).interfaceId)
         });
 
-        _ruleProcessorFacetCuts.push( 
+        _ruleProcessorFacetCuts.push(
             FacetCut({
                 facetAddress: address(new RulesEngineProcessorFacet()),
                 action: FacetCutAction.Add,
@@ -233,7 +221,7 @@ contract DiamondMine is Script {
             })
         );
 
-        _ruleProcessorFacetCuts.push( 
+        _ruleProcessorFacetCuts.push(
             FacetCut({
                 facetAddress: address(new RulesEnginePolicyFacet()),
                 action: FacetCutAction.Add,
@@ -241,7 +229,7 @@ contract DiamondMine is Script {
             })
         );
 
-        _ruleProcessorFacetCuts.push( 
+        _ruleProcessorFacetCuts.push(
             FacetCut({
                 facetAddress: address(new RulesEngineComponentFacet()),
                 action: FacetCutAction.Add,
@@ -249,7 +237,7 @@ contract DiamondMine is Script {
             })
         );
 
-        _ruleProcessorFacetCuts.push( 
+        _ruleProcessorFacetCuts.push(
             FacetCut({
                 facetAddress: address(new RulesEngineAdminRolesFacet()),
                 action: FacetCutAction.Add,
@@ -257,7 +245,7 @@ contract DiamondMine is Script {
             })
         );
 
-        _ruleProcessorFacetCuts.push( 
+        _ruleProcessorFacetCuts.push(
             FacetCut({
                 facetAddress: address(new RulesEngineInitialFacet()),
                 action: FacetCutAction.Add,
@@ -265,20 +253,17 @@ contract DiamondMine is Script {
             })
         );
 
-        _ruleProcessorFacetCuts.push( 
+        _ruleProcessorFacetCuts.push(
             FacetCut({
                 facetAddress: address(new RulesEngineRuleFacet()),
                 action: FacetCutAction.Add,
                 functionSelectors: createSelectorArrayNoCheatcodes("RulesEngineRuleFacet")
             })
         );
-        
+
         // Deploy the diamond and initialize
-        RulesEngineDiamond rulesEngineInternal = new RulesEngineDiamond(
-            _ruleProcessorFacetCuts,
-            diamondArgs
-        );
-        
+        RulesEngineDiamond rulesEngineInternal = new RulesEngineDiamond(_ruleProcessorFacetCuts, diamondArgs);
+
         RulesEngineInitialFacet(address(rulesEngineInternal)).initialize(owner);
         return rulesEngineInternal;
     }

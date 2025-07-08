@@ -3,8 +3,8 @@ pragma solidity ^0.8.24;
 
 /**
  * @title Rules Engine Storage Structures
- * @dev This contract defines the storage structures used throughout the Rules Engine. These structures are used to 
- *      manage policies, rules, trackers, calling functions, foreign calls, and other components of the Rules Engine. 
+ * @dev This contract defines the storage structures used throughout the Rules Engine. These structures are used to
+ *      manage policies, rules, trackers, calling functions, foreign calls, and other components of the Rules Engine.
  *      The storage structures are designed to support modular and efficient data management within the diamond proxy pattern.
  * @notice This contract is a critical component of the Rules Engine, enabling consistent and conflict-free storage management.
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
@@ -13,7 +13,6 @@ pragma solidity ^0.8.24;
 struct InitializedStorage {
     bool initialized;
 }
-
 
 /// Enumerated list of Logical operators used in Rule Engine Run
 /**
@@ -84,12 +83,12 @@ struct Placeholder {
     ParamTypes pType;
     // The index in the specific array for the specified type;
     uint128 typeSpecificIndex;
-    bytes mappedTrackerKey; 
+    bytes mappedTrackerKey;
     // Packed flags/type:
     // - Bit 0: foreignCall flag
     // - Bit 1: trackerValue flag
     // - Bits 2-4: Global variable type (0-7)
-    uint8 flags; 
+    uint8 flags;
 }
 
 /**
@@ -103,15 +102,15 @@ enum TrackerTypes {
 // Effect Structure
 struct Effect {
     bool valid;
-    bool dynamicParam; //bool to determine if event requires  
+    bool dynamicParam; //bool to determine if event requires
     EffectTypes effectType;
-    // event data 
+    // event data
     ParamTypes pType;
     bytes param;
     bytes32 text; // This is used by events to "Name" the event. It is an unindexed bytes32 param in RulesEngineEvent: _eventString. Bytes32 is used to reduce gas costs
     string errorMessage;
     // The instruction set that will be run at effect execution
-    uint256[] instructionSet;    
+    uint256[] instructionSet;
 }
 
 /// Foreign Call Structures
@@ -159,7 +158,6 @@ struct Arguments {
     // The actual values of the arguments in order
     bytes[] values;
 }
-
 
 /**
  * Structure used to represent a foreign call that can be made during rule evaluation
@@ -216,7 +214,6 @@ struct Trackers {
     bytes trackerValue;
     // to be added: uint lastUpdatedTimestamp;
     uint256 trackerIndex;
-
 }
 
 /// Calling Function Structures
@@ -249,7 +246,6 @@ struct RuleStorageSet {
  * Structure used to represent an individual rule
  */
 struct Rule {
-
     // The instruction set that will be run at rule evaluation
     uint256[] instructionSet;
     // The raw format string and addresses for values in the instruction set that have already been converted to uint256.
@@ -330,5 +326,3 @@ struct PolicyAssociationStorage {
     mapping(address contractAddress => uint256[]) contractPolicyIdMap;
     mapping(uint256 policyId => address[]) policyIdContractMap;
 }
-
-

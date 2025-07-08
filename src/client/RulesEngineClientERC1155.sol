@@ -11,7 +11,6 @@ import "./RulesEngineClient.sol";
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220, @Palmerg4
  */
 abstract contract RulesEngineClientERC1155 is RulesEngineClient {
-    
     /**
      * @notice Modifier for checking policies before executing the `safeMint` function.
      * @dev Calls the `_checkPoliciesERC1155SafeMint` function to evaluate policies.
@@ -20,7 +19,12 @@ abstract contract RulesEngineClientERC1155 is RulesEngineClient {
      * @param value The value of tokenId being transfered.
      * @param data Generic data to pass along with the transfer.
      */
-    modifier checksPoliciesERC1155MintBefore(address to, uint256 tokenId, uint256 value, bytes memory data) {
+    modifier checksPoliciesERC1155MintBefore(
+        address to,
+        uint256 tokenId,
+        uint256 value,
+        bytes memory data
+    ) {
         _checkPoliciesERC1155Mint(to, tokenId, value, data);
         _;
     }
@@ -33,7 +37,12 @@ abstract contract RulesEngineClientERC1155 is RulesEngineClient {
      * @param value The value of tokenId being transfered.
      * @param data Generic data to pass along with the transfer.
      */
-    modifier checksPoliciesERC1155MintAfter(address to, uint256 tokenId, uint256 value, bytes memory data) {
+    modifier checksPoliciesERC1155MintAfter(
+        address to,
+        uint256 tokenId,
+        uint256 value,
+        bytes memory data
+    ) {
         _;
         _checkPoliciesERC1155Mint(to, tokenId, value, data);
     }
@@ -46,7 +55,12 @@ abstract contract RulesEngineClientERC1155 is RulesEngineClient {
      * @param values The values of tokenIds being transfered.
      * @param data Generic data to pass along with the transfer.
      */
-    modifier checksPoliciesERC1155BatchMintBefore(address to, uint256[] memory tokenIds, uint256[] memory values, bytes memory data) {
+    modifier checksPoliciesERC1155BatchMintBefore(
+        address to,
+        uint256[] memory tokenIds,
+        uint256[] memory values,
+        bytes memory data
+    ) {
         _checkPoliciesERC1155MintBatch(to, tokenIds, values, data);
         _;
     }
@@ -59,7 +73,12 @@ abstract contract RulesEngineClientERC1155 is RulesEngineClient {
      * @param values The values of tokenIds being transfered.
      * @param data Generic data to pass along with the transfer.
      */
-    modifier checksPoliciesERC1155BatchMintAfter(address to, uint256[] memory tokenIds, uint256[] memory values, bytes memory data) {
+    modifier checksPoliciesERC1155BatchMintAfter(
+        address to,
+        uint256[] memory tokenIds,
+        uint256[] memory values,
+        bytes memory data
+    ) {
         _;
         _checkPoliciesERC1155MintBatch(to, tokenIds, values, data);
     }
@@ -73,8 +92,14 @@ abstract contract RulesEngineClientERC1155 is RulesEngineClient {
      * @param value The value of tokenId being transfered.
      * @param data Generic data to pass along with the transfer.
      */
-    modifier checksPoliciesERC1155SafeTransferFromBefore(address from, address to, uint256 tokenId, uint256 value, bytes memory data) {
-       _checkPoliciesERC1155SafeTransferFrom(from, to, tokenId, value, data);
+    modifier checksPoliciesERC1155SafeTransferFromBefore(
+        address from,
+        address to,
+        uint256 tokenId,
+        uint256 value,
+        bytes memory data
+    ) {
+        _checkPoliciesERC1155SafeTransferFrom(from, to, tokenId, value, data);
         _;
     }
 
@@ -87,7 +112,13 @@ abstract contract RulesEngineClientERC1155 is RulesEngineClient {
      * @param value The value of tokenId being transfered.
      * @param data Generic data to pass along with the transfer.
      */
-    modifier checksPoliciesERC1155SafeTransferFromAfter(address from, address to, uint256 tokenId, uint256 value, bytes memory data) {
+    modifier checksPoliciesERC1155SafeTransferFromAfter(
+        address from,
+        address to,
+        uint256 tokenId,
+        uint256 value,
+        bytes memory data
+    ) {
         _;
         _checkPoliciesERC1155SafeTransferFrom(from, to, tokenId, value, data);
     }
@@ -100,8 +131,14 @@ abstract contract RulesEngineClientERC1155 is RulesEngineClient {
      * @param tokenIds The token identifiers.
      * @param values The values of tokenIds being transfered.
      */
-    modifier checksPoliciesERC1155SafeBatchTransferFromBefore(address from, address to, uint256[] memory tokenIds, uint256[] memory values, bytes memory data) {
-       _checkPoliciesERC1155SafeBatchTransferFrom(from, to, tokenIds, values, data);
+    modifier checksPoliciesERC1155SafeBatchTransferFromBefore(
+        address from,
+        address to,
+        uint256[] memory tokenIds,
+        uint256[] memory values,
+        bytes memory data
+    ) {
+        _checkPoliciesERC1155SafeBatchTransferFrom(from, to, tokenIds, values, data);
         _;
     }
 
@@ -113,7 +150,13 @@ abstract contract RulesEngineClientERC1155 is RulesEngineClient {
      * @param tokenIds The token identifiers.
      * @param values The values of tokenIds being transfered.
      */
-    modifier checksPoliciesERC1155SafeBatchTransferFromAfter(address from, address to, uint256[] memory tokenIds, uint256[] memory values, bytes memory data) {
+    modifier checksPoliciesERC1155SafeBatchTransferFromAfter(
+        address from,
+        address to,
+        uint256[] memory tokenIds,
+        uint256[] memory values,
+        bytes memory data
+    ) {
         _;
         _checkPoliciesERC1155SafeBatchTransferFrom(from, to, tokenIds, values, data);
     }
@@ -139,7 +182,12 @@ abstract contract RulesEngineClientERC1155 is RulesEngineClient {
      * @param _values The values of tokenIds being transfered.
      * @param _data Generic data to pass along with the transfer.
      */
-    function _checkPoliciesERC1155MintBatch(address _to, uint256[] memory _tokenIds, uint256[] memory _values, bytes memory _data) internal {
+    function _checkPoliciesERC1155MintBatch(
+        address _to,
+        uint256[] memory _tokenIds,
+        uint256[] memory _values,
+        bytes memory _data
+    ) internal {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, _to, _tokenIds, _values, _data, msg.sender);
         _invokeRulesEngine(encoded);
     }
@@ -153,7 +201,13 @@ abstract contract RulesEngineClientERC1155 is RulesEngineClient {
      * @param _value The value of tokenId being transfered.
      * @param _data Generic data to pass along with the transfer.
      */
-    function _checkPoliciesERC1155SafeTransferFrom(address _from, address _to, uint256 _tokenId, uint256 _value, bytes memory _data) internal {
+    function _checkPoliciesERC1155SafeTransferFrom(
+        address _from,
+        address _to,
+        uint256 _tokenId,
+        uint256 _value,
+        bytes memory _data
+    ) internal {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, _from, _to, _tokenId, _value, _data, msg.sender);
         _invokeRulesEngine(encoded);
     }
@@ -167,7 +221,13 @@ abstract contract RulesEngineClientERC1155 is RulesEngineClient {
      * @param _values The values of tokenIds being transfered.
      * @param _data Generic data to pass along with the transfer.
      */
-    function _checkPoliciesERC1155SafeBatchTransferFrom(address _from, address _to, uint256[] memory _tokenIds, uint256[] memory _values, bytes memory _data) internal {
+    function _checkPoliciesERC1155SafeBatchTransferFrom(
+        address _from,
+        address _to,
+        uint256[] memory _tokenIds,
+        uint256[] memory _values,
+        bytes memory _data
+    ) internal {
         bytes memory encoded = abi.encodeWithSelector(msg.sig, _from, _to, _tokenIds, _values, _data, msg.sender);
         _invokeRulesEngine(encoded);
     }

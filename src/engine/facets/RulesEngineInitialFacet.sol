@@ -8,7 +8,7 @@ import "src/engine/facets/FacetCommonImports.sol";
  * @notice This contract is a critical component of the Rules Engine
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
-contract RulesEngineInitialFacet is FacetCommonImports{
+contract RulesEngineInitialFacet is FacetCommonImports {
     bool private initialized;
 
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -22,7 +22,7 @@ contract RulesEngineInitialFacet is FacetCommonImports{
      */
     function initialize(address owner) external onlyOnce {
         InitializedStorage storage init = lib._initializedStorage();
-        if(init.initialized) revert ("AlreadyInitialized");
+        if (init.initialized) revert("AlreadyInitialized");
         _callAnotherFacet(0xf2fde38b, abi.encodeWithSignature("transferOwnership(address)", owner));
     }
 
@@ -34,8 +34,17 @@ contract RulesEngineInitialFacet is FacetCommonImports{
      * @param instructionSetId The ID of the instruction set to retrieve the raw string from.
      * @return retVal A `StringVerificationStruct` containing the raw string data for the specified instruction set.
      */
-    function retrieveRawStringFromInstructionSet(uint256 policyId, uint256 ruleId, uint256 instructionSetId) public view returns (StringVerificationStruct memory retVal) {
-        (uint256 instructionSetValue, bytes memory encoded) = _retreiveRawEncodedFromInstructionSet(policyId, ruleId, instructionSetId, ParamTypes.STR);
+    function retrieveRawStringFromInstructionSet(
+        uint256 policyId,
+        uint256 ruleId,
+        uint256 instructionSetId
+    ) public view returns (StringVerificationStruct memory retVal) {
+        (uint256 instructionSetValue, bytes memory encoded) = _retreiveRawEncodedFromInstructionSet(
+            policyId,
+            ruleId,
+            instructionSetId,
+            ParamTypes.STR
+        );
         retVal.rawData = abi.decode(encoded, (string));
         retVal.instructionSetValue = instructionSetValue;
     }
@@ -49,8 +58,17 @@ contract RulesEngineInitialFacet is FacetCommonImports{
      * @param instructionSetId The ID of the instruction set to retrieve the address verification structure from.
      * @return retVal The AddressVerificationStruct containing the raw address data.
      */
-    function retrieveRawAddressFromInstructionSet(uint256 policyId, uint256 ruleId, uint256 instructionSetId) public view returns (AddressVerificationStruct memory retVal) {
-        (uint256 instructionSetValue, bytes memory encoded) = _retreiveRawEncodedFromInstructionSet(policyId, ruleId, instructionSetId, ParamTypes.ADDR);
+    function retrieveRawAddressFromInstructionSet(
+        uint256 policyId,
+        uint256 ruleId,
+        uint256 instructionSetId
+    ) public view returns (AddressVerificationStruct memory retVal) {
+        (uint256 instructionSetValue, bytes memory encoded) = _retreiveRawEncodedFromInstructionSet(
+            policyId,
+            ruleId,
+            instructionSetId,
+            ParamTypes.ADDR
+        );
         retVal.rawData = abi.decode(encoded, (address));
         retVal.instructionSetValue = instructionSetValue;
     }
@@ -64,14 +82,19 @@ contract RulesEngineInitialFacet is FacetCommonImports{
      * @return instructionSetValue The value of the instruction set.
      * @return encoded The raw encoded data associated with the instruction set.
      */
-    function _retreiveRawEncodedFromInstructionSet(uint256 _policyId, uint256 _ruleId, uint256 _instructionSetId, ParamTypes _pType) internal view returns (uint256 instructionSetValue, bytes memory encoded) {
+    function _retreiveRawEncodedFromInstructionSet(
+        uint256 _policyId,
+        uint256 _ruleId,
+        uint256 _instructionSetId,
+        ParamTypes _pType
+    ) internal view returns (uint256 instructionSetValue, bytes memory encoded) {
         RuleStorageSet memory _ruleStorage = lib._getRuleStorage().ruleStorageSets[_policyId][_ruleId];
-        if(!_ruleStorage.set) {
+        if (!_ruleStorage.set) {
             revert("Unknown Rule");
         }
-        for(uint256 i = 0; i < _ruleStorage.rule.rawData.instructionSetIndex.length; i++) {
-            if(_ruleStorage.rule.rawData.instructionSetIndex[i] == _instructionSetId) {
-                if(_ruleStorage.rule.rawData.argumentTypes[i] != _pType) {
+        for (uint256 i = 0; i < _ruleStorage.rule.rawData.instructionSetIndex.length; i++) {
+            if (_ruleStorage.rule.rawData.instructionSetIndex[i] == _instructionSetId) {
+                if (_ruleStorage.rule.rawData.argumentTypes[i] != _pType) {
                     revert("Incorrect type");
                 }
                 encoded = _ruleStorage.rule.rawData.dataValues[i];

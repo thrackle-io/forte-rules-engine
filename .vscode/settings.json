@@ -1,4 +1,7 @@
 {
-    "editor.formatOnSave": false,
-    "editor.formatOnSaveMode": "modifications"
+    "[solidity]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "JuanBlanco.solidity"
+    },
+    "prettier.documentSelectors": ["**/*.sol"]
 }

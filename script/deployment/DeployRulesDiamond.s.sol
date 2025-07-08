@@ -8,7 +8,8 @@ import {IDiamondInit} from "diamond-std/initializers/IDiamondInit.sol";
 import {DiamondInit} from "diamond-std/initializers/DiamondInit.sol";
 import {FacetCut, FacetCutAction} from "diamond-std/core/DiamondCut/DiamondCutLib.sol";
 import {IDiamondCut} from "diamond-std/core/DiamondCut/IDiamondCut.sol";
-import "test/clientContractExamples/ExampleUserContract.sol";
+import {IDiamondLoupe} from "lib/diamond-std/core/DiamondLoupe/IDiamondLoupe.sol";
+import {IERC173} from "lib/diamond-std/implementations/ERC173/IERC173.sol";
 
 /**
  * @title DeployRulesDiamond
@@ -19,33 +20,35 @@ import "test/clientContractExamples/ExampleUserContract.sol";
  * Additionally, it updates environment variables with the deployed contract addresses.
  */
 contract DeployRulesDiamond is DiamondMine {
-
     /**
      * @notice Deploys the RulesEngineDiamond and ExampleUserContract, and sets up the environment variables.
      * @dev Uses environment variables for deployment owner address and private key.
      */
     function run() external {
-        // Address and Private Key used for deployment
+        // Validate environment before deployment
+        validateEnvironment();
+
         address owner = vm.envAddress("DEPLOYMENT_OWNER");
         uint256 privateKey = vm.envUint("DEPLOYMENT_OWNER_KEY");
-        
+
+        console.log("Starting deployment with owner:", owner);
+
         vm.startBroadcast(privateKey);
 
         // Deploy the RulesEngineDiamond contract
         RulesEngineDiamond diamond = createRulesEngineDiamond(owner);
+
+        vm.stopBroadcast();
+
+        // Verify deployment
+        verifyDeployment(address(diamond), owner);
+
+        // Update environment variables
         string memory diamondAddress = vm.toString(address(diamond));
         setENVAddress("DIAMOND_ADDRESS", diamondAddress);
 
-        // Deploy the ExampleUserContract
-        ExampleUserContract cont = new ExampleUserContract();
-        string memory contractAddress = vm.toString(address(cont));
-        setENVAddress("EXAMPLE_CONTRACT_ADDRESS", contractAddress);
-
-        // Connect the ExampleUserContract to the RulesEngineDiamond and set the admin
-        cont.setRulesEngineAddress(address(diamond));
-        cont.setCallingContractAdmin(owner); 
-
-        vm.stopBroadcast();
+        console.log("Deployment completed successfully");
+        console.log("Diamond address:", diamondAddress);
     }
 
     /**
@@ -64,4 +67,36 @@ contract DeployRulesDiamond is DiamondMine {
         vm.ffi(setENVInput);
     }
 
+    /**
+     * @notice Validates that all required environment variables are properly set before deployment.
+     * @dev Checks for DEPLOYMENT_OWNER, DEPLOYMENT_OWNER_KEY, and ETH_RPC_URL environment variables.
+     */
+    function validateEnvironment() internal view {
+        // Validate required environment variables
+        require(vm.envAddress("DEPLOYMENT_OWNER") != address(0), "DEPLOYMENT_OWNER not set");
+        require(vm.envUint("DEPLOYMENT_OWNER_KEY") != 0, "DEPLOYMENT_OWNER_KEY not set");
+        require(bytes(vm.envString("ETH_RPC_URL")).length > 0, "ETH_RPC_URL not set");
+    }
+
+    /**
+     * @notice Verifies that the diamond contract was deployed successfully and is properly configured.
+     * @dev Performs comprehensive checks on the deployed diamond including code presence, ownership, and facet installation.
+     * @param diamond The address of the deployed diamond contract to verify.
+     * @param expectedOwner The expected owner address that should be set on the diamond.
+     */
+    function verifyDeployment(address diamond, address expectedOwner) internal view {
+        // Verify diamond is deployed
+        require(diamond != address(0), "Diamond not deployed");
+        require(diamond.code.length > 0, "Diamond has no code");
+
+        // Verify owner is set correctly
+        require(IERC173(diamond).owner() == expectedOwner, "Owner mismatch");
+
+        // Verify facets are properly installed
+        IDiamondLoupe.Facet[] memory facets = IDiamondLoupe(diamond).facets();
+        require(facets.length > 0, "No facets installed");
+
+        console.log("Deployment verified successfully");
+        console.log("Facets installed:", facets.length);
+    }
 }

@@ -32,10 +32,10 @@ struct RulesEngineDiamondStorage {
 
 /**
  * @title Rules Engine Diamond Library
- * @dev This library implements the core functionality for managing facets in the diamond proxy pattern. It provides 
- *      functions for adding, replacing, and removing facets, as well as initializing diamond cuts. The library also 
+ * @dev This library implements the core functionality for managing facets in the diamond proxy pattern. It provides
+ *      functions for adding, replacing, and removing facets, as well as initializing diamond cuts. The library also
  *      enforces rules for facet management and ensures that only valid operations are performed.
- * @notice This library is a critical component of the Rules Engine, enabling dynamic and modular functionality through 
+ * @notice This library is a critical component of the Rules Engine, enabling dynamic and modular functionality through
  *         the diamond proxy pattern.
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */

@@ -5,17 +5,15 @@ import "src/engine/facets/RulesEngineAdminRolesFacet.sol";
 import "src/engine/facets/RulesEngineComponentFacet.sol";
 import {RulesEngineStorageLib as StorageLib} from "src/engine/facets/RulesEngineStorageLib.sol";
 
-
 /**
  * @title Rules Engine Policy Facet
- * @dev This contract serves as the primary data facet for the Rules Engine rules. It is responsible for creating, updating, 
- *      retrieving, and managing rules. It enforces role-based access control and ensures that only authorized 
+ * @dev This contract serves as the primary data facet for the Rules Engine rules. It is responsible for creating, updating,
+ *      retrieving, and managing rules. It enforces role-based access control and ensures that only authorized
  *      users can modify or retrieve data. The contract also supports policy cementing to prevent further modifications.
  * @notice This contract is a critical component of the Rules Engine, enabling secure and flexible policy management.
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 contract RulesEngineRuleFacet is FacetCommonImports {
-
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
     // Rule Management
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -90,7 +88,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
     function deleteRule(uint256 policyId, uint256 ruleId) public policyAdminOnly(policyId, msg.sender) {
         StorageLib._notCemented(policyId);
         delete lib._getRuleStorage().ruleStorageSets[policyId][ruleId];
-        emit RuleDeleted(policyId, ruleId); 
+        emit RuleDeleted(policyId, ruleId);
     }
 
     /**
@@ -115,7 +113,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      */
     function _storeRule(RuleStorage storage _data, uint256 _policyId, uint256 _ruleId, Rule calldata _rule) internal returns (uint256) {
         // Validate that the policy exists
-        if(!lib._getPolicyStorage().policyStorageSets[_policyId].set) revert ("Invalid PolicyId");
+        if (!lib._getPolicyStorage().policyStorageSets[_policyId].set) revert("Invalid PolicyId");
 
         _data.ruleStorageSets[_policyId][_ruleId].set = true;
         _data.ruleStorageSets[_policyId][_ruleId].rule = _rule;

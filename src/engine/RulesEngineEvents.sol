@@ -12,20 +12,20 @@ event RulesEngineEvent(uint256 indexed _eventKey, bytes32 _eventString, bool ind
 event ForeignCallCreated(uint256 indexed policyId, uint256 indexed foreignCallId);
 event ForeignCallUpdated(uint256 indexed policyId, uint256 indexed foreignCallId);
 event ForeignCallDeleted(uint256 indexed policyId, uint256 indexed foreignCallId);
-/// When a Foriegn Call is deleted we delete all Rules associated 
+/// When a Foriegn Call is deleted we delete all Rules associated
 event AssociatedRuleDeleted(uint256 indexed policyId, uint256 indexed foreignCallId);
 
-/// Tracker Events 
+/// Tracker Events
 event TrackerCreated(uint256 indexed policyId, uint256 indexed trackerId);
 event TrackerUpdated(uint256 indexed policyId, uint256 indexed trackerId);
 event TrackerDeleted(uint256 indexed policyId, uint256 indexed trackerId);
 
-/// Rule Events 
+/// Rule Events
 event RuleCreated(uint256 indexed policyId, uint256 indexed ruleId);
 event RuleUpdated(uint256 indexed policyId, uint256 indexed ruleId);
 event RuleDeleted(uint256 indexed policyId, uint256 indexed ruleId);
 
-/// Policy Events 
+/// Policy Events
 event PolicyCreated(uint256 indexed policyId);
 event PolicyUpdated(uint256 indexed policyId);
 event PolicyDeleted(uint256 indexed policyId);
@@ -39,19 +39,18 @@ event PolicySubsciberAdded(uint256 indexed policyId, address indexed subscriber)
 event PolicySubsciberRemoved(uint256 indexed policyId, address indexed subscriber);
 event PolicyDisabled(uint256 indexed policyId);
 
-/// Calling Function Events 
+/// Calling Function Events
 event CallingFunctionCreated(uint256 indexed policyId, uint256 indexed callingFunctionId);
 event CallingFunctionUpdated(uint256 indexed policyId, uint256 indexed callingFunctionId);
 event CallingFunctionDeleted(uint256 indexed policyId, uint256 indexed callingFunctionId);
 
-/// Admin Events 
-event PolicyAdminRoleGranted(address indexed adminAddress, uint256 indexed policyId); 
-event PolicyAdminRoleProposed(address indexed proposedAdminAddress, uint256 indexed policyId); 
-event PolicyAdminRoleConfirmed(address indexed adminAddress, uint256 indexed policyId); 
-event PolicyAdminRoleRenounced(address indexed adminAddress, uint256 indexed policyId); 
-event PolicyAdminRoleRevoked(address indexed adminAddress, uint256 indexed policyId); 
+/// Admin Events
+event PolicyAdminRoleGranted(address indexed adminAddress, uint256 indexed policyId);
+event PolicyAdminRoleProposed(address indexed proposedAdminAddress, uint256 indexed policyId);
+event PolicyAdminRoleConfirmed(address indexed adminAddress, uint256 indexed policyId);
+event PolicyAdminRoleRenounced(address indexed adminAddress, uint256 indexed policyId);
+event PolicyAdminRoleRevoked(address indexed adminAddress, uint256 indexed policyId);
 
-event CallingContractAdminRoleGranted(address indexed callingContract, address indexed adminAddress); 
-event CallingContractAdminRoleProposed(address indexed callingContract, address indexed proposedAdminAddress); 
-event CallingContractAdminRoleConfirmed(address indexed callingContract, address indexed adminAddress); 
-
+event CallingContractAdminRoleGranted(address indexed callingContract, address indexed adminAddress);
+event CallingContractAdminRoleProposed(address indexed callingContract, address indexed proposedAdminAddress);
+event CallingContractAdminRoleConfirmed(address indexed callingContract, address indexed adminAddress);
