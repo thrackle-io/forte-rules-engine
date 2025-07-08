@@ -103,6 +103,12 @@ source .env
 ```
 
 **Direct Forge Deployment**
+Using the bash script
+```bash
+bash script/deployment/SimpleDeploy.sh
+```
+
+Or using forge script directly
 ```bash
 forge script script/deployment/DeployRulesDiamond.s.sol \
   --ffi \
