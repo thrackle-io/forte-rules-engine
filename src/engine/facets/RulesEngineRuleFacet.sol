@@ -169,38 +169,48 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      * @param instructionSet The instructionSet to validate.
      */
     function _validateInstructionSet(uint256[] calldata instructionSet) internal pure {
-        uint memorySize = 90;
-        uint opsSize1 = 3;
-        uint opSizeUpTo2 = 16;
-        uint opSizeUpTo3 = 17;
-        uint opTotalSize = 18;
-        uint expectedDataElements;
-        bool isData;
+        uint memorySize = 90; // size of the mem array
+        uint opsSize1 = 3; // the first 3 opcodes use only one argument
+        uint opSizeUpTo2 = 16; // the first 16 opcodes use up to two arguments
+        uint opSizeUpTo3 = 17; // the first 17 opcodes use up to three arguments
+        uint opTotalSize = 18; // there are a total of 18 opcode in the set LogicalOp
+        uint expectedDataElements; // the number of expected data elements in the instruction set (memory pointers)
+        bool isData; // the first item of an instruction set must be an opcode, so isData must be "initialized" to false
 
+        // we loop through the instructionSet to validate it
         for (uint256 i = 0; i < instructionSet.length; i++) {
+            // we extract the specific item from the validation set which is in memory, and we place it in the stack to save some gas
             uint instruction = instructionSet[i];
             if (isData) {
+                // if the instruction is data, we just check that it won't point to an index outside of max memory size
                 if (instruction > memorySize) revert(MEMORY_OVERFLOW);
+                // we reduce the expectedDataElements count by one, but only if necessary since we can
                 if (expectedDataElements > 1) --expectedDataElements;
                 else {
+                    // if we have no more expected data elements, we can reset the isData flag, and we set the expectedDataElements to 0
                     isData = false;
                     delete expectedDataElements;
                 }
             } else {
+                // if the instruction is not data, we check that it is a valid opcode
                 if (instruction > opTotalSize) revert(INVALID_INSTRUCTION);
+                // NUM is a special case since it can expect any data, so no check is needed next
                 if (instruction == uint(LogicalOp.NUM)) {
                     unchecked {
-                        ++i;
+                        ++i; // we simply incrememt the iterator to skip the next data element
                     }
+                    // we skip setting the isData flag and the expectedDataElements since we won't go through any data
                     continue;
-                } // NUM can expect any data, so no check is needed next
+                }
+                //we set the expectedDataElements based its position inside the LogicalOp enum
                 if (instruction < opsSize1) expectedDataElements = 1;
                 else if (instruction < opSizeUpTo2) expectedDataElements = 2;
                 else if (instruction < opSizeUpTo3) expectedDataElements = 3;
                 else expectedDataElements = 4;
-                isData = true; // we know that following instruction set is a data pointer
+                isData = true; // we know that following instruction(s) is a data pointer
             }
         }
+        // if we have any expected data elements left, it means the instruction set is invalid
         if (expectedDataElements > 0 || isData) revert(INVALID_INSTRUCTION_SET);
     }
 
