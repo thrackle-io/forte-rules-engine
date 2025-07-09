@@ -1365,7 +1365,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         uint256 _policyId, 
         Trackers memory tracker,
         ParamTypes keyValueType,
-        ParamTypes valueValueType,
+        ParamTypes valueType,
         ParamTypes trackerValueType,
         uint128 keyTypeSpecificIndex,
         uint128 valueTypeSpecificIndex,
@@ -1388,7 +1388,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.placeHolders = new Placeholder[](3);
         rule.placeHolders[0].pType = keyValueType;
         rule.placeHolders[0].typeSpecificIndex = keyTypeSpecificIndex;
-        rule.placeHolders[1].pType = valueValueType;
+        rule.placeHolders[1].pType = valueType;
         rule.placeHolders[1].typeSpecificIndex = valueTypeSpecificIndex;
         rule.placeHolders[2].pType = trackerValueType;
         rule.placeHolders[2].flags = FLAG_TRACKER_VALUE;
