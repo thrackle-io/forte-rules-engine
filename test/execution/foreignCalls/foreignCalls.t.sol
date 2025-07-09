@@ -552,4 +552,61 @@ abstract contract foreignCalls is RulesEngineCommon {
         );
         assertTrue(pfcStorage.length == 1, "There should be only be the original foreign call admin");
     }
+
+    function testRulesEngine_Unit_PermissionedForeignCall_removeAll_AddToPolicyAfterRemoval_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        // start test as address 0x55556666
+        vm.startPrank(address(0x55556666));
+        // set the selector from the permissioned foreign call contract
+        bytes4 foreignCallSelector = PermissionedForeignCallTestContract.simpleCheck.selector;
+        permissionedForeignCallContract.setForeignCallAdmin(address(0x55556666), foreignCallSelector);
+
+        // add multiple foreign calls to the master list
+        bytes4 foreignCallSelector2 = PermissionedForeignCallTestContract.square.selector;
+        permissionedForeignCallContract.setForeignCallAdmin(address(0x55556666), foreignCallSelector2);
+        bytes4 foreignCallSelector3 = PermissionedForeignCallTestContract.getInternalValue.selector;
+        permissionedForeignCallContract.setForeignCallAdmin(address(0x55556666), foreignCallSelector3);
+
+        PermissionedForeignCallStorage memory pfcStorage = RulesEngineForeignCallFacet(address(red)).getAllPermissionedFCs();
+        assertEq(pfcStorage.permissionedForeignCallAddresses.length, 3, "There should be three permissioned foreign calls");
+        assertEq(pfcStorage.permissionedForeignCallSignatures.length, 3, "There should be three permissioned foreign call signatures");
+
+        // remove the foreign call from the master list
+        RulesEngineForeignCallFacet(address(red)).removeForeignCallPermissions(pfcContractAddress, foreignCallSelector2);
+        pfcStorage = RulesEngineForeignCallFacet(address(red)).getAllPermissionedFCs();
+        assertEq(pfcStorage.permissionedForeignCallAddresses.length, 2, "There should be two permissioned foreign calls");
+        assertEq(pfcStorage.permissionedForeignCallSignatures.length, 2, "There should be two permissioned foreign call signatures");
+        // check that the foreign call is no longer in the master list
+        assertEq(
+            pfcStorage.permissionedForeignCallSignatures[0],
+            foreignCallSelector,
+            "The first foreign call signature should be the simpleCheck"
+        );
+        assertEq(
+            pfcStorage.permissionedForeignCallSignatures[1],
+            foreignCallSelector3,
+            "The second foreign call signature should be the getInternalValue"
+        );
+
+        // now add the non permissioned FC to a policy
+        vm.stopPrank();
+        vm.startPrank(policyAdmin);
+        uint256 policyId = _createBlankPolicy();
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.UINT;
+        ForeignCall memory fc;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = address(pfcContractAddress);
+        fc.signature = bytes4(keccak256(bytes("square(uint256)")));
+        fc.returnType = ParamTypes.UINT;
+        fc.foreignCallIndex = 0;
+        RulesEngineForeignCallFacet(address(red)).createForeignCall(policyId, fc, "square(uint256)");
+    }
 }

@@ -241,6 +241,7 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
 
     /**
      * @notice Removes all addresses from the permission list for a foreign call.
+     * @notice This function resets the permission list to only include the foreign call admin.
      * @dev This function can only be called by an existing foreign call admin.
      * @param foriegnCallAddress The address of the foreign call contract.
      * @param selector The function selector of the foreign call to remove all permissions from.
@@ -285,7 +286,7 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
     }
 
     /**
-     * @notice Removes a foreign call permission.
+     * @notice Removes foreign call permissions from the contract address and selector pair.
      * @dev This function can only be called by an existing foreign call admin.
      * @param _foriegnCallAddress The address of the foreign call contract.
      * @param _selector The function selector of the foreign call to remove permissions for.
