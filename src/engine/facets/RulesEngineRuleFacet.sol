@@ -31,10 +31,10 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         _validateInstructionSet(rule.instructionSet);
         // rawData
         for (uint i=0; i < rule.rawData.instructionSetIndex.length; i++) {
-            validateInstructionSetIndex(rule.rawData.instructionSetIndex[i]);
+            _validateInstructionSetIndex(rule.rawData.instructionSetIndex[i]);
         }
         for (uint i=0; i < rule.rawData.argumentTypes.length; i++) {
-            validateParamType(rule.rawData.argumentTypes[i]);
+            _validateParamType(rule.rawData.argumentTypes[i]);
         }
         // placeholders
         _validatePlaceholders(rule.placeHolders);
@@ -52,78 +52,6 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         return ruleId;
     }
 
-    function _validateEffects(Effect[] calldata effects) internal pure {
-        for (uint256 i = 0; i < effects.length; i++) {
-            validateEffectType(effects[i].effectType);
-            validateParamType(effects[i].pType);
-            _validateInstructionSet(effects[i].instructionSet);
-        }
-    }
-
-    function _validatePlaceholders(Placeholder[] calldata placeholders) internal pure {
-        for (uint256 i = 0; i < placeholders.length; i++) {
-            validateParamType(placeholders[i].pType);
-            validateInstructionSetIndex(placeholders[i].typeSpecificIndex);
-        }
-    }
-
-    function _validateInstructionSet(uint256[] calldata instructionSet) internal pure {
-        // Ensure the instruction set is not empty
-        // if (instructionSet.length == 0) revert("Instruction set cannot be empty");
-        // Ensure the rest of the instructions are valid
-        uint memorySize = 90;
-        uint opsSize1 = 3;
-        uint opSizeUpTo2 = 17;
-        uint opSizeUpTo3 = 18;
-        uint opTotalSize = 19;
-        uint expectedDataElements;
-        bool isData;
-        
-        for (uint256 i = 0; i < instructionSet.length; i++) {
-            uint instruction = instructionSet[i];
-            if(isData) {
-                if(instruction > memorySize) revert("memory overflow");
-                if(expectedDataElements > 1) --expectedDataElements;
-                else{
-                    isData = false;
-                    delete expectedDataElements;
-                }
-            }else{
-                if(instruction > opTotalSize) revert("invalid instruction"); 
-                if(instruction == uint(LogicalOp.NUM)) {
-                    unchecked{++i;} 
-                    continue;
-                    }// NUM can expect any data, so no check is needed next
-                if(instruction < opsSize1) expectedDataElements = 1;
-                else if(instruction < opSizeUpTo2) expectedDataElements = 2;
-                else if(instruction < opSizeUpTo3) expectedDataElements = 3;
-                else expectedDataElements = 4;
-                isData = true; // we know that following instruction set is a data pointer
-            }
-        }
-        if(expectedDataElements > 0 || isData) revert("invalid instruction set");
-    }
-
-    function validateParamType(ParamTypes paramType) internal pure {
-        uint paramTypesSize = 8;
-        if(uint(paramType) >= paramTypesSize) revert(INVALID_PARAM_TYPE);
-    }
-
-    function validateEffectType(EffectTypes effectType) internal pure {
-        uint EffectTypesSize = 3;
-        if(uint(effectType) >= EffectTypesSize) revert(INVALID_EFFECT_TYPE);
-    }
-
-    function validateTrackerType(TrackerTypes trackerType) internal pure {
-        uint trackerTypesSize = 2;
-        if(uint(trackerType) >= trackerTypesSize) revert(INVALID_TRACKER_TYPE);
-    }
-
-    function validateInstructionSetIndex(uint256 instruction) internal pure{
-        uint memorySize = 90;
-        if(instruction > memorySize) revert("memory overflow");
-    }
-
     /**
      * @notice Updates a rule in storage.
      * @dev Modifies an existing rule in the specified policy. Only accessible by policy admins.
@@ -137,6 +65,23 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         uint256 ruleId,
         Rule calldata rule
     ) external policyAdminOnly(policyId, msg.sender) returns (uint256) {
+        // validate the rule
+        // instructionSet
+        _validateInstructionSet(rule.instructionSet);
+        // rawData
+        for (uint i=0; i < rule.rawData.instructionSetIndex.length; i++) {
+            _validateInstructionSetIndex(rule.rawData.instructionSetIndex[i]);
+        }
+        for (uint i=0; i < rule.rawData.argumentTypes.length; i++) {
+            _validateParamType(rule.rawData.argumentTypes[i]);
+        }
+        // placeholders
+        _validatePlaceholders(rule.placeHolders);
+        _validatePlaceholders(rule.effectPlaceHolders);
+        // effects
+        _validateEffects(rule.posEffects);
+        _validateEffects(rule.negEffects);
+        // proceed to store the rule
         StorageLib._notCemented(policyId);
         // Load the rule data from storage
         RuleStorage storage data = lib._getRuleStorage();
@@ -208,4 +153,97 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         _data.ruleStorageSets[_policyId][_ruleId].rule = _rule;
         return _ruleId;
     }
+
+
+    /**
+     * @notice Validates an array of effects.
+     * @param effects The effects to validate.
+     */
+    function _validateEffects(Effect[] calldata effects) internal pure {
+        for (uint256 i = 0; i < effects.length; i++) {
+            _validateEffectType(effects[i].effectType);
+            _validateParamType(effects[i].pType);
+            _validateInstructionSet(effects[i].instructionSet);
+        }
+    }
+
+    /**
+     * @notice Validates an array of placeholders.
+     * @param placeholders The placeholders to validate.
+     */
+    function _validatePlaceholders(Placeholder[] calldata placeholders) internal pure {
+        for (uint256 i = 0; i < placeholders.length; i++) {
+            _validateParamType(placeholders[i].pType);
+            _validateInstructionSetIndex(placeholders[i].typeSpecificIndex);
+        }
+    }
+
+    /**
+     * @notice Validates an instruction set.
+     * @param instructionSet The instructionSet to validate.
+     */
+    function _validateInstructionSet(uint256[] calldata instructionSet) internal pure {
+        // Ensure the instruction set is not empty
+        // if (instructionSet.length == 0) revert("Instruction set cannot be empty");
+        // Ensure the rest of the instructions are valid
+        uint memorySize = 90;
+        uint opsSize1 = 3;
+        uint opSizeUpTo2 = 17;
+        uint opSizeUpTo3 = 18;
+        uint opTotalSize = 19;
+        uint expectedDataElements;
+        bool isData;
+        
+        for (uint256 i = 0; i < instructionSet.length; i++) {
+            uint instruction = instructionSet[i];
+            if(isData) {
+                if(instruction > memorySize) revert(MEMORY_OVERFLOW);
+                if(expectedDataElements > 1) --expectedDataElements;
+                else{
+                    isData = false;
+                    delete expectedDataElements;
+                }
+            }else{
+                if(instruction > opTotalSize) revert(INVALID_INSTRUCTION); 
+                if(instruction == uint(LogicalOp.NUM)) {
+                    unchecked{++i;} 
+                    continue;
+                    }// NUM can expect any data, so no check is needed next
+                if(instruction < opsSize1) expectedDataElements = 1;
+                else if(instruction < opSizeUpTo2) expectedDataElements = 2;
+                else if(instruction < opSizeUpTo3) expectedDataElements = 3;
+                else expectedDataElements = 4;
+                isData = true; // we know that following instruction set is a data pointer
+            }
+        }
+        if(expectedDataElements > 0 || isData) revert(INVALID_INSTRUCTION_SET);
+    }
+
+    /**
+     * @notice Validates a paramType.
+     * @param paramType The paramType to validate.
+     */
+    function _validateParamType(ParamTypes paramType) internal pure {
+        uint paramTypesSize = 8;
+        if(uint(paramType) >= paramTypesSize) revert(INVALID_PARAM_TYPE);
+    }
+
+    /**
+     * @notice Validates an effect type.
+     * @param effectType The effectType to validate.
+     */
+    function _validateEffectType(EffectTypes effectType) internal pure {
+        uint EffectTypesSize = 3;
+        if(uint(effectType) >= EffectTypesSize) revert(INVALID_EFFECT_TYPE);
+    }
+
+    /**
+     * @notice Validates an instruction set index type.
+     * @param index The index to validate.
+     */
+    function _validateInstructionSetIndex(uint256 index) internal pure{
+        uint memorySize = 90;
+        if(index > memorySize) revert(MEMORY_OVERFLOW);
+    }
+
 }
