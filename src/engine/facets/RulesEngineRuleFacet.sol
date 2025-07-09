@@ -108,15 +108,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
 
     function validateInstructionSetIndex(uint256 instruction) internal pure{
         uint memorySize = 90;
-        assembly {
-            if gt(instruction, memorySize){
-                mstore(0, 0x08c379a000000000000000000000000000000000000000000000000000000000)
-                mstore(0x04,0x20)
-                mstore(0x24,0xf)
-                mstore(0x44, MEMORY_OVERFLOW)
-                revert(0,0x64)
-            }
-        }
+        if(instruction > memorySize) revert("memory overflow");
     }
 
     /**
