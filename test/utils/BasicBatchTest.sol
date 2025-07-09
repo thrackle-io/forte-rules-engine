@@ -3,9 +3,9 @@ pragma solidity ^0.8.24;
 
 import "test/utils/RulesEngineCommon.t.sol";
 import "src/engine/facets/RulesEngineComponentFacet.sol";
+import "src/engine/facets/RulesEngineForeignCallFacet.sol";
 
 contract BasicBatchTest is RulesEngineCommon {
-
     function setUp() public {
         red = createRulesEngineDiamond(address(this));
     }
@@ -29,8 +29,15 @@ contract BasicBatchTest is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 1;
-        calls[1] = abi.encodeWithSelector(RulesEngineComponentFacet.createForeignCall.selector, 1, fc, "simpleCheck(uint256)");
-        calls[2] = abi.encodeWithSelector(RulesEnginePolicyFacet.updatePolicy.selector, 1, blankCallingFunctions, blankCallingFunctionIds, blankRuleIds, PolicyType.CLOSED_POLICY);
+        calls[1] = abi.encodeWithSelector(RulesEngineForeignCallFacet.createForeignCall.selector, 1, fc, "simpleCheck(uint256)");
+        calls[2] = abi.encodeWithSelector(
+            RulesEnginePolicyFacet.updatePolicy.selector,
+            1,
+            blankCallingFunctions,
+            blankCallingFunctionIds,
+            blankRuleIds,
+            PolicyType.CLOSED_POLICY
+        );
         RulesEngineDiamond(red).batch(calls, true);
     }
 }

@@ -14,19 +14,30 @@ contract NewExampleERC20 is ERC20, RulesEngineClientERC20 {
         _mint(to, amount);
     }
 
-    function transfer(address to, uint256 amount) public override checksPoliciesERC20TransferBefore(to, amount, balanceOf(msg.sender), balanceOf(to), block.timestamp) returns (bool) {
+    function transfer(
+        address to,
+        uint256 amount
+    ) public override checksPoliciesERC20TransferBefore(to, amount, balanceOf(msg.sender), balanceOf(to), block.timestamp) returns (bool) {
         super.transfer(to, amount);
         return true;
     }
 
-    function transferFrom(address from, address to, uint256 amount) public override checksPoliciesERC20TransferFromBefore(from, to, amount, balanceOf(from), balanceOf(to), block.timestamp) returns (bool) {
+    function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    )
+        public
+        override
+        checksPoliciesERC20TransferFromBefore(from, to, amount, balanceOf(from), balanceOf(to), block.timestamp)
+        returns (bool)
+    {
         super.transferFrom(from, to, amount);
         return true;
     }
 }
 
 contract ReentrancyTest is RulesEngineCommon {
-
     ExampleReentrancy reentrancy;
     NewExampleERC20 erc20;
 
@@ -36,8 +47,7 @@ contract ReentrancyTest is RulesEngineCommon {
         erc20 = new NewExampleERC20("Test", "TEST");
         erc20.setRulesEngineAddress(address(red));
         erc20.setCallingContractAdmin(address(policyAdmin));
-        
-        
+
         vm.startPrank(user1);
         erc20.mint(user1, 1000000000);
         vm.stopPrank();
@@ -71,7 +81,7 @@ contract ReentrancyTest is RulesEngineCommon {
         // blank slate policy
         vm.startPrank(policyAdmin);
         policyIds[0] = _createBlankPolicy();
-        RulesEngineComponentFacet(address(red)).addClosedPolicySubscriber(policyIds[0], policyAdmin); 
+        RulesEngineComponentFacet(address(red)).addClosedPolicySubscriber(policyIds[0], policyAdmin);
         vm.stopPrank();
         // Add the calling function to the policy
         ParamTypes[] memory pTypes = new ParamTypes[](2);
@@ -115,7 +125,7 @@ contract ReentrancyTest is RulesEngineCommon {
         tracker1.set = true;
 
         // Create a tracker for the rule
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker1, "totalVolume");      
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker1, "totalVolume");
 
         ForeignCallEncodedIndex[] memory encodedIndices = new ForeignCallEncodedIndex[](2);
         encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
@@ -130,15 +140,13 @@ contract ReentrancyTest is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes("transfer(address,uint256)")));
         fc.returnType = ParamTypes.BOOL;
         fc.foreignCallIndex = 0;
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "fcName");
-
-
+        RulesEngineForeignCallFacet(address(red)).createForeignCall(policyIds[0], fc, "fcName");
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
         vm.startPrank(policyAdmin);
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
-        
+
         vm.stopPrank();
         vm.startPrank(policyAdmin);
         RulesEnginePolicyFacet(address(red)).applyPolicy(address(erc20), policyIds);
@@ -152,8 +160,8 @@ contract ReentrancyTest is RulesEngineCommon {
         policyIds[0] = _createBlankPolicy();
         policyIds[1] = _createBlankPolicy();
 
-        RulesEngineComponentFacet(address(red)).addClosedPolicySubscriber(policyIds[0], policyAdmin); 
-        RulesEngineComponentFacet(address(red)).addClosedPolicySubscriber(policyIds[1], policyAdmin); 
+        RulesEngineComponentFacet(address(red)).addClosedPolicySubscriber(policyIds[0], policyAdmin);
+        RulesEngineComponentFacet(address(red)).addClosedPolicySubscriber(policyIds[1], policyAdmin);
         vm.stopPrank();
         // Add the calling function to the policy
         ParamTypes[] memory pTypes = new ParamTypes[](2);
@@ -199,8 +207,8 @@ contract ReentrancyTest is RulesEngineCommon {
         tracker1.set = true;
 
         // Create a tracker for the rule
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker1, "totalVolume");      
-        RulesEngineComponentFacet(address(red)).createTracker(policyIds[1], tracker1, "totalVolume");      
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker1, "totalVolume");
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[1], tracker1, "totalVolume");
         ForeignCallEncodedIndex[] memory encodedIndices = new ForeignCallEncodedIndex[](2);
         encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
         encodedIndices[0].index = 0;
@@ -214,10 +222,8 @@ contract ReentrancyTest is RulesEngineCommon {
         fc.signature = bytes4(keccak256(bytes("transfer(address,uint256)")));
         fc.returnType = ParamTypes.BOOL;
         fc.foreignCallIndex = 0;
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[0], fc, "fcName");
-        RulesEngineComponentFacet(address(red)).createForeignCall(policyIds[1], fc, "fcName");
-
-
+        RulesEngineForeignCallFacet(address(red)).createForeignCall(policyIds[0], fc, "fcName");
+        RulesEngineForeignCallFacet(address(red)).createForeignCall(policyIds[1], fc, "fcName");
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -227,9 +233,21 @@ contract ReentrancyTest is RulesEngineCommon {
         uint256[] memory callingFunctionIdsNew = new uint256[](1);
         callingFunctionIdsNew[0] = callingFunctionId1;
 
-        RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[0], callingFunctionsNew, callingFunctionIdsNew, ruleIds, PolicyType.CLOSED_POLICY);
-        RulesEnginePolicyFacet(address(red)).updatePolicy(policyIds[1], callingFunctionsNew, callingFunctionIdsNew, ruleIds, PolicyType.CLOSED_POLICY);
-        
+        RulesEnginePolicyFacet(address(red)).updatePolicy(
+            policyIds[0],
+            callingFunctionsNew,
+            callingFunctionIdsNew,
+            ruleIds,
+            PolicyType.CLOSED_POLICY
+        );
+        RulesEnginePolicyFacet(address(red)).updatePolicy(
+            policyIds[1],
+            callingFunctionsNew,
+            callingFunctionIdsNew,
+            ruleIds,
+            PolicyType.CLOSED_POLICY
+        );
+
         vm.stopPrank();
         vm.startPrank(policyAdmin);
         RulesEnginePolicyFacet(address(red)).applyPolicy(address(erc20), policyIds);
@@ -270,7 +288,7 @@ contract ReentrancyTest is RulesEngineCommon {
     }
 
     /// forge-config: default.allow_internal_expect_revert = true
-    /// @notice this test is dying in foundry, I believe it might be blowing up the stack too much and foundry can't handle it. We should report this to them. 
+    /// @notice this test is dying in foundry, I believe it might be blowing up the stack too much and foundry can't handle it. We should report this to them.
     // function test_reentrancy_multiple_policies() public ifDeploymentTestsEnabled endWithStopPrank {
     //     _mimickReentrancyMultiplePolicies();
     //     reentrancy.setCallData(abi.encodeWithSelector(ERC20.transfer.selector, address(USER_ADDRESS_2), 4));
