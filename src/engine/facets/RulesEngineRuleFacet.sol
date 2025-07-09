@@ -104,6 +104,11 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         if(uint(paramType) >= paramTypesSize) revert(INVALID_PARAM_TYPE);
     }
 
+    function validateEffectType(EffectTypes effectType) internal pure {
+        uint EffectTypesSize = 3;
+        if(uint(effectType) >= EffectTypesSize) revert(INVALID_EFFECT_TYPE);
+    }
+
     /**
      * @notice Updates a rule in storage.
      * @dev Modifies an existing rule in the specified policy. Only accessible by policy admins.
