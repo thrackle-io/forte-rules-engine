@@ -8,6 +8,7 @@ import "src/engine/facets/RulesEngineProcessorFacet.sol";
 import "src/engine/facets/RulesEnginePolicyFacet.sol";
 import "src/engine/facets/RulesEngineRuleFacet.sol";
 import "src/engine/facets/RulesEngineComponentFacet.sol";
+import "src/engine/facets/RulesEngineForeignCallFacet.sol";
 import "src/engine/facets/RulesEngineAdminRolesFacet.sol";
 import "src/engine/facets/RulesEngineInitialFacet.sol";
 import {IDiamondInit} from "diamond-std/initializers/IDiamondInit.sol";
@@ -80,6 +81,15 @@ contract DiamondMine is Script {
                 facetAddress: address(new RulesEngineComponentFacet()),
                 action: FacetCutAction.Add,
                 functionSelectors: createSelectorArray("RulesEngineComponentFacet")
+            })
+        );
+
+        // Data
+        _ruleProcessorFacetCuts.push(
+            FacetCut({
+                facetAddress: address(new RulesEngineForeignCallFacet()),
+                action: FacetCutAction.Add,
+                functionSelectors: createSelectorArray("RulesEngineForeignCallFacet")
             })
         );
 
@@ -161,8 +171,16 @@ contract DiamondMine is Script {
             selectors[6] = RulesEngineComponentFacet.deleteTracker.selector;
             selectors[7] = RulesEngineComponentFacet.getAllTrackers.selector;
             return selectors;
+        } else if (keccak256(abi.encodePacked(facet)) == keccak256(abi.encodePacked("RulesEngineForeignCallFacet"))) {
+            bytes4[] memory selectors = new bytes4[](5); // Only create enough slots for actual selectors
+            selectors[0] = RulesEngineForeignCallFacet.createForeignCall.selector;
+            selectors[1] = RulesEngineForeignCallFacet.updateForeignCall.selector;
+            selectors[2] = RulesEngineForeignCallFacet.getForeignCall.selector;
+            selectors[3] = RulesEngineForeignCallFacet.deleteForeignCall.selector;
+            selectors[4] = RulesEngineForeignCallFacet.getAllForeignCalls.selector;
+            return selectors;
         } else if (keccak256(abi.encodePacked(facet)) == keccak256(abi.encodePacked("RulesEngineAdminRolesFacet"))) {
-            bytes4[] memory selectors = new bytes4[](12); // Only create enough slots for actual selectors
+            bytes4[] memory selectors = new bytes4[](16); // Only create enough slots for actual selectors
             selectors[0] = RulesEngineAdminRolesFacet.proposeNewPolicyAdmin.selector;
             selectors[1] = RulesEngineAdminRolesFacet.confirmNewPolicyAdmin.selector;
             selectors[2] = RulesEngineAdminRolesFacet.isPolicyAdmin.selector;
@@ -173,8 +191,12 @@ contract DiamondMine is Script {
             selectors[7] = RulesEngineAdminRolesFacet.grantCallingContractRole.selector;
             selectors[8] = RulesEngineAdminRolesFacet.grantCallingContractRoleAccessControl.selector;
             selectors[9] = RulesEngineAdminRolesFacet.grantCallingContractRoleOwnable.selector;
-            selectors[10] = AccessControlEnumerable.getRoleMemberCount.selector;
-            selectors[11] = AccessControl.hasRole.selector;
+            selectors[10] = RulesEngineAdminRolesFacet.grantForeignCallAdminRole.selector;
+            selectors[11] = RulesEngineAdminRolesFacet.isForeignCallAdmin.selector;
+            selectors[12] = RulesEngineAdminRolesFacet.proposeNewForeignCallAdmin.selector;
+            selectors[13] = RulesEngineAdminRolesFacet.confirmNewForeignCallAdmin.selector;
+            selectors[14] = AccessControlEnumerable.getRoleMemberCount.selector;
+            selectors[15] = AccessControl.hasRole.selector;
             return selectors;
         } else if (keccak256(abi.encodePacked(facet)) == keccak256(abi.encodePacked("RulesEngineInitialFacet"))) {
             bytes4[] memory selectors = new bytes4[](1);
@@ -234,6 +256,15 @@ contract DiamondMine is Script {
                 facetAddress: address(new RulesEngineComponentFacet()),
                 action: FacetCutAction.Add,
                 functionSelectors: createSelectorArrayNoCheatcodes("RulesEngineComponentFacet")
+            })
+        );
+
+        // Data
+        _ruleProcessorFacetCuts.push(
+            FacetCut({
+                facetAddress: address(new RulesEngineForeignCallFacet()),
+                action: FacetCutAction.Add,
+                functionSelectors: createSelectorArrayNoCheatcodes("RulesEngineForeignCallFacet")
             })
         );
 

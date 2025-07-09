@@ -14,161 +14,6 @@ import "src/engine/facets/FacetCommonImports.sol";
  */
 contract RulesEngineComponentFacet is FacetCommonImports {
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
-    // Foreign Call Management
-    //-------------------------------------------------------------------------------------------------------------------------------------------------------
-
-    /**
-     * @notice Creates a foreign call and stores it in the contract's storage.
-     * @dev Builds a foreign call structure and maps it to the associated policy ID.
-     * @param _policyId The policy ID the foreign call will be mapped to.
-     * @param _foreignCall The definition of the foreign call to create.
-     * @return The index of the created foreign call.
-     */
-    function createForeignCall(
-        uint256 _policyId,
-        ForeignCall calldata _foreignCall,
-        string calldata foreignCallName
-    ) external returns (uint256) {
-        _policyAdminOnly(_policyId, msg.sender);
-        _notCemented(_policyId);
-        if (_foreignCall.foreignCallAddress == address(0)) revert(ZERO_ADDRESS);
-
-        // Step 1: Generate the foreign call index
-        uint256 foreignCallIndex = _incrementForeignCallIndex(_policyId);
-
-        // Step 2: Store the foreign call
-        _storeForeignCallData(_policyId, _foreignCall, foreignCallIndex);
-
-        // Step 3: Store metadata
-        _storeForeignCallMetadata(_policyId, foreignCallIndex, foreignCallName);
-
-        emit ForeignCallCreated(_policyId, foreignCallIndex);
-        return foreignCallIndex;
-    }
-
-    /**
-     * @notice Updates a foreign call in the contract's storage.
-     * @param policyId The policy ID the foreign call is associated with.
-     * @param foreignCallId The ID of the foreign call to update.
-     * @param foreignCall The updated foreign call structure.
-     * @return fc The updated foreign call structure.
-     */
-    function updateForeignCall(
-        uint256 policyId,
-        uint256 foreignCallId,
-        ForeignCall calldata foreignCall
-    ) external returns (ForeignCall memory fc) {
-        _policyAdminOnly(policyId, msg.sender);
-        _notCemented(policyId);
-        fc = foreignCall;
-        if (fc.foreignCallAddress == address(0)) revert(ZERO_ADDRESS);
-        fc.foreignCallIndex = foreignCallId;
-        _storeForeignCallData(policyId, foreignCall, foreignCallId);
-        emit ForeignCallUpdated(policyId, foreignCallId);
-        return fc;
-    }
-
-    /**
-     * @notice Deletes a foreign call from the contract's storage.
-     * @param policyId The policy ID the foreign call is associated with.
-     * @param foreignCallId The ID of the foreign call to delete.
-     */
-    function deleteForeignCall(uint256 policyId, uint256 foreignCallId) external {
-        _policyAdminOnly(policyId, msg.sender);
-        _notCemented(policyId);
-        delete lib._getForeignCallStorage().foreignCalls[policyId][foreignCallId];
-        emit ForeignCallDeleted(policyId, foreignCallId);
-    }
-
-    /**
-     * @dev Retrieve Foreign Call Set from storage
-     * @param policyId the policy Id of the foreign call to retrieve
-     * @return fc the foreign call set structure
-     */
-    function getAllForeignCalls(uint256 policyId) external view returns (ForeignCall[] memory fc) {
-        // Return the Foreign Call Set data from storage
-        uint256 foreignCallCount = lib._getForeignCallStorage().foreignCallIdxCounter[policyId];
-        ForeignCall[] memory foreignCalls = new ForeignCall[](foreignCallCount);
-        uint256 j = 0;
-        for (uint256 i = 0; i <= foreignCallCount; i++) {
-            if (lib._getForeignCallStorage().foreignCalls[policyId][i].set) {
-                foreignCalls[j] = lib._getForeignCallStorage().foreignCalls[policyId][i];
-                j++;
-            }
-        }
-        return foreignCalls;
-    }
-
-    /**
-     * @notice Retrieves a foreign call from the contract's storage.
-     * @param policyId The policy ID of the foreign call to retrieve.
-     * @param foreignCallId The ID of the foreign call to retrieve.
-     * @return fc The foreign call structure.
-     */
-    function getForeignCall(uint256 policyId, uint256 foreignCallId) public view returns (ForeignCall memory fc) {
-        // Load the Foreign Call data from storage
-        return lib._getForeignCallStorage().foreignCalls[policyId][foreignCallId];
-    }
-
-    /**
-     * @notice retrieves the foreign call metadata
-     * @param policyId The policy ID the foreign call is associated with.
-     * @param foreignCallId The identifier for the foreign call
-     * @return fcMeta the metadata for the foreign call
-     */
-    function getForeignCallMetadata(uint256 policyId, uint256 foreignCallId) public view returns (string memory fcMeta) {
-        return lib._getForeignCallMetadataStorage().foreignCallMetadata[policyId][foreignCallId];
-    }
-
-    /**
-     * @notice Stores a foreign call in the contract's storage.
-     * @dev Ensures the foreign call is properly set before storing it.
-     * @param _policyId The policy ID the foreign call is associated with.
-     * @param _foreignCall The foreign call to store.
-     */
-    function _storeForeignCall(uint256 _policyId, ForeignCall calldata _foreignCall, uint256 _foreignCallIndex) internal {
-        assert(_foreignCall.parameterTypes.length == _foreignCall.encodedIndices.length);
-        require(_foreignCall.foreignCallIndex < MAX_LOOP, "Max foreign calls reached.");
-        require(_foreignCall.parameterTypes.length < MAX_LOOP, "Max foreign parameter types reached.");
-        lib._getForeignCallStorage().foreignCalls[_policyId][_foreignCallIndex] = _foreignCall;
-        lib._getForeignCallStorage().foreignCalls[_policyId][_foreignCallIndex].set = true;
-        lib._getForeignCallStorage().foreignCalls[_policyId][_foreignCallIndex].foreignCallIndex = _foreignCallIndex;
-    }
-
-    /**
-     * @dev Helper function to increment the foreign call index
-     * @dev Ensures the foreign call is properly set before storing it.
-     * @param _policyId The policy ID the foreign call is associated with.
-     */
-    function _incrementForeignCallIndex(uint256 _policyId) private returns (uint256) {
-        ForeignCallStorage storage data = lib._getForeignCallStorage();
-        return ++data.foreignCallIdxCounter[_policyId];
-    }
-
-    /**
-     * @dev Helper function to store the foreign call data
-     * @dev Ensures the foreign call is properly set before storing it.
-     * @param _policyId The policy ID the foreign call is associated with.
-     * @param _foreignCall The foreign call to store.
-     * @param _foreignCallIndex The index of the foreign call.
-     */
-    function _storeForeignCallData(uint256 _policyId, ForeignCall calldata _foreignCall, uint256 _foreignCallIndex) private {
-        ForeignCallStorage storage data = lib._getForeignCallStorage();
-        _storeForeignCall(_policyId, _foreignCall, _foreignCallIndex);
-        data.foreignCallIdxCounter[_policyId] = _foreignCallIndex;
-    }
-
-    /**
-     * @dev Helper function to store the foreign call metadata
-     * @param _policyId The policy ID the foreign call is associated with.
-     * @param _foreignCallIndex The index of the foreign call.
-     * @param _foreignCallName The name of the foreign call.
-     */
-    function _storeForeignCallMetadata(uint256 _policyId, uint256 _foreignCallIndex, string calldata _foreignCallName) private {
-        lib._getForeignCallMetadataStorage().foreignCallMetadata[_policyId][_foreignCallIndex] = _foreignCallName;
-    }
-
-    //-------------------------------------------------------------------------------------------------------------------------------------------------------
     // Tracker Management
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -319,11 +164,11 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param _trackerValue The values for the tracker mapping.
      */
     function _storeTrackerMapping(
-        TrackerStorage storage _data, 
-        uint256 _policyId, 
-        uint256 _trackerIndex, 
-        Trackers memory _tracker, 
-        bytes memory _trackerKey, 
+        TrackerStorage storage _data,
+        uint256 _policyId,
+        uint256 _trackerIndex,
+        Trackers memory _tracker,
+        bytes memory _trackerKey,
         bytes calldata _trackerValue
     ) internal {
         _tracker.mapped = true;
@@ -333,7 +178,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         if (_tracker.trackerKeyType == ParamTypes.BYTES || _tracker.trackerKeyType == ParamTypes.STR) {
             _trackerKey = abi.encode(keccak256(_trackerKey));
         }
-        // use trackerKey and assign value  
+        // use trackerKey and assign value
         _data.mappedTrackerValues[_policyId][_trackerIndex][_trackerKey] = _trackerValue;
     }
 
@@ -398,11 +243,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param index The index of the tracker to retrieve.
      * @return tracker The tracker data.
      */
-    function getMappedTrackerValue(
-        uint256 policyId,
-        uint256 index,
-        bytes memory trackerKey
-    ) public view returns (bytes memory) {
+    function getMappedTrackerValue(uint256 policyId, uint256 index, bytes memory trackerKey) public view returns (bytes memory) {
         // Load the Tracker data from storage
         TrackerStorage storage data = lib._getTrackerStorage();
         ParamTypes trackerKeyType = data.trackers[policyId][index].trackerKeyType;

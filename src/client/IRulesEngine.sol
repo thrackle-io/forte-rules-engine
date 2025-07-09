@@ -24,4 +24,13 @@ interface IRulesEngine {
      * @return bytes32 The ID of the assigned admin role.
      */
     function grantCallingContractRole(address _callingContract, address _account) external returns (bytes32);
+
+    /**
+     * @notice Grants the calling contract admin role to a specified account.
+     * @dev Call this function from your contract to assign the admin role for a specific calling contract.
+     * @param _foreignCallContract The address of the calling contract for which the admin role is being assigned.
+     * @param _account The address of the account to assign the admin role.
+     * @return bytes32 The ID of the assigned admin role.
+     */
+    function grantForeignCallAdminRole(address _foreignCallContract, address _account, bytes4 functionSignature) external returns (bytes32);
 }
