@@ -16,6 +16,7 @@ string constant INVALID_EFFECT_TYPE = "Invalid Effect Type";
 string constant INVALID_INSTRUCTION = "Invalid Instruction";
 string constant INVALID_INSTRUCTION_SET = "Invalid Instruction Set";
 string constant MEMORY_OVERFLOW = "Memory Overflow";
+string constant EMPTY_INSTRUCTION_SET = "Empty Instruction Set";
 
 // Admin Error Constants
 string constant RULES_ENGINE_ONLY = "OnlyRulesEngineCanCreateAdminRoles";

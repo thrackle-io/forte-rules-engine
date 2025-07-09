@@ -26,23 +26,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      * @return ruleId The generated rule ID.
      */
     function createRule(uint256 policyId, Rule calldata rule) external policyAdminOnly(policyId, msg.sender) returns (uint256) {
-        // validate the rule
-        // instructionSet
-        _validateInstructionSet(rule.instructionSet);
-        // rawData
-        for (uint i = 0; i < rule.rawData.instructionSetIndex.length; i++) {
-            _validateInstructionSetIndex(rule.rawData.instructionSetIndex[i]);
-        }
-        for (uint i = 0; i < rule.rawData.argumentTypes.length; i++) {
-            _validateParamType(rule.rawData.argumentTypes[i]);
-        }
-        // placeholders
-        _validatePlaceholders(rule.placeHolders);
-        _validatePlaceholders(rule.effectPlaceHolders);
-        // effects
-        _validateEffects(rule.posEffects);
-        _validateEffects(rule.negEffects);
-        // proceed to store the rule
+        _validateRule(rule);
         StorageLib._notCemented(policyId);
         RuleStorage storage data = lib._getRuleStorage();
         uint256 ruleId = ++data.ruleIdCounter[policyId];
@@ -65,23 +49,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         uint256 ruleId,
         Rule calldata rule
     ) external policyAdminOnly(policyId, msg.sender) returns (uint256) {
-        // validate the rule
-        // instructionSet
-        _validateInstructionSet(rule.instructionSet);
-        // rawData
-        for (uint i = 0; i < rule.rawData.instructionSetIndex.length; i++) {
-            _validateInstructionSetIndex(rule.rawData.instructionSetIndex[i]);
-        }
-        for (uint i = 0; i < rule.rawData.argumentTypes.length; i++) {
-            _validateParamType(rule.rawData.argumentTypes[i]);
-        }
-        // placeholders
-        _validatePlaceholders(rule.placeHolders);
-        _validatePlaceholders(rule.effectPlaceHolders);
-        // effects
-        _validateEffects(rule.posEffects);
-        _validateEffects(rule.negEffects);
-        // proceed to store the rule
+        _validateRule(rule);
         StorageLib._notCemented(policyId);
         // Load the rule data from storage
         RuleStorage storage data = lib._getRuleStorage();
@@ -154,6 +122,25 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         return _ruleId;
     }
 
+    function _validateRule(Rule calldata rule) internal pure {
+        // instructionSet
+        if (rule.instructionSet.length == 0) revert(EMPTY_INSTRUCTION_SET); // only applies to top level instruction set
+        _validateInstructionSet(rule.instructionSet);
+        // rawData
+        for (uint i = 0; i < rule.rawData.instructionSetIndex.length; i++) {
+            _validateInstructionSetIndex(rule.rawData.instructionSetIndex[i]);
+        }
+        for (uint i = 0; i < rule.rawData.argumentTypes.length; i++) {
+            _validateParamType(rule.rawData.argumentTypes[i]);
+        }
+        // placeholders
+        _validatePlaceholders(rule.placeHolders);
+        _validatePlaceholders(rule.effectPlaceHolders);
+        // effects
+        _validateEffects(rule.posEffects);
+        _validateEffects(rule.negEffects);
+    }
+
     /**
      * @notice Validates an array of effects.
      * @param effects The effects to validate.
@@ -182,9 +169,6 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      * @param instructionSet The instructionSet to validate.
      */
     function _validateInstructionSet(uint256[] calldata instructionSet) internal pure {
-        // Ensure the instruction set is not empty
-        // if (instructionSet.length == 0) revert("Instruction set cannot be empty");
-        // Ensure the rest of the instructions are valid
         uint memorySize = 90;
         uint opsSize1 = 3;
         uint opSizeUpTo2 = 16;
