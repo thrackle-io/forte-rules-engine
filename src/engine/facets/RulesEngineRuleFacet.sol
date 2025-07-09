@@ -109,6 +109,11 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         if(uint(effectType) >= EffectTypesSize) revert(INVALID_EFFECT_TYPE);
     }
 
+    function validateTrackerType(trackerTypes trackerType) internal pure {
+        uint trackerTypesSize = 2;
+        if(uint(trackerType) >= trackerTypesSize) revert(INVALID_TRACKER_TYPE);
+    }
+
     /**
      * @notice Updates a rule in storage.
      * @dev Modifies an existing rule in the specified policy. Only accessible by policy admins.
