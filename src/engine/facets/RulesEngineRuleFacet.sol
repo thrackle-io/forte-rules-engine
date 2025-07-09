@@ -26,6 +26,25 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      * @return ruleId The generated rule ID.
      */
     function createRule(uint256 policyId, Rule calldata rule) external policyAdminOnly(policyId, msg.sender) returns (uint256) {
+        // validate the rule
+        _validateInstructionSet(rule.instructionSet);
+        for(uint i=0; i < rule.posEffects.length; i++) {
+            validateEffectType(rule.posEffects[i].effectType);
+            validateParamType(rule.posEffects[i].pType);
+            _validateInstructionSet(rule.posEffects[i].instructionSet);
+        }
+        for(uint i=0; i < rule.negEffects.length; i++) {
+            validateEffectType(rule.negEffects[i].effectType);
+            validateParamType(rule.negEffects[i].pType);
+            _validateInstructionSet(rule.negEffects[i].instructionSet);
+        }
+        for (uint i=0; i < rule.rawData.instructionSetIndex.length; i++) {
+            validateInstructionSetIndex(rule.rawData.instructionSetIndex[i]);
+        }
+        for (uint i=0; i < rule.rawData.argumentTypes.length; i++) {
+            validateParamType(rule.rawData.argumentTypes[i]);
+        }
+        // proceed to store the rule
         StorageLib._notCemented(policyId);
         RuleStorage storage data = lib._getRuleStorage();
         uint256 ruleId = ++data.ruleIdCounter[policyId];
@@ -35,9 +54,9 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         return ruleId;
     }
 
-    function _validateInstructionSet(int256[] memory instructionSet) internal pure {
+    function _validateInstructionSet(uint256[] calldata instructionSet) internal pure {
         // Ensure the instruction set is not empty
-        if (instructionSet.length == 0) revert("Instruction set cannot be empty");
+        // if (instructionSet.length == 0) revert("Instruction set cannot be empty");
         // Ensure the rest of the instructions are valid
         uint memorySize = 90;
         uint opsSize1 = 3;
@@ -46,26 +65,15 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         uint opTotalSize = 19;
         uint expectedDataElements;
         bool isData;
-        uint instructionSize;
         
         assembly{
-            instructionSize := mload(instructionSet)
+            let offset := instructionSet.offset
+            let instructionSize := instructionSet.length
+            let ptr := mload(0x40) // Load free memory pointer
+            calldatacopy(ptr, offset, mul(0x20, instructionSize)) // Copy calldata to memory
             for {let i := 0} lt(i, instructionSize) {i := add(i, 1)}{
-                let instruction := mload(add(mul(0x20,add(1, i)), instructionSet))
+                let instruction := mload(add(mul(0x20,add(1, i)), ptr))
                 switch isData
-                    case 1{
-                        if gt(instruction, memorySize){
-                            mstore(0, 0x08c379a000000000000000000000000000000000000000000000000000000000)
-                            mstore(0x04,0x20)
-                            mstore(0x24,0xf)
-                            mstore(0x44, MEMORY_OVERFLOW)
-                            revert(0,0x64)
-                        }
-                        expectedDataElements := sub(expectedDataElements, 1)
-                        if iszero(expectedDataElements){
-                            isData := 0
-                        }
-                    }
                     case 0{
                         let found := 0
                         if gt(instruction, sub(opTotalSize, 1)){
@@ -94,6 +102,19 @@ contract RulesEngineRuleFacet is FacetCommonImports {
                             isData := 1
                         }
                     }
+                    default{
+                        if gt(instruction, memorySize){
+                            mstore(0, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                            mstore(0x04,0x20)
+                            mstore(0x24,0xf)
+                            mstore(0x44, MEMORY_OVERFLOW)
+                            revert(0,0x64)
+                        }
+                        expectedDataElements := sub(expectedDataElements, 1)
+                        if iszero(expectedDataElements){
+                            isData := 0
+                        }
+                    }
             }
         }
         if(expectedDataElements > 0 || isData) revert("invalid instruction set");
@@ -109,9 +130,22 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         if(uint(effectType) >= EffectTypesSize) revert(INVALID_EFFECT_TYPE);
     }
 
-    function validateTrackerType(trackerTypes trackerType) internal pure {
+    function validateTrackerType(TrackerTypes trackerType) internal pure {
         uint trackerTypesSize = 2;
         if(uint(trackerType) >= trackerTypesSize) revert(INVALID_TRACKER_TYPE);
+    }
+
+    function validateInstructionSetIndex(uint256 instruction) internal pure{
+        uint memorySize = 90;
+        assembly {
+            if gt(instruction, memorySize){
+                mstore(0, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(0x04,0x20)
+                mstore(0x24,0xf)
+                mstore(0x44, MEMORY_OVERFLOW)
+                revert(0,0x64)
+            }
+        }
     }
 
     /**

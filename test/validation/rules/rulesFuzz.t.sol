@@ -21,8 +21,11 @@ function testRulesEngine_Fuzz_createRule_simple(uint256 _ruleValue, uint256 _tra
         Rule memory rule;
         uint256[] memory policyIds = new uint256[](1); 
         policyIds[0] = _createBlankPolicy();
+        console2.log("a");
         // Build the instruction set for the rule (including placeholders)
         rule.instructionSet = _createInstructionSet(_ruleValue);
+        for (uint256 i = 0; i < rule.instructionSet.length; i++) console2.log("rule.instructionSet",rule.instructionSet[i]);
+        
         // Build the calling function argument placeholder 
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType = ParamTypes.UINT;
@@ -31,6 +34,7 @@ function testRulesEngine_Fuzz_createRule_simple(uint256 _ruleValue, uint256 _tra
         rule.negEffects[0] = effectId_revert;
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        console2.log("c");
 
         ParamTypes[] memory pTypes = new ParamTypes[](2);
         pTypes[0] = ParamTypes.ADDR;
