@@ -66,55 +66,26 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         uint expectedDataElements;
         bool isData;
         
-        assembly{
-            let offset := instructionSet.offset
-            let instructionSize := instructionSet.length
-            let ptr := mload(0x40) // Load free memory pointer
-            calldatacopy(ptr, offset, mul(0x20, instructionSize)) // Copy calldata to memory
-            for {let i := 0} lt(i, instructionSize) {i := add(i, 1)}{
-                let instruction := mload(add(mul(0x20,add(1, i)), ptr))
-                switch isData
-                    case 0{
-                        let found := 0
-                        if gt(instruction, sub(opTotalSize, 1)){
-                             mstore(0, 0x08c379a000000000000000000000000000000000000000000000000000000000)
-                            mstore(0x04,0x20)
-                            mstore(0x24,0x13)
-                            mstore(0x44, INVALID_INSTRUCTION)
-                            revert(0,0x64)
-                        }if iszero(instruction){ // this only works if NUM is at position zero in LogialOp
-                            i := add(i, 1)
-                            found := 1
-                        }if and(iszero(found), lt(instruction, opsSize1)){
-                            expectedDataElements := 1
-                            found := 1
-                            isData := 1
-                        }if and(iszero(found), lt(instruction, opSizeUpTo2)){
-                            expectedDataElements := 2
-                            found := 1
-                            isData := 1
-                        }if and(iszero(found), lt(instruction, opSizeUpTo3)){
-                            expectedDataElements := 3
-                            found := 1
-                            isData := 1
-                        }if iszero(found){
-                            expectedDataElements := 4
-                            isData := 1
-                        }
-                    }
-                    default{
-                        if gt(instruction, memorySize){
-                            mstore(0, 0x08c379a000000000000000000000000000000000000000000000000000000000)
-                            mstore(0x04,0x20)
-                            mstore(0x24,0xf)
-                            mstore(0x44, MEMORY_OVERFLOW)
-                            revert(0,0x64)
-                        }
-                        expectedDataElements := sub(expectedDataElements, 1)
-                        if iszero(expectedDataElements){
-                            isData := 0
-                        }
-                    }
+        for (uint256 i = 0; i < instructionSet.length; i++) {
+            uint instruction = instructionSet[i];
+            if(isData) {
+                if(instruction > memorySize) revert("memory overflow");
+                if(expectedDataElements > 1) --expectedDataElements;
+                else{
+                    isData = false;
+                    delete expectedDataElements;
+                }
+            }else{
+                if(instruction > opTotalSize) revert("invalid instruction"); 
+                if(instruction == uint(LogicalOp.NUM)) {
+                    unchecked{++i;} 
+                    continue;
+                    }// NUM can expect any data, so no check is needed next
+                if(instruction < opsSize1) expectedDataElements = 1;
+                else if(instruction < opSizeUpTo2) expectedDataElements = 2;
+                else if(instruction < opSizeUpTo3) expectedDataElements = 3;
+                else expectedDataElements = 4;
+                isData = true; // we know that following instruction set is a data pointer
             }
         }
         if(expectedDataElements > 0 || isData) revert("invalid instruction set");

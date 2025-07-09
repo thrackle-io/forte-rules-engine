@@ -450,9 +450,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.effectPlaceHolders[1].pType = ParamTypes.ADDR;
         rule.effectPlaceHolders[1].flags = FLAG_TRACKER_VALUE;
         rule.effectPlaceHolders[1].typeSpecificIndex = 1;
-
         ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-
         //build tracker
         Trackers memory tracker;
         /// build the members of the struct:
@@ -2027,7 +2025,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         effect.valid = true;
         effect.effectType = EffectTypes.EXPRESSION;
         effect.text = "";
-        effect.instructionSet = new uint256[](10);
+        effect.instructionSet = new uint256[](11);
         // Foreign Call Placeholder
         effect.instructionSet[0] = uint(LogicalOp.PLH);
         effect.instructionSet[1] = 0;
@@ -2040,6 +2038,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         effect.instructionSet[7] = uint(LogicalOp.TRU);
         effect.instructionSet[8] = 1;
         effect.instructionSet[9] = 2;
+        effect.instructionSet[10] = 0;
 
         return effect;
     }

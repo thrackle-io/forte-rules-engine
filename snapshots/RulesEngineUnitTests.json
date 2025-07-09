@@ -1,8 +1,12 @@
 {
+  "Additional_Encoding_Address_Value": "28593",
   "Additional_Encoding_Bool_Value": "28830",
+  "Additional_Encoding_Bytes_Value": "26289",
   "Additional_Encoding_DynamicArray_Value": "31877",
   "Additional_Encoding_ForeignCall_Value": "33045",
   "Additional_Encoding_StaticArray_Value": "29803",
+  "Additional_Encoding_String_Value": "30649",
+  "Additional_Encoding_Uint_Value": "32615",
   "CheckRules_Event": "33569",
   "CheckRules_Event_CustomParams_Address": "32210",
   "CheckRules_Event_CustomParams_Bool": "32268",
@@ -34,6 +38,8 @@
   "MappedTrackerUpdatedFromEffects_UintToUint": "39610",
   "PauseRuleRecreation": "58594",
   "checkRule_ForeignCall": "57813",
+  "checkRule_ForeignCall_ForeignCallReferenced": "58194",
+  "checkRule_ForeignCall_TrackerValuesUsed": "32680",
   "checkRule_simpleGTEQL": "26808",
   "checkRule_simpleLTEQL": "26837",
   "checkRule_simple_GT": "26649"
