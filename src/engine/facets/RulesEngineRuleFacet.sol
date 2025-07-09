@@ -68,13 +68,13 @@ contract RulesEngineRuleFacet is FacetCommonImports {
                     }
                     case 0{
                         let found := 0
-                        if or(gt(instruction, opTotalSize), eq(instruction, opTotalSize)){
+                        if gt(instruction, sub(opTotalSize, 1)){
                              mstore(0, 0x08c379a000000000000000000000000000000000000000000000000000000000)
                             mstore(0x04,0x20)
                             mstore(0x24,0x13)
                             mstore(0x44, INVALID_INSTRUCTION)
                             revert(0,0x64)
-                        }if iszero(instruction){
+                        }if iszero(instruction){ // this only works if NUM is at position zero in LogialOp
                             i := add(i, 1)
                             found := 1
                         }if and(iszero(found), lt(instruction, opsSize1)){
