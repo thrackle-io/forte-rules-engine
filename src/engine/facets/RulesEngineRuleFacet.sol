@@ -99,6 +99,11 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         if(expectedDataElements > 0 || isData) revert("invalid instruction set");
     }
 
+    function validateParamType(ParamTypes paramType) internal pure {
+        uint paramTypesSize = 8;
+        if(uint(paramType) >= paramTypesSize) revert(INVALID_PARAM_TYPE);
+    }
+
     /**
      * @notice Updates a rule in storage.
      * @dev Modifies an existing rule in the specified policy. Only accessible by policy admins.

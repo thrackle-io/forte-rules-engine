@@ -11,6 +11,7 @@ string constant INVALID_RULE = "Invalid Rule";
 string constant INVALID_SIGNATURE = "Invalid Signature";
 string constant FOREIGN_CALL_NOT_SET = "Foreign Call referenced in rule not set";
 string constant TRACKER_NOT_SET = "Tracker referenced in rule not set";
+string constant INVALID_PARAM_TYPE = "Invalid Param Type";
 uint256 constant INVALID_INSTRUCTION = 0x696e76616c696420696e737472756374696f6e00000000000000000000000000;
 uint256 constant MEMORY_OVERFLOW = 0x6d656d6f7279206f766572666c6f770000000000000000000000000000000000;
 
