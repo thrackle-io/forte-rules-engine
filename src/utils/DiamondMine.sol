@@ -264,7 +264,7 @@ contract DiamondMine is Script {
             FacetCut({
                 facetAddress: address(new RulesEngineForeignCallFacet()),
                 action: FacetCutAction.Add,
-                functionSelectors: createSelectorArray("RulesEngineForeignCallFacet")
+                functionSelectors: createSelectorArrayNoCheatcodes("RulesEngineForeignCallFacet")
             })
         );
 
