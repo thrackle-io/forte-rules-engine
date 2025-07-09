@@ -29,7 +29,6 @@ struct InitializedStorage {
  * EQ - perform a equals comparison with the values at the memory addresses denoted by the next two slots in the instruction set
  * AND - perform a logical AND with the values at the memory addresses denoted by the next two slots in the instruciton set
  * OR - perform a logical OR with the values at the memory addresses denoted by the next two slots in the instruction set
- * ASSIGN - assign the value at the memory address denoted by the next slot in the instruction set to the memory address denoted by the slot after that
  * GTEQL - perform a greater than or equal to comparison with the values at the memory addresses denoted by the next two slots in the instruction set
  * LTEQL - perform a less than or equal to comparison with the values at the memory addresses denoted by the next two slots in the instruction set
  * NOTEQ - perform a not equal to comparison with the values at the memory addresses denoted by the next two slots in the instruction set
@@ -50,7 +49,6 @@ enum LogicalOp {
     EQ,
     AND,
     OR,
-    ASSIGN,
     GTEQL,
     LTEQL,
     NOTEQ,

@@ -30,10 +30,10 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         // instructionSet
         _validateInstructionSet(rule.instructionSet);
         // rawData
-        for (uint i=0; i < rule.rawData.instructionSetIndex.length; i++) {
+        for (uint i = 0; i < rule.rawData.instructionSetIndex.length; i++) {
             _validateInstructionSetIndex(rule.rawData.instructionSetIndex[i]);
         }
-        for (uint i=0; i < rule.rawData.argumentTypes.length; i++) {
+        for (uint i = 0; i < rule.rawData.argumentTypes.length; i++) {
             _validateParamType(rule.rawData.argumentTypes[i]);
         }
         // placeholders
@@ -69,10 +69,10 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         // instructionSet
         _validateInstructionSet(rule.instructionSet);
         // rawData
-        for (uint i=0; i < rule.rawData.instructionSetIndex.length; i++) {
+        for (uint i = 0; i < rule.rawData.instructionSetIndex.length; i++) {
             _validateInstructionSetIndex(rule.rawData.instructionSetIndex[i]);
         }
-        for (uint i=0; i < rule.rawData.argumentTypes.length; i++) {
+        for (uint i = 0; i < rule.rawData.argumentTypes.length; i++) {
             _validateParamType(rule.rawData.argumentTypes[i]);
         }
         // placeholders
@@ -100,11 +100,11 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         Policy storage data = lib._getPolicyStorage().policyStorageSets[policyId].policy;
         bytes4[] memory callingFunctions = data.callingFunctions;
         Rule[][] memory rules = new Rule[][](callingFunctions.length);
-        // Data validation will always ensure callingFunctions.length will be less than MAX_LOOP 
+        // Data validation will always ensure callingFunctions.length will be less than MAX_LOOP
         for (uint256 i = 0; i < callingFunctions.length; i++) {
             uint256[] memory ruleIds = data.callingFunctionsToRuleIds[callingFunctions[i]];
             rules[i] = new Rule[](ruleIds.length);
-            // Data validation will always ensure ruleIds.length will be less than MAX_LOOP 
+            // Data validation will always ensure ruleIds.length will be less than MAX_LOOP
             for (uint256 j = 0; j < ruleIds.length; j++) {
                 if (lib._getRuleStorage().ruleStorageSets[policyId][ruleIds[j]].set) {
                     rules[i][j] = lib._getRuleStorage().ruleStorageSets[policyId][ruleIds[j]].rule;
@@ -154,7 +154,6 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         return _ruleId;
     }
 
-
     /**
      * @notice Validates an array of effects.
      * @param effects The effects to validate.
@@ -188,35 +187,37 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         // Ensure the rest of the instructions are valid
         uint memorySize = 90;
         uint opsSize1 = 3;
-        uint opSizeUpTo2 = 17;
-        uint opSizeUpTo3 = 18;
-        uint opTotalSize = 19;
+        uint opSizeUpTo2 = 16;
+        uint opSizeUpTo3 = 17;
+        uint opTotalSize = 18;
         uint expectedDataElements;
         bool isData;
-        
+
         for (uint256 i = 0; i < instructionSet.length; i++) {
             uint instruction = instructionSet[i];
-            if(isData) {
-                if(instruction > memorySize) revert(MEMORY_OVERFLOW);
-                if(expectedDataElements > 1) --expectedDataElements;
-                else{
+            if (isData) {
+                if (instruction > memorySize) revert(MEMORY_OVERFLOW);
+                if (expectedDataElements > 1) --expectedDataElements;
+                else {
                     isData = false;
                     delete expectedDataElements;
                 }
-            }else{
-                if(instruction > opTotalSize) revert(INVALID_INSTRUCTION); 
-                if(instruction == uint(LogicalOp.NUM)) {
-                    unchecked{++i;} 
+            } else {
+                if (instruction > opTotalSize) revert(INVALID_INSTRUCTION);
+                if (instruction == uint(LogicalOp.NUM)) {
+                    unchecked {
+                        ++i;
+                    }
                     continue;
-                    }// NUM can expect any data, so no check is needed next
-                if(instruction < opsSize1) expectedDataElements = 1;
-                else if(instruction < opSizeUpTo2) expectedDataElements = 2;
-                else if(instruction < opSizeUpTo3) expectedDataElements = 3;
+                } // NUM can expect any data, so no check is needed next
+                if (instruction < opsSize1) expectedDataElements = 1;
+                else if (instruction < opSizeUpTo2) expectedDataElements = 2;
+                else if (instruction < opSizeUpTo3) expectedDataElements = 3;
                 else expectedDataElements = 4;
                 isData = true; // we know that following instruction set is a data pointer
             }
         }
-        if(expectedDataElements > 0 || isData) revert(INVALID_INSTRUCTION_SET);
+        if (expectedDataElements > 0 || isData) revert(INVALID_INSTRUCTION_SET);
     }
 
     /**
@@ -225,7 +226,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      */
     function _validateParamType(ParamTypes paramType) internal pure {
         uint paramTypesSize = 8;
-        if(uint(paramType) >= paramTypesSize) revert(INVALID_PARAM_TYPE);
+        if (uint(paramType) >= paramTypesSize) revert(INVALID_PARAM_TYPE);
     }
 
     /**
@@ -234,16 +235,15 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      */
     function _validateEffectType(EffectTypes effectType) internal pure {
         uint EffectTypesSize = 3;
-        if(uint(effectType) >= EffectTypesSize) revert(INVALID_EFFECT_TYPE);
+        if (uint(effectType) >= EffectTypesSize) revert(INVALID_EFFECT_TYPE);
     }
 
     /**
      * @notice Validates an instruction set index type.
      * @param index The index to validate.
      */
-    function _validateInstructionSetIndex(uint256 index) internal pure{
+    function _validateInstructionSetIndex(uint256 index) internal pure {
         uint memorySize = 90;
-        if(index > memorySize) revert(MEMORY_OVERFLOW);
+        if (index > memorySize) revert(MEMORY_OVERFLOW);
     }
-
 }
