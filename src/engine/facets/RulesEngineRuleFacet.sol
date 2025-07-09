@@ -27,23 +27,21 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      */
     function createRule(uint256 policyId, Rule calldata rule) external policyAdminOnly(policyId, msg.sender) returns (uint256) {
         // validate the rule
+        // instructionSet
         _validateInstructionSet(rule.instructionSet);
-        for(uint i=0; i < rule.posEffects.length; i++) {
-            validateEffectType(rule.posEffects[i].effectType);
-            validateParamType(rule.posEffects[i].pType);
-            _validateInstructionSet(rule.posEffects[i].instructionSet);
-        }
-        for(uint i=0; i < rule.negEffects.length; i++) {
-            validateEffectType(rule.negEffects[i].effectType);
-            validateParamType(rule.negEffects[i].pType);
-            _validateInstructionSet(rule.negEffects[i].instructionSet);
-        }
+        // rawData
         for (uint i=0; i < rule.rawData.instructionSetIndex.length; i++) {
             validateInstructionSetIndex(rule.rawData.instructionSetIndex[i]);
         }
         for (uint i=0; i < rule.rawData.argumentTypes.length; i++) {
             validateParamType(rule.rawData.argumentTypes[i]);
         }
+        // placeholders
+        _validatePlaceholders(rule.placeHolders);
+        _validatePlaceholders(rule.effectPlaceHolders);
+        // effects
+        _validateEffects(rule.posEffects);
+        _validateEffects(rule.negEffects);
         // proceed to store the rule
         StorageLib._notCemented(policyId);
         RuleStorage storage data = lib._getRuleStorage();
@@ -52,6 +50,21 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         data.ruleIdCounter[policyId] = ruleId;
         emit RuleCreated(policyId, ruleId);
         return ruleId;
+    }
+
+    function _validateEffects(Effect[] calldata effects) internal pure {
+        for (uint256 i = 0; i < effects.length; i++) {
+            validateEffectType(effects[i].effectType);
+            validateParamType(effects[i].pType);
+            _validateInstructionSet(effects[i].instructionSet);
+        }
+    }
+
+    function _validatePlaceholders(Placeholder[] calldata placeholders) internal pure {
+        for (uint256 i = 0; i < placeholders.length; i++) {
+            validateParamType(placeholders[i].pType);
+            validateInstructionSetIndex(placeholders[i].typeSpecificIndex);
+        }
     }
 
     function _validateInstructionSet(uint256[] calldata instructionSet) internal pure {
