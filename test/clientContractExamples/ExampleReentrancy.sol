@@ -14,7 +14,7 @@ contract ExampleReentrancy {
     bytes[] public dataHistory2;
     address rulesEngine;
 
-    fallback() external payable {
+    fallback() external {
         if (data.length == 0) {
             data = msg.data;
         }

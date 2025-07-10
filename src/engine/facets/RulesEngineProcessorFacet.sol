@@ -562,6 +562,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
             } else if (op == LogicalOp.DIV) {
                 v = mem[_prog[idx + 1]] / mem[_prog[idx + 2]];
                 idx += 3;
+            } else if (op == LogicalOp.ASSIGN) {
+                v = mem[_prog[idx + 1]];
+                idx += 2;
             } else if (op == LogicalOp.LT) {
                 v = ProcessorLib._boolToUint(mem[_prog[idx + 1]] < mem[_prog[idx + 2]]);
                 idx += 3;

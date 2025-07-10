@@ -170,10 +170,10 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      */
     function _validateInstructionSet(uint256[] calldata instructionSet) internal pure {
         uint memorySize = 90; // size of the mem array
-        uint opsSize1 = 3; // the first 3 opcodes use only one argument
-        uint opSizeUpTo2 = 16; // the first 16 opcodes use up to two arguments
-        uint opSizeUpTo3 = 17; // the first 17 opcodes use up to three arguments
-        uint opTotalSize = 18; // there are a total of 18 opcode in the set LogicalOp
+        uint opsSize1 = 4; // the first 3 opcodes use only one argument
+        uint opSizeUpTo2 = 17; // the first 16 opcodes use up to two arguments
+        uint opSizeUpTo3 = 18; // the first 17 opcodes use up to three arguments
+        uint opTotalSize = 19; // there are a total of 18 opcode in the set LogicalOp
         uint expectedDataElements; // the number of expected data elements in the instruction set (memory pointers)
         bool isData; // the first item of an instruction set must be an opcode, so isData must be "initialized" to false
 

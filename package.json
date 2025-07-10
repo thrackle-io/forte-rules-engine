@@ -10,6 +10,7 @@
     "src/example",
     "out/RulesEngineAdminRolesFacet.sol/RulesEngineAdminRolesFacet.json",
     "out/RulesEngineComponentFacet.sol/RulesEngineComponentFacet.json",
+    "out/RulesEngineForeignCallsFacet.sol/RulesEngineForeignCallsFacet.json",
     "out/RulesEngineDiamond.sol/RulesEngineDiamond.json",
     "out/RulesEnginePolicyFacet.sol/RulesEnginePolicyFacet.json",
     "out/RulesEngineRuleFacet.sol/RulesEngineRuleFacet.json"
