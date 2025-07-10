@@ -52,7 +52,7 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
      * @param policyId The policy ID the foreign call is associated with.
      * @param foreignCallId The ID of the foreign call to update.
      * @param foreignCall The updated foreign call structure.
-     * @return The updated foreign call structure.
+     * @return fc The updated foreign call structure.
      */
     function updateForeignCall(
         uint256 policyId,
