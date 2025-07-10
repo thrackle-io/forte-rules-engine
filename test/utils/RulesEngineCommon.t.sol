@@ -2410,7 +2410,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
         fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 0;
-        RulesEngineComponentFacet(address(red)).createForeignCall(_policyId, fc, "simpleCheck(uint256)");
+        RulesEngineForeignCallFacet(address(red)).createForeignCall(_policyId, fc, "simpleCheck(uint256)");
         return fc;
     }
 
@@ -2427,7 +2427,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.encodedIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
         fc.returnType = ParamTypes.UINT;
         fc.foreignCallIndex = 0;
-        uint256 foreignCallId = RulesEngineComponentFacet(address(red)).createForeignCall(_policyId, fc, "simpleCheck(uint256)");
+        uint256 foreignCallId = RulesEngineForeignCallFacet(address(red)).createForeignCall(_policyId, fc, "simpleCheck(uint256)");
         return (fc, foreignCallId);
     }
 
