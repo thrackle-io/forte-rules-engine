@@ -326,9 +326,9 @@ EOF
 
 *This report is automatically generated from test output.*  
 *To update this report, run: \`./script/reportGas.sh\`*  
-*Rules Engine tests: [\`$GAS_TEST_PATH\`]($GAS_TEST_PATH)*  
-*Hardcoded tests: [\`$HARDCODED_TEST_PATH\`]($HARDCODED_TEST_PATH)*  
-*Snapshots: [\`$SNAPSHOTS_FILE\`]($SNAPSHOTS_FILE)*
+*Rules Engine tests: [\`$GAS_TEST_PATH\`](../$GAS_TEST_PATH)*  
+*Hardcoded tests: [\`$HARDCODED_TEST_PATH\`](../$HARDCODED_TEST_PATH)*  
+*Snapshots: [\`$SNAPSHOTS_FILE\`](../$SNAPSHOTS_FILE)*
 EOF
     
     log_info "Markdown report generated: $OUTPUT_MD_FILE"

@@ -1,6 +1,6 @@
 # Gas Usage Report
 
-**Last Updated:** 2025-07-10 12:53:17 UTC  
+**Last Updated:** 2025-07-10 13:00:44 UTC  
 **Generated automatically by:** `script/reportGas.sh`
 
 ## Purpose
@@ -116,6 +116,6 @@ The following snapshots are taken from automated test runs and represent compreh
 
 *This report is automatically generated from test output.*  
 *To update this report, run: `./script/reportGas.sh`*  
-*Rules Engine tests: [`test/utils/gasReport/GasReport.t.sol`](test/utils/gasReport/GasReport.t.sol)*  
-*Hardcoded tests: [`test/utils/gasReport/GasReportHardcoded.t.sol`](test/utils/gasReport/GasReportHardcoded.t.sol)*  
-*Snapshots: [`snapshots/RulesEngineUnitTests.json`](snapshots/RulesEngineUnitTests.json)*
+*Rules Engine tests: [`test/utils/gasReport/GasReport.t.sol`](../test/utils/gasReport/GasReport.t.sol)*  
+*Hardcoded tests: [`test/utils/gasReport/GasReportHardcoded.t.sol`](../test/utils/gasReport/GasReportHardcoded.t.sol)*  
+*Snapshots: [`snapshots/RulesEngineUnitTests.json`](../snapshots/RulesEngineUnitTests.json)*
