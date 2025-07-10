@@ -1,0 +1,51 @@
+name: Generate Gas Report
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  gas-report:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout the repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Install Foundry
+      uses: foundry-rs/foundry-toolchain@v1
+      with:
+        version: v1.2.1
+
+    - name: Install python dependencies for tests
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-pip
+        pip3 install -r requirements.txt
+        forge soldeer install
+
+    - name: Build the repository
+      run: forge build
+
+    - name: Generate latest gas report
+      run: |
+        bash script/reportGas.sh -v
+
+    - name: Create timestamped archive
+      run: |
+        TIMESTAMP=$(date '+%Y%m%d_%H%M%S')
+        COMMIT_HASH=$(git rev-parse --short HEAD)
+        cp gasReports/GAS_USAGE.md "gasReports/archive/gas-report_${TIMESTAMP}_${COMMIT_HASH}.md"
+
+    - name: Commit gas reports
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add gasReports/
+        if ! git diff --staged --quiet; then
+          git commit -m "📊 Update gas reports for commit $(git rev-parse --short HEAD)"
+          git push
+        fi
