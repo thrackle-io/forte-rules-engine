@@ -184,7 +184,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
             if (isData) {
                 // if the instruction is data, we just check that it won't point to an index outside of max memory size
                 if (instruction > memorySize) revert(MEMORY_OVERFLOW);
-                // we reduce the expectedDataElements count by one, but only if necessary since we can
+                // we reduce the expectedDataElements count by one, but only if necessary
                 if (expectedDataElements > 1) --expectedDataElements;
                 else {
                     // if we have no more expected data elements, we can reset the isData flag, and we set the expectedDataElements to 0
