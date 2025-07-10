@@ -2042,6 +2042,7 @@ abstract contract trackers is RulesEngineCommon {
         RulesEngineForeignCallFacet(address(red)).createForeignCall(policyIds[0], foreignCall2, "testSig2");
 
         Rule memory rule;
+        // PLH 2, NUM 1234, EQ 0, 1, PLH 3, NUM 1234, EQ 4, 5, AND 3, 6
         rule.instructionSet = new uint256[](17);
         rule.instructionSet[0] = uint256(LogicalOp.PLH);
         rule.instructionSet[1] = uint256(2);
