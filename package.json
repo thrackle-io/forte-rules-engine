@@ -12,7 +12,8 @@
     "out/RulesEngineComponentFacet.sol/RulesEngineComponentFacet.json",
     "out/RulesEngineDiamond.sol/RulesEngineDiamond.json",
     "out/RulesEnginePolicyFacet.sol/RulesEnginePolicyFacet.json",
-    "out/RulesEngineRuleFacet.sol/RulesEngineRuleFacet.json"
+    "out/RulesEngineRuleFacet.sol/RulesEngineRuleFacet.json",
+    "out/RulesEngineForeignCallFacet.sol/RulesEngineForeignCallFacet.json"
   ],
   "keywords": [
     "evm",
