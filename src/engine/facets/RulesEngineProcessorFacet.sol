@@ -30,13 +30,13 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
      * @dev Primary entry point for policy checks.
      * @param arguments Function arguments, including the function signature and the arguments to be passed to the function.
      */
-    function checkPolicies(bytes calldata arguments) public {  
+    function checkPolicies(bytes calldata arguments) public {
         // Load the calling function data from storage
-        // Data validation will always ensure policyIds.length will be less than MAX_LOOP 
+        // Data validation will always ensure policyIds.length will be less than MAX_LOOP
         PolicyAssociationStorage storage data = lib._getPolicyAssociationStorage();
         uint256[] memory policyIds = data.contractPolicyIdMap[msg.sender];
         // loop through all the active policies
-        for(uint256 policyIdx = 0; policyIdx < policyIds.length; policyIdx++) _checkPolicy(policyIds[policyIdx], msg.sender, arguments);
+        for (uint256 policyIdx = 0; policyIdx < policyIds.length; policyIdx++) _checkPolicy(policyIds[policyIdx], msg.sender, arguments);
     }
 
     /**
@@ -83,7 +83,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         uint256 lengthToAppend = 0;
         // calculate sizes
         // Data validation will always ensure fc.parameterTypes.length will be less than MAX_LOOP
-        for(uint256 i = 0; i < fc.parameterTypes.length; i++) {
+        for (uint256 i = 0; i < fc.parameterTypes.length; i++) {
             ParamTypes argType = fc.parameterTypes[i];
 
             if (fc.encodedIndices[i].eType != EncodedIndexType.ENCODED_VALUES) {
@@ -373,8 +373,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
     ) internal returns (bool _retVal) {
         _retVal = true;
         uint256 ruleCount = _applicableRules.length;
-        // Data validation will always ensure ruleCount will be less than MAX_LOOP 
-        for(uint256 i = 0; i < ruleCount; i++) { 
+        // Data validation will always ensure ruleCount will be less than MAX_LOOP
+        for (uint256 i = 0; i < ruleCount; i++) {
             Rule storage rule = _ruleData[_applicableRules[i]].rule;
             if (!_evaluateIndividualRule(rule, _policyId, _callingFunctionArgs)) {
                 _retVal = false;
@@ -424,7 +424,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
             placeHolders = _rule.placeHolders;
         }
         bytes[] memory retVals = new bytes[](placeHolders.length);
-        // Data validation will alway ensure ruleCount will be less than MAX_LOOP 
+        // Data validation will alway ensure ruleCount will be less than MAX_LOOP
         ForeignCallEncodedIndex[] memory metadata = new ForeignCallEncodedIndex[](placeHolders.length);
         for (uint256 placeholderIndex = 0; placeholderIndex < placeHolders.length; placeholderIndex++) {
             // Determine if the placeholder represents the return value of a foreign call or a function parameter from the calling function
@@ -482,39 +482,39 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
             uint256 v = 0;
             LogicalOp op = LogicalOp(_prog[idx]);
 
-            if(op == LogicalOp.PLH || op == LogicalOp.PLHM) {
+            if (op == LogicalOp.PLH || op == LogicalOp.PLHM) {
                 // Placeholder format is: get the index of the argument in the array. For example, PLH 0 is the first argument in the arguments array and its type and value
                 uint256 pli;
                 bytes memory value;
                 ParamTypes typ;
-                if(op == LogicalOp.PLHM) {
-                    uint256 key = mem[_prog[idx+2]];
-                    (value, typ) = _getMappedTrackerValue(_policyId, _prog[idx+1], key);
+                if (op == LogicalOp.PLHM) {
+                    uint256 key = mem[_prog[idx + 2]];
+                    (value, typ) = _getMappedTrackerValue(_policyId, _prog[idx + 1], key);
                 } else {
-                    pli = _prog[idx+1];
+                    pli = _prog[idx + 1];
                     value = _arguments[pli];
                     typ = _placeHolders[pli].pType;
                 }
-                if(typ == ParamTypes.UINT) {
+                if (typ == ParamTypes.UINT) {
                     v = abi.decode(value, (uint256));
-                } else if(typ == ParamTypes.ADDR) {
+                } else if (typ == ParamTypes.ADDR) {
                     // Convert address to uint256 for direct comparison using == and != operations
                     v = uint256(uint160(address(abi.decode(value, (address)))));
-                } else if(typ == ParamTypes.STR) {
+                } else if (typ == ParamTypes.STR) {
                     // Convert string to uint256 for direct comparison using == and != operations
                     v = uint256(keccak256(abi.encode(abi.decode(value, (string)))));
-                } else if(typ == ParamTypes.BOOL) {
+                } else if (typ == ParamTypes.BOOL) {
                     // Convert bool to uint256 for direct comparison using == and != operations
                     v = uint256(ProcessorLib._boolToUint((abi.decode(value, (bool)))));
-                } else if(typ == ParamTypes.BYTES) {
+                } else if (typ == ParamTypes.BYTES) {
                     // Convert bytes to uint256 for direct comparison using == and != operations
                     v = uint256(keccak256(abi.encode(abi.decode(value, (bytes)))));
-                } else if(typ == ParamTypes.STATIC_TYPE_ARRAY || typ == ParamTypes.DYNAMIC_TYPE_ARRAY) {
+                } else if (typ == ParamTypes.STATIC_TYPE_ARRAY || typ == ParamTypes.DYNAMIC_TYPE_ARRAY) {
                     // length of array for direct comparison using == and != operations
                     v = abi.decode(value, (uint256));
                 }
 
-                if(op == LogicalOp.PLHM) {
+                if (op == LogicalOp.PLHM) {
                     idx += 3;
                 } else {
                     idx += 2;
@@ -560,9 +560,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 idx += 3;
             } else if (op == LogicalOp.DIV) {
                 v = mem[_prog[idx + 1]] / mem[_prog[idx + 2]];
-                idx += 3;
-            } else if (op == LogicalOp.ASSIGN) {
-                v = mem[_prog[idx + 2]];
                 idx += 3;
             } else if (op == LogicalOp.LT) {
                 v = ProcessorLib._boolToUint(mem[_prog[idx + 1]] < mem[_prog[idx + 2]]);
@@ -675,7 +672,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         lib._getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][encodedKey] = encodedValue;
     }
 
-    function _getMappedTrackerValue(uint256 _policyId, uint256 _trackerId, uint256 _mappedTrackerKey) internal view returns (bytes memory, ParamTypes) {
+    function _getMappedTrackerValue(
+        uint256 _policyId,
+        uint256 _trackerId,
+        uint256 _mappedTrackerKey
+    ) internal view returns (bytes memory, ParamTypes) {
         assert(lib._getTrackerStorage().trackers[_policyId][_trackerId].mapped);
         ParamTypes keyType = lib._getTrackerStorage().trackers[_policyId][_trackerId].pType;
         bytes memory value = lib._getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][abi.encode(_mappedTrackerKey)];
@@ -839,7 +840,10 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         Trackers memory tracker = lib._getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex];
         if (tracker.mapped) {
             if (tracker.trackerKeyType == ParamTypes.BYTES || tracker.trackerKeyType == ParamTypes.STR) {
-                return lib._getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][abi.encode(keccak256(placeholder.mappedTrackerKey))];
+                return
+                    lib._getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][
+                        abi.encode(keccak256(placeholder.mappedTrackerKey))
+                    ];
             } else {
                 return lib._getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][placeholder.mappedTrackerKey];
             }
@@ -887,7 +891,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
     function _doEffects(Rule storage _rule, uint256 _policyId, Effect[] memory _effects, bytes calldata _callingFunctionArgs) internal {
         // Load the Effect data from storage
         // Data validation will always ensure _effects.length will be less than MAX_LOOP
-        for(uint256 i = 0; i < _effects.length; i++) {
+        for (uint256 i = 0; i < _effects.length; i++) {
             Effect memory effect = _effects[i];
             if (effect.valid) {
                 if (effect.effectType == EffectTypes.REVERT) {
@@ -938,8 +942,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         // Build the effect arguments struct for event parameters:
         (bytes[] memory effectArguments, Placeholder[] memory placeholders) = _buildArguments(_rule, _policyId, _callingFunctionArgs, true);
         // Data validation will always ensure effectArguments.length will be less than MAX_LOOP
-        for(uint256 i = 0; i < effectArguments.length; i++) { 
-            // loop through parameter types and set eventParam 
+        for (uint256 i = 0; i < effectArguments.length; i++) {
+            // loop through parameter types and set eventParam
             if (placeholders[i].pType == ParamTypes.UINT) {
                 uint256 uintParam = abi.decode(effectArguments[i], (uint));
                 emit RulesEngineEvent(_policyId, _message, uintParam);
