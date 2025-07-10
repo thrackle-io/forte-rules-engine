@@ -470,7 +470,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
      * @param _placeHolders An array of Placeholder structs used within the program.
      * @param _policyId The ID of the policy associated with the program execution.
      * @param _arguments An array of bytes containing additional arguments for the program.
-     * @return _ans A boolean indicating the result of the program execution.
+     * @return A boolean indicating the result of the program execution.
      */
     function _run(
         uint256[] memory _prog,
@@ -750,8 +750,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
      * @param _callingFunctionArgs Arguments from the original function call, passed to the foreign call as needed
      * @param typeSpecificIndex Index referencing the specific foreign call configuration to execute
      * @param retVals Array containing previously computed return values that might be used as inputs for this call
-     * @return value The encoded return data from the foreign call
-     * @return pType The parameter type of the foreign call's return value
+     * @return The encoded return data from the foreign call
+     * @return The parameter type of the foreign call's return value
      */
     function _handleForeignCall(
         uint256 _policyId,
@@ -996,7 +996,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
      * @param _index The index of the dynamic variable to extract.
      * @return _retVal The extracted dynamic variable as a bytes array.
      */
-    function _getDynamicVariableFromCalldata(bytes calldata _data, uint256 _index) internal pure returns (bytes memory _retVal) {
+    function _getDynamicVariableFromCalldata(bytes calldata _data, uint256 _index) internal pure returns (bytes memory) {
         // Get offset from parameter position, using index * 32 to get the correct position in the calldata
         uint256 offset = uint256(bytes32(_data[_index * 32:(_index + 1) * 32]));
         // Get length from the offset position, using offset + 32 to get the correct position in the calldata

@@ -52,7 +52,7 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
      * @param policyId The policy ID the foreign call is associated with.
      * @param foreignCallId The ID of the foreign call to update.
      * @param foreignCall The updated foreign call structure.
-     * @return fc The updated foreign call structure.
+     * @return The updated foreign call structure.
      */
     function updateForeignCall(
         uint256 policyId,
@@ -84,7 +84,7 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
     /**
      * @dev Retrieve Foreign Call Set from storage
      * @param policyId the policy Id of the foreign call to retrieve
-     * @return fc the foreign call set structure
+     * @return the foreign call set structure
      */
     function getAllForeignCalls(uint256 policyId) external view returns (ForeignCall[] memory) {
         // Return the Foreign Call Set data from storage
@@ -104,7 +104,7 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
      * @notice Retrieves a foreign call from the contract's storage.
      * @param policyId The policy ID of the foreign call to retrieve.
      * @param foreignCallId The ID of the foreign call to retrieve.
-     * @return fc The foreign call structure.
+     * @return The foreign call structure.
      */
     function getForeignCall(uint256 policyId, uint256 foreignCallId) public view returns (ForeignCall memory) {
         // Load the Foreign Call data from storage
@@ -115,7 +115,7 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
      * @notice retrieves the foreign call metadata
      * @param policyId The policy ID the foreign call is associated with.
      * @param foreignCallId The identifier for the foreign call
-     * @return fcMeta the metadata for the foreign call
+     * @return the metadata for the foreign call
      */
     function getForeignCallMetadata(uint256 policyId, uint256 foreignCallId) public view returns (string memory) {
         return lib._getForeignCallMetadataStorage().foreignCallMetadata[policyId][foreignCallId];
