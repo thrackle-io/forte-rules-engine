@@ -50,7 +50,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
      * @param callingFunctionArgs representation of the calling function arguments
      * @param foreignCallIndex Index of the foreign call.
      * @param retVals array of return values from previous foreign calls, trackers, etc.
-     * @return returnValue The output of the foreign call.
+     * @return The output of the foreign call.
      */
     function evaluateForeignCalls(
         uint256 policyId,
@@ -58,7 +58,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         uint256 foreignCallIndex,
         bytes[] memory retVals,
         ForeignCallEncodedIndex[] memory metadata
-    ) public returns (ForeignCallReturnValue memory returnValue) {
+    ) public returns (ForeignCallReturnValue memory) {
         // Load the Foreign Call data from storage
         ForeignCall memory foreignCall = lib._getForeignCallStorage().foreignCalls[policyId][foreignCallIndex];
         if (foreignCall.set) {
@@ -477,7 +477,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         Placeholder[] memory _placeHolders,
         uint256 _policyId,
         bytes[] memory _arguments
-    ) internal returns (bool _ans) {
+    ) internal returns (bool) {
         uint256[90] memory mem;
         uint256 idx = 0;
         uint256 opi = 0;
@@ -759,7 +759,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         uint256 typeSpecificIndex,
         bytes[] memory retVals,
         ForeignCallEncodedIndex[] memory metadata
-    ) internal returns (bytes memory value, ParamTypes pType) {
+    ) internal returns (bytes memory, ParamTypes) {
         ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, _callingFunctionArgs, typeSpecificIndex, retVals, metadata);
         return (retVal.value, retVal.pType);
     }
@@ -775,9 +775,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
      *                     - GLOBAL_BLOCK_NUMBER (4): Current block number
      *                     - GLOBAL_TX_ORIGIN (5): Original transaction sender
      * @return bytes Encoded value of the requested global variable
-     * @return pType Parameter type enum value corresponding to the global variable
+     * @return Parameter type enum value corresponding to the global variable
      */
-    function _handleGlobalVar(uint256 globalVarType) internal view returns (bytes memory, ParamTypes pType) {
+    function _handleGlobalVar(uint256 globalVarType) internal view returns (bytes memory, ParamTypes) {
         if (globalVarType == GLOBAL_MSG_SENDER) {
             return (abi.encode(msg.sender), ParamTypes.ADDR);
         } else if (globalVarType == GLOBAL_BLOCK_TIMESTAMP) {

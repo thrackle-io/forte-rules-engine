@@ -67,7 +67,6 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
         fc.foreignCallIndex = foreignCallId;
         _storeForeignCallData(policyId, foreignCall, foreignCallId);
         emit ForeignCallUpdated(policyId, foreignCallId);
-        return fc;
     }
 
     /**
@@ -87,7 +86,7 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
      * @param policyId the policy Id of the foreign call to retrieve
      * @return fc the foreign call set structure
      */
-    function getAllForeignCalls(uint256 policyId) external view returns (ForeignCall[] memory fc) {
+    function getAllForeignCalls(uint256 policyId) external view returns (ForeignCall[] memory) {
         // Return the Foreign Call Set data from storage
         uint256 foreignCallCount = lib._getForeignCallStorage().foreignCallIdxCounter[policyId];
         ForeignCall[] memory foreignCalls = new ForeignCall[](foreignCallCount);
@@ -107,7 +106,7 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
      * @param foreignCallId The ID of the foreign call to retrieve.
      * @return fc The foreign call structure.
      */
-    function getForeignCall(uint256 policyId, uint256 foreignCallId) public view returns (ForeignCall memory fc) {
+    function getForeignCall(uint256 policyId, uint256 foreignCallId) public view returns (ForeignCall memory) {
         // Load the Foreign Call data from storage
         return lib._getForeignCallStorage().foreignCalls[policyId][foreignCallId];
     }
@@ -118,7 +117,7 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
      * @param foreignCallId The identifier for the foreign call
      * @return fcMeta the metadata for the foreign call
      */
-    function getForeignCallMetadata(uint256 policyId, uint256 foreignCallId) public view returns (string memory fcMeta) {
+    function getForeignCallMetadata(uint256 policyId, uint256 foreignCallId) public view returns (string memory) {
         return lib._getForeignCallMetadataStorage().foreignCallMetadata[policyId][foreignCallId];
     }
 
@@ -323,9 +322,9 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
 
     /**
      * @notice Retrieves all permissioned foreign calls.
-     * @return pfc The PermissionedForeignCallStorage structure containing all permissioned foreign calls.
+     * @return The PermissionedForeignCallStorage structure containing all permissioned foreign calls.
      */
-    function getAllPermissionedFCs() external pure returns (PermissionedForeignCallStorage memory pfc) {
+    function getAllPermissionedFCs() external pure returns (PermissionedForeignCallStorage memory) {
         return lib._getPermissionedForeignCallStorage();
     }
 
