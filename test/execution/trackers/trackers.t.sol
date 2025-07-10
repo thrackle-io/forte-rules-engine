@@ -1985,4 +1985,153 @@ abstract contract trackers is RulesEngineCommon {
         vm.expectRevert(abi.encodePacked(revert_text));
         RulesEngineProcessorFacet(address(red)).checkPolicies(arguments4);
     }
+
+    function testRulesEngine_Integration_TrackerUpdate() public ifDeploymentTestsEnabled resetsGlobalVariables {
+        uint256 policyId = _createBlankPolicy();
+
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = policyId;
+
+        ParamTypes[] memory pTypes = new ParamTypes[](2);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+
+        _addCallingFunctionToPolicy(policyIds[0]);
+        /// create tracker struct
+        Trackers memory tracker;
+        tracker.pType = ParamTypes.UINT;
+        tracker.trackerValue = abi.encode(1);
+        string memory trackerName = "tracker1";
+
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, trackerName);
+        Trackers memory tracker2;
+        tracker2.pType = ParamTypes.UINT;
+        tracker2.trackerValue = abi.encode(2);
+        string memory trackerName2 = "tracker2";
+        RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker2, trackerName2);
+
+        ForeignCallTestContract foreignCallTestContract = new ForeignCallTestContract();
+        ForeignCall memory foreignCall;
+        foreignCall.signature = bytes4(keccak256(bytes("testSig(uint256,uint256)")));
+        foreignCall.foreignCallAddress = address(foreignCallTestContract);
+        foreignCall.returnType = ParamTypes.UINT;
+        foreignCall.parameterTypes = new ParamTypes[](2);
+        foreignCall.parameterTypes[0] = ParamTypes.UINT;
+        foreignCall.parameterTypes[1] = ParamTypes.UINT;
+        foreignCall.encodedIndices = new ForeignCallEncodedIndex[](2);
+        foreignCall.encodedIndices[0].eType = EncodedIndexType.TRACKER;
+        foreignCall.encodedIndices[0].index = 1;
+        foreignCall.encodedIndices[1].eType = EncodedIndexType.TRACKER;
+        foreignCall.encodedIndices[1].index = 2;
+
+        RulesEngineForeignCallFacet(address(red)).createForeignCall(policyIds[0], foreignCall, "testSig");
+
+        ForeignCall memory foreignCall2;
+        foreignCall2.signature = bytes4(keccak256(bytes("testSig(uint256,uint256)")));
+        foreignCall2.foreignCallAddress = address(foreignCallTestContract);
+        foreignCall2.returnType = ParamTypes.UINT;
+        foreignCall2.parameterTypes = new ParamTypes[](2);
+        foreignCall2.parameterTypes[0] = ParamTypes.UINT;
+        foreignCall2.parameterTypes[1] = ParamTypes.UINT;
+        foreignCall2.encodedIndices = new ForeignCallEncodedIndex[](2);
+        foreignCall2.encodedIndices[0].eType = EncodedIndexType.TRACKER;
+        foreignCall2.encodedIndices[0].index = 1;
+        foreignCall2.encodedIndices[1].eType = EncodedIndexType.TRACKER;
+        foreignCall2.encodedIndices[1].index = 2;
+
+        RulesEngineForeignCallFacet(address(red)).createForeignCall(policyIds[0], foreignCall2, "testSig2");
+
+        Rule memory rule;
+        rule.instructionSet = new uint256[](17);
+        rule.instructionSet[0] = uint256(LogicalOp.PLH);
+        rule.instructionSet[1] = uint256(2);
+        rule.instructionSet[2] = uint256(LogicalOp.NUM);
+        rule.instructionSet[3] = uint256(1234);
+        rule.instructionSet[4] = uint256(LogicalOp.EQ);
+        rule.instructionSet[5] = uint256(0);
+        rule.instructionSet[6] = uint256(1);
+        rule.instructionSet[7] = uint256(LogicalOp.PLH);
+        rule.instructionSet[8] = uint256(3);
+        rule.instructionSet[9] = uint256(LogicalOp.NUM);
+        rule.instructionSet[10] = uint256(1234);
+        rule.instructionSet[11] = uint256(LogicalOp.EQ);
+        rule.instructionSet[12] = uint256(4);
+        rule.instructionSet[13] = uint256(5);
+        rule.instructionSet[14] = uint256(LogicalOp.AND);
+        rule.instructionSet[15] = uint256(3);
+        rule.instructionSet[16] = uint256(6);
+
+
+        rule.placeHolders = new Placeholder[](4);
+        rule.placeHolders[0].pType = ParamTypes.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.placeHolders[0].flags = FLAG_TRACKER_VALUE;
+        rule.placeHolders[1].pType = ParamTypes.UINT;
+        rule.placeHolders[1].typeSpecificIndex = 2;
+        rule.placeHolders[1].flags = FLAG_TRACKER_VALUE;
+        rule.placeHolders[2].pType = ParamTypes.UINT;
+        rule.placeHolders[2].typeSpecificIndex = 1;
+        rule.placeHolders[2].flags = FLAG_FOREIGN_CALL;
+        rule.placeHolders[3].pType = ParamTypes.UINT;
+        rule.placeHolders[3].typeSpecificIndex = 2;
+        rule.placeHolders[3].flags = FLAG_FOREIGN_CALL;
+
+        rule.effectPlaceHolders = new Placeholder[](4);
+        rule.effectPlaceHolders[0].pType = ParamTypes.UINT;
+        rule.effectPlaceHolders[0].typeSpecificIndex = 1;
+        rule.effectPlaceHolders[0].flags = FLAG_TRACKER_VALUE;
+        rule.effectPlaceHolders[1].pType = ParamTypes.UINT;
+        rule.effectPlaceHolders[1].typeSpecificIndex = 2;
+        rule.effectPlaceHolders[1].flags = FLAG_TRACKER_VALUE;
+        rule.effectPlaceHolders[2].pType = ParamTypes.UINT;
+        rule.effectPlaceHolders[2].typeSpecificIndex = 1;
+        rule.effectPlaceHolders[2].flags = FLAG_FOREIGN_CALL;
+        rule.effectPlaceHolders[3].pType = ParamTypes.UINT;
+        rule.effectPlaceHolders[3].typeSpecificIndex = 2;
+        rule.effectPlaceHolders[3].flags = FLAG_FOREIGN_CALL;
+
+        uint256[] memory negInstructionSet = new uint256[](14);
+        negInstructionSet[0] = uint256(LogicalOp.NUM);
+        negInstructionSet[1] = uint256(0);
+        negInstructionSet[2] = uint256(LogicalOp.TRU);
+        negInstructionSet[3] = uint256(1);
+        negInstructionSet[4] = uint256(0);
+        negInstructionSet[5] = uint256(TrackerTypes.MEMORY);
+        negInstructionSet[6] = uint256(LogicalOp.NUM);
+        negInstructionSet[7] = uint256(47);
+        negInstructionSet[8] = uint256(LogicalOp.TRU);
+        negInstructionSet[9] = uint256(2);
+        negInstructionSet[10] = uint256(2);
+        negInstructionSet[11] = uint256(TrackerTypes.MEMORY);
+        negInstructionSet[12] = uint256(LogicalOp.PLH);
+        negInstructionSet[13] = uint256(0);
+
+        rule.negEffects = new Effect[](1);
+        rule.negEffects[0].instructionSet = negInstructionSet;
+        rule.negEffects[0].effectType = EffectTypes.EXPRESSION;
+        rule.negEffects[0].valid = true;
+
+        rule.posEffects = new Effect[](1);
+        rule.posEffects[0] = effectId_revert;
+        rule.posEffects[0].valid = true;
+
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+
+        ruleIds.push(new uint256[](1));
+        ruleIds[0][0] = ruleId;
+        _addRuleIdsToPolicy(policyIds[0], ruleIds);
+
+        vm.startPrank(callingContractAdmin);
+        RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
+        vm.stopPrank();
+
+
+        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x1234567), 1000);
+        vm.startPrank(userContractAddress);
+        RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
+        bytes memory trackerValue = RulesEngineComponentFacet(address(red)).getTracker(policyIds[0], 1).trackerValue;
+        assertEq(trackerValue, abi.encode(0));
+        trackerValue = RulesEngineComponentFacet(address(red)).getTracker(policyIds[0], 2).trackerValue;
+        assertEq(trackerValue, abi.encode(47));
+    }
 }
