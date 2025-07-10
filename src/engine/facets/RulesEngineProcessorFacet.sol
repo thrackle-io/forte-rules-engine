@@ -994,7 +994,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
      * @dev This function is a pure function and does not modify state.
      * @param _data The calldata containing the dynamic variables.
      * @param _index The index of the dynamic variable to extract.
-     * @return _retVal The extracted dynamic variable as a bytes array.
+     * @return The extracted dynamic variable as a bytes array.
      */
     function _getDynamicVariableFromCalldata(bytes calldata _data, uint256 _index) internal pure returns (bytes memory) {
         // Get offset from parameter position, using index * 32 to get the correct position in the calldata
