@@ -535,7 +535,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 idx = TRUM opcode
                 idx + 1 = tracker index
                 idx + 2 = memory/argument index
-                idx + 3 = indnex tracker key
+                idx + 3 = index tracker key
                 idx + 4 = type (memory vs argument)
                 */
                 // If the Tracker Type == Place Holder, pull the data from the place holder, otherwise, pull it from Memory
