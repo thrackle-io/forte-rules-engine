@@ -5,8 +5,8 @@ import "./GasHelpers.sol";
 import "forge-std/src/Test.sol";
 import "test/utils/ExampleERC20Hardcoded.sol";
 import "src/example/ExampleERC20.sol";
-import "test/utils/ExampleERC20WithMinTransfer.sol"; 
-import "test/utils/ExampleERC20WithDenyList.sol"; 
+import "test/utils/ExampleERC20WithMinTransfer.sol";
+import "test/utils/ExampleERC20WithDenyList.sol";
 import "test/utils/ExampleERC20WithDenyListFlex.sol";
 import "test/utils/ExampleERC20WithDenyListAndMinTransfer.sol";
 import "test/utils/ExampleERC20WithDenyListMinAndMax.sol";
@@ -15,14 +15,13 @@ import "test/utils/ExampleERC20MinMaxBalance.sol";
 import "test/utils/ExampleERC20Pause.sol";
 
 contract GasReportHardcoded is GasHelpers, Test {
-
     uint256 gasUsed;
-    address constant USER_ADDRESS = address(0xd00d); 
+    address constant USER_ADDRESS = address(0xd00d);
     address constant USER_ADDRESS_2 = address(0xBADd00d);
     uint256 constant ATTO = 10 ** 18;
 
     // ERC20's for Hardcoded tests
-    //-------------------------------------------------------------------------------------    
+    //-------------------------------------------------------------------------------------
     ExampleERC20Hardcoded hardCodedContract;
     ExampleERC20WithMinTransfer exampleERC20WithMinTransfer;
     ExampleERC20WithManyConditionMinTransfer exampleERC20WithManyConditionMinTransfer;
@@ -35,9 +34,7 @@ contract GasReportHardcoded is GasHelpers, Test {
 
     //-------------------------------------------------------------------------------------
 
-
     function setUp() public {
-
         // Hardcoded Setup
         //-------------------------------------------------------------------------------------
 
@@ -73,76 +70,67 @@ contract GasReportHardcoded is GasHelpers, Test {
         exampleERC20WithDenyListFlex.mint(USER_ADDRESS, 1_000_000 * ATTO);
         exampleERC20WithDenyListFlex.addToDenyList(address(msg.sender));
 
-
         //-------------------------------------------------------------------------------------
-
     }
 
-
-
-/**********  HARD CODED, No Rules Engine Integration **********/
-//---------------------------------------------------------------------------------------------
+    /**********  HARD CODED, No Rules Engine Integration **********/
+    //---------------------------------------------------------------------------------------------
     /**********  BASELINE gas test with no integrations or rules **********/
     function testGasExampleContract_Base() public {
         vm.startPrank(USER_ADDRESS);
-        _exampleContractGasReport(1, address(hardCodedContract), "Base");   
+        _exampleContractGasReport(1, address(hardCodedContract), "Base");
     }
-    
 
-// /**********  Hard-coded MinTransfer with positive effect **********/
+    // /**********  Hard-coded MinTransfer with positive effect **********/
 
-    function testGasExampleHardcodedMinTransferRevert() public {  
-        vm.startPrank(USER_ADDRESS);      
-        _exampleContractGasReport(5, address(exampleERC20WithMinTransfer), "Hardcoding Min Transfer Revert"); 
+    function testGasExampleHardcodedMinTransferRevert() public {
+        vm.startPrank(USER_ADDRESS);
+        _exampleContractGasReport(5, address(exampleERC20WithMinTransfer), "Hardcoding Min Transfer Revert");
     }
 
     function testGasExampleHardcodedManyMinTransferRevert() public {
         vm.startPrank(USER_ADDRESS);
-        _exampleContractGasReport(5, address(exampleERC20WithManyConditionMinTransfer), "Hardcoding Many Min Transfer Revert"); 
+        _exampleContractGasReport(5, address(exampleERC20WithManyConditionMinTransfer), "Hardcoding Many Min Transfer Revert");
     }
 
-// /**********  Hard-coded MinTransfer with foreign call and positive effect **********/
+    // /**********  Hard-coded MinTransfer with foreign call and positive effect **********/
 
     function testGasExampleHardcodedOFAC() public {
         vm.startPrank(USER_ADDRESS);
-        _exampleContractGasReport(3, address(exampleERC20WithDenyList), "Hardcoding OFAC deny list"); 
+        _exampleContractGasReport(3, address(exampleERC20WithDenyList), "Hardcoding OFAC deny list");
     }
 
     function testGasExampleHardcodedOFACWithMinTransfer() public {
         vm.startPrank(USER_ADDRESS);
-        _exampleContractGasReport(5, address(exampleERC20WithDenyListAndMinTransfer), "Hardcoding OFAC deny list with min transfer"); 
+        _exampleContractGasReport(5, address(exampleERC20WithDenyListAndMinTransfer), "Hardcoding OFAC deny list with min transfer");
     }
 
     function testGasExampleHardcodedOFACWithMinTransferAndMaxTransfer() public {
         vm.startPrank(USER_ADDRESS);
-        _exampleContractGasReport(5, address(exampleERC20WithDenyListMinAndMax), "Hardcoding OFAC deny list with min transfer"); 
+        _exampleContractGasReport(5, address(exampleERC20WithDenyListMinAndMax), "Hardcoding OFAC deny list with min and max transfer");
     }
 
     function testGasExampleHardcodedMinMaxBalanceTransfer() public {
         vm.startPrank(USER_ADDRESS);
-        _exampleContractGasReport(5, address(exampleERC20MinMax), "Hardcoding OFAC deny list with min transfer"); 
+        _exampleContractGasReport(5, address(exampleERC20MinMax), "Hardcoding OFAC deny list with min and max balance transfer");
     }
 
     function testGasExampleHardcodedPauseTransfer() public {
         vm.warp(1000000001);
         vm.startPrank(USER_ADDRESS);
-        _exampleContractGasReport(5, address(exampleERC20Pause), "Hardcoding OFAC deny list with min transfer"); 
+        _exampleContractGasReport(5, address(exampleERC20Pause), "Hardcoding OFAC deny list with pause transfer");
     }
 
     function testGasExampleHardcodedOracleFlex() public {
         vm.startPrank(USER_ADDRESS);
-        _exampleContractGasReport(3, address(exampleERC20WithDenyListFlex), "Hardcoding OFAC deny list"); 
+        _exampleContractGasReport(3, address(exampleERC20WithDenyListFlex), "Hardcoding OFAC deny list");
     }
 
-
-/**********  Rule Setup Helpers **********/
+    /**********  Rule Setup Helpers **********/
     function _exampleContractGasReport(uint256 _amount, address contractAddress, string memory _label) public {
         startMeasuringGas(_label);
         ExampleERC20(contractAddress).transfer(address(0x7654321), _amount);
         gasUsed = stopMeasuringGas();
-        console.log(_label, gasUsed);  
+        console.log(_label, gasUsed);
     }
-
-
-
 }

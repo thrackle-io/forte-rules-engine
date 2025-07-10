@@ -1,6 +1,6 @@
 # Gas Usage Report
 
-**Last Updated:** 2025-07-10 12:44:21 UTC  
+**Last Updated:** 2025-07-10 12:53:17 UTC  
 **Generated automatically by:** `script/reportGas.sh`
 
 ## Purpose
@@ -42,10 +42,10 @@ Column Definitions:
 | Hardcoding Min Transfer Revert | 44956 |
 | Hardcoding OFAC deny list | 50441 |
 | Hardcoding OFAC deny list | 53476 |
-| Hardcoding OFAC deny list with min transfer | 42827 |
-| Hardcoding OFAC deny list with min transfer | 47599 |
+| Hardcoding OFAC deny list with min and max balance transfer | 47599 |
+| Hardcoding OFAC deny list with min and max transfer | 52592 |
 | Hardcoding OFAC deny list with min transfer | 52572 |
-| Hardcoding OFAC deny list with min transfer | 52592 |
+| Hardcoding OFAC deny list with pause transfer | 42827 |
 | Using REv2 Event Effect with min transfer gas report | 161310 |
 | Using REv2 Min Transfer Triggered With Revert Effect | 117609 |
 | Using REv2 No Policies Active | 56984 |
