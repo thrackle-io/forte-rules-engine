@@ -450,9 +450,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.effectPlaceHolders[1].pType = ParamTypes.ADDR;
         rule.effectPlaceHolders[1].flags = FLAG_TRACKER_VALUE;
         rule.effectPlaceHolders[1].typeSpecificIndex = 1;
-
         ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-
         //build tracker
         Trackers memory tracker;
         /// build the members of the struct:
@@ -1675,7 +1673,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Set up some effects.
         _setupEffectProcessor();
         // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, _amount, LogicalOp.GT, 0, 1
-        rule.instructionSet = rule.instructionSet = _createInstructionSet(_amount);
+        rule.instructionSet = _createInstructionSet(_amount);
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
@@ -2027,7 +2025,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         effect.valid = true;
         effect.effectType = EffectTypes.EXPRESSION;
         effect.text = "";
-        effect.instructionSet = new uint256[](10);
+        effect.instructionSet = new uint256[](11);
         // Foreign Call Placeholder
         effect.instructionSet[0] = uint(LogicalOp.PLH);
         effect.instructionSet[1] = 0;
@@ -2040,6 +2038,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         effect.instructionSet[7] = uint(LogicalOp.TRU);
         effect.instructionSet[8] = 1;
         effect.instructionSet[9] = 2;
+        effect.instructionSet[10] = 0;
 
         return effect;
     }
@@ -2069,15 +2068,17 @@ contract RulesEngineCommon is DiamondMine, Test {
         effect.valid = true;
         effect.effectType = EffectTypes.EXPRESSION;
         effect.text = "";
-        effect.instructionSet = new uint256[](7);
+        effect.instructionSet = new uint256[](9);
         effect.instructionSet[0] = uint(LogicalOp.PLH);
         effect.instructionSet[1] = 0;
-        // Tracker Placeholder
-        effect.instructionSet[2] = uint(LogicalOp.TRUM);
+        effect.instructionSet[2] = uint(LogicalOp.NUM);
         effect.instructionSet[3] = 1;
-        effect.instructionSet[4] = 0;
+        // Tracker Placeholder
+        effect.instructionSet[4] = uint(LogicalOp.TRUM);
         effect.instructionSet[5] = 1;
-        effect.instructionSet[6] = uint(TrackerTypes.PLACE_HOLDER);
+        effect.instructionSet[6] = 0;
+        effect.instructionSet[7] = 1;
+        effect.instructionSet[8] = uint(TrackerTypes.PLACE_HOLDER);
         return effect;
     }
 
@@ -2087,15 +2088,17 @@ contract RulesEngineCommon is DiamondMine, Test {
         effect.valid = true;
         effect.effectType = EffectTypes.EXPRESSION;
         effect.text = "";
-        effect.instructionSet = new uint256[](7);
+        effect.instructionSet = new uint256[](9);
         effect.instructionSet[0] = uint(LogicalOp.PLH);
         effect.instructionSet[1] = 0;
+        effect.instructionSet[2] = uint(LogicalOp.NUM);
+        effect.instructionSet[3] = uint256(uint160(address(0x7654321)));
         // Tracker Placeholder
-        effect.instructionSet[2] = uint(LogicalOp.TRUM);
-        effect.instructionSet[3] = 1;
-        effect.instructionSet[4] = 0;
-        effect.instructionSet[5] = uint256(uint160(address(0x7654321)));
-        effect.instructionSet[6] = uint(TrackerTypes.PLACE_HOLDER);
+        effect.instructionSet[4] = uint(LogicalOp.TRUM);
+        effect.instructionSet[5] = 1;
+        effect.instructionSet[6] = 0;
+        effect.instructionSet[7] = 1;
+        effect.instructionSet[8] = uint(TrackerTypes.PLACE_HOLDER);
         return effect;
     }
 
@@ -2105,15 +2108,17 @@ contract RulesEngineCommon is DiamondMine, Test {
         effect.valid = true;
         effect.effectType = EffectTypes.EXPRESSION;
         effect.text = "";
-        effect.instructionSet = new uint256[](7);
+        effect.instructionSet = new uint256[](9);
         effect.instructionSet[0] = uint(LogicalOp.PLH);
         effect.instructionSet[1] = 0;
+        effect.instructionSet[2] = uint(LogicalOp.NUM);
+        effect.instructionSet[3] = uint256(uint160(address(0x7654321)));
         // Tracker Placeholder
-        effect.instructionSet[2] = uint(LogicalOp.TRUM);
-        effect.instructionSet[3] = 1;
-        effect.instructionSet[4] = 0;
-        effect.instructionSet[5] = uint256(uint160(address(0x7654321)));
-        effect.instructionSet[6] = uint(TrackerTypes.PLACE_HOLDER);
+        effect.instructionSet[4] = uint(LogicalOp.TRUM);
+        effect.instructionSet[5] = 1;
+        effect.instructionSet[6] = 0;
+        effect.instructionSet[7] = 1;
+        effect.instructionSet[8] = uint(TrackerTypes.PLACE_HOLDER);
         return effect;
     }
 
@@ -2123,15 +2128,17 @@ contract RulesEngineCommon is DiamondMine, Test {
         effect.valid = true;
         effect.effectType = EffectTypes.EXPRESSION;
         effect.text = "";
-        effect.instructionSet = new uint256[](7);
+        effect.instructionSet = new uint256[](9);
         effect.instructionSet[0] = uint(LogicalOp.PLH);
         effect.instructionSet[1] = 0;
+        effect.instructionSet[2] = uint(LogicalOp.PLH);
+        effect.instructionSet[3] = uint256(uint160(address(0x7654321)));
         // Tracker Placeholder
-        effect.instructionSet[2] = uint(LogicalOp.TRUM);
-        effect.instructionSet[3] = 1;
-        effect.instructionSet[4] = 0;
-        effect.instructionSet[5] = uint256(uint160(address(0x7654321)));
-        effect.instructionSet[6] = uint(TrackerTypes.MEMORY);
+        effect.instructionSet[4] = uint(LogicalOp.TRUM);
+        effect.instructionSet[5] = 1;
+        effect.instructionSet[6] = 0;
+        effect.instructionSet[7] = 1;
+        effect.instructionSet[8] = uint(TrackerTypes.MEMORY);
 
         return effect;
     }
@@ -2142,15 +2149,17 @@ contract RulesEngineCommon is DiamondMine, Test {
         effect.valid = true;
         effect.effectType = EffectTypes.EXPRESSION;
         effect.text = "";
-        effect.instructionSet = new uint256[](7);
+        effect.instructionSet = new uint256[](9);
         effect.instructionSet[0] = uint(LogicalOp.PLH);
         effect.instructionSet[1] = 0;
-        // Tracker Placeholder
-        effect.instructionSet[2] = uint(LogicalOp.TRUM);
+        effect.instructionSet[2] = uint(LogicalOp.NUM);
         effect.instructionSet[3] = 1;
-        effect.instructionSet[4] = 0;
+        // Tracker Placeholder
+        effect.instructionSet[4] = uint(LogicalOp.TRUM);
         effect.instructionSet[5] = 1;
-        effect.instructionSet[6] = uint(TrackerTypes.MEMORY);
+        effect.instructionSet[6] = 0;
+        effect.instructionSet[7] = 1;
+        effect.instructionSet[8] = uint(TrackerTypes.MEMORY);
 
         return effect;
     }
@@ -2161,15 +2170,17 @@ contract RulesEngineCommon is DiamondMine, Test {
         effect.valid = true;
         effect.effectType = EffectTypes.EXPRESSION;
         effect.text = "";
-        effect.instructionSet = new uint256[](7);
+        effect.instructionSet = new uint256[](9);
         effect.instructionSet[0] = uint(LogicalOp.PLH);
         effect.instructionSet[1] = 0;
+        effect.instructionSet[2] = uint(LogicalOp.NUM);
+        effect.instructionSet[3] = 0;
         // Tracker Placeholder
-        effect.instructionSet[2] = uint(LogicalOp.TRUM);
-        effect.instructionSet[3] = 1;
-        effect.instructionSet[4] = 0;
-        effect.instructionSet[5] = 0; // false
-        effect.instructionSet[6] = uint(TrackerTypes.MEMORY);
+        effect.instructionSet[4] = uint(LogicalOp.TRUM);
+        effect.instructionSet[5] = 1;
+        effect.instructionSet[6] = 0;
+        effect.instructionSet[7] = 1; // false
+        effect.instructionSet[8] = uint(TrackerTypes.MEMORY);
 
         return effect;
     }

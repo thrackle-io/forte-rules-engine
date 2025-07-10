@@ -52,6 +52,9 @@ abstract contract rules is RulesEngineCommon {
     function testRulesEngine_Unit_createRule_Negative_CementedPolicy() public ifDeploymentTestsEnabled endWithStopPrank {
         uint256 policyId = _createBlankPolicy();
         Rule memory rule;
+        rule.instructionSet = new uint256[](2);
+        rule.instructionSet[0] = 0;
+        rule.instructionSet[1] = 0;
 
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
         vm.expectRevert("Not allowed for cemented policy");
@@ -151,6 +154,9 @@ abstract contract rules is RulesEngineCommon {
         uint256 policyId = _createBlankPolicy();
         uint256 ruleId = 1;
         Rule memory rule;
+        rule.instructionSet = new uint256[](2);
+        rule.instructionSet[0] = 0;
+        rule.instructionSet[1] = 0;
         vm.expectEmit(true, false, false, false);
         emit RuleCreated(policyId, ruleId);
         RulesEngineRuleFacet(address(red)).createRule(policyId, rule);
@@ -212,6 +218,9 @@ abstract contract rules is RulesEngineCommon {
         vm.startPrank(policyAdmin);
         uint256 policyId = _createBlankPolicy();
         Rule memory rule;
+        rule.instructionSet = new uint256[](2);
+        rule.instructionSet[0] = 0;
+        rule.instructionSet[1] = 0;
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyId, rule);
         vm.expectEmit(true, false, false, false);
         emit RuleUpdated(policyId, ruleId);
