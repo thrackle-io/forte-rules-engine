@@ -535,16 +535,15 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 idx = TRUM opcode
                 idx + 1 = tracker index
                 idx + 2 = memory/argument index
-                idx + 3 = mapped tracker key
+                idx + 3 = index tracker key
                 idx + 4 = type (memory vs argument)
                 */
                 // If the Tracker Type == Place Holder, pull the data from the place holder, otherwise, pull it from Memory
                 TrackerTypes tt = TrackerTypes(_prog[idx + 4]);
-                if (tt == TrackerTypes.MEMORY) {
-                    _updateMappedTrackerValue(_policyId, _prog[idx + 1], mem[_prog[idx + 2]], _prog[idx + 3]); // + key for mapped tracker
-                } else {
-                    _updateMappedTrackerValue(_policyId, _prog[idx + 1], _arguments[_prog[idx + 2]], _prog[idx + 3]); // + key for mapped tracker
-                }
+                uint256 key = mem[_prog[idx + 3]];
+                tt == TrackerTypes.MEMORY
+                    ? _updateMappedTrackerValue(_policyId, _prog[idx + 1], mem[_prog[idx + 2]], key)
+                    : _updateMappedTrackerValue(_policyId, _prog[idx + 1], _arguments[_prog[idx + 2]], key);
                 idx += 5;
             } else if (op == LogicalOp.NUM) {
                 v = _prog[idx + 1];

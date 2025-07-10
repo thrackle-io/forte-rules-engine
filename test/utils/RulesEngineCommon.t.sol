@@ -2068,15 +2068,17 @@ contract RulesEngineCommon is DiamondMine, Test {
         effect.valid = true;
         effect.effectType = EffectTypes.EXPRESSION;
         effect.text = "";
-        effect.instructionSet = new uint256[](7);
+        effect.instructionSet = new uint256[](9);
         effect.instructionSet[0] = uint(LogicalOp.PLH);
         effect.instructionSet[1] = 0;
-        // Tracker Placeholder
-        effect.instructionSet[2] = uint(LogicalOp.TRUM);
+        effect.instructionSet[2] = uint(LogicalOp.NUM);
         effect.instructionSet[3] = 1;
-        effect.instructionSet[4] = 0;
+        // Tracker Placeholder
+        effect.instructionSet[4] = uint(LogicalOp.TRUM);
         effect.instructionSet[5] = 1;
-        effect.instructionSet[6] = uint(TrackerTypes.PLACE_HOLDER);
+        effect.instructionSet[6] = 0;
+        effect.instructionSet[7] = 1;
+        effect.instructionSet[8] = uint(TrackerTypes.PLACE_HOLDER);
         return effect;
     }
 
@@ -2086,15 +2088,17 @@ contract RulesEngineCommon is DiamondMine, Test {
         effect.valid = true;
         effect.effectType = EffectTypes.EXPRESSION;
         effect.text = "";
-        effect.instructionSet = new uint256[](7);
+        effect.instructionSet = new uint256[](9);
         effect.instructionSet[0] = uint(LogicalOp.PLH);
         effect.instructionSet[1] = 0;
+        effect.instructionSet[2] = uint(LogicalOp.NUM);
+        effect.instructionSet[3] = uint256(uint160(address(0x7654321)));
         // Tracker Placeholder
-        effect.instructionSet[2] = uint(LogicalOp.TRUM);
-        effect.instructionSet[3] = 1;
-        effect.instructionSet[4] = 0;
-        effect.instructionSet[5] = uint256(uint160(address(0x7654321)));
-        effect.instructionSet[6] = uint(TrackerTypes.PLACE_HOLDER);
+        effect.instructionSet[4] = uint(LogicalOp.TRUM);
+        effect.instructionSet[5] = 1;
+        effect.instructionSet[6] = 0;
+        effect.instructionSet[7] = 1;
+        effect.instructionSet[8] = uint(TrackerTypes.PLACE_HOLDER);
         return effect;
     }
 
@@ -2104,15 +2108,17 @@ contract RulesEngineCommon is DiamondMine, Test {
         effect.valid = true;
         effect.effectType = EffectTypes.EXPRESSION;
         effect.text = "";
-        effect.instructionSet = new uint256[](7);
+        effect.instructionSet = new uint256[](9);
         effect.instructionSet[0] = uint(LogicalOp.PLH);
         effect.instructionSet[1] = 0;
+        effect.instructionSet[2] = uint(LogicalOp.NUM);
+        effect.instructionSet[3] = uint256(uint160(address(0x7654321)));
         // Tracker Placeholder
-        effect.instructionSet[2] = uint(LogicalOp.TRUM);
-        effect.instructionSet[3] = 1;
-        effect.instructionSet[4] = 0;
-        effect.instructionSet[5] = uint256(uint160(address(0x7654321)));
-        effect.instructionSet[6] = uint(TrackerTypes.PLACE_HOLDER);
+        effect.instructionSet[4] = uint(LogicalOp.TRUM);
+        effect.instructionSet[5] = 1;
+        effect.instructionSet[6] = 0;
+        effect.instructionSet[7] = 1;
+        effect.instructionSet[8] = uint(TrackerTypes.PLACE_HOLDER);
         return effect;
     }
 
@@ -2122,15 +2128,17 @@ contract RulesEngineCommon is DiamondMine, Test {
         effect.valid = true;
         effect.effectType = EffectTypes.EXPRESSION;
         effect.text = "";
-        effect.instructionSet = new uint256[](7);
+        effect.instructionSet = new uint256[](9);
         effect.instructionSet[0] = uint(LogicalOp.PLH);
         effect.instructionSet[1] = 0;
+        effect.instructionSet[2] = uint(LogicalOp.PLH);
+        effect.instructionSet[3] = uint256(uint160(address(0x7654321)));
         // Tracker Placeholder
-        effect.instructionSet[2] = uint(LogicalOp.TRUM);
-        effect.instructionSet[3] = 1;
-        effect.instructionSet[4] = 0;
-        effect.instructionSet[5] = uint256(uint160(address(0x7654321)));
-        effect.instructionSet[6] = uint(TrackerTypes.MEMORY);
+        effect.instructionSet[4] = uint(LogicalOp.TRUM);
+        effect.instructionSet[5] = 1;
+        effect.instructionSet[6] = 0;
+        effect.instructionSet[7] = 1;
+        effect.instructionSet[8] = uint(TrackerTypes.MEMORY);
 
         return effect;
     }
@@ -2141,15 +2149,17 @@ contract RulesEngineCommon is DiamondMine, Test {
         effect.valid = true;
         effect.effectType = EffectTypes.EXPRESSION;
         effect.text = "";
-        effect.instructionSet = new uint256[](7);
+        effect.instructionSet = new uint256[](9);
         effect.instructionSet[0] = uint(LogicalOp.PLH);
         effect.instructionSet[1] = 0;
-        // Tracker Placeholder
-        effect.instructionSet[2] = uint(LogicalOp.TRUM);
+        effect.instructionSet[2] = uint(LogicalOp.NUM);
         effect.instructionSet[3] = 1;
-        effect.instructionSet[4] = 0;
+        // Tracker Placeholder
+        effect.instructionSet[4] = uint(LogicalOp.TRUM);
         effect.instructionSet[5] = 1;
-        effect.instructionSet[6] = uint(TrackerTypes.MEMORY);
+        effect.instructionSet[6] = 0;
+        effect.instructionSet[7] = 1;
+        effect.instructionSet[8] = uint(TrackerTypes.MEMORY);
 
         return effect;
     }
@@ -2160,15 +2170,17 @@ contract RulesEngineCommon is DiamondMine, Test {
         effect.valid = true;
         effect.effectType = EffectTypes.EXPRESSION;
         effect.text = "";
-        effect.instructionSet = new uint256[](7);
+        effect.instructionSet = new uint256[](9);
         effect.instructionSet[0] = uint(LogicalOp.PLH);
         effect.instructionSet[1] = 0;
+        effect.instructionSet[2] = uint(LogicalOp.NUM);
+        effect.instructionSet[3] = 0;
         // Tracker Placeholder
-        effect.instructionSet[2] = uint(LogicalOp.TRUM);
-        effect.instructionSet[3] = 1;
-        effect.instructionSet[4] = 0;
-        effect.instructionSet[5] = 0; // false
-        effect.instructionSet[6] = uint(TrackerTypes.MEMORY);
+        effect.instructionSet[4] = uint(LogicalOp.TRUM);
+        effect.instructionSet[5] = 1;
+        effect.instructionSet[6] = 0;
+        effect.instructionSet[7] = 1; // false
+        effect.instructionSet[8] = uint(TrackerTypes.MEMORY);
 
         return effect;
     }

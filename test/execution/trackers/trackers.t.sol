@@ -1463,7 +1463,6 @@ abstract contract trackers is RulesEngineCommon {
         ifDeploymentTestsEnabled
         resetsGlobalVariables
     {
-        vm.skip(true); // TODO: enable once TRUM is fixed
         uint256 policyId = _createBlankPolicy();
         /// create tracker struct
         Trackers memory tracker;
@@ -1522,7 +1521,6 @@ abstract contract trackers is RulesEngineCommon {
         ifDeploymentTestsEnabled
         resetsGlobalVariables
     {
-        vm.skip(true); // TODO: enable once TRUM is fixed
         uint256 policyId = _createBlankPolicy();
         /// create tracker struct
         Trackers memory tracker;
@@ -1579,7 +1577,6 @@ abstract contract trackers is RulesEngineCommon {
         ifDeploymentTestsEnabled
         resetsGlobalVariables
     {
-        vm.skip(true); // TODO: enable once TRUM is fixed
         uint256 policyId = _createBlankPolicy();
         /// create tracker struct
         Trackers memory tracker;
@@ -1644,7 +1641,6 @@ abstract contract trackers is RulesEngineCommon {
         ifDeploymentTestsEnabled
         resetsGlobalVariables
     {
-        vm.skip(true); // TODO: enable once TRUM is fixed
         uint256 policyId = _createBlankPolicy();
         /// create tracker struct
         Trackers memory tracker;
@@ -1705,7 +1701,6 @@ abstract contract trackers is RulesEngineCommon {
         ifDeploymentTestsEnabled
         resetsGlobalVariables
     {
-        vm.skip(true); // TODO: enable once TRUM is fixed
         uint256 policyId = _createBlankPolicy();
         /// create tracker struct
         Trackers memory tracker;
@@ -1764,7 +1759,6 @@ abstract contract trackers is RulesEngineCommon {
         ifDeploymentTestsEnabled
         resetsGlobalVariables
     {
-        vm.skip(true); // TODO: enable once TRUM is fixed
         uint256 policyId = _createBlankPolicy();
         /// create tracker struct
         Trackers memory tracker;
