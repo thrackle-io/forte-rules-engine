@@ -2,10 +2,12 @@ name: Generate Gas Report
 
 on:
   push:
-    branches: [  ]
+    branches: [ RL-206-Gas-Report-Generation ]
 
 jobs:
   gas-report:
+    # Skip if the last commit was made by GitHub Action (bot)
+    if: github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '📊 Update gas reports')
     runs-on: ubuntu-latest
     
     steps:
