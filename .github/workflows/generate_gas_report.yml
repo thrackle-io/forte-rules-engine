@@ -2,17 +2,17 @@ name: Generate Gas Report
 
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Test"]
-    types: [completed]
+  push:
     branches:
-      - '**'  # This will match any branch
+      - RL-206-Gas-Report-Generation
 
 jobs:
   gas-report:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
+    - name: Wait for other workflows
+      run: sleep 600  # Wait 10 minutes for other workflows to complete
+      
     - name: Checkout the repository
       uses: actions/checkout@v4
       with:
