@@ -1,0 +1,10 @@
+name: Generate Gas Report
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Test"]
+    types: [completed]
+    branches: [RL-206-Gas-Report-Generation]
+
+jobs:
