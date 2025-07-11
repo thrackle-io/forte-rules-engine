@@ -18,7 +18,7 @@ jobs:
         submodules: recursive
         token: ${{ secrets.GITHUB_TOKEN }}
         # Important: checkout the merge commit, not the PR head
-        ref: main
+        ref: RL-206-Gas-Report-Generation
 
     - name: Install Foundry
       uses: foundry-rs/foundry-toolchain@v1
