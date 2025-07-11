@@ -50,7 +50,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
      * @param callingFunctionArgs representation of the calling function arguments
      * @param foreignCallIndex Index of the foreign call.
      * @param retVals array of return values from previous foreign calls, trackers, etc.
-     * @return returnValue The output of the foreign call.
+     * @return The output of the foreign call.
      */
     function evaluateForeignCalls(
         uint256 policyId,
@@ -58,7 +58,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         uint256 foreignCallIndex,
         bytes[] memory retVals,
         ForeignCallEncodedIndex[] memory metadata
-    ) public returns (ForeignCallReturnValue memory returnValue) {
+    ) public returns (ForeignCallReturnValue memory) {
         // Load the Foreign Call data from storage
         ForeignCall memory foreignCall = lib._getForeignCallStorage().foreignCalls[policyId][foreignCallIndex];
         if (foreignCall.set) {
@@ -470,14 +470,14 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
      * @param _placeHolders An array of Placeholder structs used within the program.
      * @param _policyId The ID of the policy associated with the program execution.
      * @param _arguments An array of bytes containing additional arguments for the program.
-     * @return _ans A boolean indicating the result of the program execution.
+     * @return A boolean indicating the result of the program execution.
      */
     function _run(
         uint256[] memory _prog,
         Placeholder[] memory _placeHolders,
         uint256 _policyId,
         bytes[] memory _arguments
-    ) internal returns (bool _ans) {
+    ) internal returns (bool) {
         uint256[90] memory mem;
         uint256 idx = 0;
         uint256 opi = 0;
@@ -750,8 +750,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
      * @param _callingFunctionArgs Arguments from the original function call, passed to the foreign call as needed
      * @param typeSpecificIndex Index referencing the specific foreign call configuration to execute
      * @param retVals Array containing previously computed return values that might be used as inputs for this call
-     * @return value The encoded return data from the foreign call
-     * @return pType The parameter type of the foreign call's return value
+     * @return The encoded return data from the foreign call
+     * @return The parameter type of the foreign call's return value
      */
     function _handleForeignCall(
         uint256 _policyId,
@@ -759,7 +759,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         uint256 typeSpecificIndex,
         bytes[] memory retVals,
         ForeignCallEncodedIndex[] memory metadata
-    ) internal returns (bytes memory value, ParamTypes pType) {
+    ) internal returns (bytes memory, ParamTypes) {
         ForeignCallReturnValue memory retVal = evaluateForeignCalls(_policyId, _callingFunctionArgs, typeSpecificIndex, retVals, metadata);
         return (retVal.value, retVal.pType);
     }
@@ -775,9 +775,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
      *                     - GLOBAL_BLOCK_NUMBER (4): Current block number
      *                     - GLOBAL_TX_ORIGIN (5): Original transaction sender
      * @return bytes Encoded value of the requested global variable
-     * @return pType Parameter type enum value corresponding to the global variable
+     * @return Parameter type enum value corresponding to the global variable
      */
-    function _handleGlobalVar(uint256 globalVarType) internal view returns (bytes memory, ParamTypes pType) {
+    function _handleGlobalVar(uint256 globalVarType) internal view returns (bytes memory, ParamTypes) {
         if (globalVarType == GLOBAL_MSG_SENDER) {
             return (abi.encode(msg.sender), ParamTypes.ADDR);
         } else if (globalVarType == GLOBAL_BLOCK_TIMESTAMP) {
@@ -994,9 +994,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
      * @dev This function is a pure function and does not modify state.
      * @param _data The calldata containing the dynamic variables.
      * @param _index The index of the dynamic variable to extract.
-     * @return _retVal The extracted dynamic variable as a bytes array.
+     * @return The extracted dynamic variable as a bytes array.
      */
-    function _getDynamicVariableFromCalldata(bytes calldata _data, uint256 _index) internal pure returns (bytes memory _retVal) {
+    function _getDynamicVariableFromCalldata(bytes calldata _data, uint256 _index) internal pure returns (bytes memory) {
         // Get offset from parameter position, using index * 32 to get the correct position in the calldata
         uint256 offset = uint256(bytes32(_data[_index * 32:(_index + 1) * 32]));
         // Get length from the offset position, using offset + 32 to get the correct position in the calldata

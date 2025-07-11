@@ -193,9 +193,9 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @notice retrieves the tracker metadata
      * @param policyId The policy ID the tracker is associated with.
      * @param trackerId The identifier for the tracker
-     * @return trMeta the metadata for the tracker
+     * @return the metadata for the tracker
      */
-    function getTrackerMetadata(uint256 policyId, uint256 trackerId) public view returns (string memory trMeta) {
+    function getTrackerMetadata(uint256 policyId, uint256 trackerId) public view returns (string memory) {
         return lib._getTrackerMetadataStorage().trackerMetadata[policyId][trackerId];
     }
 
@@ -225,9 +225,9 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @notice Retrieves a tracker from the tracker storage mapping.
      * @param policyId The policy ID the tracker is associated with.
      * @param index The index of the tracker to retrieve.
-     * @return tracker The tracker data.
+     * @return The tracker data.
      */
-    function getTracker(uint256 policyId, uint256 index) public view returns (Trackers memory tracker) {
+    function getTracker(uint256 policyId, uint256 index) public view returns (Trackers memory) {
         // Load the Tracker data from storage
         TrackerStorage storage data = lib._getTrackerStorage();
         // return trackers for contract address at speficic index
