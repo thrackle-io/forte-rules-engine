@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
 import {RulesEngineProcessorLib as ProcessorLib} from "src/engine/facets/RulesEngineProcessorLib.sol";
-
+import {console2 as console} from "forge-std/src/console2.sol";
 /**
  * @title Rules Engine Processor Facet
  * @dev This contract serves as the core processor for evaluating rules and executing effects in the Rules Engine.
@@ -379,9 +379,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         for (uint256 i = 0; i < ruleCount; i++) {
             Rule storage rule = _ruleData[_applicableRules[i]].rule;
             if (!_evaluateIndividualRule(rule, _policyId, _callingFunctionArgs)) {
+                console.log("NEG EFFECTS");
                 _retVal = false;
                 _doEffects(rule, _policyId, rule.negEffects, _callingFunctionArgs);
             } else {
+                console.log("POS EFFECTS");
                 _doEffects(rule, _policyId, rule.posEffects, _callingFunctionArgs);
             }
         }
@@ -489,45 +491,36 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 uint256 pli;
                 bytes memory value;
                 ParamTypes typ;
-                if (op == LogicalOp.PLHM) {
-                    uint256 key = mem[_prog[idx + 2]];
-                    (value, typ) = _getMappedTrackerValue(_policyId, _prog[idx + 1], key);
+                if(op == LogicalOp.PLHM) {
+                    uint key = mem[_prog[idx+2]];
+                    (value, typ) = _getMappedTrackerValue(_policyId, _prog[idx+1], key);
+                    idx += 3;
                 } else {
-                    pli = _prog[idx + 1];
+                    pli = _prog[idx+1];
                     value = _arguments[pli];
                     typ = _placeHolders[pli].pType;
+                    idx += 2;
                 }
-                if (typ == ParamTypes.UINT) {
+                if(typ == ParamTypes.UINT || typ == ParamTypes.ADDR || typ == ParamTypes.BOOL) {
                     v = abi.decode(value, (uint256));
-                } else if (typ == ParamTypes.ADDR) {
-                    // Convert address to uint256 for direct comparison using == and != operations
-                    v = uint256(uint160(address(abi.decode(value, (address)))));
-                } else if (typ == ParamTypes.STR) {
+                } else if(typ == ParamTypes.STR || typ == ParamTypes.BYTES) {
                     // Convert string to uint256 for direct comparison using == and != operations
-                    v = uint256(keccak256(abi.encode(abi.decode(value, (string)))));
-                } else if (typ == ParamTypes.BOOL) {
-                    // Convert bool to uint256 for direct comparison using == and != operations
-                    v = uint256(ProcessorLib._boolToUint((abi.decode(value, (bool)))));
-                } else if (typ == ParamTypes.BYTES) {
-                    // Convert bytes to uint256 for direct comparison using == and != operations
-                    v = uint256(keccak256(abi.encode(abi.decode(value, (bytes)))));
-                } else if (typ == ParamTypes.STATIC_TYPE_ARRAY || typ == ParamTypes.DYNAMIC_TYPE_ARRAY) {
+                    v = uint256(keccak256(value));
+                } else if(typ == ParamTypes.STATIC_TYPE_ARRAY || typ == ParamTypes.DYNAMIC_TYPE_ARRAY) {
                     // length of array for direct comparison using == and != operations
                     v = abi.decode(value, (uint256));
                 }
-
-                if (op == LogicalOp.PLHM) {
-                    idx += 3;
-                } else {
-                    idx += 2;
-                }
-            } else if (op == LogicalOp.TRU) {
+            } else if(op == LogicalOp.TRU) {
                 // update the tracker value
+                console.log("TRU");
                 // If the Tracker Type == Place Holder, pull the data from the place holder, otherwise, pull it from Memory
                 TrackerTypes tt = TrackerTypes(_prog[idx + 3]);
+                console.log("tt", uint256(tt));
                 if (tt == TrackerTypes.MEMORY) {
+                    console.log("MEMORY");
                     _updateTrackerValue(_policyId, _prog[idx + 1], mem[_prog[idx + 2]]);
                 } else {
+                    console.log("ARGUMENT");
                     _updateTrackerValue(_policyId, _prog[idx + 1], _arguments[_prog[idx + 2]]);
                 }
                 idx += 4;
@@ -614,13 +607,12 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
     function _updateTrackerValue(uint256 _policyId, uint256 _trackerId, uint256 _trackerValue) internal {
         // retrieve the tracker
         Trackers storage trk = lib._getTrackerStorage().trackers[_policyId][_trackerId];
-        if (trk.pType == ParamTypes.UINT) {
-            trk.trackerValue = abi.encode(_trackerValue);
-        } else if (trk.pType == ParamTypes.ADDR) {
-            trk.trackerValue = abi.encode(ProcessorLib._uintToAddr(_trackerValue));
-        } else if (trk.pType == ParamTypes.BOOL) {
-            trk.trackerValue = abi.encode(ProcessorLib._uintToBool(_trackerValue));
-        } else if (trk.pType == ParamTypes.BYTES) {
+        console.log("storing", _trackerValue);
+        if(trk.pType == ParamTypes.UINT || trk.pType == ParamTypes.ADDR || trk.pType == ParamTypes.BOOL) {
+           console.log("storing uint");
+           trk.trackerValue = abi.encode(_trackerValue);
+        } else if(trk.pType == ParamTypes.BYTES || trk.pType == ParamTypes.STR) {
+            console.log("storing bytes");
             trk.trackerValue = ProcessorLib._uintToBytes(_trackerValue);
         } else {
             revert("Invalid tracker type for updates");
@@ -651,39 +643,30 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         // store the updated value to the tracker mapping
         bytes memory encodedValue;
         bytes memory encodedKey;
-
-        // encode uint key to type
-        if (trk.trackerKeyType == ParamTypes.UINT) {
+        
+        // encode uint key to type 
+        if(trk.trackerKeyType == ParamTypes.UINT || trk.trackerKeyType == ParamTypes.ADDR || trk.trackerKeyType == ParamTypes.BOOL) {
             encodedKey = abi.encode(_mappedTrackerKey);
-        } else if (trk.trackerKeyType == ParamTypes.ADDR) {
-            encodedKey = abi.encode(ProcessorLib._uintToAddr(_mappedTrackerKey));
-        } else if (trk.trackerKeyType == ParamTypes.BOOL) {
-            encodedKey = abi.encode(ProcessorLib._uintToBool(_mappedTrackerKey));
         } else if (trk.trackerKeyType == ParamTypes.BYTES || trk.trackerKeyType == ParamTypes.STR) {
             encodedKey = ProcessorLib._uintToBytes(_mappedTrackerKey);
         }
 
-        if (trk.pType == ParamTypes.UINT) {
+        if (trk.pType == ParamTypes.UINT || trk.pType == ParamTypes.ADDR || trk.pType == ParamTypes.BOOL) {
             encodedValue = abi.encode(_trackerValue);
-        } else if (trk.pType == ParamTypes.ADDR) {
-            encodedValue = abi.encode(ProcessorLib._uintToAddr(_trackerValue));
-        } else if (trk.pType == ParamTypes.BOOL) {
-            encodedValue = abi.encode(ProcessorLib._uintToBool(_trackerValue));
-        } else if (trk.pType == ParamTypes.BYTES) {
+        } else if (trk.pType == ParamTypes.BYTES || trk.pType == ParamTypes.STR) {
             encodedValue = ProcessorLib._uintToBytes(_trackerValue);
         }
         // re encode as bytes to mapping
         lib._getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][encodedKey] = encodedValue;
     }
 
-    function _getMappedTrackerValue(
-        uint256 _policyId,
-        uint256 _trackerId,
-        uint256 _mappedTrackerKey
-    ) internal view returns (bytes memory, ParamTypes) {
+    function _getMappedTrackerValue(uint256 _policyId, uint256 _trackerId, uint256 _mappedTrackerKey) internal view returns (bytes memory, ParamTypes) {
         assert(lib._getTrackerStorage().trackers[_policyId][_trackerId].mapped);
         ParamTypes keyType = lib._getTrackerStorage().trackers[_policyId][_trackerId].pType;
         bytes memory value = lib._getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][abi.encode(_mappedTrackerKey)];
+        if (value.length == 0) {
+            return (abi.encode(0), keyType);
+        }
         return (value, keyType);
     }
 
@@ -702,13 +685,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         // retrieve the tracker
         Trackers storage trk = lib._getTrackerStorage().trackers[_policyId][_trackerId];
         bytes memory encodedKey;
-        // encode uint key to type
-        if (trk.trackerKeyType == ParamTypes.UINT) {
+        // encode uint key to type 
+        if(trk.trackerKeyType == ParamTypes.UINT || trk.trackerKeyType == ParamTypes.ADDR || trk.trackerKeyType == ParamTypes.BOOL) {
             encodedKey = abi.encode(_mappedTrackerKey);
-        } else if (trk.trackerKeyType == ParamTypes.ADDR) {
-            encodedKey = abi.encode(ProcessorLib._uintToAddr(_mappedTrackerKey));
-        } else if (trk.trackerKeyType == ParamTypes.BOOL) {
-            encodedKey = abi.encode(ProcessorLib._uintToBool(_mappedTrackerKey));
         } else if (trk.trackerKeyType == ParamTypes.BYTES || trk.trackerKeyType == ParamTypes.STR) {
             encodedKey = ProcessorLib._uintToBytes(_mappedTrackerKey);
         } else {
@@ -841,18 +820,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
      * @return bytes The encoded value of the requested tracker
      */
     function _handleTrackerValue(uint256 _policyId, Placeholder memory placeholder) internal view returns (bytes memory) {
-        Trackers memory tracker = lib._getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex];
-        if (tracker.mapped) {
-            if (tracker.trackerKeyType == ParamTypes.BYTES || tracker.trackerKeyType == ParamTypes.STR) {
-                return
-                    lib._getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][
-                        abi.encode(keccak256(placeholder.mappedTrackerKey))
-                    ];
-            } else {
-                return lib._getTrackerStorage().mappedTrackerValues[_policyId][placeholder.typeSpecificIndex][placeholder.mappedTrackerKey];
-            }
-        }
-        return tracker.trackerValue;
+        return lib._getTrackerStorage().trackers[_policyId][placeholder.typeSpecificIndex].trackerValue;
     }
 
     /**
@@ -903,6 +871,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 } else if (effect.effectType == EffectTypes.EVENT) {
                     _buildEvent(_rule, _effects[i].dynamicParam, _policyId, _effects[i].text, _effects[i], _callingFunctionArgs);
                 } else {
+                    console.log("EVALUATING EXPRESSION");
                     _evaluateExpression(_rule, _policyId, _callingFunctionArgs, effect.instructionSet);
                 }
             }
@@ -1007,6 +976,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
     ) internal {
         (bytes[] memory effectArguments, Placeholder[] memory placeholders) = _buildArguments(_rule, _policyId, _callingFunctionArgs, true);
         if (_instructionSet.length > 1) {
+            console.log("RUNNING INSTRUCTION SET");
             _run(_instructionSet, placeholders, _policyId, effectArguments);
         }
     }

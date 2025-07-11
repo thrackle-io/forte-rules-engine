@@ -18,7 +18,9 @@ library RulesEngineProcessorLib {
      * @param _x the bool to convert
      */
     function _boolToUint(bool _x) internal pure returns (uint256 _ans) {
-        return _x ? 1 : 0;
+        assembly {
+            _ans := _x
+        }
     }
 
     /**
