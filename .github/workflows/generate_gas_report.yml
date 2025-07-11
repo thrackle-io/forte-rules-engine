@@ -7,6 +7,44 @@ on:
     types: [completed]
 
 jobs:
+  check-all-workflows:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Check workflow statuses
+        id: check-workflows
+        run: |
+          # Wait for a reasonable time for other workflows to complete
+          sleep 200
+          
+          # Use GitHub API to check status of all required workflows
+          GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          SHA="${{ github.event.workflow_run.head_sha }}"
+          
+          # Check each required workflow
+          REQUIRED_WORKFLOWS=("Test" "Check Markdown links" "Code coverage evaluation" "Contract Size")
+          ALL_SUCCEEDED=true
+          
+          for workflow in "${REQUIRED_WORKFLOWS[@]}"; do
+            echo "Checking status of workflow: $workflow"
+            STATUS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/workflows/*/runs?head_sha=$SHA&event=pull_request" | \
+              jq --arg name "$workflow" '.workflow_runs[] | select(.name==$name) | .conclusion')
+            
+            echo "$workflow status: $STATUS"
+            if [[ "$STATUS" != *"success"* ]]; then
+              ALL_SUCCEEDED=false
+              echo "$workflow is not successfully completed"
+            fi
+          done
+          
+          # Set output variable for next job
+          echo "all_succeeded=$ALL_SUCCEEDED" >> $GITHUB_OUTPUT
+          
+          if [ "$ALL_SUCCEEDED" = false ]; then
+            echo "Not all required workflows have completed successfully"
+            exit 1
+          fi
   gas-report:
     # Only run if all prerequisite workflows succeeded
     if: github.event.workflow_run.conclusion == 'success'
