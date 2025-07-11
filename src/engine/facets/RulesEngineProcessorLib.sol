@@ -9,7 +9,7 @@ library RulesEngineProcessorLib {
      * @dev converts a uint256 to a bool
      * @param _x the uint256 to convert
      */
-    function _uintToBool(uint256 _x) internal pure returns (bool _ans) {
+    function _uintToBool(uint256 _x) internal pure returns (bool) {
         return _x == 1;
     }
 
@@ -27,7 +27,7 @@ library RulesEngineProcessorLib {
      * @dev converts a uint256 to an address
      * @param _x the uint256 to convert
      */
-    function _uintToAddr(uint256 _x) internal pure returns (address _ans) {
+    function _uintToAddr(uint256 _x) internal pure returns (address) {
         return address(uint160(_x));
     }
 
@@ -35,7 +35,7 @@ library RulesEngineProcessorLib {
      * @dev converts a uint256 to a bytes
      * @param _x the uint256 to convert
      */
-    function _uintToBytes(uint256 _x) internal pure returns (bytes memory _ans) {
+    function _uintToBytes(uint256 _x) internal pure returns (bytes memory) {
         return abi.encode(_x);
     }
 
