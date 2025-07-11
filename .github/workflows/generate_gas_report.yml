@@ -2,7 +2,7 @@ name: Generate Gas Report
 
 on:
   push:
-    branches: [ RL-206-Gas-Report-Generation ]
+    branches: [  ]
 
 jobs:
   gas-report:
