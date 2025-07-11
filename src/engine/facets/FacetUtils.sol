@@ -45,8 +45,8 @@ contract FacetUtils {
      */
     function _isForeignCall(Placeholder memory placeholder) internal pure returns (bool result) {
         assembly {
-            // Load the flags byte from memory (offset 0x60 from placeholder pointer)
-            let flags := and(mload(add(placeholder, 0x60)), 0xFF)
+            // Load the flags byte from memory (offset 0x40 from placeholder pointer)
+            let flags := and(mload(add(placeholder, 0x40)), 0xFF)
 
             // Check if FLAG_FOREIGN_CALL bit is set
             // FLAG_FOREIGN_CALL = 0x01 (00000001 in binary)
@@ -62,8 +62,8 @@ contract FacetUtils {
      */
     function _isTrackerValue(Placeholder memory placeholder) internal pure returns (bool result) {
         assembly {
-            // Load the flags byte from memory (offset 0x60 from placeholder pointer)
-            let flags := and(mload(add(placeholder, 0x60)), 0xFF)
+            // Load the flags byte from memory (offset 0x40 from placeholder pointer)
+            let flags := and(mload(add(placeholder, 0x40)), 0xFF)
 
             // Check if FLAG_TRACKER_VALUE bit is set
             // FLAG_TRACKER_VALUE = 0x02 (00000010 in binary)
@@ -82,8 +82,8 @@ contract FacetUtils {
         Placeholder memory placeholder
     ) internal pure returns (bool isTrackerValue, bool isForeignCall, uint8 globalVarType) {
         assembly {
-            // Load the flags byte from memory (offset 0x60 from placeholder pointer)
-            let flags := and(mload(add(placeholder, 0x60)), 0xFF)
+            // Load the flags byte from memory (offset 0x40 from placeholder pointer)
+            let flags := and(mload(add(placeholder, 0x40)), 0xFF)
 
             // Check if foreign call bit is set (bit 0)
             isForeignCall := iszero(iszero(and(flags, 0x01))) // FLAG_FOREIGN_CALL = 0x01
