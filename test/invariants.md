@@ -16,6 +16,15 @@
 - Only the calling contract admin can set which policies are invoked by the calling contract 
 - Zero address can never be calling contract admin 
 
+#### Permissioned Foreign Call Admin 
+- Each Foreign Call contract and selector pair has exactly one Foreign Call Admin
+- A single address may be the Foreign Call Admin for multiple different contracts
+- A single address may be the Foreign Call Admin for multiple different contract and selector pairs
+- The Foreign Call sets its own Foreign Call Admin via the setForeignCallAdmin() function within RulesEngineForeignCallAdmin
+- Only the current foreign call admin can propose a new calling contract admin 
+- Proposed foreign call Admin Role cannot act as the foreign call admin until role is confirmed 
+- For a given Foreign contract and selector pair, the Foreign Call Admin is the only one who can configure which Policy Admins may leverage the Foreign Call in their policies
+
 ### Policy Invariants 
 - policyId can never be 0 
 - policyId can never decrement 

@@ -4,9 +4,6 @@ pragma solidity ^0.8.24;
 import "test/utils/RulesEngineCommon.t.sol";
 
 abstract contract rulesFuzz is RulesEngineCommon {
-    uint opTotalSize = 18;
-    uint memorySize = 90;
-
     /**
      *
      *
@@ -126,11 +123,7 @@ abstract contract rulesFuzz is RulesEngineCommon {
         RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
 
-    function findArgumentSize(uint opA, uint opB) internal pure returns (uint opAElements, uint opBElements) {
-        uint opsSize1 = 3;
-        uint opSizeUpTo2 = 16;
-        uint opSizeUpTo3 = 17;
-
+    function findArgumentSize(uint opA, uint opB) internal view returns (uint opAElements, uint opBElements) {
         opAElements = 1;
         opBElements = 1;
         if (opA >= opsSize1) opAElements = 2;
