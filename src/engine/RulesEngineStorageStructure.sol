@@ -39,6 +39,7 @@ enum LogicalOp {
     NUM,
     NOT,
     PLH,
+    ASSIGN,
     PLHM,
     ADD,
     SUB,
@@ -118,10 +119,9 @@ struct Effect {
 struct ForeignCallStorage {
     mapping(uint256 policyId => uint256) foreignCallIdxCounter;
     mapping(uint256 policyId => mapping(uint256 foreignCallIndex => ForeignCall)) foreignCalls;
-    mapping(address foreignCallAddress => mapping(bytes4 signature => bool)) isPermissionedForeignCall; // Store all permissioned foreign calls within the rules engine 
+    mapping(address foreignCallAddress => mapping(bytes4 signature => bool)) isPermissionedForeignCall; // Store all permissioned foreign calls within the rules engine
     mapping(address foreignCallContractAddress => mapping(bytes4 => mapping(address permissionedAdmin => bool))) permissionedForeignCallAdmins; // This is used to store the addresses of all permissioned foreign call admins for look ups
     mapping(address foreignCallContractAddress => mapping(bytes4 selector => address[])) permissionedForeignCallAdminsList; // This is used to store the addresses of all permissioned foreign call admins for look ups
-    
 }
 
 struct PermissionedForeignCallStorage {

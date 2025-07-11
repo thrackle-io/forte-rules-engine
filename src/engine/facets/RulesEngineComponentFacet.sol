@@ -132,9 +132,6 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      */
     function _storeTrackerMetadata(uint256 _policyId, uint256 _trackerIndex, string calldata _trackerName) internal {
         lib._getTrackerMetadataStorage().trackerMetadata[_policyId][_trackerIndex] = _trackerName;
-        // Event emission moved here to avoid stack too deep errors
-        // Emit event
-        emit TrackerCreated(_policyId, _trackerIndex);
     }
 
     /**

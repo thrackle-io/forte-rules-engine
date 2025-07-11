@@ -21,6 +21,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
     uint8 constant GLOBAL_BLOCK_NUMBER = 4;
     uint8 constant GLOBAL_TX_ORIGIN = 5;
 
+    string public constant version = "v1.0.0";
+
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
     // Rule Evaluation Functions
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -559,6 +561,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 idx += 3;
             } else if (op == LogicalOp.DIV) {
                 v = mem[_prog[idx + 1]] / mem[_prog[idx + 2]];
+                idx += 3;
+            } else if (op == LogicalOp.ASSIGN) {
+                v = mem[_prog[idx + 2]];
                 idx += 3;
             } else if (op == LogicalOp.LT) {
                 v = ProcessorLib._boolToUint(mem[_prog[idx + 1]] < mem[_prog[idx + 2]]);
