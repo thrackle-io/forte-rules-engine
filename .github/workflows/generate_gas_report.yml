@@ -1,14 +1,16 @@
 name: Generate Gas Report
 
 on:
-  pull_request:
-    branches: [ RL-206-Gas-Report-Generation ]
-    types: [ closed ]
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Check Markdown links", "Test", "Code coverage evaluation", "Contract Size"]
+    types: [completed]
+    branches: [RL-206-Gas-Report-Generation]
 
 jobs:
   gas-report:
-    # Only run if PR was actually merged (not just closed)
-    if: github.event.pull_request.merged == true
+    # Only run if all prerequisite workflows succeeded
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     
     steps:
@@ -17,8 +19,8 @@ jobs:
       with:
         submodules: recursive
         token: ${{ secrets.GITHUB_TOKEN }}
-        # Important: checkout the merge commit, not the PR head
-        ref: RL-206-Gas-Report-Generation
+        # Checkout the actual commit that triggered the workflow run
+        ref: ${{ github.event.workflow_run.head_sha }}
 
     - name: Install Foundry
       uses: foundry-rs/foundry-toolchain@v1
@@ -51,6 +53,6 @@ jobs:
         git config --local user.name "GitHub Action"
         git add gasReports/
         if ! git diff --staged --quiet; then
-          git commit -m "📊 Update gas reports for merge $(git rev-parse --short HEAD)"
+          git commit -m "📊 Update gas reports for merge $(git rev-parse --short HEAD) [skip ci]"
           git push
         fi
