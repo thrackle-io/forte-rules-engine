@@ -400,7 +400,9 @@ abstract contract components is RulesEngineCommon {
             blankcallingFunctions,
             blankcallingFunctionIds,
             blankRuleIds,
-            PolicyType.OPEN_POLICY
+            PolicyType.OPEN_POLICY,
+            policyName,
+            policyDescription
         );
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
 
@@ -419,7 +421,9 @@ abstract contract components is RulesEngineCommon {
             blankcallingFunctions,
             blankcallingFunctionIds,
             blankRuleIds,
-            PolicyType.OPEN_POLICY
+            PolicyType.OPEN_POLICY,
+            policyName,
+            policyDescription
         );
 
         ForeignCall memory fc;
@@ -756,5 +760,13 @@ abstract contract components is RulesEngineCommon {
         assertTrue(hasOwner, "NativeFacet should have ownership functionality");
 
         vm.stopPrank();
+    }
+
+    function testRulesEngine_unit_RetreiveRuleMetadata_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
+        vm.startPrank(policyAdmin);
+        (uint256 policyId, uint256 ruleId) = setUpRuleSimple();
+        (string memory name, string memory description) = RulesEngineRuleFacet(address(red)).getRuleMetadata(policyId, ruleId);
+        assertEq(name, ruleName);
+        assertEq(description, ruleDescription);
     }
 }

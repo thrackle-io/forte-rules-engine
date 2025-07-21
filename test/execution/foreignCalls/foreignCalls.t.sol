@@ -157,7 +157,7 @@ abstract contract foreignCalls is RulesEngineCommon {
             rule.posEffects = new Effect[](1);
             rule.posEffects[0] = effectId_event;
 
-            ruleId = RulesEngineRuleFacet(address(red)).createRule(policyId, rule);
+            ruleId = RulesEngineRuleFacet(address(red)).createRule(policyId, rule, ruleName, ruleDescription);
 
             {
                 bytes4 transferSelector = ExampleUserContract.transferFrom.selector;
@@ -180,7 +180,15 @@ abstract contract foreignCalls is RulesEngineCommon {
                 uint256[][] memory ruleIdsArr = new uint256[][](1);
                 ruleIdsArr[0] = new uint256[](1);
                 ruleIdsArr[0][0] = ruleId;
-                RulesEnginePolicyFacet(address(red)).updatePolicy(policyId, selectors, functionIds, ruleIdsArr, PolicyType.CLOSED_POLICY);
+                RulesEnginePolicyFacet(address(red)).updatePolicy(
+                    policyId,
+                    selectors,
+                    functionIds,
+                    ruleIdsArr,
+                    PolicyType.CLOSED_POLICY,
+                    policyName,
+                    policyDescription
+                );
             }
 
             {

@@ -44,7 +44,7 @@ contract RulesEngineAdminRolesTest is RulesEngineCommon, RulesEngineAdminRolesFa
         }
 
         if (testPolicyId == 0) {
-            testPolicyId = RulesEnginePolicyFacet(address(red)).createPolicy(PolicyType.CLOSED_POLICY);
+            testPolicyId = RulesEnginePolicyFacet(address(red)).createPolicy(PolicyType.CLOSED_POLICY, policyName, policyDescription);
         }
 
         if (testUserContract == address(0)) {

@@ -290,7 +290,7 @@ struct RuleStorage {
  * Structure used to hold the rule Ids and their associated metadata
  * This is used to store the rules for a policy and their associated metadata
  */
-struct RulesMetadata {
+struct RulesMetadataStruct {
     mapping(uint256 policyId => mapping(uint256 ruleId => RuleMetadata)) ruleMetadata;
 }
 
@@ -332,7 +332,9 @@ struct Rule {
     Effect[] negEffects;
 }
 
-// This struct will hold the raw form of strings and addresses that were submitted to the SDK
+/**
+ * This struct will hold the raw form of strings and addresses that were submitted to the SDK
+ */
 struct RawData {
     // The index in the instruction set that contains the "converted" version of this data (converted to uint256)
     uint256[] instructionSetIndex;
@@ -342,7 +344,9 @@ struct RawData {
     bytes[] dataValues;
 }
 
-// Contains the "converted" uint256 value and the stored original string value for comparison to make sure the conversion can be replicated.
+/**
+ * Contains the "converted" uint256 value and the stored original string value for comparison to make sure the conversion can be replicated.
+ */
 struct StringVerificationStruct {
     // The "converted" value that exists in the instruction set.
     uint256 instructionSetValue;
@@ -350,7 +354,9 @@ struct StringVerificationStruct {
     string rawData;
 }
 
-// Contains the "converted" uint256 value and the stored original address value for comparison to make sure the conversion can be replicated.
+/**
+ * Contains the "converted" uint256 value and the stored original address value for comparison to make sure the conversion can be replicated.
+ */
 struct AddressVerificationStruct {
     // The "converted" value that exists in the instruction set.
     uint256 instructionSetValue;
@@ -358,7 +364,9 @@ struct AddressVerificationStruct {
     address rawData;
 }
 
-/// POLICY Storage Structures
+/**
+ * POLICY Storage Structures
+ */
 struct PolicyStorage {
     uint256 policyId;
     mapping(uint256 policyId => PolicyStorageSet) policyStorageSets;
@@ -367,7 +375,7 @@ struct PolicyStorage {
 /**
  * Structure used to hold the metadata for policies
  */
-struct PolicyMetadataMap {
+struct PolicyMetadataStruct {
     mapping(uint256 policyId => PolicyMetadata) policyMetadata;
 }
 
@@ -375,23 +383,30 @@ struct PolicyMetadataMap {
  * Structure used to hold the policy metadata
  */
 struct PolicyMetadata {
-    mapping(uint256 policyId => string) policyName; // This is used to store the name of the policy
-    mapping(uint256 policyId => string) policyDescription; // This is used to store the description of the policy
+    string policyName; // This is used to store the name of the policy
+    string policyDescription; // This is used to store the description of the policy
 }
 
-// Policy Type enum to determine if policy is open or closed
+/**
+ * Policy Type enum to determine if policy is open or closed
+ */
 enum PolicyType {
     CLOSED_POLICY,
     OPEN_POLICY,
     DISABLED_POLICY
 }
 
-// Policy storage with set
+/**
+ * Policy storage with set
+ */
 struct PolicyStorageSet {
     bool set;
     Policy policy;
 }
 
+/**
+ * Policy Storage Structure
+ */
 struct Policy {
     // calling functions to calling function Id
     mapping(bytes4 => uint256) callingFunctionIdMap;
@@ -406,7 +421,9 @@ struct Policy {
     mapping(address => bool) closedPolicySubscribers;
 }
 
-/// Policy Association Storage Structures
+/**
+ * Policy Association Storage Structures
+ */
 struct PolicyAssociationStorage {
     mapping(address contractAddress => uint256[]) contractPolicyIdMap;
     mapping(uint256 policyId => address[]) policyIdContractMap;

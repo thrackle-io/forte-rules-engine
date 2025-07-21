@@ -424,7 +424,7 @@ abstract contract adminRoles is RulesEngineCommon {
         vm.startPrank(user1);
         vm.expectRevert("Not Authorized To Policy");
         // Attempt to Save the rule
-        RulesEngineRuleFacet(address(red)).updateRule(policyId, 0, rule);
+        RulesEngineRuleFacet(address(red)).updateRule(policyId, 0, rule, ruleName, ruleDescription);
     }
 
     function test_GrantCallingContractRole() public ifDeploymentTestsEnabled {

@@ -25,13 +25,18 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      * @param rule The rule to create.
      * @return ruleId The generated rule ID.
      */
-    function createRule(uint256 policyId, Rule calldata rule) external policyAdminOnly(policyId, msg.sender) returns (uint256) {
+    function createRule(
+        uint256 policyId,
+        Rule calldata rule,
+        string calldata ruleName,
+        string calldata ruleDescription
+    ) external returns (uint256) {
+        _policyAdminOnly(policyId, msg.sender);
         _validateRule(rule);
         StorageLib._notCemented(policyId);
         RuleStorage storage data = lib._getRuleStorage();
-        uint256 ruleId = ++data.ruleIdCounter[policyId];
-        _storeRule(data, policyId, ruleId, rule);
-        data.ruleIdCounter[policyId] = ruleId;
+        uint256 ruleId = _incrementRuleId(data, policyId);
+        _storeRuleData(data, policyId, ruleId, rule, ruleName, ruleDescription);
         emit RuleCreated(policyId, ruleId);
         return ruleId;
     }
@@ -47,13 +52,16 @@ contract RulesEngineRuleFacet is FacetCommonImports {
     function updateRule(
         uint256 policyId,
         uint256 ruleId,
-        Rule calldata rule
-    ) external policyAdminOnly(policyId, msg.sender) returns (uint256) {
+        Rule calldata rule,
+        string calldata ruleName,
+        string calldata ruleDescription
+    ) external returns (uint256) {
+        _policyAdminOnly(policyId, msg.sender);
         _validateRule(rule);
         StorageLib._notCemented(policyId);
         // Load the rule data from storage
         RuleStorage storage data = lib._getRuleStorage();
-        _storeRule(data, policyId, ruleId, rule);
+        _storeRuleData(data, policyId, ruleId, rule, ruleName, ruleDescription);
         emit RuleUpdated(policyId, ruleId);
         return ruleId;
     }
@@ -83,6 +91,19 @@ contract RulesEngineRuleFacet is FacetCommonImports {
     }
 
     /**
+     * @notice Retrieves the metadata of a rule.
+     * @param policyId The ID of the policy the rule belongs to.
+     * @param ruleId The ID of the rule to retrieve metadata for.
+     * @return RuleMetadata The metadata of the specified rule.
+     */
+    function getRuleMetadata(uint256 policyId, uint256 ruleId) external view returns (string memory, string memory) {
+        return (
+            lib._getRulesMetadataStorage().ruleMetadata[policyId][ruleId].ruleName,
+            lib._getRulesMetadataStorage().ruleMetadata[policyId][ruleId].ruleDescription
+        );
+    }
+
+    /**
      * @notice Deletes a rule from storage.
      * @param policyId The ID of the policy the rule belongs to.
      * @param ruleId The ID of the rule to delete.
@@ -105,6 +126,28 @@ contract RulesEngineRuleFacet is FacetCommonImports {
     }
 
     /**
+     * @notice Stores rule data in storage.
+     * @dev This function is used to store the rule and its metadata.
+     * @param data The rule storage structure.
+     * @param policyId The ID of the policy the rule belongs to.
+     * @param ruleId The ID of the rule to store.
+     * @param rule The rule to store.
+     * @param ruleName The name of the rule.
+     * @param ruleDescription The description of the rule.
+     */
+    function _storeRuleData(
+        RuleStorage storage data,
+        uint256 policyId,
+        uint256 ruleId,
+        Rule calldata rule,
+        string calldata ruleName,
+        string calldata ruleDescription
+    ) private {
+        _storeRule(data, policyId, ruleId, rule);
+        _storeRuleMetadata(policyId, ruleId, ruleName, ruleDescription);
+    }
+
+    /**
      * @notice Stores a rule in storage.
      * @dev Validates the policy existence before storing the rule.
      * @param _data The rule storage structure.
@@ -120,6 +163,31 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         _data.ruleStorageSets[_policyId][_ruleId].set = true;
         _data.ruleStorageSets[_policyId][_ruleId].rule = _rule;
         return _ruleId;
+    }
+
+    /**
+     * @notice Increments the rule ID counter for a specific policy.
+     * @dev This function is used to generate a new rule ID for a policy.
+     * @param data The rule storage structure.
+     * @param _policyId The ID of the policy to increment the rule ID for.
+     * @return The incremented rule ID.
+     */
+    function _incrementRuleId(RuleStorage storage data, uint256 _policyId) private returns (uint256) {
+        return ++data.ruleIdCounter[_policyId];
+    }
+
+    /**
+     * @notice function to store the metadata for a rule.
+     * @dev This function is used to store the metadata for a rule, such as its name and description.
+     * @param _policyId The ID of the policy the rule belongs to.
+     * @param _ruleId The ID of the rule to store metadata for.
+     * @param _ruleName The name of the rule.
+     * @param _description The description of the rule.
+     */
+    function _storeRuleMetadata(uint256 _policyId, uint256 _ruleId, string calldata _ruleName, string calldata _description) internal {
+        RulesMetadataStruct storage metadata = lib._getRulesMetadataStorage();
+        metadata.ruleMetadata[_policyId][_ruleId].ruleName = _ruleName;
+        metadata.ruleMetadata[_policyId][_ruleId].ruleDescription = _description;
     }
 
     function _validateRule(Rule calldata rule) internal pure {
@@ -239,5 +307,30 @@ contract RulesEngineRuleFacet is FacetCommonImports {
     function _validateInstructionSetIndex(uint256 index) internal pure {
         uint memorySize = 90;
         if (index > memorySize) revert(MEMORY_OVERFLOW);
+    }
+
+    /**
+     * @notice Checks that the caller is a policy admin
+     * @param _policyId The ID of the policy.
+     * @param _address The address to check for policy admin status.
+     */
+    function _policyAdminOnly(uint256 _policyId, address _address) internal {
+        // 0x901cee11 = isPolicyAdmin(uint256,address)
+        (bool success, bytes memory res) = _callAnotherFacet(
+            0x901cee11,
+            abi.encodeWithSignature("isPolicyAdmin(uint256,address)", _policyId, _address)
+        );
+        bool returnBool;
+        if (success) {
+            if (res.length >= 4) {
+                assembly {
+                    returnBool := mload(add(res, 32))
+                }
+            } else {
+                returnBool = false;
+            }
+            // returned false so revert with error
+            if (!returnBool) revert("Not Authorized To Policy");
+        }
     }
 }
