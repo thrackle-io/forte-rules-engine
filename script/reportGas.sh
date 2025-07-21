@@ -45,6 +45,56 @@ log_debug() {
     fi
 }
 
+# Usage function
+usage() {
+    cat << EOF
+Gas Report Generation Script
+
+DESCRIPTION:
+    Generates comprehensive gas usage reports for the Rules Engine project.
+    Runs both Rules Engine tests and hardcoded baseline tests, parses results,
+    and generates markdown reports with gas snapshots.
+
+USAGE:
+    $0 [OPTIONS]
+
+OPTIONS:
+    -h, --help      Show this help message and exit
+    -v, --verbose   Enable verbose output (shows debug information)
+    -d, --debug     Enable debug mode (verbose + preserve temp files + bash debug)
+
+EXAMPLES:
+    # Generate gas report with default settings
+    $0
+
+    # Generate gas report with verbose output
+    $0 -v
+
+    # Generate gas report in debug mode (for troubleshooting)
+    $0 -d
+
+FILES GENERATED:
+    gasReports/GAS_USAGE.md                    Main gas usage report
+    gasReports/archive/gas-report_*.md         Timestamped archive (CI only)
+
+INPUT FILES:
+    test/utils/gasReport/GasReport.t.sol       Rules Engine gas tests
+    test/utils/gasReport/GasReportHardcoded.t.sol  Hardcoded baseline tests
+    snapshots/RulesEngineUnitTests.json       Gas snapshots from test suite
+
+REQUIREMENTS:
+    - Foundry (forge command)
+    - jq (for JSON parsing, optional but recommended)
+    - foundry.toml in project root
+
+ENVIRONMENT VARIABLES:
+    GAS_REPORT_OUTPUT_FILE    Override default output file path
+                              Default: gasReports/GAS_USAGE.md
+
+For more information, see: gasReports/GAS_REPORTS.md
+EOF
+}
+
 # Cleanup function
 cleanup() {
     if [ -d "$TEMP_DIR" ] && [ "$DEBUG_MODE" != true ]; then

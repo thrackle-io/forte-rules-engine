@@ -1,6 +1,6 @@
 # Gas Usage Report
 
-**Last Updated:** 2025-07-11 17:19:58 UTC  
+**Last Updated:** 2025-07-21 09:58:05 UTC  
 **Generated automatically by:** `script/reportGas.sh`
 
 ## Purpose
@@ -24,7 +24,7 @@ forge test -vv --ffi --match-path test/utils/gasReport/GasReportHardcoded.t.sol
 Or regenerate this entire report with:
 
 ```bash
-./script/reportGas.sh
+bash ./script/reportGas.sh
 ```
 
 ## Gas Usage Results
@@ -113,9 +113,3 @@ The following snapshots are taken from automated test runs and represent compreh
 | checkRule_simple_GT | 28995 |
 
 ---
-
-*This report is automatically generated from test output.*  
-*To update this report, run: `./script/reportGas.sh`*  
-*Rules Engine tests: [`test/utils/gasReport/GasReport.t.sol`](../test/utils/gasReport/GasReport.t.sol)*  
-*Hardcoded tests: [`test/utils/gasReport/GasReportHardcoded.t.sol`](../test/utils/gasReport/GasReportHardcoded.t.sol)*  
-*Snapshots: [`snapshots/RulesEngineUnitTests.json`](../snapshots/RulesEngineUnitTests.json)*
