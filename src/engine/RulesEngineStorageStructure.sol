@@ -19,6 +19,7 @@ struct InitializedStorage {
  * NUM - a static value will be in the next slot in the instruction set
  * NOT - perform a logical NOT with the value at the memory address denoted by the next slot in the instruction set
  * PLH - insert a placeholder value into the next memory slot
+ * ASSIGN - assign the value at the memory address denoted by the next slot in the instruction set to the memory address denoted by the slot after that
  * PLHM - insert a mapped placeholder value into the next memory slot
  * ADD - add the values at the memory addresses denoted by the next two slots in the instruction set
  * SUB - subtract the values at the memory addresses denoted by the next two slots in the instruction set
@@ -57,7 +58,9 @@ enum LogicalOp {
     TRUM
 }
 
-// Supported Parameter Types
+/**
+ * Supported Parameter Types
+ */
 enum ParamTypes {
     ADDR,
     STR,
@@ -68,8 +71,10 @@ enum ParamTypes {
     STATIC_TYPE_ARRAY,
     DYNAMIC_TYPE_ARRAY
 }
-/// Effect Storage Structures
-// Supported Effect Types
+/**
+ * Effect Storage Structures
+ * Supported Effect Types
+ */
 enum EffectTypes {
     REVERT,
     EVENT,
@@ -100,7 +105,9 @@ enum TrackerTypes {
     PLACE_HOLDER
 }
 
-// Effect Structure
+/**
+ * Effect Structure
+ */
 struct Effect {
     bool valid;
     bool dynamicParam; //bool to determine if event requires
@@ -114,7 +121,9 @@ struct Effect {
     uint256[] instructionSet;
 }
 
-/// Foreign Call Structures
+/**
+ * Foreign Call Structures
+ */
 struct ForeignCallStorage {
     mapping(uint256 policyId => uint256) foreignCallIdxCounter;
     mapping(uint256 policyId => mapping(uint256 foreignCallIndex => ForeignCall)) foreignCalls;
@@ -123,25 +132,41 @@ struct ForeignCallStorage {
     mapping(address foreignCallContractAddress => mapping(bytes4 selector => address[])) permissionedForeignCallAdminsList; // This is used to store the addresses of all permissioned foreign call admins for look ups
 }
 
+/**
+ * Structure used to hold the addresses and signatures of all permissioned foreign calls
+ * This is used to store the addresses and signatures of all permissioned foreign calls for look ups
+ */
 struct PermissionedForeignCallStorage {
     address[] permissionedForeignCallAddresses; // This is used to store the addresses of all permissioned foreign call contracts for look ups
     bytes4[] permissionedForeignCallSignatures; // This is used to store the signatures of all permissioned foreign calls for look ups
 }
 
+/**
+ * Structure used to hold the metadata for foreign calls
+ */
 struct ForeignCallMetadataStruct {
     mapping(uint256 policyId => mapping(uint256 foreignCallIndex => string)) foreignCallMetadata;
 }
 
+/**
+ * Structure used to hold the metadata for trackers
+ */
 struct TrackerMetadataStruct {
     mapping(uint256 policyId => mapping(uint256 trackerIndex => string)) trackerMetadata;
 }
 
+/**
+ * Structure used to store the calling function name, signature and encoded values for the calling function
+ */
 struct CallingFunctionHashMapping {
     string callingFunction;
     bytes4 signature;
     string encodedValues;
 }
 
+/**
+ * Mapping for the metadata for calling functions
+ */
 struct CallingFunctionMetadataStruct {
     mapping(uint256 policyId => mapping(uint256 functionId => CallingFunctionHashMapping)) callingFunctionMetadata;
 }
@@ -187,6 +212,10 @@ struct ForeignCall {
     ForeignCallEncodedIndex[] encodedIndices;
 }
 
+/**
+ * Enum to represent the type of encoded index for a foreign call.
+ * This is used to determine how the index should be interpreted when decoding the foreign call arguments.
+ */
 enum EncodedIndexType {
     ENCODED_VALUES,
     FOREIGN_CALL,
@@ -194,12 +223,17 @@ enum EncodedIndexType {
     GLOBAL_VAR
 }
 
+/**
+ * Structure used to represent an encoded index for a foreign call.
+ */
 struct ForeignCallEncodedIndex {
     EncodedIndexType eType;
     uint256 index;
 }
 
-/// Tracker Structures
+/**
+ * Tracker Structures
+ */
 struct TrackerStorage {
     //uint256 TrackerIndex;
     mapping(uint256 policyId => uint256 trackerIndex) trackerIndexCounter;
@@ -225,22 +259,49 @@ struct Trackers {
     uint256 trackerIndex;
 }
 
-/// Calling Function Structures
+/**
+ * Structure used to hold the calling function Ids and their associated metadata
+ */
 struct CallingFunctionStruct {
     mapping(uint256 policyId => uint256 functionId) functionIdCounter;
     mapping(uint256 policyId => mapping(uint256 functionId => CallingFunctionStorageSet)) callingFunctionStorageSets;
 }
 
+/**
+ * Structure used to hold the calling function signature, parameter types and whether it has been set
+ * This is used to store the calling function signature and parameter types for look ups
+ */
 struct CallingFunctionStorageSet {
     bool set;
     bytes4 signature;
     ParamTypes[] parameterTypes;
 }
 
-/// Rule Structures
+/**
+ * Structure used to hold the rule storage
+ * This is used to store the rules for a policy and their associated metadata
+ */
 struct RuleStorage {
     mapping(uint256 policyId => uint256 ruleId) ruleIdCounter;
     mapping(uint256 policyId => mapping(uint256 ruleId => RuleStorageSet)) ruleStorageSets;
+}
+
+/**
+ * Structure used to hold the rule Ids and their associated metadata
+ * This is used to store the rules for a policy and their associated metadata
+ */
+struct RulesMetadata {
+    mapping(uint256 policyId => mapping(uint256 ruleId => RuleMetadata)) ruleMetadata;
+}
+
+/**
+ * Structure used to hold the metadata for a rule
+ */
+struct RuleMetadata {
+    // The name of the rule
+    string ruleName;
+    // The description of the rule
+    string ruleDescription;
 }
 
 /**
@@ -301,6 +362,21 @@ struct AddressVerificationStruct {
 struct PolicyStorage {
     uint256 policyId;
     mapping(uint256 policyId => PolicyStorageSet) policyStorageSets;
+}
+
+/**
+ * Structure used to hold the metadata for policies
+ */
+struct PolicyMetadataMap {
+    mapping(uint256 policyId => PolicyMetadata) policyMetadata;
+}
+
+/**
+ * Structure used to hold the policy metadata
+ */
+struct PolicyMetadata {
+    mapping(uint256 policyId => string) policyName; // This is used to store the name of the policy
+    mapping(uint256 policyId => string) policyDescription; // This is used to store the description of the policy
 }
 
 // Policy Type enum to determine if policy is open or closed
