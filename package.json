@@ -1,6 +1,6 @@
 {
   "name": "@thrackle-io/forte-rules-engine",
-  "version": "0.0.3-rc.6",
+  "version": "0.0.3-rc.8",
   "description": "Forte Rules Engine",
   "files": [
     "LICENSE",
@@ -13,7 +13,8 @@
     "out/RulesEngineForeignCallsFacet.sol/RulesEngineForeignCallsFacet.json",
     "out/RulesEngineDiamond.sol/RulesEngineDiamond.json",
     "out/RulesEnginePolicyFacet.sol/RulesEnginePolicyFacet.json",
-    "out/RulesEngineRuleFacet.sol/RulesEngineRuleFacet.json"
+    "out/RulesEngineRuleFacet.sol/RulesEngineRuleFacet.json",
+    "out/RulesEngineForeignCallFacet.sol/RulesEngineForeignCallFacet.json"
   ],
   "keywords": [
     "evm",
