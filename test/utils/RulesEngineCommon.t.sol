@@ -57,6 +57,10 @@ contract RulesEngineCommon is DiamondMine, Test {
     string constant event_text2 = "Rules Engine Event 2";
     string constant revert_text2 = "Rules Engine Revert 2";
     string constant customEventText = "Custom Event";
+    string ruleName = "ruleName";
+    string ruleDescription = "ruleDescription";
+    string policyName = "policyName";
+    string policyDescription = "policyDescription";
 
     //bytes32
     bytes32 public constant EVENTTEXT = bytes32("Rules Engine Event");
@@ -67,7 +71,7 @@ contract RulesEngineCommon is DiamondMine, Test {
     uint8 constant MASK_GLOBAL_VAR = 0x1C; // 00011100
     uint8 constant SHIFT_GLOBAL_VAR = 2;
 
-    uint opsSize1 = 4;
+    uint opsSize1 = 3;
     uint opSizeUpTo2 = 17;
     uint opSizeUpTo3 = 18;
     uint opTotalSize = 19;
@@ -170,7 +174,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -204,7 +208,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
-        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -240,7 +244,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
-        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -276,7 +280,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
-        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -321,7 +325,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
-        ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyIds[0], 0, rule);
+        ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyIds[0], 0, rule, ruleName, ruleDescription);
 
         ParamTypes[] memory pTypes = new ParamTypes[](2);
         pTypes[0] = ParamTypes.ADDR;
@@ -345,7 +349,9 @@ contract RulesEngineCommon is DiamondMine, Test {
             callingFunctions,
             callingFunctionIds,
             ruleIds,
-            PolicyType.CLOSED_POLICY
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
         );
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
@@ -385,7 +391,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
-        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ParamTypes[] memory pTypes = new ParamTypes[](2);
         pTypes[0] = ParamTypes.ADDR;
@@ -410,7 +416,9 @@ contract RulesEngineCommon is DiamondMine, Test {
             callingFunctions,
             callingFunctionIds,
             ruleIds,
-            PolicyType.CLOSED_POLICY
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
         );
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
@@ -456,7 +464,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.effectPlaceHolders[1].pType = ParamTypes.ADDR;
         rule.effectPlaceHolders[1].flags = FLAG_TRACKER_VALUE;
         rule.effectPlaceHolders[1].typeSpecificIndex = 1;
-        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
         //build tracker
         Trackers memory tracker;
         /// build the members of the struct:
@@ -525,7 +533,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.effectPlaceHolders[1].flags = FLAG_TRACKER_VALUE;
         rule.effectPlaceHolders[1].typeSpecificIndex = 1;
 
-        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -595,7 +603,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.foreignCallIndex = 0;
         RulesEngineForeignCallFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -661,7 +669,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc2.foreignCallIndex = 0;
         RulesEngineForeignCallFacet(address(red)).createForeignCall(policyIds[0], fc2, "square(uint256)");
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -725,7 +733,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.foreignCallIndex = 0;
         RulesEngineForeignCallFacet(address(red)).createForeignCall(policyIds[0], fc, "square(uint256)");
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -791,7 +799,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.posEffects[0] = effectId_revert;
 
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -816,7 +824,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.posEffects[0] = effectId_event;
 
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -844,7 +852,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.posEffects[0] = effectId_event;
 
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -876,7 +884,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         }
 
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -904,7 +912,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.posEffects[0] = effectId_event;
 
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         if (ruleIds.length == 0) ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -937,7 +945,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.posEffects[0] = effectId_event;
 
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](4));
         ruleIds[0][0] = ruleId;
@@ -947,7 +955,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.posEffects[0] = effectId_event2;
 
         // Save the rule
-        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         // // Save the fKureIds.push(callingFunctionId);
         ruleIds[0][1] = ruleId;
@@ -957,7 +965,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.posEffects[0] = effectId_event;
 
         // Save the rule
-        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         // // Save the fKureIds.push(callingFunctionId);
         ruleIds[0][2] = ruleId;
@@ -967,7 +975,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.posEffects[0] = effectId_event2;
 
         // Save the rule
-        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         // // Save the fKureIds.push(callingFunctionId);
         ruleIds[0][3] = ruleId;
@@ -996,7 +1004,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.posEffects[1] = effectId_event2;
 
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -1039,7 +1047,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.posEffects[0] = effectId_event;
 
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
         // Build the tracker
         Trackers memory tracker;
 
@@ -1108,7 +1116,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Add the tracker
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -1169,7 +1177,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Add the tracker
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -1229,7 +1237,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Add the tracker
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -1289,7 +1297,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Add the tracker
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -1349,7 +1357,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         // Add the tracker
         RulesEngineComponentFacet(address(red)).createTracker(policyIds[0], tracker, "trName");
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -1412,7 +1420,7 @@ contract RulesEngineCommon is DiamondMine, Test {
             trackerValues
         );
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -1493,7 +1501,7 @@ contract RulesEngineCommon is DiamondMine, Test {
             trackerValues
         );
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -1573,7 +1581,7 @@ contract RulesEngineCommon is DiamondMine, Test {
             trackerValues
         );
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -1782,18 +1790,18 @@ contract RulesEngineCommon is DiamondMine, Test {
 
     /// Test helper functions
     function _createBlankPolicy() internal returns (uint256) {
-        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(PolicyType.CLOSED_POLICY);
+        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(PolicyType.CLOSED_POLICY, policyName, policyDescription);
         RulesEngineComponentFacet(address(red)).addClosedPolicySubscriber(policyId, callingContractAdmin);
         return policyId;
     }
 
     function _createBlankPolicyOpen() internal returns (uint256) {
-        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(PolicyType.OPEN_POLICY);
+        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(PolicyType.OPEN_POLICY, policyName, policyDescription);
         return policyId;
     }
 
     function _createBlankPolicyWithAdminRoleString() internal returns (uint256) {
-        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(PolicyType.CLOSED_POLICY);
+        uint256 policyId = RulesEnginePolicyFacet(address(red)).createPolicy(PolicyType.CLOSED_POLICY, policyName, policyDescription);
         return policyId;
     }
 
@@ -1916,7 +1924,9 @@ contract RulesEngineCommon is DiamondMine, Test {
             callingFunctions,
             callingFunctionIds,
             blankRuleIds,
-            PolicyType.CLOSED_POLICY
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
         );
         return callingFunctionId;
     }
@@ -1947,7 +1957,9 @@ contract RulesEngineCommon is DiamondMine, Test {
             callingFunctions,
             callingFunctionIds,
             blankRuleIds,
-            PolicyType.CLOSED_POLICY
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
         );
         return callingFunctionId;
     }
@@ -1977,7 +1989,9 @@ contract RulesEngineCommon is DiamondMine, Test {
             callingFunctions,
             callingFunctionIds,
             blankRuleIds,
-            PolicyType.CLOSED_POLICY
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
         );
         return callingFunctionId;
     }
@@ -2007,7 +2021,9 @@ contract RulesEngineCommon is DiamondMine, Test {
             callingFunctions,
             callingFunctionIds,
             blankRuleIds,
-            PolicyType.OPEN_POLICY
+            PolicyType.OPEN_POLICY,
+            policyName,
+            policyDescription
         );
         return callingFunctionId;
     }
@@ -2020,14 +2036,24 @@ contract RulesEngineCommon is DiamondMine, Test {
             callingFunctions,
             callingFunctionIds,
             _ruleIds,
-            PolicyType.CLOSED_POLICY
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
         );
     }
 
     function _addRuleIdsToPolicyOpen(uint256 policyId, uint256[][] memory _ruleIds) internal {
         vm.stopPrank();
         vm.startPrank(policyAdmin);
-        RulesEnginePolicyFacet(address(red)).updatePolicy(policyId, callingFunctions, callingFunctionIds, _ruleIds, PolicyType.OPEN_POLICY);
+        RulesEnginePolicyFacet(address(red)).updatePolicy(
+            policyId,
+            callingFunctions,
+            callingFunctionIds,
+            _ruleIds,
+            PolicyType.OPEN_POLICY,
+            policyName,
+            policyDescription
+        );
     }
 
     function _setupEffectProcessor() public {
@@ -2417,7 +2443,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ParamTypes[] memory fcArgs = new ParamTypes[](1);
         fcArgs[0] = ParamTypes.UINT;
@@ -2478,7 +2504,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -2507,7 +2533,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ParamTypes[] memory fcArgs = new ParamTypes[](1);
         fcArgs[0] = ParamTypes.UINT;

@@ -123,7 +123,9 @@ abstract contract rulesExecution is RulesEngineCommon {
             callingFunctions,
             callingFunctionIds,
             blankRuleIds,
-            PolicyType.CLOSED_POLICY
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
         );
 
         // create Rule - cannot use existing helper functions since rule is unique to test scenario
@@ -162,7 +164,7 @@ abstract contract rulesExecution is RulesEngineCommon {
         rule.negEffects[0] = effectId_revert;
         rule.posEffects = new Effect[](1);
 
-        uint256 ruleID = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleID = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleID;
         _addRuleIdsToPolicy(policyIds[0], ruleIds);
@@ -231,7 +233,7 @@ abstract contract rulesExecution is RulesEngineCommon {
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         rule.posEffects = new Effect[](1);
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
         // Save the calling Function
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
             policyIds[0],
@@ -250,7 +252,9 @@ abstract contract rulesExecution is RulesEngineCommon {
             callingFunctions,
             callingFunctionIds,
             ruleIds,
-            PolicyType.CLOSED_POLICY
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
         );
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
@@ -338,7 +342,7 @@ abstract contract rulesExecution is RulesEngineCommon {
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
 
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
         // Save the calling Function
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
             policyIds[0],
@@ -358,7 +362,9 @@ abstract contract rulesExecution is RulesEngineCommon {
             callingFunctions,
             callingFunctionIds,
             ruleIds,
-            PolicyType.CLOSED_POLICY
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
         );
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
@@ -424,7 +430,7 @@ abstract contract rulesExecution is RulesEngineCommon {
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
         // Save the calling Function
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
             policyIds[0],
@@ -448,7 +454,9 @@ abstract contract rulesExecution is RulesEngineCommon {
             callingFunctions,
             callingFunctionIds,
             ruleIds,
-            PolicyType.CLOSED_POLICY
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
         );
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
@@ -509,7 +517,7 @@ abstract contract rulesExecution is RulesEngineCommon {
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         rule.posEffects = new Effect[](1);
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
         // Save the calling Function
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
             policyIds[0],
@@ -532,7 +540,9 @@ abstract contract rulesExecution is RulesEngineCommon {
             callingFunctions,
             callingFunctionIds,
             ruleIds,
-            PolicyType.CLOSED_POLICY
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
         );
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
@@ -604,7 +614,7 @@ abstract contract rulesExecution is RulesEngineCommon {
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         rule.posEffects = new Effect[](1);
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
         // Save the calling Function
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
             policyIds[0],
@@ -627,7 +637,9 @@ abstract contract rulesExecution is RulesEngineCommon {
             callingFunctions,
             callingFunctionIds,
             ruleIds,
-            PolicyType.CLOSED_POLICY
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
         );
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
@@ -694,7 +706,7 @@ abstract contract rulesExecution is RulesEngineCommon {
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         rule.posEffects = new Effect[](1);
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
         // Save the calling Function
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
             policyIds[0],
@@ -718,7 +730,9 @@ abstract contract rulesExecution is RulesEngineCommon {
             callingFunctions,
             callingFunctionIds,
             ruleIds,
-            PolicyType.CLOSED_POLICY
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
         );
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
@@ -785,7 +799,7 @@ abstract contract rulesExecution is RulesEngineCommon {
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
         // Save the calling Function
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
             policyIds[0],
@@ -809,7 +823,9 @@ abstract contract rulesExecution is RulesEngineCommon {
             callingFunctions,
             callingFunctionIds,
             ruleIds,
-            PolicyType.CLOSED_POLICY
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
         );
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
@@ -876,7 +892,7 @@ abstract contract rulesExecution is RulesEngineCommon {
         // Add a negative/positive effects
         rule.negEffects = new Effect[](1);
         rule.posEffects = new Effect[](1);
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
         // Save the calling Function
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
             policyIds[0],
@@ -899,7 +915,9 @@ abstract contract rulesExecution is RulesEngineCommon {
             callingFunctions,
             callingFunctionIds,
             ruleIds,
-            PolicyType.CLOSED_POLICY
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
         );
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
@@ -968,7 +986,7 @@ abstract contract rulesExecution is RulesEngineCommon {
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         rule.posEffects = new Effect[](1);
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
         // Save the calling Function
         uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
             policyIds[0],
@@ -991,7 +1009,9 @@ abstract contract rulesExecution is RulesEngineCommon {
             callingFunctions,
             callingFunctionIds,
             ruleIds,
-            PolicyType.CLOSED_POLICY
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
         );
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
@@ -1033,7 +1053,9 @@ abstract contract rulesExecution is RulesEngineCommon {
             callingFunctions,
             callingFunctionIds,
             blankRuleIds,
-            PolicyType.CLOSED_POLICY
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
         );
 
         // Rule:uintTracker BlockTime > currentBlockTime -> revert -> transfer(address _to, uint256 amount) returns (bool)
@@ -1067,7 +1089,7 @@ abstract contract rulesExecution is RulesEngineCommon {
         rule.placeHolders[2].pType = ParamTypes.UINT;
         rule.placeHolders[2].typeSpecificIndex = 5;
 
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         //build tracker
         Trackers memory tracker;

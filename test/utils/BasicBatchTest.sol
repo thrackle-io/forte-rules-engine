@@ -16,7 +16,12 @@ contract BasicBatchTest is RulesEngineCommon {
         bytes4[] memory blankCallingFunctions = new bytes4[](0);
         uint256[] memory blankCallingFunctionIds = new uint256[](0);
         uint256[][] memory blankRuleIds = new uint256[][](0);
-        calls[0] = abi.encodeWithSelector(RulesEnginePolicyFacet.createPolicy.selector, PolicyType.CLOSED_POLICY);
+        calls[0] = abi.encodeWithSelector(
+            RulesEnginePolicyFacet.createPolicy.selector,
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
+        );
         address _address = address(22);
         ParamTypes[] memory fcArgs = new ParamTypes[](1);
         fcArgs[0] = ParamTypes.UINT;

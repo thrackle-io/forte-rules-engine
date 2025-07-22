@@ -116,7 +116,7 @@ contract ReentrancyTest is RulesEngineCommon {
         rule.effectPlaceHolders[1].typeSpecificIndex = 1;
 
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         Trackers memory tracker1;
         tracker1.pType = ParamTypes.UINT;
@@ -197,8 +197,8 @@ contract ReentrancyTest is RulesEngineCommon {
         rule.effectPlaceHolders[1].typeSpecificIndex = 1;
 
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
-        RulesEngineRuleFacet(address(red)).createRule(policyIds[1], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
+        RulesEngineRuleFacet(address(red)).createRule(policyIds[1], rule, ruleName, ruleDescription);
 
         Trackers memory tracker1;
         tracker1.pType = ParamTypes.UINT;
@@ -238,14 +238,18 @@ contract ReentrancyTest is RulesEngineCommon {
             callingFunctionsNew,
             callingFunctionIdsNew,
             ruleIds,
-            PolicyType.CLOSED_POLICY
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
         );
         RulesEnginePolicyFacet(address(red)).updatePolicy(
             policyIds[1],
             callingFunctionsNew,
             callingFunctionIdsNew,
             ruleIds,
-            PolicyType.CLOSED_POLICY
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
         );
 
         vm.stopPrank();
