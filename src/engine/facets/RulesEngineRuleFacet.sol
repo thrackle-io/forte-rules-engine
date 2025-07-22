@@ -96,11 +96,8 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      * @param ruleId The ID of the rule to retrieve metadata for.
      * @return RuleMetadata The metadata of the specified rule.
      */
-    function getRuleMetadata(uint256 policyId, uint256 ruleId) external view returns (string memory, string memory) {
-        return (
-            lib._getRulesMetadataStorage().ruleMetadata[policyId][ruleId].ruleName,
-            lib._getRulesMetadataStorage().ruleMetadata[policyId][ruleId].ruleDescription
-        );
+    function getRuleMetadata(uint256 policyId, uint256 ruleId) external view returns (RuleMetadata memory) {
+        return (lib._getRulesMetadataStorage().ruleMetadata[policyId][ruleId]);
     }
 
     /**

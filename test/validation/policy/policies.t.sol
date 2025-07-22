@@ -767,8 +767,8 @@ abstract contract policies is RulesEngineCommon {
     function testRulesEngine_unit_RetreivePolicyMetadata_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
         vm.startPrank(policyAdmin);
         uint256 policyId = _createBlankPolicy();
-        (string memory name, string memory description) = RulesEnginePolicyFacet(address(red)).getPolicyMetadata(policyId);
-        assertEq(name, policyName);
-        assertEq(description, policyDescription);
+        PolicyMetadata memory data = RulesEnginePolicyFacet(address(red)).getPolicyMetadata(policyId);
+        assertEq(data.policyName, policyName);
+        assertEq(data.policyDescription, policyDescription);
     }
 }

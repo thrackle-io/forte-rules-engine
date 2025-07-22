@@ -254,14 +254,10 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
     /**
      * @notice Retrieves the metadata of a policy.
      * @param _policyId The ID of the policy to retrieve metadata for.
-     * @return string The name of the policy.
-     * @return string The description of the policy.
+     * @return PolicyMetadata The metadata of the policy.
      */
-    function getPolicyMetadata(uint256 _policyId) external view returns (string memory, string memory) {
-        return (
-            lib._getPolicyMetadataStorage().policyMetadata[_policyId].policyName,
-            lib._getPolicyMetadataStorage().policyMetadata[_policyId].policyDescription
-        );
+    function getPolicyMetadata(uint256 _policyId) external view returns (PolicyMetadata memory) {
+        return (lib._getPolicyMetadataStorage().policyMetadata[_policyId]);
     }
 
     /**

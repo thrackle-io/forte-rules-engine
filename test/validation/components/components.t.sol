@@ -765,8 +765,8 @@ abstract contract components is RulesEngineCommon {
     function testRulesEngine_unit_RetreiveRuleMetadata_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
         vm.startPrank(policyAdmin);
         (uint256 policyId, uint256 ruleId) = setUpRuleSimple();
-        (string memory name, string memory description) = RulesEngineRuleFacet(address(red)).getRuleMetadata(policyId, ruleId);
-        assertEq(name, ruleName);
-        assertEq(description, ruleDescription);
+        RuleMetadata memory data = RulesEngineRuleFacet(address(red)).getRuleMetadata(policyId, ruleId);
+        assertEq(data.ruleName, ruleName);
+        assertEq(data.ruleDescription, ruleDescription);
     }
 }
