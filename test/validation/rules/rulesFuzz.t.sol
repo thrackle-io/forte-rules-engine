@@ -26,7 +26,7 @@ abstract contract rulesFuzz is RulesEngineCommon {
         rule.instructionSet = instructionSet;
         // test
         if (opA > opTotalSize || opB > opTotalSize) vm.expectRevert("Invalid Instruction");
-        RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
     }
 
     function testRulesEngine_Fuzz_createRule_negInvalidInstructionSet(uint8 _opA, uint8 _opB, uint _opAElements, uint _opBElements) public {
@@ -49,7 +49,7 @@ abstract contract rulesFuzz is RulesEngineCommon {
         /// @notice we can also run into a scenario where instruction _a_ can take 3 or 4 elements and total instructions are 4 or 5,
         /// which would match a valid case, so we have to account for that exception
         if ((opAElements != _opAElements || opBElements != _opBElements) && totalElements != opAElements + 1) vm.expectRevert();
-        RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
     }
 
     function testRulesEngine_Fuzz_createRule_memoryOverFlow(uint8 _opA, uint8 _opB, uint8 _data) public {
@@ -67,7 +67,7 @@ abstract contract rulesFuzz is RulesEngineCommon {
         rule.instructionSet = instructionSet;
         // test
         if (_data > memorySize) vm.expectRevert("Memory Overflow");
-        RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
     }
 
     function testRulesEngine_Fuzz_createRule_simple(uint256 _ruleValue, uint256 _transferValue) public {
@@ -87,7 +87,7 @@ abstract contract rulesFuzz is RulesEngineCommon {
         rule.negEffects = new Effect[](1);
         rule.negEffects[0] = effectId_revert;
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ParamTypes[] memory pTypes = new ParamTypes[](2);
         pTypes[0] = ParamTypes.ADDR;
@@ -111,7 +111,9 @@ abstract contract rulesFuzz is RulesEngineCommon {
             callingFunctions,
             callingFunctionIds,
             ruleIds,
-            PolicyType.CLOSED_POLICY
+            PolicyType.CLOSED_POLICY,
+            policyName,
+            policyDescription
         );
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);

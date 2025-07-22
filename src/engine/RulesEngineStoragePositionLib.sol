@@ -24,6 +24,8 @@ library RulesEngineStoragePositionLib {
     bytes32 constant FOREIGN_CALL_METADATA_POSITION = bytes32(uint256(keccak256("foreign-call-metadata-position")) - 1);
     bytes32 constant CALLING_FUNCTION_METADATA_POSITION = bytes32(uint256(keccak256("calling-function-metadata-position")) - 1);
     bytes32 constant TRACKER_METADATA_POSITION = bytes32(uint256(keccak256("tracker-metadata-position")) - 1);
+    bytes32 constant RULES_METADATA_POSITION = bytes32(uint256(keccak256("rules-metadata-position")) - 1);
+    bytes32 constant POLICY_METADATA_POSITION = bytes32(uint256(keccak256("policy-metadata-position")) - 1);
 
     /**
      * @notice Retrieves the storage for the initialized flag.
@@ -134,12 +136,36 @@ library RulesEngineStoragePositionLib {
     }
 
     /**
+     * @notice Retrieves the storage for rules metadata.
+     * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
+     * @return _ds The storage structure for the rules metadata map.
+     */
+    function _getRulesMetadataStorage() internal pure returns (RulesMetadataStruct storage _ds) {
+        bytes32 position = RULES_METADATA_POSITION;
+        assembly {
+            _ds.slot := position
+        }
+    }
+
+    /**
      * @notice Retrieves the storage for policies.
      * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
      * @return _ds The storage structure for the policy map.
      */
     function _getPolicyStorage() internal pure returns (PolicyStorage storage _ds) {
         bytes32 position = POLICY_POSITION;
+        assembly {
+            _ds.slot := position
+        }
+    }
+
+    /**
+     * @notice Retrieves the storage for policy metadata.
+     * @dev Uses a fixed storage slot to avoid conflicts with other contracts.
+     * @return _ds The storage structure for the policy metadata map.
+     */
+    function _getPolicyMetadataStorage() internal pure returns (PolicyMetadataStruct storage _ds) {
+        bytes32 position = POLICY_METADATA_POSITION;
         assembly {
             _ds.slot := position
         }

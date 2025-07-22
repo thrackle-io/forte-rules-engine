@@ -3,20 +3,17 @@ pragma solidity ^0.8.24;
 
 import "test/utils/RulesEngineCommon.t.sol";
 
-
 abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
-
     string constant ERC721_SAFEMINT_SIGNATURE = "safeMint(address)";
     string constant ERC721_SAFETRANSFERFROM_SIGNATURE = "safeTransferFrom(address,address,uint256,bytes)";
     string constant ERC721_TRANSFERFROM_SIGNATURE = "transferFrom(address,address,uint256)";
 
-    
     function testERC721_SafeMint_Unit_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
         ParamTypes[] memory pTypes = new ParamTypes[](2);
         pTypes[0] = ParamTypes.ADDR;
         pTypes[1] = ParamTypes.ADDR;
         _setupRuleWithRevertSafeMint(ERC721_SAFEMINT_SIGNATURE, pTypes);
-        vm.expectRevert(abi.encodePacked(revert_text)); 
+        vm.expectRevert(abi.encodePacked(revert_text));
         userContract721.safeMint(address(55));
     }
 
@@ -27,7 +24,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         _setupRuleWithRevertSafeMint(ERC721_SAFEMINT_SIGNATURE, pTypes);
         vm.startPrank(USER_ADDRESS);
         vm.expectEmit(true, true, false, false);
-        emit RulesEngineEvent(1, EVENTTEXT, event_text); 
+        emit RulesEngineEvent(1, EVENTTEXT, event_text);
         userContract721.safeMint(USER_ADDRESS);
     }
 
@@ -41,7 +38,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         pTypes[4] = ParamTypes.ADDR;
         _setupRuleWithRevertSafeTransferFrom(ERC721_SAFETRANSFERFROM_SIGNATURE, pTypes);
         vm.startPrank(USER_ADDRESS);
-        vm.expectRevert(abi.encodePacked(revert_text)); 
+        vm.expectRevert(abi.encodePacked(revert_text));
         userContract721.safeTransferFrom(USER_ADDRESS, USER_ADDRESS_2, 0, "");
     }
 
@@ -62,7 +59,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
 
     function testERC721_TransferFrom_Unit_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
         userContract721.safeMint(USER_ADDRESS_2);
-       ParamTypes[] memory pTypes = new ParamTypes[](4);
+        ParamTypes[] memory pTypes = new ParamTypes[](4);
         pTypes[0] = ParamTypes.ADDR;
         pTypes[1] = ParamTypes.ADDR;
         pTypes[2] = ParamTypes.UINT;
@@ -83,7 +80,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         pTypes[3] = ParamTypes.ADDR;
         _setupRuleWithRevertTransferFrom(ERC721_TRANSFERFROM_SIGNATURE, pTypes);
         vm.startPrank(USER_ADDRESS);
-        vm.expectRevert(abi.encodePacked(revert_text)); 
+        vm.expectRevert(abi.encodePacked(revert_text));
         userContract721.transferFrom(USER_ADDRESS, USER_ADDRESS_2, 0);
     }
 
@@ -97,7 +94,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         // Expect revert while rule is enabled
         uint256 _policyId = _setupRuleWithRevertTransferFrom(ERC721_TRANSFERFROM_SIGNATURE, pTypes);
         vm.startPrank(USER_ADDRESS);
-        vm.expectRevert(abi.encodePacked(revert_text)); 
+        vm.expectRevert(abi.encodePacked(revert_text));
         userContract721.transferFrom(USER_ADDRESS, USER_ADDRESS_2, 0);
 
         // Disable the policy and expect it to go through
@@ -107,81 +104,76 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         vm.startPrank(USER_ADDRESS);
         userContract721.transferFrom(USER_ADDRESS, USER_ADDRESS_2, 0);
     }
-    
-    function _setupRuleWithRevertSafeMint(string memory _callingFunction, ParamTypes[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
+
+    function _setupRuleWithRevertSafeMint(
+        string memory _callingFunction,
+        ParamTypes[] memory pTypes
+    ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables {
         // if the address equals the mint to address, then emit event, else revert
         uint256[] memory policyIds = new uint256[](1);
-        
+
         policyIds[0] = _createBlankPolicyOpen();
 
-        _addCallingFunctionToPolicy(
-            policyIds[0], 
-            bytes4(keccak256(bytes(_callingFunction))), 
-            pTypes,
-            _callingFunction  
-        );
+        _addCallingFunctionToPolicy(policyIds[0], bytes4(keccak256(bytes(_callingFunction))), pTypes, _callingFunction);
 
-        Rule memory rule =  _createEQRuleSafeMint(USER_ADDRESS);
+        Rule memory rule = _createEQRuleSafeMint(USER_ADDRESS);
         rule.negEffects[0] = effectId_revert;
         rule.posEffects[0] = effectId_event;
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyIds[0], 0, rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyIds[0], 0, rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
-        ruleIds[0][0]= ruleId;
+        ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContract721Address, policyIds);
     }
 
-    function _setupRuleWithRevertSafeTransferFrom(string memory _callingFunction, ParamTypes[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables{
+    function _setupRuleWithRevertSafeTransferFrom(
+        string memory _callingFunction,
+        ParamTypes[] memory pTypes
+    ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables {
         // if the address equals the mint to address, then emit event, else revert
         uint256[] memory policyIds = new uint256[](1);
-        
+
         policyIds[0] = _createBlankPolicyOpen();
 
-        _addCallingFunctionToPolicy(
-            policyIds[0], 
-            bytes4(keccak256(bytes(_callingFunction))), 
-            pTypes,
-            _callingFunction);
+        _addCallingFunctionToPolicy(policyIds[0], bytes4(keccak256(bytes(_callingFunction))), pTypes, _callingFunction);
 
-        Rule memory rule =  _createEQRuleSafeTransferFrom(USER_ADDRESS);
+        Rule memory rule = _createEQRuleSafeTransferFrom(USER_ADDRESS);
         rule.negEffects[0] = effectId_revert;
         rule.posEffects[0] = effectId_event;
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyIds[0], 0, rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyIds[0], 0, rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
-        ruleIds[0][0]= ruleId;
+        ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContract721Address, policyIds);
     }
 
-    function _setupRuleWithRevertTransferFrom(string memory _callingFunction, ParamTypes[] memory pTypes) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns(uint256 _policyId){
+    function _setupRuleWithRevertTransferFrom(
+        string memory _callingFunction,
+        ParamTypes[] memory pTypes
+    ) public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables returns (uint256 _policyId) {
         // if the address equals the mint to address, then emit event, else revert
         uint256[] memory policyIds = new uint256[](1);
-        
+
         _policyId = policyIds[0] = _createBlankPolicyOpen();
 
-        _addCallingFunctionToPolicy(
-            policyIds[0], 
-            bytes4(keccak256(bytes(_callingFunction))),
-             pTypes,
-             _callingFunction
-        );
+        _addCallingFunctionToPolicy(policyIds[0], bytes4(keccak256(bytes(_callingFunction))), pTypes, _callingFunction);
 
-        Rule memory rule =  _createEQRuleTransferFrom(USER_ADDRESS);
+        Rule memory rule = _createEQRuleTransferFrom(USER_ADDRESS);
         rule.negEffects[0] = effectId_revert;
         rule.posEffects[0] = effectId_event;
         // Save the rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyIds[0], 0, rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyIds[0], 0, rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
-        ruleIds[0][0]= ruleId;
+        ruleIds[0][0] = ruleId;
         _addRuleIdsToPolicyOpen(policyIds[0], ruleIds);
         vm.stopPrank();
         vm.startPrank(callingContractAdmin);
@@ -189,7 +181,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         return _policyId;
     }
 
-    function _createEQRuleSafeMint(address _address) public returns(Rule memory){
+    function _createEQRuleSafeMint(address _address) public returns (Rule memory) {
         // Rule: _to == _address -> revert -> safeMint(address _to)"
         Rule memory rule;
         // Set up some effects.
@@ -213,7 +205,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         return rule;
     }
 
-    function _createEQRuleSafeTransferFrom(address _address) public returns(Rule memory){
+    function _createEQRuleSafeTransferFrom(address _address) public returns (Rule memory) {
         // Rule: _to == _address -> revert -> safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data)"
         Rule memory rule;
         // Set up some effects.
@@ -237,7 +229,7 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         return rule;
     }
 
-    function _createEQRuleTransferFrom(address _address) public returns(Rule memory){
+    function _createEQRuleTransferFrom(address _address) public returns (Rule memory) {
         // Rule: _to == _address -> revert -> TransferFrom(address from, address to, uint256 tokenId)"
         Rule memory rule;
         // Set up some effects.
@@ -260,5 +252,4 @@ abstract contract ERC721UnitTestsCommon is RulesEngineCommon {
         rule.posEffects = new Effect[](1);
         return rule;
     }
-
 }

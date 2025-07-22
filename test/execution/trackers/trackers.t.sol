@@ -192,17 +192,17 @@ abstract contract trackers is RulesEngineCommon {
         /// create tracker name
         string memory trackerName = "tracker1";
 
-        /// set up rule 
+        /// set up rule
         uint256 trackerIndex = _setupRuleWithMappedTracker(
             policyId,
-            tracker, 
+            tracker,
             ParamTypes.UINT, // key type
             ParamTypes.UINT, // value type
             ParamTypes.UINT, // tracker type
             2, // key type specific index
             1, // value type specific index
-            trackerKeys, 
-            trackerValues, 
+            trackerKeys,
+            trackerValues,
             trackerName
         );
         // validate tracker
@@ -215,7 +215,7 @@ abstract contract trackers is RulesEngineCommon {
 
         /// validate tracker is checked as conditional
         vm.startPrank(userContractAddress);
-        
+
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 1000000000, 1);
         vm.startSnapshotGas("MappedTrackerAsConditional_Uint_Positive");
         RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
@@ -244,17 +244,17 @@ abstract contract trackers is RulesEngineCommon {
         /// create tracker name
         string memory trackerName = "tracker1";
 
-        /// set up rule 
+        /// set up rule
         uint256 trackerIndex = _setupRuleWithMappedTracker(
             policyId,
-            tracker, 
+            tracker,
             ParamTypes.UINT, // key type
             ParamTypes.UINT, // value type
             ParamTypes.UINT, // tracker type
             0, // key type specific index
             1, // value type specific index
-            trackerKeys, 
-            trackerValues, 
+            trackerKeys,
+            trackerValues,
             trackerName
         );
         // validate tracker
@@ -301,17 +301,17 @@ abstract contract trackers is RulesEngineCommon {
         /// create tracker name
         string memory trackerName = "tracker1";
 
-        /// set up rule 
+        /// set up rule
         uint256 trackerIndex = _setupRuleWithMappedTracker(
             policyId,
-            tracker, 
+            tracker,
             ParamTypes.UINT, // key type
             ParamTypes.ADDR, // value type
             ParamTypes.ADDR, // tracker type
             1, // key type specific index
             0, // value type specific index
-            trackerKeys, 
-            trackerValues, 
+            trackerKeys,
+            trackerValues,
             trackerName
         );
         // validate tracker
@@ -356,17 +356,17 @@ abstract contract trackers is RulesEngineCommon {
         /// create tracker name
         string memory trackerName = "tracker1";
 
-        /// set up rule 
+        /// set up rule
         uint256 trackerIndex = _setupRuleWithMappedTracker(
             policyId,
-            tracker, 
+            tracker,
             ParamTypes.UINT, // key type
             ParamTypes.ADDR, // value type
             ParamTypes.ADDR, // tracker type
             0, // key type specific index
             1, // value type specific index
-            trackerKeys, 
-            trackerValues, 
+            trackerKeys,
+            trackerValues,
             trackerName
         );
         // validate tracker
@@ -411,17 +411,17 @@ abstract contract trackers is RulesEngineCommon {
         /// create tracker name
         string memory trackerName = "tracker1";
 
-        /// set up rule 
+        /// set up rule
         uint256 trackerIndex = _setupRuleWithMappedTracker(
             policyId,
-            tracker, 
+            tracker,
             ParamTypes.ADDR, // key type
             ParamTypes.UINT, // value type
             ParamTypes.UINT, // tracker type
             0, // key type specific index
             1, // value type specific index
-            trackerKeys, 
-            trackerValues, 
+            trackerKeys,
+            trackerValues,
             trackerName
         );
         // validate tracker
@@ -467,17 +467,17 @@ abstract contract trackers is RulesEngineCommon {
         /// create tracker name
         string memory trackerName = "tracker1";
 
-        /// set up rule 
+        /// set up rule
         uint256 trackerIndex = _setupRuleWithMappedTracker(
             policyId,
-            tracker, 
+            tracker,
             ParamTypes.UINT, // key type
             ParamTypes.ADDR, // value type
             ParamTypes.ADDR, // tracker type
             0, // key type specific index
             1, // value type specific index
-            trackerKeys, 
-            trackerValues, 
+            trackerKeys,
+            trackerValues,
             trackerName
         );
         // validate tracker
@@ -522,17 +522,17 @@ abstract contract trackers is RulesEngineCommon {
         /// create tracker name
         string memory trackerName = "tracker1";
 
-        /// set up rule 
+        /// set up rule
         uint256 trackerIndex = _setupRuleWithMappedTracker(
             policyId,
-            tracker, 
+            tracker,
             ParamTypes.ADDR, // key type
             ParamTypes.ADDR, // value type
             ParamTypes.ADDR, // tracker type
             0, // key type specific index
             0, // value type specific index
-            trackerKeys, 
-            trackerValues, 
+            trackerKeys,
+            trackerValues,
             trackerName
         );
         // validate tracker
@@ -578,17 +578,17 @@ abstract contract trackers is RulesEngineCommon {
         /// create tracker name
         string memory trackerName = "tracker1";
 
-        /// set up rule 
+        /// set up rule
         uint256 trackerIndex = _setupRuleWithMappedTracker(
             policyId,
-            tracker, 
+            tracker,
             ParamTypes.UINT, // key type
             ParamTypes.BOOL, // value type
             ParamTypes.BOOL, // tracker type
             0, // key type specific index
             1, // value type specific index
-            trackerKeys, 
-            trackerValues, 
+            trackerKeys,
+            trackerValues,
             trackerName
         );
         // validate tracker
@@ -630,17 +630,17 @@ abstract contract trackers is RulesEngineCommon {
         /// create tracker name
         string memory trackerName = "tracker1";
 
-        /// set up rule 
+        /// set up rule
         uint256 trackerIndex = _setupRuleWithMappedTracker(
             policyId,
-            tracker, 
+            tracker,
             ParamTypes.UINT, // key type
             ParamTypes.BOOL, // value type
             ParamTypes.BOOL, // tracker type
             0, // key type specific index
             1, // value type specific index
-            trackerKeys, 
-            trackerValues, 
+            trackerKeys,
+            trackerValues,
             trackerName
         );
         // validate tracker
@@ -681,17 +681,17 @@ abstract contract trackers is RulesEngineCommon {
         /// create tracker name
         string memory trackerName = "tracker1";
 
-        /// set up rule 
+        /// set up rule
         uint256 trackerIndex = _setupRuleWithMappedTracker(
             policyId,
-            tracker, 
+            tracker,
             ParamTypes.UINT, // key type
             ParamTypes.BOOL, // value type
             ParamTypes.BOOL, // tracker type
             1, // key type specific index
             2, // value type specific index
-            trackerKeys, 
-            trackerValues, 
+            trackerKeys,
+            trackerValues,
             trackerName
         );
         // validate tracker
@@ -733,17 +733,17 @@ abstract contract trackers is RulesEngineCommon {
         /// create tracker name
         string memory trackerName = "tracker1";
 
-        /// set up rule 
+        /// set up rule
         uint256 trackerIndex = _setupRuleWithMappedTracker(
             policyId,
-            tracker, 
+            tracker,
             ParamTypes.UINT, // key type
             ParamTypes.BOOL, // value type
             ParamTypes.BOOL, // tracker type
             0, // key type specific index
             1, // value type specific index
-            trackerKeys, 
-            trackerValues, 
+            trackerKeys,
+            trackerValues,
             trackerName
         );
         // validate tracker
@@ -784,17 +784,17 @@ abstract contract trackers is RulesEngineCommon {
         /// create tracker name
         string memory trackerName = "tracker1";
 
-        /// set up rule 
+        /// set up rule
         uint256 trackerIndex = _setupRuleWithMappedTracker(
             policyId,
-            tracker, 
+            tracker,
             ParamTypes.BOOL, // key type
             ParamTypes.UINT, // value type
             ParamTypes.UINT, // tracker type
             2, // key type specific index
             1, // value type specific index
-            trackerKeys, 
-            trackerValues, 
+            trackerKeys,
+            trackerValues,
             trackerName
         );
         // validate tracker
@@ -839,17 +839,17 @@ abstract contract trackers is RulesEngineCommon {
         /// create tracker name
         string memory trackerName = "tracker1";
 
-        /// set up rule 
+        /// set up rule
         uint256 trackerIndex = _setupRuleWithMappedTracker(
             policyId,
-            tracker, 
+            tracker,
             ParamTypes.UINT, // key type
             ParamTypes.BOOL, // value type
             ParamTypes.BOOL, // tracker type
             0, // key type specific index
             1, // value type specific index
-            trackerKeys, 
-            trackerValues, 
+            trackerKeys,
+            trackerValues,
             trackerName
         );
         // validate tracker
@@ -894,17 +894,17 @@ abstract contract trackers is RulesEngineCommon {
         /// create tracker name
         string memory trackerName = "tracker1";
 
-        /// set up rule 
+        /// set up rule
         uint256 trackerIndex = _setupRuleWithMappedTracker(
             policyId,
-            tracker, 
+            tracker,
             ParamTypes.UINT, // key type
             ParamTypes.BOOL, // value type
             ParamTypes.BOOL, // tracker type
             0, // key type specific index
             1, // value type specific index
-            trackerKeys, 
-            trackerValues, 
+            trackerKeys,
+            trackerValues,
             trackerName
         );
         // validate tracker
@@ -949,17 +949,17 @@ abstract contract trackers is RulesEngineCommon {
         /// create tracker name
         string memory trackerName = "tracker1";
 
-        /// set up rule 
+        /// set up rule
         uint256 trackerIndex = _setupRuleWithMappedTracker(
             policyId,
-            tracker, 
+            tracker,
             ParamTypes.UINT, // key type
             ParamTypes.BOOL, // value type
             ParamTypes.BOOL, // tracker type
             0, // key type specific index
             1, // value type specific index
-            trackerKeys, 
-            trackerValues, 
+            trackerKeys,
+            trackerValues,
             trackerName
         );
         // validate tracker
@@ -1004,17 +1004,17 @@ abstract contract trackers is RulesEngineCommon {
         /// create tracker name
         string memory trackerName = "tracker1";
 
-        /// set up rule 
+        /// set up rule
         uint256 trackerIndex = _setupRuleWithMappedTracker(
             policyId,
-            tracker, 
+            tracker,
             ParamTypes.UINT, // key type
             ParamTypes.BOOL, // value type
             ParamTypes.BOOL, // tracker type
             0, // key type specific index
             1, // value type specific index
-            trackerKeys, 
-            trackerValues, 
+            trackerKeys,
+            trackerValues,
             trackerName
         );
         // validate tracker
@@ -1059,17 +1059,17 @@ abstract contract trackers is RulesEngineCommon {
         /// create tracker name
         string memory trackerName = "tracker1";
 
-        /// set up rule 
+        /// set up rule
         uint256 trackerIndex = _setupRuleWithMappedTracker(
             policyId,
-            tracker, 
+            tracker,
             ParamTypes.ADDR, // key type
             ParamTypes.STR, // value type
             ParamTypes.STR, // tracker type
             0, // key type specific index
             2, // value type specific index
-            trackerKeys, 
-            trackerValues, 
+            trackerKeys,
+            trackerValues,
             trackerName
         );
         // validate tracker
@@ -1082,7 +1082,12 @@ abstract contract trackers is RulesEngineCommon {
 
         /// validate tracker is checked as conditional
         vm.startPrank(userContractAddress);
-        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x1234567), 2000000000, "trackerValue1");
+        bytes memory arguments = abi.encodeWithSelector(
+            bytes4(keccak256(bytes(callingFunction))),
+            address(0x1234567),
+            2000000000,
+            "trackerValue1"
+        );
         vm.expectRevert(abi.encodePacked(revert_text));
         RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
@@ -1114,17 +1119,17 @@ abstract contract trackers is RulesEngineCommon {
         /// create tracker name
         string memory trackerName = "tracker1";
 
-        /// set up rule 
+        /// set up rule
         uint256 trackerIndex = _setupRuleWithMappedTracker(
             policyId,
-            tracker, 
+            tracker,
             ParamTypes.ADDR, // key type
             ParamTypes.STR, // value type
             ParamTypes.STR, // tracker type
             0, // key type specific index
             2, // value type specific index
-            trackerKeys, 
-            trackerValues, 
+            trackerKeys,
+            trackerValues,
             trackerName
         );
         // validate tracker
@@ -1171,17 +1176,17 @@ abstract contract trackers is RulesEngineCommon {
         /// create tracker name
         string memory trackerName = "tracker1";
 
-        /// set up rule 
+        /// set up rule
         uint256 trackerIndex = _setupRuleWithMappedTracker(
             policyId,
-            tracker, 
+            tracker,
             ParamTypes.STR, // key type
             ParamTypes.ADDR, // value type
             ParamTypes.ADDR, // tracker type
             2, // key type specific index
             0, // value type specific index
-            trackerKeys, 
-            trackerValues, 
+            trackerKeys,
+            trackerValues,
             trackerName
         );
         // validate tracker
@@ -1198,7 +1203,12 @@ abstract contract trackers is RulesEngineCommon {
 
         /// validate tracker is checked as conditional
         vm.startPrank(userContractAddress);
-        bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x1234567), 2000000000, "trackerValue1");
+        bytes memory arguments = abi.encodeWithSelector(
+            bytes4(keccak256(bytes(callingFunction))),
+            address(0x1234567),
+            2000000000,
+            "trackerValue1"
+        );
         vm.expectRevert(abi.encodePacked(revert_text));
         RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
     }
@@ -1230,17 +1240,17 @@ abstract contract trackers is RulesEngineCommon {
         /// create tracker name
         string memory trackerName = "tracker1";
 
-        /// set up rule 
+        /// set up rule
         uint256 trackerIndex = _setupRuleWithMappedTracker(
             policyId,
-            tracker, 
+            tracker,
             ParamTypes.STR, // key type
             ParamTypes.ADDR, // value type
             ParamTypes.ADDR, // tracker type
             2, // key type specific index
             0, // value type specific index
-            trackerKeys, 
-            trackerValues, 
+            trackerKeys,
+            trackerValues,
             trackerName
         );
         // validate tracker
@@ -1961,8 +1971,13 @@ abstract contract trackers is RulesEngineCommon {
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, event_text);
         RulesEngineProcessorFacet(address(red)).checkPolicies(arguments);
-        
-        bytes memory arguments2 = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x7654321), 2000, bytes("regular player"));
+
+        bytes memory arguments2 = abi.encodeWithSelector(
+            bytes4(keccak256(bytes(callingFunction))),
+            address(0x7654321),
+            2000,
+            bytes("regular player")
+        );
         vm.expectEmit(true, true, false, false);
         emit RulesEngineEvent(1, EVENTTEXT, event_text);
         RulesEngineProcessorFacet(address(red)).checkPolicies(arguments2);
@@ -2062,7 +2077,6 @@ abstract contract trackers is RulesEngineCommon {
         rule.instructionSet[15] = uint256(3);
         rule.instructionSet[16] = uint256(6);
 
-
         rule.placeHolders = new Placeholder[](4);
         rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
@@ -2116,7 +2130,7 @@ abstract contract trackers is RulesEngineCommon {
         rule.posEffects[0] = effectId_revert;
         rule.posEffects[0].valid = true;
 
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
@@ -2125,7 +2139,6 @@ abstract contract trackers is RulesEngineCommon {
         vm.startPrank(callingContractAdmin);
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
         vm.stopPrank();
-
 
         bytes memory arguments = abi.encodeWithSelector(bytes4(keccak256(bytes(callingFunction))), address(0x1234567), 1000);
         vm.startPrank(userContractAddress);
