@@ -1,6 +1,6 @@
 {
   "name": "@thrackle-io/forte-rules-engine",
-  "version": "0.0.3-rc.8",
+  "version": "0.1.0",
   "description": "Forte Rules Engine",
   "files": [
     "LICENSE",
