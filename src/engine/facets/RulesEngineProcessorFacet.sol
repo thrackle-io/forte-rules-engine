@@ -106,9 +106,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                     mappedTrackerKeyEI,
                     parameterTypesLength                    
                 );
-            }
-
-            if (encodedIndex.eType != EncodedIndexType.ENCODED_VALUES) {
+            } else if (encodedIndex.eType != EncodedIndexType.ENCODED_VALUES) {
                 (encodedCall, lengthToAppend, dynamicData) = evaluateForeignCallForRulePlaceholderValues(
                     fc,
                     retVals,
@@ -767,26 +765,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
             }
         }
         return applicableRules;
-    }
-
-    /**
-     * @notice Calculates the absolute value of a signed integer.
-     * @param _value The signed integer value to convert to its absolute value.
-     * @return result The absolute value of the input number as an unsigned integer.
-     */
-    function _getAbsoluteAssembly(int256 _value) internal pure returns (uint256) {
-        uint256 result;
-        assembly {
-            // If number is negative, negate it
-            switch slt(_value, 0)
-            case 1 {
-                result := sub(0, _value)
-            }
-            default {
-                result := _value
-            }
-        }
-        return result;
     }
 
     /**
