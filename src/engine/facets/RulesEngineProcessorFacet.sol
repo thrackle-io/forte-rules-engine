@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
 import {RulesEngineProcessorLib as ProcessorLib} from "src/engine/facets/RulesEngineProcessorLib.sol";
-import {console2 as console} from "forge-std/src/console2.sol";
+
 /**
  * @title Rules Engine Processor Facet
  * @dev This contract serves as the core processor for evaluating rules and executing effects in the Rules Engine.
@@ -62,7 +62,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         // Load the Foreign Call data from storage
         ForeignCall memory foreignCall = lib._getForeignCallStorage().foreignCalls[policyId][foreignCallIndex];
         if (foreignCall.set) {
-            return evaluateForeignCallForRule(foreignCall, callingFunctionArgs, retVals, metadata);
+            return evaluateForeignCallForRule(foreignCall, callingFunctionArgs, retVals, metadata, policyId);
         }
     }
 
@@ -76,19 +76,39 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         ForeignCall memory fc,
         bytes calldata functionArguments,
         bytes[] memory retVals,
-        ForeignCallEncodedIndex[] memory metadata
+        ForeignCallEncodedIndex[] memory metadata,
+        uint256 policyId
     ) public returns (ForeignCallReturnValue memory retVal) {
         // First, calculate total size needed and positions of dynamic data
         bytes memory encodedCall = bytes.concat(bytes4(fc.signature));
         bytes memory dynamicData;
 
         uint256 lengthToAppend = 0;
+        uint256 mappedTrackerKeyIndex = 0;
         // calculate sizes
         // Data validation will always ensure fc.parameterTypes.length will be less than MAX_LOOP
         for (uint256 i = 0; i < fc.parameterTypes.length; i++) {
             ParamTypes argType = fc.parameterTypes[i];
+            ForeignCallEncodedIndex memory encodedIndex = fc.encodedIndices[i];
 
-            if (fc.encodedIndices[i].eType != EncodedIndexType.ENCODED_VALUES) {
+            if (encodedIndex.eType == EncodedIndexType.MAPPED_TRACKER_KEY) {
+                ForeignCallEncodedIndex memory mappedTrackerKeyEI = fc.mappedTrackerKeyIndices[mappedTrackerKeyIndex];
+                uint256 parameterTypesLength = fc.parameterTypes.length;
+                mappedTrackerKeyIndex++;
+                (encodedCall, lengthToAppend, dynamicData) = evaluateForeignCallForRuleMappedTrackerKey(
+                    functionArguments,
+                    retVals,
+                    policyId,
+                    encodedIndex.index,
+                    encodedCall,
+                    lengthToAppend,
+                    dynamicData,
+                    mappedTrackerKeyEI,
+                    parameterTypesLength                    
+                );
+            }
+
+            if (encodedIndex.eType != EncodedIndexType.ENCODED_VALUES) {
                 (encodedCall, lengthToAppend, dynamicData) = evaluateForeignCallForRulePlaceholderValues(
                     fc,
                     retVals,
@@ -121,6 +141,30 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
             retVal.pType = fc.returnType;
             retVal.value = data;
         }
+    }
+
+
+    function evaluateForeignCallForRuleMappedTrackerKey(
+        bytes calldata functionArguments,
+        bytes[] memory retVals,
+        uint256 policyId,
+        uint256 trackerIndex,
+        bytes memory encodedCall,
+        uint256 lengthToAppend,
+        bytes memory dynamicData,
+        ForeignCallEncodedIndex memory mappedTrackerKeyEI,
+        uint256 parameterTypesLength
+    ) public returns (bytes memory, uint256, bytes memory) {
+        bytes memory mappedTrackerValue;
+        ParamTypes typ; 
+        if (mappedTrackerKeyEI.eType == EncodedIndexType.ENCODED_VALUES) {
+            uint256 mappedTrackerKey = uint256(bytes32(functionArguments[mappedTrackerKeyEI.index * 32:(mappedTrackerKeyEI.index + 1) * 32]));
+            (mappedTrackerValue, typ) = _getMappedTrackerValue(policyId, trackerIndex, mappedTrackerKey);
+        } else {
+            (mappedTrackerValue, typ) = _getMappedTrackerValue(policyId, trackerIndex, uint256(bytes32(retVals[mappedTrackerKeyEI.index])));
+        }
+        (encodedCall, lengthToAppend, dynamicData) = concatenateCallOnMemory(encodedCall, lengthToAppend, dynamicData, mappedTrackerValue, typ, parameterTypesLength);
+        return (encodedCall, lengthToAppend, dynamicData);
     }
 
     /**
@@ -233,10 +277,23 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 iter += 1;
             }
         }
+        bytes memory value = retVals[retValIndex];
+        uint256 parameterTypesLength = fc.parameterTypes.length;
+        (encodedCall, lengthToAppend, dynamicData) = concatenateCallOnMemory(encodedCall, lengthToAppend, dynamicData, value, argType, parameterTypesLength);
+        return (encodedCall, lengthToAppend, dynamicData);
+    }
 
+    function concatenateCallOnMemory(
+        bytes memory encodedCall,
+        uint256 lengthToAppend,
+        bytes memory dynamicData,
+        bytes memory value,
+        ParamTypes argType,
+        uint256 parameterTypesLength
+    ) public pure returns (bytes memory, uint256, bytes memory) {
         if (argType == ParamTypes.STR || argType == ParamTypes.BYTES) {
-            encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
-            bytes memory stringData = ProcessorLib._extractStringData(retVals[retValIndex]);
+            encodedCall = bytes.concat(encodedCall, bytes32(32 * (parameterTypesLength) + lengthToAppend));
+            bytes memory stringData = ProcessorLib._extractStringData(value);
             dynamicData = bytes.concat(
                 dynamicData,
                 stringData // data (already padded)
@@ -244,12 +301,12 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
             lengthToAppend += stringData.length;
         } else if (argType == ParamTypes.STATIC_TYPE_ARRAY || argType == ParamTypes.DYNAMIC_TYPE_ARRAY) {
             // encode the static offset
-            encodedCall = bytes.concat(encodedCall, bytes32(32 * (fc.parameterTypes.length) + lengthToAppend));
-            bytes memory arrayData = ProcessorLib._extractDynamicArrayData(retVals[retValIndex]);
+            encodedCall = bytes.concat(encodedCall, bytes32(32 * (parameterTypesLength) + lengthToAppend));
+            bytes memory arrayData = ProcessorLib._extractDynamicArrayData(value);
             dynamicData = bytes.concat(dynamicData, arrayData);
             lengthToAppend += arrayData.length;
         } else {
-            encodedCall = bytes.concat(encodedCall, retVals[retValIndex]);
+            encodedCall = bytes.concat(encodedCall, value);
         }
         return (encodedCall, lengthToAppend, dynamicData);
     }
@@ -379,11 +436,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         for (uint256 i = 0; i < ruleCount; i++) {
             Rule storage rule = _ruleData[_applicableRules[i]].rule;
             if (!_evaluateIndividualRule(rule, _policyId, _callingFunctionArgs)) {
-                console.log("NEG EFFECTS");
                 _retVal = false;
                 _doEffects(rule, _policyId, rule.negEffects, _callingFunctionArgs);
             } else {
-                console.log("POS EFFECTS");
                 _doEffects(rule, _policyId, rule.posEffects, _callingFunctionArgs);
             }
         }
@@ -512,15 +567,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 }
             } else if(op == LogicalOp.TRU) {
                 // update the tracker value
-                console.log("TRU");
                 // If the Tracker Type == Place Holder, pull the data from the place holder, otherwise, pull it from Memory
                 TrackerTypes tt = TrackerTypes(_prog[idx + 3]);
-                console.log("tt", uint256(tt));
                 if (tt == TrackerTypes.MEMORY) {
-                    console.log("MEMORY");
                     _updateTrackerValue(_policyId, _prog[idx + 1], mem[_prog[idx + 2]]);
                 } else {
-                    console.log("ARGUMENT");
                     _updateTrackerValue(_policyId, _prog[idx + 1], _arguments[_prog[idx + 2]]);
                 }
                 idx += 4;
@@ -607,12 +658,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
     function _updateTrackerValue(uint256 _policyId, uint256 _trackerId, uint256 _trackerValue) internal {
         // retrieve the tracker
         Trackers storage trk = lib._getTrackerStorage().trackers[_policyId][_trackerId];
-        console.log("storing", _trackerValue);
         if(trk.pType == ParamTypes.UINT || trk.pType == ParamTypes.ADDR || trk.pType == ParamTypes.BOOL) {
-           console.log("storing uint");
            trk.trackerValue = abi.encode(_trackerValue);
         } else if(trk.pType == ParamTypes.BYTES || trk.pType == ParamTypes.STR) {
-            console.log("storing bytes");
             trk.trackerValue = ProcessorLib._uintToBytes(_trackerValue);
         } else {
             revert("Invalid tracker type for updates");
@@ -871,7 +919,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 } else if (effect.effectType == EffectTypes.EVENT) {
                     _buildEvent(_rule, _effects[i].dynamicParam, _policyId, _effects[i].text, _effects[i], _callingFunctionArgs);
                 } else {
-                    console.log("EVALUATING EXPRESSION");
                     _evaluateExpression(_rule, _policyId, _callingFunctionArgs, effect.instructionSet);
                 }
             }
@@ -976,7 +1023,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
     ) internal {
         (bytes[] memory effectArguments, Placeholder[] memory placeholders) = _buildArguments(_rule, _policyId, _callingFunctionArgs, true);
         if (_instructionSet.length > 1) {
-            console.log("RUNNING INSTRUCTION SET");
             _run(_instructionSet, placeholders, _policyId, effectArguments);
         }
     }

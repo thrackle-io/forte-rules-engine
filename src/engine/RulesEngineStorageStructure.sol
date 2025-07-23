@@ -185,13 +185,16 @@ struct ForeignCall {
     ParamTypes[] parameterTypes;
     // A list of type specific indices to use for the foreign call and where they sit in the calldata
     ForeignCallEncodedIndex[] encodedIndices;
+    // Tracks the index of the arguments that are mapped to a tracker
+    ForeignCallEncodedIndex[] mappedTrackerKeyIndices;
 }
 
 enum EncodedIndexType {
     ENCODED_VALUES,
     FOREIGN_CALL,
     TRACKER,
-    GLOBAL_VAR
+    GLOBAL_VAR,
+    MAPPED_TRACKER_KEY
 }
 
 struct ForeignCallEncodedIndex {
