@@ -610,18 +610,115 @@ abstract contract foreignCalls is RulesEngineCommon {
         RulesEngineForeignCallFacet(address(red)).createForeignCall(policyId, fc, "square(uint256)");
     }
 
-    function testRulesEngine_Unit_ForeignCall_MappedTrackerAsParam_UintToUintMappedTracker_Positive()
+    function testRulesEngine_Unit_ForeignCall_MappedTrackerAsParam_UintToUintMappedTracker()
         public
         ifDeploymentTestsEnabled
         endWithStopPrank
     {
-        _createForeignCallUsingMappedTrackerValueRule(EffectTypes.REVERT, false);
+        // create policy
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = _createBlankPolicy();
+        _addCallingFunctionToPolicy(policyIds[0]);
+        bytes[] memory trackerKeys = new bytes[](2);
+        trackerKeys[0] = abi.encode(1);
+        trackerKeys[1] = abi.encode(2);
+        bytes[] memory trackerValues = new bytes[](2);
+        trackerValues[0] = abi.encode(1000000000);
+        trackerValues[1] = abi.encode(2000000000);
+        Rule memory rule;
+        ForeignCall memory fc;
+        (rule, fc) = _createForeignCallUsingMappedTrackerValueRule(
+            policyIds,
+            ParamTypes.UINT,
+            ParamTypes.UINT,
+            trackerKeys,
+            trackerValues,
+            1,
+            2000000000
+        );
+        _createForeignCallUsingMappedTrackerValueHelper(rule, policyIds, fc, EffectTypes.REVERT, false);
         vm.expectRevert();
         userContract.transfer(address(0x7654321), 1);
 
         userContract.transfer(address(0x7654321), 2);
+
+        assertEq(testContract.getInternalValue(), 2000000000, "The internal value should be updated to 2000000000");
     }
-    
+
+    function testRulesEngine_Unit_ForeignCall_MappedTrackerAsParam_AddressToUintMappedTracker()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        // create policy
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = _createBlankPolicy();
+        _addCallingFunctionToPolicy(policyIds[0]);
+        bytes[] memory trackerKeys = new bytes[](2);
+        trackerKeys[0] = abi.encode(address(0x7654321));
+        trackerKeys[1] = abi.encode(address(0x7654322));
+        bytes[] memory trackerValues = new bytes[](2);
+        trackerValues[0] = abi.encode(1000000000);
+        trackerValues[1] = abi.encode(2000000000);
+        Rule memory rule;
+        ForeignCall memory fc;
+        (rule, fc) = _createForeignCallUsingMappedTrackerValueRule(
+            policyIds,
+            ParamTypes.UINT,
+            ParamTypes.UINT,
+            trackerKeys,
+            trackerValues,
+            0,
+            2000000000
+        );
+        _createForeignCallUsingMappedTrackerValueHelper(rule, policyIds, fc, EffectTypes.REVERT, false);
+        vm.expectRevert();
+        userContract.transfer(address(0x7654321), 10);
+
+        userContract.transfer(address(0x7654322), 15);
+
+        assertEq(testContract.getInternalValue(), 2000000000, "The internal value should be updated to 2000000000");
+    }
+
+    function testRulesEngine_Unit_ForeignCall_MappedTrackerAsParam_UintToAddressMappedTracker()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        // create policy
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = _createBlankPolicy();
+        _addCallingFunctionToPolicy(policyIds[0]);
+        bytes[] memory trackerKeys = new bytes[](2);
+        trackerKeys[0] = abi.encode(1000000000);
+        trackerKeys[1] = abi.encode(2000000000);
+        bytes[] memory trackerValues = new bytes[](2);
+        trackerValues[0] = abi.encode(address(0x7654321));
+        trackerValues[1] = abi.encode(address(0x7654322));
+        Rule memory rule;
+        ForeignCall memory fc;
+        (rule, fc) = _createForeignCallUsingMappedTrackerValueRule(
+            policyIds,
+            ParamTypes.ADDR,
+            ParamTypes.ADDR,
+            trackerKeys,
+            trackerValues,
+            1,
+            uint256(uint160(address(0x7654322)))
+        );
+        _createForeignCallUsingMappedTrackerValueHelper(rule, policyIds, fc, EffectTypes.REVERT, false);
+        vm.expectRevert();
+        userContract.transfer(address(0x7654321), 1000000000);
+
+        userContract.transfer(address(0x7654322), 2000000000);
+
+        assertEq(
+            testContract.getInternalValue(),
+            uint256(uint160(address(0x7654322))),
+            "The internal value should be updated to to address"
+        );
+    }
+
     function testRulesEngine_Unit_ForeignCall_ValidateMappedTrackerKeyLengths_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
         // start test as address 0x55556666
         uint256 policyId = _createBlankPolicy();
@@ -671,7 +768,11 @@ abstract contract foreignCalls is RulesEngineCommon {
         RulesEngineForeignCallFacet(address(red)).createForeignCall(policyId, fc, "simpleCheck(uint256,uint256)");
     }
 
-    function testRulesEngine_Unit_ForeignCall_ValidateMappedTrackerKeyLengths_Negative_ExtraMappedTrackerKey() public ifDeploymentTestsEnabled endWithStopPrank {
+    function testRulesEngine_Unit_ForeignCall_ValidateMappedTrackerKeyLengths_Negative_ExtraMappedTrackerKey()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
         // start test as address 0x55556666
         uint256 policyId = _createBlankPolicy();
         ParamTypes[] memory fcArgs = new ParamTypes[](2);
@@ -698,7 +799,11 @@ abstract contract foreignCalls is RulesEngineCommon {
         RulesEngineForeignCallFacet(address(red)).createForeignCall(policyId, fc, "simpleCheck(uint256,uint256)");
     }
 
-    function testRulesEngine_Unit_ForeignCall_ValidateMappedTrackerKeyLengths_Negative_DoubleNestedMappedTrackerKey() public ifDeploymentTestsEnabled endWithStopPrank {
+    function testRulesEngine_Unit_ForeignCall_ValidateMappedTrackerKeyLengths_Negative_DoubleNestedMappedTrackerKey()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
         // start test as address 0x55556666
         uint256 policyId = _createBlankPolicy();
         ParamTypes[] memory fcArgs = new ParamTypes[](2);
