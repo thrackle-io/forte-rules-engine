@@ -617,4 +617,16 @@ abstract contract foreignCalls is RulesEngineCommon {
         fc.foreignCallIndex = 0;
         RulesEngineForeignCallFacet(address(red)).createForeignCall(policyId, fc, "square(uint256)");
     }
+
+    function testRulesEngine_Unit_ForeignCall_MappedTrackerAsParam_UintToUintMappedTracker_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        _createForeignCallUsingMappedTrackerValueRule(EffectTypes.REVERT, false);
+        vm.expectRevert();
+        userContract.transfer(address(0x7654321), 1);
+
+        userContract.transfer(address(0x7654321), 2);
+    }
 }
