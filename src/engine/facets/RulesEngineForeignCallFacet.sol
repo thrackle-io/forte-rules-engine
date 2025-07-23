@@ -135,6 +135,7 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
         for (uint256 i = 0; i < _foreignCall.parameterTypes.length; i++) {
             if (_foreignCall.encodedIndices[i].eType == EncodedIndexType.MAPPED_TRACKER_KEY) {
                 mappedTrackerKeyIndexCounter++;
+                require(_foreignCall.mappedTrackerKeyIndices[i].eType != EncodedIndexType.MAPPED_TRACKER_KEY, "Mapped tracker key cannot be double nested");
             }
         }
         require(mappedTrackerKeyIndexCounter == _foreignCall.mappedTrackerKeyIndices.length, "Mapped tracker key indices length mismatch.");
