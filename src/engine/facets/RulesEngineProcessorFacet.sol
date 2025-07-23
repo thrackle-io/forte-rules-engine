@@ -694,9 +694,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
     function _updateTrackerValue(uint256 _policyId, uint256 _trackerId, uint256 _trackerValue) internal {
         // retrieve the tracker
         Trackers storage trk = lib._getTrackerStorage().trackers[_policyId][_trackerId];
-        if (trk.pType == ParamTypes.UINT || trk.pType == ParamTypes.ADDR || trk.pType == ParamTypes.BOOL) {
-            trk.trackerValue = abi.encode(_trackerValue);
-        } else if (trk.pType == ParamTypes.BYTES || trk.pType == ParamTypes.STR) {
+        if(trk.pType == ParamTypes.UINT || trk.pType == ParamTypes.ADDR || trk.pType == ParamTypes.BOOL) {
+           trk.trackerValue = abi.encode(_trackerValue);
+        } else if(trk.pType == ParamTypes.BYTES || trk.pType == ParamTypes.STR) {
             trk.trackerValue = ProcessorLib._uintToBytes(_trackerValue);
         } else {
             revert(INVALID_TRACKER_TYPE);
