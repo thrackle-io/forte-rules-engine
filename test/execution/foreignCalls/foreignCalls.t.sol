@@ -757,7 +757,7 @@ abstract contract foreignCalls is RulesEngineCommon {
         RulesEngineForeignCallFacet(address(red)).createForeignCall(policyId, fc, "square(uint256)");
     }
 
-    function testRulesEngine_Unit_ForeignCall_MappedTrackerAsParam_UintToUintMappedTracker()
+    function testRulesEngine_Unit_ForeignCall_MappedTrackerAsParam_UintToUintMappedTracker_Positive()
         public
         ifDeploymentTestsEnabled
         endWithStopPrank
