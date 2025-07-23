@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
+import {console2 as console} from "forge-std/src/console2.sol";
 
 /**
  * @title Rules Engine Foreign Call Facet
