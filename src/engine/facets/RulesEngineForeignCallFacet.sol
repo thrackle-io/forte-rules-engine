@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
+import {console2 as console} from "forge-std/src/console2.sol";
 
 /**
  * @title Rules Engine Foreign Call Facet
@@ -132,10 +133,14 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
         require(_foreignCall.foreignCallIndex < MAX_LOOP, "Max foreign calls reached.");
         require(_foreignCall.parameterTypes.length < MAX_LOOP, "Max foreign parameter types reached.");
         uint mappedTrackerKeyIndexCounter = 0;
-        for (uint256 i = 0; i < _foreignCall.parameterTypes.length; i++) {
+        console.log("encodedIndices length", _foreignCall.encodedIndices.length);
+        console.log("mappedTrackerKeyIndices length", _foreignCall.mappedTrackerKeyIndices.length);
+        console.log("mappedTrackerKeyIndexCounter", mappedTrackerKeyIndexCounter);
+        for (uint256 i = 0; i < _foreignCall.encodedIndices.length; i++) {
             if (_foreignCall.encodedIndices[i].eType == EncodedIndexType.MAPPED_TRACKER_KEY) {
+                require(mappedTrackerKeyIndexCounter < _foreignCall.mappedTrackerKeyIndices.length, "Mapped tracker key indices length mismatch.");
+                require(_foreignCall.mappedTrackerKeyIndices[mappedTrackerKeyIndexCounter].eType != EncodedIndexType.MAPPED_TRACKER_KEY, "Mapped tracker key cannot be double nested");
                 mappedTrackerKeyIndexCounter++;
-                require(_foreignCall.mappedTrackerKeyIndices[i].eType != EncodedIndexType.MAPPED_TRACKER_KEY, "Mapped tracker key cannot be double nested");
             }
         }
         require(mappedTrackerKeyIndexCounter == _foreignCall.mappedTrackerKeyIndices.length, "Mapped tracker key indices length mismatch.");
