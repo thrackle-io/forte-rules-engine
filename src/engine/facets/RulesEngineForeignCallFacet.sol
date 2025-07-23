@@ -131,6 +131,13 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
         assert(_foreignCall.parameterTypes.length == _foreignCall.encodedIndices.length);
         require(_foreignCall.foreignCallIndex < MAX_LOOP, MAX_FC);
         require(_foreignCall.parameterTypes.length < MAX_LOOP, MAX_FC_PT);
+        uint mappedTrackerKeyIndexCounter = 0;
+        for (uint256 i = 0; i < _foreignCall.parameterTypes.length; i++) {
+            if (_foreignCall.encodedIndices[i].eType == EncodedIndexType.MAPPED_TRACKER_KEY) {
+                mappedTrackerKeyIndexCounter++;
+            }
+        }
+        require(mappedTrackerKeyIndexCounter == _foreignCall.mappedTrackerKeyIndices.length, "Mapped tracker key indices length mismatch.");
         lib._getForeignCallStorage().foreignCalls[_policyId][_foreignCallIndex] = _foreignCall;
         lib._getForeignCallStorage().foreignCalls[_policyId][_foreignCallIndex].set = true;
         lib._getForeignCallStorage().foreignCalls[_policyId][_foreignCallIndex].foreignCallIndex = _foreignCallIndex;
