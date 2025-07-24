@@ -303,7 +303,7 @@ abstract contract foreignCalls is RulesEngineCommon {
                 bytes[] memory tracker2Values = new bytes[](2);
                 tracker2Values[0] = abi.encode(22);
                 tracker2Values[1] = abi.encode(33);
-                
+
                 RulesEngineComponentFacet(address(red)).createTracker(policyId, tracker1, "tracker1", tracker1Keys, tracker1Values);
                 RulesEngineComponentFacet(address(red)).createTracker(policyId, tracker2, "tracker2", tracker2Keys, tracker2Values);
             }
@@ -357,7 +357,7 @@ abstract contract foreignCalls is RulesEngineCommon {
                 uint256[][] memory ruleIdsArr = new uint256[][](1);
                 ruleIdsArr[0] = new uint256[](1);
                 ruleIdsArr[0][0] = ruleId;
-                
+
                 RulesEnginePolicyFacet(address(red)).updatePolicy(
                     policyId,
                     selectors,
@@ -385,14 +385,7 @@ abstract contract foreignCalls is RulesEngineCommon {
             uint256 value = 1;
             string memory str = "TESTER";
             string memory str2 = "TESTER2";
-            bytes memory transferCalldata = abi.encodeWithSelector(
-                ExampleUserContract.transferSigTest.selector,
-                to,
-                value,
-                str,
-                str2,
-                22
-            );
+            bytes memory transferCalldata = abi.encodeWithSelector(ExampleUserContract.transferSigTest.selector, to, value, str, str2, 22);
 
             RulesEngineProcessorFacet(address(red)).checkPolicies(transferCalldata);
 
@@ -959,6 +952,64 @@ abstract contract foreignCalls is RulesEngineCommon {
         assertEq(testContract.getInternalValue(), 0);
 
         userContract.transferFrom(address(0x7654322), 2000000000, "TestKey2");
+
+        assertEq(
+            testContract.getInternalValue(),
+            uint256(uint160(address(0x7654322))),
+            "The internal value should be updated to the `to` address"
+        );
+    }
+
+    function testRulesEngine_Unit_ForeignCall_MappedTrackerAsParam_StringToAddressMappedTracker()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        // create policy
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = _createBlankPolicy();
+        ParamTypes[] memory pTypes = new ParamTypes[](5);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.BYTES;
+        pTypes[3] = ParamTypes.BOOL;
+        pTypes[4] = ParamTypes.STR;
+        _addCallingFunctionToPolicy(
+            policyIds[0],
+            bytes4(bytes4(keccak256(bytes("transferFromString(address,uint256,string)")))),
+            pTypes,
+            string("transferFomString(address,uint256,string)")
+        );
+        bytes[] memory trackerKeys = new bytes[](2);
+        trackerKeys[0] = abi.encode("TestKey1");
+        trackerKeys[1] = abi.encode("TestKey2");
+        bytes[] memory trackerValues = new bytes[](2);
+        trackerValues[0] = abi.encode(address(0x7654321));
+        trackerValues[1] = abi.encode(address(0x7654322));
+        Rule memory rule;
+        ForeignCall memory fc;
+        (rule, fc) = _createForeignCallUsingMappedTrackerValueRuleBytes32(
+            policyIds,
+            ParamTypes.ADDR,
+            ParamTypes.STR,
+            trackerKeys,
+            trackerValues,
+            2,
+            uint256(uint160(address(0x7654322)))
+        );
+        _createForeignCallUsingMappedTrackerValueHelper(rule, policyIds, fc, EffectTypes.REVERT, false);
+        // validate tracker exists
+        Trackers memory returnedTracker = RulesEngineComponentFacet(address(red)).getTracker(policyIds[0], 1);
+        assertTrue(returnedTracker.mapped);
+
+        bytes memory value = RulesEngineComponentFacet(address(red)).getMappedTrackerValue(policyIds[0], 1, abi.encode("TestKey1"));
+        assertEq(value, abi.encode(address(0x7654321)));
+
+        vm.expectRevert();
+        userContract.transferFromString(address(0x7654321), 1000000000, "TestKey1");
+        assertEq(testContract.getInternalValue(), 0);
+
+        userContract.transferFromString(address(0x7654322), 2000000000, "TestKey2");
 
         assertEq(
             testContract.getInternalValue(),
