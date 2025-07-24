@@ -162,7 +162,7 @@ contract StandardCallsForked is RulesEngineCommon {
 
     function setUp() public {
         // Create and select mainnet fork
-        uint256 forkId = vm.createFork(vm.envOr("ETHEREUM_RPC_URL", string("")));
+        uint256 forkId = vm.createFork(vm.envOr("ETHEREUM_RPC_KEY", string("")));
         vm.selectFork(forkId);
 
         // Verify we're on mainnet by checking a known contract

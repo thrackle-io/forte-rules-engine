@@ -22,7 +22,7 @@ solc_version = "0.8.28"
 optimize = true
 optimizer_runs = 2000000000
 ffi = true
-fork_url = "${ETHEREUM_RPC_URL}"
+fork_url = "${ETHEREUM_RPC_KEY}"
 
 [soldeer]
 remappings_generate = true
