@@ -38,6 +38,15 @@ contract ExampleUserContract is RulesEngineClient {
         return true;
     }
 
+    function transferSigTest(address to, uint256 value, string memory _str, string memory _str2) public returns (bool) {
+        _invokeRulesEngine(abi.encodeWithSelector(this.transferFrom.selector, to, value, _str, _str2, 22));
+        to; // added to silence compiler warnings
+        value; // added to silence compiler warnings
+        _str; // added to silence compiler warnings
+        _str2; // added to silence compiler warnings
+        return true;
+    }
+
     function setMsgData(bytes memory data) public returns (bool) {
         msgData = data;
         return true;
