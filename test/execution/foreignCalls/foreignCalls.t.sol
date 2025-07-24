@@ -276,36 +276,38 @@ abstract contract foreignCalls is RulesEngineCommon {
                 );
             }
 
-            // Effect for the foreign call
-            Tracker memory tracker1;
-            tracker1.pType = ParamTypes.UINT;
-            tracker1.trackerKeyType = ParamTypes.UINT;
-            tracker1.mapped = true;
+            {
+                // Effect for the foreign call
+                Trackers memory tracker1;
+                tracker1.pType = ParamTypes.UINT;
+                tracker1.trackerKeyType = ParamTypes.UINT;
+                tracker1.mapped = true;
 
-            bytes[] memory tracker1Keys = new bytes[](2);
-            tracker1Keys[0] = abi.encode(11);
-            tracker1Keys[1] = abi.encode(22);
+                bytes[] memory tracker1Keys = new bytes[](2);
+                tracker1Keys[0] = abi.encode(11);
+                tracker1Keys[1] = abi.encode(22);
 
-            bytes[] memory tracker1Values = new bytes[](2);
-            tracker1Values[0] = abi.encode(1000000000);
-            tracker1Values[1] = abi.encode(2000000000);
+                bytes[] memory tracker1Values = new bytes[](2);
+                tracker1Values[0] = abi.encode(1000000000);
+                tracker1Values[1] = abi.encode(2000000000);
 
-            Tracker memory tracker2;
-            tracker2.pType = ParamTypes.UINT;
-            tracker2.trackerKeyType = ParamTypes.ADDR;
-            tracker2.mapped = true;
+                Trackers memory tracker2;
+                tracker2.pType = ParamTypes.UINT;
+                tracker2.trackerKeyType = ParamTypes.ADDR;
+                tracker2.mapped = true;
 
-            bytes[] memory tracker2Keys = new bytes[](2);
-            tracker2Keys[0] = abi.encode(address(0x7654321));
-            tracker2Keys[1] = abi.encode(address(0x1234567));
+                bytes[] memory tracker2Keys = new bytes[](2);
+                tracker2Keys[0] = abi.encode(address(0x7654321));
+                tracker2Keys[1] = abi.encode(address(0x1234567));
 
-            bytes[] memory tracker2Values = new bytes[](2);
-            tracker2Values[0] = abi.encode(22);
-            tracker2Values[1] = abi.encode(33);
+                bytes[] memory tracker2Values = new bytes[](2);
+                tracker2Values[0] = abi.encode(22);
+                tracker2Values[1] = abi.encode(33);
+                
+                RulesEngineComponentFacet(address(red)).createTracker(policyId, tracker1, "tracker1", tracker1Keys, tracker1Values);
+                RulesEngineComponentFacet(address(red)).createTracker(policyId, tracker2, "tracker2", tracker2Keys, tracker2Values);
+            }
             
-            RulesEngineComponentFacet(address(red)).createTracker(policyId, tracker1, "tracker1", tracker1Keys, tracker1Values);
-            RulesEngineComponentFacet(address(red)).createTracker(policyId, tracker2, "tracker2", tracker2Keys, tracker2Values);
-
             Rule memory rule;
             rule.instructionSet = new uint256[](7);
             rule.instructionSet[0] = uint(LogicalOp.PLH);
@@ -318,9 +320,9 @@ abstract contract foreignCalls is RulesEngineCommon {
 
             rule.placeHolders = new Placeholder[](3);
             // Placeholder 0: msg.data
-            rule.placeHolders[0].flags = uint8(FLAG_TRACKER_KEY);
+            rule.placeHolders[0].flags = uint8(FLAG_TRACKER_VALUE);
             rule.placeHolders[0].typeSpecificIndex = uint128(1);
-            rule.placeHolders[1].flags = uint8(FLAG_TRACKER_KEY);
+            rule.placeHolders[1].flags = uint8(FLAG_TRACKER_VALUE);
             rule.placeHolders[1].typeSpecificIndex = uint128(2);
             rule.placeHolders[2].flags = uint8(FLAG_FOREIGN_CALL);
             rule.placeHolders[2].typeSpecificIndex = uint128(foreignCallId);
@@ -355,6 +357,7 @@ abstract contract foreignCalls is RulesEngineCommon {
                 uint256[][] memory ruleIdsArr = new uint256[][](1);
                 ruleIdsArr[0] = new uint256[](1);
                 ruleIdsArr[0][0] = ruleId;
+                
                 RulesEnginePolicyFacet(address(red)).updatePolicy(
                     policyId,
                     selectors,
@@ -393,11 +396,11 @@ abstract contract foreignCalls is RulesEngineCommon {
 
             RulesEngineProcessorFacet(address(red)).checkPolicies(transferCalldata);
 
-            assertEq(PermissionedForeignCallTestContract(pfcContractAddress).decodedIntOne(), 1000000000);
-            assertEq(PermissionedForeignCallTestContract(pfcContractAddress).decondedIntTwo(), 2000000000);
-            assertEq(PermissionedForeignCallTestContract(pfcContractAddress).decodedStrOne(), str);
-            assertEq(PermissionedForeignCallTestContract(pfcContractAddress).decodedStrTwo(), str2);
-            assertEq(PermissionedForeignCallTestContract(pfcContractAddress).decodedAddr(), to);
+            assertEq(PermissionedForeignCallTestContract(pfcContractAddress).getDecodedIntOne(), 1000000000);
+            assertEq(PermissionedForeignCallTestContract(pfcContractAddress).getDecodedIntTwo(), 2000000000);
+            assertEq(PermissionedForeignCallTestContract(pfcContractAddress).getDecodedStrOne(), str);
+            assertEq(PermissionedForeignCallTestContract(pfcContractAddress).getDecodedStrTwo(), str2);
+            assertEq(PermissionedForeignCallTestContract(pfcContractAddress).getDecodedAddr(), to);
         }
     }
 
