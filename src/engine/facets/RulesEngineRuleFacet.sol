@@ -16,9 +16,9 @@ import {RulesEngineStorageLib as StorageLib} from "src/engine/facets/RulesEngine
 contract RulesEngineRuleFacet is FacetCommonImports {
     uint public constant memorySize = 90; // size of the mem array
     uint public constant opsSize1 = 3; // the first 3 opcodes use only one argument
-    uint public constant opSizeUpTo2 = 17; // the first 16 opcodes use up to two arguments
-    uint public constant opSizeUpTo3 = 18; // the first 17 opcodes use up to three arguments
-    uint public constant opTotalSize = 19; // there are a total of 18 opcode in the set LogicalOp
+    uint public constant opsSizeUpTo2 = 17; // the first 16 opcodes use up to two arguments
+    uint public constant opsSizeUpTo3 = 18; // the first 17 opcodes use up to three arguments
+    uint public constant opsTotalSize = 19; // there are a total of 18 opcode in the set LogicalOp
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
     // Rule Management
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -259,7 +259,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
                 }
             } else {
                 // if the instruction is not data, we check that it is a valid opcode
-                if (instruction > opTotalSize) revert(INVALID_INSTRUCTION);
+                if (instruction > opsTotalSize) revert(INVALID_INSTRUCTION);
                 // NUM is a special case since it can expect any data, so no check is needed next
                 if (instruction == uint(LogicalOp.NUM)) {
                     unchecked {
@@ -270,8 +270,8 @@ contract RulesEngineRuleFacet is FacetCommonImports {
                 }
                 //we set the expectedDataElements based its position inside the LogicalOp enum
                 if (instruction < opsSize1) expectedDataElements = 1;
-                else if (instruction < opSizeUpTo2) expectedDataElements = 2;
-                else if (instruction < opSizeUpTo3) expectedDataElements = 3;
+                else if (instruction < opsSizeUpTo2) expectedDataElements = 2;
+                else if (instruction < opsSizeUpTo3) expectedDataElements = 3;
                 else expectedDataElements = 4;
                 isData = true; // we know that following instruction(s) is a data pointer
             }
