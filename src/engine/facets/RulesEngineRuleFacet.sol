@@ -14,6 +14,11 @@ import {RulesEngineStorageLib as StorageLib} from "src/engine/facets/RulesEngine
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
  */
 contract RulesEngineRuleFacet is FacetCommonImports {
+    uint public constant memorySize = 90; // size of the mem array
+    uint public constant opsSize1 = 3; // the first 3 opcodes use only one argument
+    uint public constant opSizeUpTo2 = 17; // the first 16 opcodes use up to two arguments
+    uint public constant opSizeUpTo3 = 18; // the first 17 opcodes use up to three arguments
+    uint public constant opTotalSize = 19; // there are a total of 18 opcode in the set LogicalOp
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
     // Rule Management
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -156,7 +161,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
     function _storeRule(RuleStorage storage _data, uint256 _policyId, uint256 _ruleId, Rule calldata _rule) internal returns (uint256) {
         // Validate that the policy exists
         if (!lib._getPolicyStorage().policyStorageSets[_policyId].set) revert(POLICY_ID_INV);
-        
+
         _data.ruleStorageSets[_policyId][_ruleId].set = true;
         _data.ruleStorageSets[_policyId][_ruleId].rule = _rule;
         return _ruleId;
@@ -235,11 +240,6 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      * @param instructionSet The instructionSet to validate.
      */
     function _validateInstructionSet(uint256[] calldata instructionSet) internal pure {
-        uint memorySize = 90; // size of the mem array
-        uint opsSize1 = 3; // the first 3 opcodes use only one argument
-        uint opSizeUpTo2 = 17; // the first 16 opcodes use up to two arguments
-        uint opSizeUpTo3 = 18; // the first 17 opcodes use up to three arguments
-        uint opTotalSize = 19; // there are a total of 18 opcode in the set LogicalOp
         uint expectedDataElements; // the number of expected data elements in the instruction set (memory pointers)
         bool isData; // the first item of an instruction set must be an opcode, so isData must be "initialized" to false
 
