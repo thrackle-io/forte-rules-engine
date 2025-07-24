@@ -1663,6 +1663,75 @@ contract RulesEngineCommon is DiamondMine, Test {
         return (rule, fc);
     }
 
+    function _createForeignCallUsingMappedTrackerValueRuleBytes32(
+        uint256[] memory policyIds,
+        ParamTypes trackerPType,
+        ParamTypes trackerKeyType,
+        bytes[] memory trkKeys,
+        bytes[] memory trackerVls,
+        uint256 mappedTrackerKeyIndex,
+        uint256 ruleConditional
+    ) internal returns (Rule memory rule, ForeignCall memory fc) {
+        // create rule
+        // Rule: FC:simpleCheck(mappedTrackerValue) = ruleParam -> revert -> transfer(address _to, uint256 amount) returns (bool)"
+        Rule memory rule;
+        // create mapped tracker
+        _createMappedTrackerHelper(policyIds, trackerPType, trackerKeyType, trkKeys, trackerVls);
+
+        /// set up rule
+        rule.placeHolders = new Placeholder[](3);
+        rule.placeHolders[0].pType = ParamTypes.BYTES; // keyValueType;
+        rule.placeHolders[0].typeSpecificIndex = 2; //keyTypeSpecificIndex;
+        rule.placeHolders[1].pType = ParamTypes.ADDR; //valueType;
+        rule.placeHolders[1].typeSpecificIndex = 1; //valueTypeSpecificIndex;
+        rule.placeHolders[2].pType = ParamTypes.ADDR; // trackerValueType;
+        rule.placeHolders[2].flags = FLAG_TRACKER_VALUE;
+        rule.placeHolders[2].typeSpecificIndex = 1;
+
+        rule.effectPlaceHolders = new Placeholder[](1);
+        rule.effectPlaceHolders[0].pType = ParamTypes.BYTES;
+        rule.effectPlaceHolders[0].typeSpecificIndex = 2;
+        // Add a negative/positive effects
+        rule.negEffects = new Effect[](1);
+        rule.posEffects = new Effect[](1);
+        rule.negEffects[0] = effectId_revert;
+        rule.posEffects[0] = effectId_event;
+
+        // create foreign call
+        // Build the foreign call placeholder
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].flags = FLAG_FOREIGN_CALL;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = new uint256[](7);
+        rule.instructionSet[0] = uint(LogicalOp.PLH);
+        rule.instructionSet[1] = 0;
+        rule.instructionSet[2] = uint(LogicalOp.NUM);
+        rule.instructionSet[3] = ruleConditional; // dynamic
+        rule.instructionSet[4] = uint(LogicalOp.EQ);
+        rule.instructionSet[5] = 0;
+        rule.instructionSet[6] = 1;
+
+        ParamTypes[] memory fcArgs = new ParamTypes[](1);
+        fcArgs[0] = ParamTypes.UINT;
+        ForeignCall memory fc;
+        fc.encodedIndices = new ForeignCallEncodedIndex[](1);
+        fc.encodedIndices[0].index = 1;
+        fc.encodedIndices[0].eType = EncodedIndexType.MAPPED_TRACKER_KEY;
+        fc.mappedTrackerKeyIndices = new ForeignCallEncodedIndex[](1);
+        fc.mappedTrackerKeyIndices[0].index = mappedTrackerKeyIndex; // dynamic
+        fc.mappedTrackerKeyIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
+
+        fc.parameterTypes = fcArgs;
+        fc.foreignCallAddress = address(testContract);
+        fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
+        fc.returnType = ParamTypes.UINT;
+        fc.foreignCallIndex = 0;
+
+        return (rule, fc);
+    }
+
     function _createMappedTrackerHelper(
         uint256[] memory policyIds,
         ParamTypes trackerPType,
