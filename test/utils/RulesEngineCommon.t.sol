@@ -71,12 +71,6 @@ contract RulesEngineCommon is DiamondMine, Test {
     uint8 constant MASK_GLOBAL_VAR = 0x1C; // 00011100
     uint8 constant SHIFT_GLOBAL_VAR = 2;
 
-    uint opsSize1 = 3;
-    uint opsSizeUpTo2 = 17;
-    uint opsSizeUpTo3 = 18;
-    uint opsTotalSize = 19;
-    uint memorySize = 90;
-
     //bytes4
     bytes4[] callingFunctions;
 

@@ -303,7 +303,6 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      * @param index The index to validate.
      */
     function _validateInstructionSetIndex(uint256 index) internal pure {
-        uint memorySize = 90;
         if (index > memorySize) revert(MEMORY_OVERFLOW);
     }
 

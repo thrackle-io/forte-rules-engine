@@ -27,13 +27,14 @@ abstract contract rulesFuzz is RulesEngineCommon {
         rule.posEffects = new Effect[](1);
         rule.posEffects[0] = effectId_event;
         // test
-        if (opA > opsTotalSize || opB > opsTotalSize) vm.expectRevert("Invalid Instruction");
+        if (opA > RulesEngineRuleFacet(address(red)).opsTotalSize() || opB > RulesEngineRuleFacet(address(red)).opsTotalSize())
+            vm.expectRevert("Invalid Instruction");
         RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
     }
 
     function testRulesEngine_Fuzz_createRule_negInvalidInstructionSet(uint8 _opA, uint8 _opB, uint _opAElements, uint _opBElements) public {
-        uint256 opA = bound(_opA, 0, opsTotalSize - 1);
-        uint256 opB = bound(_opB, 0, opsTotalSize - 1);
+        uint256 opA = bound(_opA, 0, RulesEngineRuleFacet(address(red)).opsTotalSize() - 1);
+        uint256 opB = bound(_opB, 0, RulesEngineRuleFacet(address(red)).opsTotalSize() - 1);
         _opAElements = bound(_opAElements, 1, 4);
         _opBElements = bound(_opBElements, 1, 4);
 
@@ -58,8 +59,8 @@ abstract contract rulesFuzz is RulesEngineCommon {
 
     function testRulesEngine_Fuzz_createRule_memoryOverFlow(uint8 _opA, uint8 _opB, uint8 _data) public {
         // we avoid opcode 0 as it is the only one whose element won't be checked
-        uint256 opA = bound(_opA, 1, opsTotalSize - 1);
-        uint256 opB = bound(_opB, 1, opsTotalSize - 1);
+        uint256 opA = bound(_opA, 1, RulesEngineRuleFacet(address(red)).opsTotalSize() - 1);
+        uint256 opB = bound(_opB, 1, RulesEngineRuleFacet(address(red)).opsTotalSize() - 1);
 
         (uint opAElements, uint opBElements) = findArgumentSize(opA, opB);
         uint256[] memory instructionSet = buildInstructionSet(opA, opB, opAElements, opBElements, _data);
@@ -72,7 +73,7 @@ abstract contract rulesFuzz is RulesEngineCommon {
         rule.posEffects = new Effect[](1);
         rule.posEffects[0] = effectId_event;
         // test
-        if (_data > memorySize) vm.expectRevert("Memory Overflow");
+        if (_data > RulesEngineRuleFacet(address(red)).memorySize()) vm.expectRevert("Memory Overflow");
         RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
     }
 
@@ -134,12 +135,12 @@ abstract contract rulesFuzz is RulesEngineCommon {
     function findArgumentSize(uint opA, uint opB) internal view returns (uint opAElements, uint opBElements) {
         opAElements = 1;
         opBElements = 1;
-        if (opA >= opsSize1) opAElements = 2;
-        if (opA >= opsSizeUpTo2) opAElements = 3;
-        if (opA >= opsSizeUpTo3) opAElements = 4;
-        if (opB >= opsSize1) opBElements = 2;
-        if (opB >= opsSizeUpTo2) opBElements = 3;
-        if (opB >= opsSizeUpTo3) opBElements = 4;
+        if (opA >= RulesEngineRuleFacet(address(red)).opsSize1()) opAElements = 2;
+        if (opA >= RulesEngineRuleFacet(address(red)).opsSizeUpTo2()) opAElements = 3;
+        if (opA >= RulesEngineRuleFacet(address(red)).opsSizeUpTo3()) opAElements = 4;
+        if (opB >= RulesEngineRuleFacet(address(red)).opsSize1()) opBElements = 2;
+        if (opB >= RulesEngineRuleFacet(address(red)).opsSizeUpTo2()) opBElements = 3;
+        if (opB >= RulesEngineRuleFacet(address(red)).opsSizeUpTo3()) opBElements = 4;
     }
 
     function buildInstructionSet(
