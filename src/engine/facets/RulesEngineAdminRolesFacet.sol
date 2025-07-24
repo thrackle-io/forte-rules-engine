@@ -376,7 +376,7 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
     function renounceRole(bytes32 role, address account) public virtual override(AccessControl, IAccessControl) {
         role;
         account;
-        revert("Function disabled");
+        revert(FUNCTION_DISABLED);
     }
 
     /**
@@ -388,7 +388,7 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
     function revokeRole(bytes32 role, address account) public virtual override(AccessControl, IAccessControl) {
         role;
         account;
-        revert("Function disabled");
+        revert(FUNCTION_DISABLED);
     }
 
     /**
@@ -402,6 +402,6 @@ contract RulesEngineAdminRolesFacet is AccessControlEnumerable, ReentrancyGuard 
         /// the policyAdmins could add other policyAdmins through this back door
         role;
         account;
-        revert("Function disabled");
+        revert(FUNCTION_DISABLED);
     }
 }

@@ -24,6 +24,8 @@ abstract contract rulesFuzz is RulesEngineCommon {
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicy();
         rule.instructionSet = instructionSet;
+        rule.posEffects = new Effect[](1);
+        rule.posEffects[0] = effectId_event;
         // test
         if (opA > opTotalSize || opB > opTotalSize) vm.expectRevert("Invalid Instruction");
         RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);
@@ -44,6 +46,8 @@ abstract contract rulesFuzz is RulesEngineCommon {
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicy();
         rule.instructionSet = instructionSet;
+        rule.posEffects = new Effect[](1);
+        rule.posEffects[0] = effectId_event;
         // test
         /// @notice we could revert for 2 reasons so we cannot check for a specific string
         /// @notice we can also run into a scenario where instruction _a_ can take 3 or 4 elements and total instructions are 4 or 5,
@@ -65,6 +69,8 @@ abstract contract rulesFuzz is RulesEngineCommon {
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = _createBlankPolicy();
         rule.instructionSet = instructionSet;
+        rule.posEffects = new Effect[](1);
+        rule.posEffects[0] = effectId_event;
         // test
         if (_data > memorySize) vm.expectRevert("Memory Overflow");
         RulesEngineRuleFacet(address(red)).createRule(policyIds[0], rule, ruleName, ruleDescription);

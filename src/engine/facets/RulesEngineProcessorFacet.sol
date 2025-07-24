@@ -153,13 +153,13 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
             encodedCall = bytes.concat(encodedCall, bytes32(dynamicOffset));
 
             // Get the dynamic data - and bounds checking
-            require(uint(value) < functionArguments.length, "Invalid dynamic data offset");
-            require(uint(value) + 32 <= functionArguments.length, "Dynamic data length out of bounds");
+            require(uint(value) < functionArguments.length, DYNDATA_OFFSET);
+            require(uint(value) + 32 <= functionArguments.length, DYNDATA_OUTBNDS);
             uint256 length = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
             // Calculate total bytes needed: 32 bytes for length prefix + padded data length (round up to nearest 32-byte boundary)
             uint256 words = 32 + ((length + 31) / 32) * 32;
 
-            require(uint(value) + words <= functionArguments.length, "Dynamic data content out of bounds");
+            require(uint(value) + words <= functionArguments.length, DYNDATA_OUTBNDS);
 
             bytes memory dynamicValue = functionArguments[uint(value):uint(value) + words];
             // Add length and data (data is already padded to 32 bytes)
@@ -280,14 +280,14 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 bytes32 value = bytes32(uint256(uint160(msg.sender)));
                 encodedCall = bytes.concat(encodedCall, value);
             } else {
-                revert("MSG_SENDER can only be used with address type");
+                revert(MSGSENDER_ONLY_ADDR);
             }
         } else if (globalVarType == GLOBAL_BLOCK_TIMESTAMP) {
             if (argType == ParamTypes.UINT) {
                 bytes32 value = bytes32(block.timestamp);
                 encodedCall = bytes.concat(encodedCall, value);
             } else {
-                revert("BLOCK_TIMESTAMP can only be used with uint type");
+                revert(BLOCKTIME_ONLY_UINT);
             }
         } else if (globalVarType == GLOBAL_MSG_DATA) {
             if (argType == ParamTypes.STR || argType == ParamTypes.BYTES) {
@@ -310,24 +310,24 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 dynamicData = bytes.concat(dynamicData, encodedMsgData);
                 lengthToAppend += encodedMsgData.length;
             } else {
-                revert("MSG_DATA can only be used with bytes or string types");
+                revert(MSGDTA_ONLY_STRING);
             }
         } else if (globalVarType == GLOBAL_BLOCK_NUMBER) {
             if (argType == ParamTypes.UINT) {
                 bytes32 value = bytes32(block.number);
                 encodedCall = bytes.concat(encodedCall, value);
             } else {
-                revert("BLOCK_NUMBER can only be used with uint type");
+                revert(BLK_NUMBER_ONLY_UINT);
             }
         } else if (globalVarType == GLOBAL_TX_ORIGIN) {
             if (argType == ParamTypes.ADDR) {
                 bytes32 value = bytes32(uint256(uint160(tx.origin)));
                 encodedCall = bytes.concat(encodedCall, value);
             } else {
-                revert("TX_ORIGIN can only be used with address type");
+                revert(TX_ORG_ONLY_ADDR);
             }
         } else {
-            revert("Unknown global variable type");
+            revert(GLB_VAR_INV);
         }
 
         return (encodedCall, lengthToAppend, dynamicData);
@@ -379,11 +379,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         for (uint256 i = 0; i < ruleCount; i++) {
             Rule storage rule = _ruleData[_applicableRules[i]].rule;
             if (!_evaluateIndividualRule(rule, _policyId, _callingFunctionArgs)) {
-                console.log("NEG EFFECTS");
                 _retVal = false;
                 _doEffects(rule, _policyId, rule.negEffects, _callingFunctionArgs);
             } else {
-                console.log("POS EFFECTS");
                 _doEffects(rule, _policyId, rule.posEffects, _callingFunctionArgs);
             }
         }
@@ -512,15 +510,11 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 }
             } else if(op == LogicalOp.TRU) {
                 // update the tracker value
-                console.log("TRU");
                 // If the Tracker Type == Place Holder, pull the data from the place holder, otherwise, pull it from Memory
                 TrackerTypes tt = TrackerTypes(_prog[idx + 3]);
-                console.log("tt", uint256(tt));
                 if (tt == TrackerTypes.MEMORY) {
-                    console.log("MEMORY");
                     _updateTrackerValue(_policyId, _prog[idx + 1], mem[_prog[idx + 2]]);
                 } else {
-                    console.log("ARGUMENT");
                     _updateTrackerValue(_policyId, _prog[idx + 1], _arguments[_prog[idx + 2]]);
                 }
                 idx += 4;
@@ -590,7 +584,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 v = ProcessorLib._boolToUint(!ProcessorLib._uintToBool(mem[_prog[idx + 1]]));
                 idx += 2;
             } else {
-                revert("Illegal instruction");
+                revert(INVALID_INSTRUCTION);
             }
             mem[opi] = v;
             opi += 1;
@@ -615,7 +609,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
             console.log("storing bytes");
             trk.trackerValue = ProcessorLib._uintToBytes(_trackerValue);
         } else {
-            revert("Invalid tracker type for updates");
+            revert(INVALID_TRACKER_TYPE);
         }
     }
 
@@ -691,7 +685,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         } else if (trk.trackerKeyType == ParamTypes.BYTES || trk.trackerKeyType == ParamTypes.STR) {
             encodedKey = ProcessorLib._uintToBytes(_mappedTrackerKey);
         } else {
-            revert("Invalid tracker key type for updates");
+            revert(INVALID_TRACKER_KEY_TYPE);
         }
         // store the tracker  value to the tracker mapping
         lib._getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][encodedKey] = _trackerValue;
@@ -804,7 +798,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         } else if (globalVarType == GLOBAL_TX_ORIGIN) {
             return (abi.encode(tx.origin), ParamTypes.ADDR);
         } else {
-            revert("Invalid global variable type");
+            revert(GLB_VAR_INV);
         }
     }
 
@@ -871,7 +865,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 } else if (effect.effectType == EffectTypes.EVENT) {
                     _buildEvent(_rule, _effects[i].dynamicParam, _policyId, _effects[i].text, _effects[i], _callingFunctionArgs);
                 } else {
-                    console.log("EVALUATING EXPRESSION");
                     _evaluateExpression(_rule, _policyId, _callingFunctionArgs, effect.instructionSet);
                 }
             }
@@ -976,7 +969,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
     ) internal {
         (bytes[] memory effectArguments, Placeholder[] memory placeholders) = _buildArguments(_rule, _policyId, _callingFunctionArgs, true);
         if (_instructionSet.length > 1) {
-            console.log("RUNNING INSTRUCTION SET");
             _run(_instructionSet, placeholders, _policyId, effectArguments);
         }
     }
