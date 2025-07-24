@@ -277,36 +277,53 @@ abstract contract foreignCalls is RulesEngineCommon {
             }
 
             // Effect for the foreign call
-            Effect memory effect;
-            effect.valid = true;
-            effect.dynamicParam = false;
-            effect.effectType = EffectTypes.EXPRESSION;
-            effect.pType = ParamTypes.VOID;
-            effect.param = abi.encodePacked(foreignCallId);
-            effect.text = "";
-            effect.errorMessage = "";
-            effect.instructionSet = new uint256[](0);
+            Tracker memory tracker1;
+            tracker1.pType = ParamTypes.UINT;
+            tracker1.trackerKeyType = ParamTypes.UINT;
+            tracker1.mapped = true;
+
+            bytes[] memory tracker1Keys = new bytes[](2);
+            tracker1Keys[0] = abi.encode(11);
+            tracker1Keys[1] = abi.encode(22);
+
+            bytes[] memory tracker1Values = new bytes[](2);
+            tracker1Values[0] = abi.encode(1000000000);
+            tracker1Values[1] = abi.encode(2000000000);
+
+            Tracker memory tracker2;
+            tracker2.pType = ParamTypes.UINT;
+            tracker2.trackerKeyType = ParamTypes.ADDR;
+            tracker2.mapped = true;
+
+            bytes[] memory tracker2Keys = new bytes[](2);
+            tracker2Keys[0] = abi.encode(address(0x7654321));
+            tracker2Keys[1] = abi.encode(address(0x1234567));
+
+            bytes[] memory tracker2Values = new bytes[](2);
+            tracker2Values[0] = abi.encode(22);
+            tracker2Values[1] = abi.encode(33);
+            
+            RulesEngineComponentFacet(address(red)).createTracker(policyId, tracker1, "tracker1", tracker1Keys, tracker1Values);
+            RulesEngineComponentFacet(address(red)).createTracker(policyId, tracker2, "tracker2", tracker2Keys, tracker2Values);
 
             Rule memory rule;
-            rule.instructionSet = new uint256[](2);
+            rule.instructionSet = new uint256[](7);
             rule.instructionSet[0] = uint(LogicalOp.PLH);
-            rule.instructionSet[1] = 1;
+            rule.instructionSet[1] = 0;
+            rule.instructionSet[2] = uint(LogicalOp.NUM);
+            rule.instructionSet[3] = 0;
+            rule.instructionSet[4] = uint(LogicalOp.EQ);
+            rule.instructionSet[5] = 0;
+            rule.instructionSet[6] = 1;
 
-            rule.placeHolders = new Placeholder[](2);
+            rule.placeHolders = new Placeholder[](3);
             // Placeholder 0: msg.data
-            rule.placeHolders[0].pType = ParamTypes.BYTES;
-            rule.placeHolders[0].typeSpecificIndex = 2;
-            //rule.placeHolders[0].flags = uint8(GLOBAL_MSG_DATA << SHIFT_GLOBAL_VAR);
-
-            // Placeholder 1: foreign call
-            rule.placeHolders[1].pType = ParamTypes.BOOL;
-            rule.placeHolders[1].typeSpecificIndex = uint128(foreignCallId);
-            rule.placeHolders[1].flags = uint8(FLAG_FOREIGN_CALL);
-
-            rule.effectPlaceHolders = new Placeholder[](1);
-            rule.effectPlaceHolders[0].pType = ParamTypes.BYTES;
-            rule.effectPlaceHolders[0].typeSpecificIndex = 0;
-            rule.effectPlaceHolders[0].flags = 0;
+            rule.placeHolders[0].flags = uint8(FLAG_TRACKER_KEY);
+            rule.placeHolders[0].typeSpecificIndex = uint128(1);
+            rule.placeHolders[1].flags = uint8(FLAG_TRACKER_KEY);
+            rule.placeHolders[1].typeSpecificIndex = uint128(2);
+            rule.placeHolders[2].flags = uint8(FLAG_FOREIGN_CALL);
+            rule.placeHolders[2].typeSpecificIndex = uint128(foreignCallId);
 
             rule.negEffects = new Effect[](1);
             rule.negEffects[0] = effectId_revert;
@@ -316,16 +333,18 @@ abstract contract foreignCalls is RulesEngineCommon {
             ruleId = RulesEngineRuleFacet(address(red)).createRule(policyId, rule, ruleName, ruleDescription);
 
             {
-                bytes4 transferSelector = ExampleUserContract.transferFrom.selector;
-                ParamTypes[] memory pTypes = new ParamTypes[](3);
+                bytes4 transferSelector = ExampleUserContract.transferSigTest.selector;
+                ParamTypes[] memory pTypes = new ParamTypes[](5);
                 pTypes[0] = ParamTypes.ADDR;
                 pTypes[1] = ParamTypes.UINT;
-                pTypes[2] = ParamTypes.BYTES;
+                pTypes[2] = ParamTypes.STR;
+                pTypes[3] = ParamTypes.STR;
+                pTypes[4] = ParamTypes.UINT;
                 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
                     policyId,
                     transferSelector,
                     pTypes,
-                    "transferFrom(address,uint256,bytes)",
+                    "transferSigTest(address,uint256,string,string)",
                     ""
                 );
 
@@ -359,22 +378,26 @@ abstract contract foreignCalls is RulesEngineCommon {
 
         {
             vm.startPrank(userContractAddress);
-            address to = address(0xBEEF);
-            uint256 value = 42;
+            address to = address(0x1234567);
+            uint256 value = 1;
+            string memory str = "TESTER";
+            string memory str2 = "TESTER2";
             bytes memory transferCalldata = abi.encodeWithSelector(
-                ExampleUserContract.transferFrom.selector,
+                ExampleUserContract.transferSigTest.selector,
                 to,
                 value,
-                abi.encode("TESTER")
+                str,
+                str2,
+                22
             );
 
-            vm.startSnapshotGas("checkRule_ForeignCall_Bytes");
             RulesEngineProcessorFacet(address(red)).checkPolicies(transferCalldata);
-            vm.stopSnapshotGas();
 
-            bytes memory actualMsgData = ExampleUserContract(userContractAddress).msgData();
-            assertEq(actualMsgData, transferCalldata, "Foreign call should set msgData to the transfer calldata");
-            vm.stopPrank();
+            assertEq(PermissionedForeignCallTestContract(pfcContractAddress).decodedIntOne(), 1000000000);
+            assertEq(PermissionedForeignCallTestContract(pfcContractAddress).decondedIntTwo(), 2000000000);
+            assertEq(PermissionedForeignCallTestContract(pfcContractAddress).decodedStrOne(), str);
+            assertEq(PermissionedForeignCallTestContract(pfcContractAddress).decodedStrTwo(), str2);
+            assertEq(PermissionedForeignCallTestContract(pfcContractAddress).decodedAddr(), to);
         }
     }
 
