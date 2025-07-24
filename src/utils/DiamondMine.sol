@@ -1,7 +1,7 @@
 /// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.24;
 
-import "src/engine/RulesEngineDiamond.sol";
+import "src/engine/ForteRulesEngine.sol";
 import "forge-std/src/Script.sol";
 import "src/engine/facets/NativeFacet.sol";
 import "src/engine/facets/RulesEngineProcessorFacet.sol";
@@ -25,7 +25,7 @@ import {FacetCut, FacetCutAction} from "diamond-std/core/DiamondCut/DiamondCutLi
  */
 contract DiamondMine is Script {
     FacetCut[] _ruleProcessorFacetCuts;
-    RulesEngineDiamond red;
+    ForteRulesEngine red;
     address constant OWNER = address(0xB0b);
 
     /**
@@ -34,7 +34,7 @@ contract DiamondMine is Script {
      * @param owner The address to be set as the owner of the diamond.
      * @return diamond The fully configured Rules Engine Diamond.
      */
-    function createRulesEngineDiamond(address owner) public returns (RulesEngineDiamond diamond) {
+    function createRulesEngineDiamond(address owner) public returns (ForteRulesEngine diamond) {
         delete _ruleProcessorFacetCuts;
         // Start by deploying the DiamonInit contract.
         DiamondInit diamondInit = new DiamondInit();
@@ -122,7 +122,7 @@ contract DiamondMine is Script {
 
         /// Build the diamond
         // Deploy the diamond.
-        RulesEngineDiamond rulesEngineInternal = new RulesEngineDiamond(_ruleProcessorFacetCuts, diamondArgs);
+        ForteRulesEngine rulesEngineInternal = new ForteRulesEngine(_ruleProcessorFacetCuts, diamondArgs);
         RulesEngineInitialFacet(address(rulesEngineInternal)).initialize(owner);
         return rulesEngineInternal;
     }
@@ -223,7 +223,7 @@ contract DiamondMine is Script {
     }
 
     // Implementation of createRulesEngineDiamond without cheatcodes
-    function createRulesEngineDiamondNoCheatcodes(address owner) internal returns (RulesEngineDiamond diamond) {
+    function createRulesEngineDiamondNoCheatcodes(address owner) internal returns (ForteRulesEngine diamond) {
         delete _ruleProcessorFacetCuts;
         // Start by deploying the DiamonInit contract.
         DiamondInit diamondInit = new DiamondInit();
@@ -293,7 +293,7 @@ contract DiamondMine is Script {
         );
 
         // Deploy the diamond and initialize
-        RulesEngineDiamond rulesEngineInternal = new RulesEngineDiamond(_ruleProcessorFacetCuts, diamondArgs);
+        ForteRulesEngine rulesEngineInternal = new ForteRulesEngine(_ruleProcessorFacetCuts, diamondArgs);
 
         RulesEngineInitialFacet(address(rulesEngineInternal)).initialize(owner);
         return rulesEngineInternal;

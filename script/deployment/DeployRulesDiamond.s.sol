@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "forge-std/src/Script.sol";
-import "src/engine/RulesEngineDiamond.sol";
+import "src/engine/ForteRulesEngine.sol";
 import "src/utils/DiamondMine.sol";
 import {IDiamondInit} from "diamond-std/initializers/IDiamondInit.sol";
 import {DiamondInit} from "diamond-std/initializers/DiamondInit.sol";
@@ -14,14 +14,14 @@ import {IERC173} from "lib/diamond-std/implementations/ERC173/IERC173.sol";
 /**
  * @title DeployRulesDiamond
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
- * @dev This contract handles the deployment of the RulesEngineDiamond and ExampleUserContract.
+ * @dev This contract handles the deployment of the ForteRulesEngine and ExampleUserContract.
  * It sets up the necessary environment variables and connects the deployed contracts.
  * The deployment process uses environment variables for the owner address and private key.
  * Additionally, it updates environment variables with the deployed contract addresses.
  */
 contract DeployRulesDiamond is DiamondMine {
     /**
-     * @notice Deploys the RulesEngineDiamond and ExampleUserContract, and sets up the environment variables.
+     * @notice Deploys the ForteRulesEngine and ExampleUserContract, and sets up the environment variables.
      * @dev Uses environment variables for deployment owner address and private key.
      */
     function run() external {
@@ -35,8 +35,8 @@ contract DeployRulesDiamond is DiamondMine {
 
         vm.startBroadcast(privateKey);
 
-        // Deploy the RulesEngineDiamond contract
-        RulesEngineDiamond diamond = createRulesEngineDiamond(owner);
+        // Deploy the ForteRulesEngine contract
+        ForteRulesEngine diamond = createRulesEngineDiamond(owner);
 
         vm.stopBroadcast();
 

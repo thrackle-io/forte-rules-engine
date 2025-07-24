@@ -8,6 +8,9 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, edited, ready_for_review]
 
+env:
+  FOUNDRY_PROFILE: ci
+
 jobs:
   check:
     strategy:
@@ -50,6 +53,8 @@ jobs:
           forge build
         id: build
       - name: Run Foundry tests
+        env:
+          ETHEREUM_RPC_KEY: ${{ secrets.ALCHEMY_KEY }}
         run: |
           forge test --ffi -vvv 
         id: forge-test
