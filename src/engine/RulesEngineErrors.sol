@@ -49,6 +49,8 @@ string constant DYNDATA_OUTBNDS = "Dynamic data content out of bounds";
 string constant DYNDATA_OFFSET = "Invalid dynamic data offset";
 string constant ENC_STRING_INV = "Invalid encoded string";
 string constant EFFECT_REQ = "Must have at least one effect";
+string constant MAPPED_TRACKER_KEY_INDICES_LENGTH_MISMATCH = "Mapped tracker key indices length mismatch.";
+string constant MAPPED_TRACKER_KEY_CANNOT_BE_DOUBLE_NESTED = "Mapped tracker key cannot be double nested";
 
 // Admin Error Constants
 string constant RULES_ENGINE_ONLY = "OnlyRulesEngineCanCreateAdminRoles";
