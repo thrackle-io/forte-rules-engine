@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetUtils.sol";
+import "src/engine/RulesEngineErrors.sol";
 
 /**
  * @title Access Modifiers for the Rules Engine
@@ -35,7 +36,7 @@ contract AccessModifiers is FacetUtils {
                 returnBool = false;
             }
             // returned false so revert with error
-            if (!returnBool) revert("Not Authorized To Policy");
+            if (!returnBool) revert(NOT_AUTH_POLICY);
         }
         _;
     }
@@ -63,7 +64,7 @@ contract AccessModifiers is FacetUtils {
                 returnBool = false;
             }
             // returned false so revert with error
-            if (!returnBool) revert("Not Authorized Admin");
+            if (!returnBool) revert(NOT_CALLING_CONTRACT_ADMIN);
         }
         _;
     }
