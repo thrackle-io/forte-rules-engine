@@ -49,41 +49,6 @@ string constant DYNDATA_OUTBNDS = "Dynamic data content out of bounds";
 string constant DYNDATA_OFFSET = "Invalid dynamic data offset";
 string constant ENC_STRING_INV = "Invalid encoded string";
 string constant EFFECT_REQ = "Must have at least one effect";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-// string constant POLICY_ID_INV = "PolicyId";
-
-
-
 
 // Admin Error Constants
 string constant RULES_ENGINE_ONLY = "OnlyRulesEngineCanCreateAdminRoles";
