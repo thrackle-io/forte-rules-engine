@@ -208,7 +208,7 @@ abstract contract policies is RulesEngineCommon {
         policyIds[0] = policyId;
         address potentialSubscriber = address(0xdeadbeef);
         vm.startPrank(address(1));
-        vm.expectRevert("Not Authorized Admin");
+        vm.expectRevert("Not Calling Contract Admin");
         RulesEnginePolicyFacet(address(red)).applyPolicy(potentialSubscriber, policyIds);
     }
 
@@ -446,7 +446,7 @@ abstract contract policies is RulesEngineCommon {
 
         // Prank a random, non-calling contract admin address
         vm.startPrank(address(0x1337));
-        vm.expectRevert("Not Authorized Admin");
+        vm.expectRevert("Not Calling Contract Admin");
         RulesEnginePolicyFacet(address(red)).applyPolicy(userContractAddress, policyIds);
     }
 
@@ -567,7 +567,7 @@ abstract contract policies is RulesEngineCommon {
         uint256[] memory policyIds = new uint256[](1);
         policyIds[0] = policyId;
         vm.startPrank(policyAdmin);
-        vm.expectRevert("Not Authorized Admin");
+        vm.expectRevert("Not Calling Contract Admin");
         RulesEnginePolicyFacet(address(red)).unapplyPolicy(address(userContract), policyIds);
     }
 

@@ -129,8 +129,8 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
      */
     function _storeForeignCall(uint256 _policyId, ForeignCall calldata _foreignCall, uint256 _foreignCallIndex) internal {
         assert(_foreignCall.parameterTypes.length == _foreignCall.encodedIndices.length);
-        require(_foreignCall.foreignCallIndex < MAX_LOOP, "Max foreign calls reached.");
-        require(_foreignCall.parameterTypes.length < MAX_LOOP, "Max foreign parameter types reached.");
+        require(_foreignCall.foreignCallIndex < MAX_LOOP, MAX_FC);
+        require(_foreignCall.parameterTypes.length < MAX_LOOP, MAX_FC_PT);
         lib._getForeignCallStorage().foreignCalls[_policyId][_foreignCallIndex] = _foreignCall;
         lib._getForeignCallStorage().foreignCalls[_policyId][_foreignCallIndex].set = true;
         lib._getForeignCallStorage().foreignCalls[_policyId][_foreignCallIndex].foreignCallIndex = _foreignCallIndex;
@@ -333,7 +333,7 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
      * @param _policyId The ID of the policy.
      */
     function _notCemented(uint256 _policyId) internal view {
-        if (lib._getPolicyStorage().policyStorageSets[_policyId].policy.cemented) revert("Not allowed for cemented policy");
+        if (lib._getPolicyStorage().policyStorageSets[_policyId].policy.cemented) revert(NOT_ALLOWED_CEMENTED_POLICY);
     }
 
     /**
@@ -357,7 +357,7 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
                 returnBool = false;
             }
             // returned false so revert with error
-            if (!returnBool) revert("Not Authorized To Policy");
+            if (!returnBool) revert(NOT_AUTH_POLICY);
         }
     }
 
@@ -383,7 +383,7 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
                 returnBool = false;
             }
             // returned false so revert with error
-            if (!returnBool) revert("Not An Authorized Foreign Call Admin");
+            if (!returnBool) revert(NOT_AUTH_FC);
         }
     }
 

@@ -155,7 +155,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      */
     function _storeRule(RuleStorage storage _data, uint256 _policyId, uint256 _ruleId, Rule calldata _rule) internal returns (uint256) {
         // Validate that the policy exists
-        if (!lib._getPolicyStorage().policyStorageSets[_policyId].set) revert("Invalid PolicyId");
+        if (!lib._getPolicyStorage().policyStorageSets[_policyId].set) revert(POLICY_ID_INV);
         
         _data.ruleStorageSets[_policyId][_ruleId].set = true;
         _data.ruleStorageSets[_policyId][_ruleId].rule = _rule;
@@ -202,7 +202,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         _validatePlaceholders(rule.placeHolders);
         _validatePlaceholders(rule.effectPlaceHolders);
         // effects
-        require(rule.posEffects.length > 0 || rule.negEffects.length > 0, "Must have at least one effect");
+        require(rule.posEffects.length > 0 || rule.negEffects.length > 0, EFFECT_REQ);
         _validateEffects(rule.posEffects);
         _validateEffects(rule.negEffects);
     }
@@ -328,7 +328,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
                 returnBool = false;
             }
             // returned false so revert with error
-            if (!returnBool) revert("Not Authorized To Policy");
+            if (!returnBool) revert(NOT_AUTH_POLICY);
         }
     }
 }

@@ -147,7 +147,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         // Load the policy data from storage
         PolicyAssociationStorage storage data = lib._getPolicyAssociationStorage();
 
-        require(policyIds.length < MAX_LOOP, "Max policies per contract address reached.");
+        require(policyIds.length < MAX_LOOP, MAX_POLICIES_PER_ADDR);
         for (uint256 i = 0; i < policyIds.length; i++) {
             PolicyStorageSet storage policySet = lib._getPolicyStorage().policyStorageSets[policyIds[i]];
             require(policySet.set, POLICY_DOES_NOT_EXIST);
@@ -221,7 +221,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      * @return uint256 The generated policy ID.
      */
     function createPolicy(PolicyType policyType, string calldata policyName, string calldata policyDescription) external returns (uint256) {
-        require(uint8(policyType) < 3, "PolicyType is invalid");
+        require(uint8(policyType) < 3, POLICY_TYPE_INV);
         // retrieve Policy Storage
         PolicyStorage storage data = lib._getPolicyStorage();
         uint256 policyId = data.policyId;
@@ -344,8 +344,8 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         string calldata _policyName,
         string calldata _policyDescription
     ) internal returns (uint256) {
-        require(uint8(_policyType) < 3, "PolicyType is invalid");
-        require(_policyId >  0, "PolicyId is invalid");
+        require(uint8(_policyType) < 3, POLICY_TYPE_INV);
+        require(_policyId >  0, POLICY_ID_INV);
         // Load the policy data from storage
         Policy storage data = lib._getPolicyStorage().policyStorageSets[_policyId].policy;
 
@@ -357,8 +357,8 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         delete data.callingFunctions;
 
         // Validate input lengths
-        require(_ruleIds.length < MAX_LOOP, "Max rules count reached.");
-        require(_callingFunctions.length < MAX_LOOP, "Max function signatures reached.");
+        require(_ruleIds.length < MAX_LOOP, MAX_RULES);
+        require(_callingFunctions.length < MAX_LOOP, MAX_CF);
 
         if (_ruleIds.length > 0) {
             _processCallingFunctionsWithRules(_policyId, _callingFunctions, _callingFunctionIds, _ruleIds, data);
@@ -456,7 +456,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      * @param placeholders The array of placeholders to validate.
      */
     function _validatePlaceholders(uint256 _policyId, Placeholder[] memory placeholders) private view {
-        require(placeholders.length < MAX_LOOP, "Max place holders reached.");
+        require(placeholders.length < MAX_LOOP, MAX_PLC_HLD);
         for (uint256 k = 0; k < placeholders.length; k++) {
             if (FacetUtils._isForeignCall(placeholders[k])) {
                 require(StorageLib._isForeignCallSet(_policyId, placeholders[k].typeSpecificIndex), FOREIGN_CALL_NOT_SET);
@@ -517,7 +517,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
                 returnBool = false;
             }
             // returned false so revert with error
-            if (!returnBool) revert("Not Authorized To Policy");
+            if (!returnBool) revert(NOT_AUTH_POLICY);
         }
     }
 }

@@ -90,7 +90,7 @@ contract RulesEngineInitialFacet is FacetCommonImports {
     ) internal view returns (uint256 instructionSetValue, bytes memory encoded) {
         RuleStorageSet memory _ruleStorage = lib._getRuleStorage().ruleStorageSets[_policyId][_ruleId];
         if (!_ruleStorage.set) {
-            revert("Unknown Rule");
+            revert(UNKNOWN_RULE);
         }
         for (uint256 i = 0; i < _ruleStorage.rule.rawData.instructionSetIndex.length; i++) {
             if (_ruleStorage.rule.rawData.instructionSetIndex[i] == _instructionSetId) {

@@ -59,8 +59,8 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
         _validateTrackerType(tracker);
-        if (trackerKeys.length == 0 || trackerValues.length == 0) revert("Tracker keys and values cannot be empty");
-        if (trackerKeys.length != trackerValues.length) revert("Tracker keys and values must have the same length");
+        if (trackerKeys.length == 0 || trackerValues.length == 0) revert(KEY_AND_VALUE_REQUIRED);
+        if (trackerKeys.length != trackerValues.length) revert(KEY_AND_VALUE_SAME);
         uint256 trackerIndex = lib._getTrackerStorage().trackerIndexCounter[policyId];
         trackerIndex = _incrementTrackerIndex(policyId);
         for (uint256 i = 0; i < trackerKeys.length; i++) {
@@ -143,7 +143,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param _tracker The tracker data to store.
      */
     function _storeTracker(TrackerStorage storage _data, uint256 _policyId, uint256 _trackerIndex, Trackers memory _tracker) internal {
-        require(_trackerIndex < MAX_LOOP, "Max trackers reached.");
+        require(_trackerIndex < MAX_LOOP, MAX_TRACKERS);
         _tracker.set = true;
         _tracker.mapped = false;
         _tracker.trackerIndex = _trackerIndex;
@@ -363,13 +363,13 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         CallingFunctionStruct storage data = lib._getCallingFunctionStorage();
         // increment the callingFunctionId if necessary
         CallingFunctionStorageSet storage callingFunction = data.callingFunctionStorageSets[policyId][callingFunctionID];
-        require(callingFunction.signature == functionSignature, "Delete calling function before updating to a new one");
+        require(callingFunction.signature == functionSignature, CALLING_FUNCTION_EXISTS);
         require(
             callingFunction.parameterTypes.length <= pTypes.length,
-            "New parameter types must be of greater or equal length to the original"
+            PARM_GT_EQ
         );
         for (uint256 i = 0; i < callingFunction.parameterTypes.length; i++) {
-            require(pTypes[i] == callingFunction.parameterTypes[i], "New parameter types must be of the same type as the original");
+            require(pTypes[i] == callingFunction.parameterTypes[i], PARM_NOT_SAME_TYPE);
         }
         if (callingFunction.parameterTypes.length < pTypes.length) {
             for (uint256 i = callingFunction.parameterTypes.length; i < pTypes.length; i++) {
