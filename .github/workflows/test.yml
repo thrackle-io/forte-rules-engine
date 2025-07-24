@@ -22,7 +22,6 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.XREPO_GITHUB_TOKEN}}
           submodules: recursive
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
