@@ -51,6 +51,6 @@ library RulesEngineStorageLib {
      * @param _policyId The ID of the policy.
      */
     function _notCemented(uint256 _policyId) internal view {
-        if (lib._getPolicyStorage().policyStorageSets[_policyId].policy.cemented) revert("Not allowed for cemented policy");
+        if (lib._getPolicyStorage().policyStorageSets[_policyId].policy.cemented) revert(NOT_ALLOWED_CEMENTED_POLICY);
     }
 }

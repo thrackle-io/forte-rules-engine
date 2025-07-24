@@ -46,7 +46,7 @@ library RulesEngineProcessorLib {
      */
     function _extractStringData(bytes memory _encodedString) internal pure returns (bytes memory) {
         // We want to skip the first 32 bytes (offset) and keep the rest
-        require(_encodedString.length >= 64, "Invalid encoded string");
+        require(_encodedString.length >= 64, ENC_STRING_INV);
 
         // Create result with size needed for everything except the offset
         bytes memory result = new bytes(_encodedString.length - 32);

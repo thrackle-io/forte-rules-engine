@@ -226,13 +226,13 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
             encodedCall = bytes.concat(encodedCall, bytes32(dynamicOffset));
 
             // Get the dynamic data - and bounds checking
-            require(uint(value) < functionArguments.length, "Invalid dynamic data offset");
-            require(uint(value) + 32 <= functionArguments.length, "Dynamic data length out of bounds");
+            require(uint(value) < functionArguments.length, DYNDATA_OFFSET);
+            require(uint(value) + 32 <= functionArguments.length, DYNDATA_OUTBNDS);
             uint256 length = uint256(bytes32(functionArguments[uint(value):uint(value) + 32]));
             // Calculate total bytes needed: 32 bytes for length prefix + padded data length (round up to nearest 32-byte boundary)
             uint256 words = 32 + ((length + 31) / 32) * 32;
 
-            require(uint(value) + words <= functionArguments.length, "Dynamic data content out of bounds");
+            require(uint(value) + words <= functionArguments.length, DYNDATA_OUTBNDS);
 
             bytes memory dynamicValue = functionArguments[uint(value):uint(value) + words];
             // Add length and data (data is already padded to 32 bytes)
@@ -373,14 +373,14 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 bytes32 value = bytes32(uint256(uint160(msg.sender)));
                 encodedCall = bytes.concat(encodedCall, value);
             } else {
-                revert("MSG_SENDER can only be used with address type");
+                revert(MSGSENDER_ONLY_ADDR);
             }
         } else if (globalVarType == GLOBAL_BLOCK_TIMESTAMP) {
             if (argType == ParamTypes.UINT) {
                 bytes32 value = bytes32(block.timestamp);
                 encodedCall = bytes.concat(encodedCall, value);
             } else {
-                revert("BLOCK_TIMESTAMP can only be used with uint type");
+                revert(BLOCKTIME_ONLY_UINT);
             }
         } else if (globalVarType == GLOBAL_MSG_DATA) {
             if (argType == ParamTypes.STR || argType == ParamTypes.BYTES) {
@@ -403,24 +403,24 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 dynamicData = bytes.concat(dynamicData, encodedMsgData);
                 lengthToAppend += encodedMsgData.length;
             } else {
-                revert("MSG_DATA can only be used with bytes or string types");
+                revert(MSGDTA_ONLY_STRING);
             }
         } else if (globalVarType == GLOBAL_BLOCK_NUMBER) {
             if (argType == ParamTypes.UINT) {
                 bytes32 value = bytes32(block.number);
                 encodedCall = bytes.concat(encodedCall, value);
             } else {
-                revert("BLOCK_NUMBER can only be used with uint type");
+                revert(BLK_NUMBER_ONLY_UINT);
             }
         } else if (globalVarType == GLOBAL_TX_ORIGIN) {
             if (argType == ParamTypes.ADDR) {
                 bytes32 value = bytes32(uint256(uint160(tx.origin)));
                 encodedCall = bytes.concat(encodedCall, value);
             } else {
-                revert("TX_ORIGIN can only be used with address type");
+                revert(TX_ORG_ONLY_ADDR);
             }
         } else {
-            revert("Unknown global variable type");
+            revert(GLB_VAR_INV);
         }
 
         return (encodedCall, lengthToAppend, dynamicData);
@@ -677,7 +677,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 v = ProcessorLib._boolToUint(!ProcessorLib._uintToBool(mem[_prog[idx + 1]]));
                 idx += 2;
             } else {
-                revert("Illegal instruction");
+                revert(INVALID_INSTRUCTION);
             }
             mem[opi] = v;
             opi += 1;
@@ -699,7 +699,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         } else if (trk.pType == ParamTypes.BYTES || trk.pType == ParamTypes.STR) {
             trk.trackerValue = ProcessorLib._uintToBytes(_trackerValue);
         } else {
-            revert("Invalid tracker type for updates");
+            revert(INVALID_TRACKER_TYPE);
         }
     }
 
@@ -779,7 +779,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         } else if (trk.trackerKeyType == ParamTypes.BYTES || trk.trackerKeyType == ParamTypes.STR) {
             encodedKey = ProcessorLib._uintToBytes(_mappedTrackerKey);
         } else {
-            revert("Invalid tracker key type for updates");
+            revert(INVALID_TRACKER_KEY_TYPE);
         }
         // store the tracker  value to the tracker mapping
         lib._getTrackerStorage().mappedTrackerValues[_policyId][_trackerId][encodedKey] = _trackerValue;
@@ -872,7 +872,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         } else if (globalVarType == GLOBAL_TX_ORIGIN) {
             return (abi.encode(tx.origin), ParamTypes.ADDR);
         } else {
-            revert("Invalid global variable type");
+            revert(GLB_VAR_INV);
         }
     }
 

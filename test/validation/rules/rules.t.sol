@@ -55,6 +55,8 @@ abstract contract rules is RulesEngineCommon {
         rule.instructionSet = new uint256[](2);
         rule.instructionSet[0] = 0;
         rule.instructionSet[1] = 0;
+        rule.posEffects = new Effect[](1);
+        rule.posEffects[0] = effectId_event;
 
         RulesEnginePolicyFacet(address(red)).cementPolicy(policyId);
         vm.expectRevert("Not allowed for cemented policy");
@@ -165,6 +167,8 @@ abstract contract rules is RulesEngineCommon {
         rule.instructionSet = new uint256[](2);
         rule.instructionSet[0] = 0;
         rule.instructionSet[1] = 0;
+        rule.posEffects = new Effect[](1);
+        rule.posEffects[0] = effectId_event;
         vm.expectEmit(true, false, false, false);
         emit RuleCreated(policyId, ruleId);
         RulesEngineRuleFacet(address(red)).createRule(policyId, rule, ruleName, ruleDescription);
@@ -229,6 +233,8 @@ abstract contract rules is RulesEngineCommon {
         rule.instructionSet = new uint256[](2);
         rule.instructionSet[0] = 0;
         rule.instructionSet[1] = 0;
+        rule.posEffects = new Effect[](1);
+        rule.posEffects[0] = effectId_event;
         uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyId, rule, ruleName, ruleDescription);
         vm.expectEmit(true, false, false, false);
         emit RuleUpdated(policyId, ruleId);
@@ -246,6 +252,8 @@ abstract contract rules is RulesEngineCommon {
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.posEffects = new Effect[](1);
+        rule.posEffects[0] = effectId_event;
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyId, 0, rule, ruleName, ruleDescription);
 
@@ -264,6 +272,8 @@ abstract contract rules is RulesEngineCommon {
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.posEffects = new Effect[](1);
+        rule.posEffects[0] = effectId_event;
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyId, 0, rule, ruleName, ruleDescription);
 
@@ -282,6 +292,9 @@ abstract contract rules is RulesEngineCommon {
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.posEffects = new Effect[](1);
+        rule.posEffects[0] = effectId_event;
+        
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyId, 0, rule, ruleName, ruleDescription);
 
@@ -300,6 +313,8 @@ abstract contract rules is RulesEngineCommon {
         rule.placeHolders = new Placeholder[](1);
         rule.placeHolders[0].pType = ParamTypes.UINT;
         rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.posEffects = new Effect[](1);
+        rule.posEffects[0] = effectId_event;
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyId, 0, rule, ruleName, ruleDescription);
         vm.expectEmit(true, false, false, false);
