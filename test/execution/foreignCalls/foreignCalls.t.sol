@@ -222,7 +222,12 @@ abstract contract foreignCalls is RulesEngineCommon {
         }
     }
 
-    function testRulesEngine_Unit_ForeignCall_MappedTrackerAsParam_MultipleMappedTrackerKeys_Positive() public ifDeploymentTestsEnabled endWithStopPrank resetsGlobalVariables {
+    function testRulesEngine_Unit_ForeignCall_MappedTrackerAsParam_MultipleMappedTrackerKeys_Positive()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+        resetsGlobalVariables
+    {
         uint256 policyId;
         uint256 ruleId;
         uint256 callingFunctionId;
@@ -264,7 +269,11 @@ abstract contract foreignCalls is RulesEngineCommon {
                 fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256,string,uint256,string,address)")));
                 fc.returnType = ParamTypes.UINT;
                 fc.parameterTypes = fcArgs;
-                foreignCallId = RulesEngineForeignCallFacet(address(red)).createForeignCall(policyId, fc, "simpleCheck(uint256,string,uint256,string,address)");
+                foreignCallId = RulesEngineForeignCallFacet(address(red)).createForeignCall(
+                    policyId,
+                    fc,
+                    "simpleCheck(uint256,string,uint256,string,address)"
+                );
             }
 
             // Effect for the foreign call
@@ -874,7 +883,7 @@ abstract contract foreignCalls is RulesEngineCommon {
         );
     }
 
-    function testRulesEngine_Unit_ForeignCall_MappedTrackerAsParam_Bytes32ToAddressMappedTracker()
+    function testRulesEngine_Unit_ForeignCall_MappedTrackerAsParam_BytesToAddressMappedTracker()
         public
         ifDeploymentTestsEnabled
         endWithStopPrank
@@ -890,13 +899,13 @@ abstract contract foreignCalls is RulesEngineCommon {
         pTypes[4] = ParamTypes.STR;
         _addCallingFunctionToPolicy(
             policyIds[0],
-            bytes4(bytes4(keccak256(bytes("transferFrom(address,uint256,bytes32)")))),
+            bytes4(bytes4(keccak256(bytes("transferFrom(address,uint256,bytes)")))),
             pTypes,
-            string("transferFom(address,uint256,bytes32)")
+            string("transferFom(address,uint256,bytes)")
         );
         bytes[] memory trackerKeys = new bytes[](2);
-        trackerKeys[0] = abi.encode(uint(bytes32("TestKey1")));
-        trackerKeys[1] = abi.encode(uint(bytes32("TestKey2")));
+        trackerKeys[0] = abi.encode("TestKey1");
+        trackerKeys[1] = abi.encode("TestKey2");
         bytes[] memory trackerValues = new bytes[](2);
         trackerValues[0] = abi.encode(address(0x7654321));
         trackerValues[1] = abi.encode(address(0x7654322));
@@ -916,25 +925,24 @@ abstract contract foreignCalls is RulesEngineCommon {
         Trackers memory returnedTracker = RulesEngineComponentFacet(address(red)).getTracker(policyIds[0], 1);
         assertTrue(returnedTracker.mapped);
 
-        bytes memory value = RulesEngineComponentFacet(address(red)).getMappedTrackerValue(
-            policyIds[0],
-            1,
-            abi.encode(uint(bytes32("TestKey1")))
-        );
+        bytes memory value = RulesEngineComponentFacet(address(red)).getMappedTrackerValue(policyIds[0], 1, abi.encode("TestKey1"));
         assertEq(value, abi.encode(address(0x7654321)));
-        console2.log(uint256(bytes32("TestKey1")));
+        console2.log(uint(keccak256(abi.encode("TestKey1"))));
 
         vm.expectRevert();
-        userContract.transferFrom(address(0x7654321), 1000000000, bytes32("TestKey1"));
+        userContract.transferFrom(address(0x7654321), 1000000000, abi.encode("TestKey1"));
         assertEq(testContract.getInternalValue(), 0);
 
-        userContract.transferFrom(address(0x7654322), 2000000000, bytes32("TestKey2"));
+        userContract.transferFrom(address(0x7654322), 2000000000, abi.encode("TestKey2"));
 
         assertEq(
             testContract.getInternalValue(),
             uint256(uint160(address(0x7654322))),
             "The internal value should be updated to the `to` address"
         );
+
+        bytes memory newV = abi.encode("TestKey1");
+        assertEq(value, newV); // this is to retrieve the tracker key encoding
     }
 
     function testRulesEngine_Unit_ForeignCall_ValidateMappedTrackerKeyLengths_Positive() public ifDeploymentTestsEnabled endWithStopPrank {

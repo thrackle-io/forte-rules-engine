@@ -30,7 +30,7 @@ contract ExampleUserContract is RulesEngineClient {
         return true;
     }
 
-    function transferFrom(address to, uint256 value, bytes32 _bytes) public returns (bool) {
+    function transferFrom(address to, uint256 value, bytes memory _bytes) public returns (bool) {
         _invokeRulesEngine(msg.data);
         to; // added to silence compiler warnings
         value; // added to silence compiler warnings

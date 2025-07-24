@@ -23,6 +23,9 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
 
     string public constant version = "v1.0.0";
 
+    event Log(uint counter, uint data);
+    event Log(uint counter, bytes data);
+
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
     // Rule Evaluation Functions
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -155,7 +158,14 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         bytes memory mappedTrackerValue;
         ParamTypes typ = lib._getTrackerStorage().trackers[policyId][trackerIndex].trackerKeyType;
 
-        (mappedTrackerValue, typ) = _foreignCallGetMappedTrackerValue(functionArguments, retVals, policyId, trackerIndex, mappedTrackerKeyEI, typ);
+        (mappedTrackerValue, typ) = _foreignCallGetMappedTrackerValue(
+            functionArguments,
+            retVals,
+            policyId,
+            trackerIndex,
+            mappedTrackerKeyEI,
+            typ
+        );
 
         (encodedCall, lengthToAppend, dynamicData) = concatenateCallOnMemory(
             encodedCall,
@@ -180,12 +190,14 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         if (mappedTrackerKeyEI.eType == EncodedIndexType.ENCODED_VALUES) {
             if (typ == ParamTypes.STR || typ == ParamTypes.BYTES) {
                 mappedTrackerKey = uint256(keccak256(_getDynamicVariableFromCalldata(functionArguments, mappedTrackerKeyEI.index)));
+                emit Log(1, mappedTrackerKey);
+                emit Log(2, mappedTrackerKeyEI.index);
+                emit Log(1, _getDynamicVariableFromCalldata(functionArguments, mappedTrackerKeyEI.index));
             } else {
-                mappedTrackerKey = uint256(
-                    bytes32(functionArguments[mappedTrackerKeyEI.index * 32:(mappedTrackerKeyEI.index + 1) * 32])
-                );
+                mappedTrackerKey = uint256(bytes32(functionArguments[mappedTrackerKeyEI.index * 32:(mappedTrackerKeyEI.index + 1) * 32]));
             }
             (mappedTrackerValue, valueType) = _getMappedTrackerValue(policyId, trackerIndex, mappedTrackerKey);
+            emit Log(2, mappedTrackerValue);
         } else {
             if (typ == ParamTypes.STR || typ == ParamTypes.BYTES) {
                 mappedTrackerKey = uint256(keccak256(retVals[mappedTrackerKeyEI.index]));
