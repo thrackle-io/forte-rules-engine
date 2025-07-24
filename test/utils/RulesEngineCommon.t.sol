@@ -1777,7 +1777,7 @@ contract RulesEngineCommon is DiamondMine, Test {
         RulesEngineForeignCallFacet(address(red)).createForeignCall(policyId[0], fc, "simpleCheck(uint256)");
 
         // update rule
-        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyId[0], rule);
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(policyId[0], rule, ruleName, ruleDescription);
 
         ruleIds.push(new uint256[](1));
         ruleIds[0][0] = ruleId;
