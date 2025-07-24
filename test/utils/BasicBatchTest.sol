@@ -43,6 +43,6 @@ contract BasicBatchTest is RulesEngineCommon {
             blankRuleIds,
             PolicyType.CLOSED_POLICY
         );
-        RulesEngineDiamond(red).batch(calls, true);
+        ForteRulesEngine(red).batch(calls, true);
     }
 }

@@ -22,7 +22,7 @@
   "CheckRules_Explicit_WithTrackerUpdateEffectString": "106596",
   "CheckRules_Explicit_WithTrackerUpdateEffectUint": "38931",
   "CheckRules_Multiple_Positive_Event": "42757",
-  "CheckRules_Revert": "31195",
+  "CheckRules_Revert": "31174",
   "CheckRules_WithTrackerValue": "38488",
   "MappedTrackerAsConditional_AddressToAddress": "36549",
   "MappedTrackerAsConditional_AddressToBool": "36559",

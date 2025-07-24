@@ -18,21 +18,19 @@ import "test/validation/policy/policies.t.sol";
  * URQTBC AMM
 */
 
-contract RulesEngineForkTests is adminRoles, components, rules, policies 
-    {
-    // Set your Fork Test addresses 
-    address deploymentOwner = address(0x000); 
+contract RulesEngineForkTests is adminRoles, components, rules, policies {
+    // Set your Fork Test addresses
+    address deploymentOwner = address(0x000);
     address marketPlace = address(0x0000);
     address ammALTBC = address(0x0000);
     address ammURQTBC = address(0x0000);
 
-
-    function setUp() public{
+    function setUp() public {
         if (deploymentOwner != address(0x0)) {
             vm.startPrank(deploymentOwner);
             callingContractAdmin = address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8);
             policyAdmin = address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
-            red = RulesEngineDiamond(payable(vm.envAddress("DIAMOND_ADDRESS")));        
+            red = ForteRulesEngine(payable(vm.envAddress("DIAMOND_ADDRESS")));
             userContract = new ExampleUserContract();
             userContract.setRulesEngineAddress(address(red));
             userContract.setCallingContractAdmin(callingContractAdmin);
@@ -47,5 +45,4 @@ contract RulesEngineForkTests is adminRoles, components, rules, policies
             testDeployments = false;
         }
     }
-
 }

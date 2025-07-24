@@ -24,9 +24,9 @@ struct RulesEngineDiamondArgs {
  * @dev This contract implements the diamond proxy pattern for the Rules Engine. It is responsible for managing facets,
  *      handling token rule configurations, and facilitating communication between the application and protocol.
  * @notice The diamond inherits ERC173 for ownership management and supports batch operations for efficiency.
- * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220, @Palmerg4
  */
-contract RulesEngineDiamond is ERC173 {
+contract ForteRulesEngine is ERC173 {
     event EngineDeployed();
 
     /**

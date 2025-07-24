@@ -50,6 +50,8 @@ jobs:
           forge build
         id: build
       - name: Run Foundry tests
+        env:
+          ETHEREUM_RPC_KEY: ${{ secrets.ALCHEMY_KEY }}
         run: |
           forge test --ffi -vvv 
         id: forge-test

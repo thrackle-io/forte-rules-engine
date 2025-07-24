@@ -5,12 +5,24 @@ libs = ["lib", "dependencies"]
 solc_version = "0.8.28"
 optimize = true
 optimizer_runs = 2000000000
+ffi = true
 
 remappings = [
     "@openzeppelin/=dependencies/@openzeppelin-contracts-5.3.0/",
     "diamond-std/=lib/diamond-std/",
     "forge-std/=dependencies/forge-std-1.9.7/",
 ]
+
+# Fork testing configuration
+[profile.fork]
+src = "src"
+out = "out"
+libs = ["lib", "dependencies"]
+solc_version = "0.8.28"
+optimize = true
+optimizer_runs = 2000000000
+ffi = true
+fork_url = "${ETHEREUM_RPC_URL}"
 
 [soldeer]
 remappings_generate = true
