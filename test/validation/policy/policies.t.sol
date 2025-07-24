@@ -97,6 +97,8 @@ abstract contract policies is RulesEngineCommon {
         rule.instructionSet = new uint256[](2);
         rule.instructionSet[0] = 0;
         rule.instructionSet[1] = 0;
+        rule.posEffects = new Effect[](1);
+        rule.posEffects[0] = effectId_event;
 
         uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyIds[0], 0, rule, ruleName, ruleDescription);
 
@@ -123,6 +125,8 @@ abstract contract policies is RulesEngineCommon {
         rule.placeHolders[1].pType = ParamTypes.UINT;
         rule.placeHolders[1].flags = FLAG_TRACKER_VALUE;
         rule.placeHolders[1].typeSpecificIndex = 1;
+        rule.posEffects = new Effect[](1);
+        rule.posEffects[0] = effectId_event;
 
         uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyIds[0], 0, rule, ruleName, ruleDescription);
 

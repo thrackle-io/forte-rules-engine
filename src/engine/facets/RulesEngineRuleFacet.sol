@@ -156,7 +156,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
     function _storeRule(RuleStorage storage _data, uint256 _policyId, uint256 _ruleId, Rule calldata _rule) internal returns (uint256) {
         // Validate that the policy exists
         if (!lib._getPolicyStorage().policyStorageSets[_policyId].set) revert("Invalid PolicyId");
-
+        
         _data.ruleStorageSets[_policyId][_ruleId].set = true;
         _data.ruleStorageSets[_policyId][_ruleId].rule = _rule;
         return _ruleId;
@@ -202,6 +202,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         _validatePlaceholders(rule.placeHolders);
         _validatePlaceholders(rule.effectPlaceHolders);
         // effects
+        require(rule.posEffects.length > 0 || rule.negEffects.length > 0, "Must have at least one effect");
         _validateEffects(rule.posEffects);
         _validateEffects(rule.negEffects);
     }

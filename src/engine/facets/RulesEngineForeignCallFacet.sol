@@ -386,4 +386,25 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
             if (!returnBool) revert("Not An Authorized Foreign Call Admin");
         }
     }
+
+    /**
+     * @notice Validates a foreign call.
+     * @param _foreignCall The foreign call to validate.
+     */
+    function _validateForeignCall(ForeignCall memory _foreignCall) internal pure {
+        _validateParamType(_foreignCall.returnType);
+        for (uint256 i = 0; i < _foreignCall.parameterTypes.length; i++) {
+            _validateParamType(_foreignCall.parameterTypes[i]);
+        }
+        require(_foreignCall.foreignCallAddress != address(0), ZERO_ADDRESS_NOT_ALLOWED);
+    }
+
+    /**
+     * @notice Validates a paramType.
+     * @param paramType The paramType to validate.
+     */
+    function _validateParamType(ParamTypes paramType) internal pure {
+        uint paramTypesSize = 8;
+        if (uint(paramType) >= paramTypesSize) revert(INVALID_PARAM_TYPE);
+    }
 }

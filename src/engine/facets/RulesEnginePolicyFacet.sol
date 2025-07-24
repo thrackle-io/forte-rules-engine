@@ -221,6 +221,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
      * @return uint256 The generated policy ID.
      */
     function createPolicy(PolicyType policyType, string calldata policyName, string calldata policyDescription) external returns (uint256) {
+        require(uint8(policyType) < 3, "PolicyType is invalid");
         // retrieve Policy Storage
         PolicyStorage storage data = lib._getPolicyStorage();
         uint256 policyId = data.policyId;
@@ -343,6 +344,8 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         string calldata _policyName,
         string calldata _policyDescription
     ) internal returns (uint256) {
+        require(uint8(_policyType) < 3, "PolicyType is invalid");
+        require(_policyId >  0, "PolicyId is invalid");
         // Load the policy data from storage
         Policy storage data = lib._getPolicyStorage().policyStorageSets[_policyId].policy;
 

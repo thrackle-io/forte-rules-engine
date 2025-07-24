@@ -81,7 +81,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
                 _tracker.pType == ParamTypes.BOOL ||
                 _tracker.pType == ParamTypes.BYTES ||
                 _tracker.pType == ParamTypes.ADDR,
-            "Invalid tracker type"
+            INVALID_TRACKER_TYPE
         );
         // Ensure the tracker key is of a valid type
         if (_tracker.mapped) {
@@ -91,7 +91,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
                     _tracker.trackerKeyType == ParamTypes.BOOL ||
                     _tracker.trackerKeyType == ParamTypes.BYTES ||
                     _tracker.trackerKeyType == ParamTypes.ADDR,
-                "Invalid tracker key type"
+                INVALID_TRACKER_KEY_TYPE
             );
         }
     }

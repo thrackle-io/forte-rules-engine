@@ -17,6 +17,11 @@ string constant INVALID_INSTRUCTION = "Invalid Instruction";
 string constant INVALID_INSTRUCTION_SET = "Invalid Instruction Set";
 string constant MEMORY_OVERFLOW = "Memory Overflow";
 string constant EMPTY_INSTRUCTION_SET = "Empty Instruction Set";
+string constant ZERO_ADDRESS_NOT_ALLOWED = "Zero Address Is Not Allowed";
+string constant INVALID_TRACKER_TYPE = "Invalid tracker type";
+string constant INVALID_TRACKER_KEY_TYPE = "Invalid tracker key type";
+
+
 
 // Admin Error Constants
 string constant RULES_ENGINE_ONLY = "OnlyRulesEngineCanCreateAdminRoles";
