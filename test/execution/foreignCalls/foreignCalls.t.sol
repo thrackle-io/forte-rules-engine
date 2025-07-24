@@ -307,7 +307,7 @@ abstract contract foreignCalls is RulesEngineCommon {
                 RulesEngineComponentFacet(address(red)).createTracker(policyId, tracker1, "tracker1", tracker1Keys, tracker1Values);
                 RulesEngineComponentFacet(address(red)).createTracker(policyId, tracker2, "tracker2", tracker2Keys, tracker2Values);
             }
-            
+
             Rule memory rule;
             rule.instructionSet = new uint256[](7);
             rule.instructionSet[0] = uint(LogicalOp.PLH);
@@ -953,22 +953,18 @@ abstract contract foreignCalls is RulesEngineCommon {
 
         bytes memory value = RulesEngineComponentFacet(address(red)).getMappedTrackerValue(policyIds[0], 1, abi.encode("TestKey1"));
         assertEq(value, abi.encode(address(0x7654321)));
-        console2.log(uint(keccak256(abi.encode("TestKey1"))));
 
         vm.expectRevert();
-        userContract.transferFrom(address(0x7654321), 1000000000, abi.encode("TestKey1"));
+        userContract.transferFrom(address(0x7654321), 1000000000, "TestKey1");
         assertEq(testContract.getInternalValue(), 0);
 
-        userContract.transferFrom(address(0x7654322), 2000000000, abi.encode("TestKey2"));
+        userContract.transferFrom(address(0x7654322), 2000000000, "TestKey2");
 
         assertEq(
             testContract.getInternalValue(),
             uint256(uint160(address(0x7654322))),
             "The internal value should be updated to the `to` address"
         );
-
-        bytes memory newV = abi.encode("TestKey1");
-        assertEq(value, newV); // this is to retrieve the tracker key encoding
     }
 
     function testRulesEngine_Unit_ForeignCall_ValidateMappedTrackerKeyLengths_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
