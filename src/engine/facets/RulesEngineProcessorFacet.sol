@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
 import {RulesEngineProcessorLib as ProcessorLib} from "src/engine/facets/RulesEngineProcessorLib.sol";
-
 /**
  * @title Rules Engine Processor Facet
  * @dev This contract serves as the core processor for evaluating rules and executing effects in the Rules Engine.
@@ -189,10 +188,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         uint256 mappedTrackerKey;
         if (mappedTrackerKeyEI.eType == EncodedIndexType.ENCODED_VALUES) {
             if (typ == ParamTypes.STR || typ == ParamTypes.BYTES) {
-                mappedTrackerKey = uint256(keccak256(_getDynamicVariableFromCalldata(functionArguments, mappedTrackerKeyEI.index)));
-                emit Log(1, mappedTrackerKey);
-                emit Log(2, mappedTrackerKeyEI.index);
-                emit Log(1, _getDynamicVariableFromCalldata(functionArguments, mappedTrackerKeyEI.index));
+                bytes memory dynamicVariable = _getDynamicVariableFromCalldata(functionArguments, mappedTrackerKeyEI.index);
+                mappedTrackerKey = uint256(keccak256(dynamicVariable));
             } else {
                 mappedTrackerKey = uint256(bytes32(functionArguments[mappedTrackerKeyEI.index * 32:(mappedTrackerKeyEI.index + 1) * 32]));
             }
