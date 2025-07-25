@@ -1052,7 +1052,7 @@ abstract contract foreignCalls is RulesEngineCommon {
             ParamTypes.ADDR,
             trackerKeys,
             trackerValues,
-            2,
+            0,
             uint256(keccak256(abi.encodePacked("This is a string to test")))
         );
         _createForeignCallUsingMappedTrackerValueHelper(rule, policyIds, fc, EffectTypes.REVERT, false);

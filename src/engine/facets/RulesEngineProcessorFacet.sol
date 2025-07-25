@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
 import {RulesEngineProcessorLib as ProcessorLib} from "src/engine/facets/RulesEngineProcessorLib.sol";
-
+import {console2 as console} from "forge-std/src/console2.sol";
 /**
  * @title Rules Engine Processor Facet
  * @dev This contract serves as the core processor for evaluating rules and executing effects in the Rules Engine.
@@ -199,6 +199,10 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
             }
             (mappedTrackerValue, valueType) = _getMappedTrackerValue(policyId, trackerIndex, mappedTrackerKey);
         }
+        console.log("mappedTrackerKey: ", mappedTrackerKey);
+        console.log("mappedTrackerValue: ");
+        console.logBytes(mappedTrackerValue);
+        console.log("valueType: ", uint(valueType));
     }
 
     /**
@@ -333,6 +337,8 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
     ) public pure returns (bytes memory, uint256, bytes memory) {
         if (argType == ParamTypes.STR || argType == ParamTypes.BYTES) {
             encodedCall = bytes.concat(encodedCall, bytes32(32 * (parameterTypesLength) + lengthToAppend));
+            console.log("value");
+            console.logBytes(value);
             bytes memory stringData = ProcessorLib._extractStringData(value);
             dynamicData = bytes.concat(
                 dynamicData,
