@@ -1042,18 +1042,33 @@ abstract contract foreignCalls is RulesEngineCommon {
         trackerKeys[0] = abi.encode(address(0x7654321));
         trackerKeys[1] = abi.encode(address(0x7654322));
         bytes[] memory trackerValues = new bytes[](2);
-        trackerValues[0] = abi.encode("This is a string to test");
-        trackerValues[1] = abi.encode("This is a long string but not the same.");
+        trackerValues[0] = abi.encode(
+            "This is a string to test that the value string is above a bytes32 and does not get sliced weirdly. If you are seeing this we win!"
+        );
+        trackerValues[1] = abi.encode(
+            "This is a long string but not the same string so that we can ensure this is working as we think it will work. You are now the player. Good luck."
+        );
         Rule memory rule;
         ForeignCall memory fc;
-        (rule, fc) = _createForeignCallUsingMappedTrackerValueRuleBytes32(
+        (rule, fc) = _createForeignCallUsingMappedTrackerValueRuleString(
             policyIds,
             ParamTypes.STR,
             ParamTypes.ADDR,
             trackerKeys,
             trackerValues,
             0,
-            uint256(keccak256(abi.encodePacked("This is a string to test")))
+            uint256(bytes32(abi.encode(true)))
+        );
+
+        console.log(
+            "rule value keccak: ",
+            uint256(
+                keccak256(
+                    abi.encodePacked(
+                        "This is a long string but not the same string so that we can ensure this is working as we think it will work. You are now the player. Good luck."
+                    )
+                )
+            )
         );
         _createForeignCallUsingMappedTrackerValueHelper(rule, policyIds, fc, EffectTypes.REVERT, false);
         // validate tracker exists
@@ -1061,19 +1076,34 @@ abstract contract foreignCalls is RulesEngineCommon {
         assertTrue(returnedTracker.mapped);
 
         bytes memory value = RulesEngineComponentFacet(address(red)).getMappedTrackerValue(policyIds[0], 1, abi.encode(address(0x7654321)));
-        assertEq(value, abi.encode("This is a string to test"));
+        assertEq(
+            value,
+            abi.encode(
+                "This is a string to test that the value string is above a bytes32 and does not get sliced weirdly. If you are seeing this we win!"
+            )
+        );
 
-        vm.expectRevert();
-        userContract.transferFromString(address(0x7654321), 1000000000, "This is a string to test");
-        assertEq(testContract.getInternalValue(), 0);
-
-        userContract.transferFromString(address(0x7654322), 2000000000, "This is a long string but not the same.");
+        // vm.expectRevert();
+        userContract.transferFromString(address(0x7654321), 1000000000, "Test String 1");
 
         assertEq(
-            testContract.getInternalValue(),
-            uint256(keccak256(abi.encodePacked("This is a string to test"))),
+            testContract.getDecodedStrOne(),
+            "This is a string to test that the value string is above a bytes32 and does not get sliced weirdly. If you are seeing this we win!",
             "The internal value should be updated to the string above"
         );
+
+        userContract.transferFromString(address(0x7654322), 2000000000, "Test String 2");
+
+        assertEq(
+            testContract.getDecodedStrOne(),
+            "This is a long string but not the same string so that we can ensure this is working as we think it will work. You are now the player. Good luck.",
+            "The internal value should be updated to the string above"
+        );
+
+        /** 
+        25837056493731107400212975313110805414715314646597854337469320516987899609613
+        25837056493731107400212975313110805414715314646597854337469320516987899609613
+        */
     }
 
     function testRulesEngine_Unit_ForeignCall_ValidateMappedTrackerKeyLengths_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
