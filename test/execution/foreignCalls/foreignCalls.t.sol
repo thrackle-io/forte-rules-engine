@@ -250,29 +250,29 @@ abstract contract foreignCalls is RulesEngineCommon {
                 fc.encodedIndices = new ForeignCallEncodedIndex[](5);
                 fc.encodedIndices[0].index = 1;
                 fc.encodedIndices[0].eType = EncodedIndexType.MAPPED_TRACKER_KEY;
-                fc.encodedIndices[1].index = 1;
+                fc.encodedIndices[1].index = 2;
                 fc.encodedIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
-                fc.encodedIndices[2].index = 1;
+                fc.encodedIndices[2].index = 2;
                 fc.encodedIndices[2].eType = EncodedIndexType.MAPPED_TRACKER_KEY;
                 fc.encodedIndices[3].index = 3;
                 fc.encodedIndices[3].eType = EncodedIndexType.ENCODED_VALUES;
-                fc.encodedIndices[4].index = 2;
+                fc.encodedIndices[4].index = 1;
                 fc.encodedIndices[4].eType = EncodedIndexType.MAPPED_TRACKER_KEY;
-                fc.mappedTrackerKeyIndices = new ForeignCallEncodedIndex[](2);
-                fc.mappedTrackerKeyIndices[0].index = 0;
+                fc.mappedTrackerKeyIndices = new ForeignCallEncodedIndex[](3);
+                fc.mappedTrackerKeyIndices[0].index = 1;
                 fc.mappedTrackerKeyIndices[0].eType = EncodedIndexType.ENCODED_VALUES;
-                fc.mappedTrackerKeyIndices[1].index = 2;
+                fc.mappedTrackerKeyIndices[1].index = 0;
                 fc.mappedTrackerKeyIndices[1].eType = EncodedIndexType.ENCODED_VALUES;
                 fc.mappedTrackerKeyIndices[2].index = 4;
                 fc.mappedTrackerKeyIndices[2].eType = EncodedIndexType.ENCODED_VALUES;
                 fc.foreignCallAddress = address(pfcContractAddress);
-                fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256,string,uint256,string,address)")));
+                fc.signature = bytes4(keccak256(bytes("testSig(uint256,string,uint256,string,address)")));
                 fc.returnType = ParamTypes.UINT;
                 fc.parameterTypes = fcArgs;
                 foreignCallId = RulesEngineForeignCallFacet(address(red)).createForeignCall(
                     policyId,
                     fc,
-                    "simpleCheck(uint256,string,uint256,string,address)"
+                    "testSig(uint256,string,uint256,string,address)"
                 );
             }
 
@@ -289,7 +289,7 @@ abstract contract foreignCalls is RulesEngineCommon {
 
                 bytes[] memory tracker1Values = new bytes[](2);
                 tracker1Values[0] = abi.encode(1000000000);
-                tracker1Values[1] = abi.encode(2000000000);
+                tracker1Values[1] = abi.encode(0x1234567);
 
                 Trackers memory tracker2;
                 tracker2.pType = ParamTypes.UINT;
@@ -311,7 +311,7 @@ abstract contract foreignCalls is RulesEngineCommon {
             Rule memory rule;
             rule.instructionSet = new uint256[](7);
             rule.instructionSet[0] = uint(LogicalOp.PLH);
-            rule.instructionSet[1] = 0;
+            rule.instructionSet[1] = 2;
             rule.instructionSet[2] = uint(LogicalOp.NUM);
             rule.instructionSet[3] = 0;
             rule.instructionSet[4] = uint(LogicalOp.EQ);
@@ -382,7 +382,7 @@ abstract contract foreignCalls is RulesEngineCommon {
         {
             vm.startPrank(userContractAddress);
             address to = address(0x1234567);
-            uint256 value = 1;
+            uint256 value = 11;
             string memory str = "TESTER";
             string memory str2 = "TESTER2";
             bytes memory transferCalldata = abi.encodeWithSelector(ExampleUserContract.transferSigTest.selector, to, value, str, str2, 22);
@@ -390,7 +390,7 @@ abstract contract foreignCalls is RulesEngineCommon {
             RulesEngineProcessorFacet(address(red)).checkPolicies(transferCalldata);
 
             assertEq(PermissionedForeignCallTestContract(pfcContractAddress).getDecodedIntOne(), 1000000000);
-            assertEq(PermissionedForeignCallTestContract(pfcContractAddress).getDecodedIntTwo(), 2000000000);
+            assertEq(PermissionedForeignCallTestContract(pfcContractAddress).getDecodedIntTwo(), 33);
             assertEq(PermissionedForeignCallTestContract(pfcContractAddress).getDecodedStrOne(), str);
             assertEq(PermissionedForeignCallTestContract(pfcContractAddress).getDecodedStrTwo(), str2);
             assertEq(PermissionedForeignCallTestContract(pfcContractAddress).getDecodedAddr(), to);
