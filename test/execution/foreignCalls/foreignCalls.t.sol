@@ -1018,6 +1018,64 @@ abstract contract foreignCalls is RulesEngineCommon {
         );
     }
 
+    function testRulesEngine_Unit_ForeignCall_MappedTrackerAsParam_AddressToStringMappedTracker()
+        public
+        ifDeploymentTestsEnabled
+        endWithStopPrank
+    {
+        // create policy
+        uint256[] memory policyIds = new uint256[](1);
+        policyIds[0] = _createBlankPolicy();
+        ParamTypes[] memory pTypes = new ParamTypes[](5);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.BYTES;
+        pTypes[3] = ParamTypes.BOOL;
+        pTypes[4] = ParamTypes.STR;
+        _addCallingFunctionToPolicy(
+            policyIds[0],
+            bytes4(bytes4(keccak256(bytes("transferFromString(address,uint256,string)")))),
+            pTypes,
+            string("transferFomString(address,uint256,string)")
+        );
+        bytes[] memory trackerKeys = new bytes[](2);
+        trackerKeys[0] = abi.encode(address(0x7654321));
+        trackerKeys[1] = abi.encode(address(0x7654322));
+        bytes[] memory trackerValues = new bytes[](2);
+        trackerValues[0] = abi.encode("This is a string to test");
+        trackerValues[1] = abi.encode("This is a long string but not the same.");
+        Rule memory rule;
+        ForeignCall memory fc;
+        (rule, fc) = _createForeignCallUsingMappedTrackerValueRuleBytes32(
+            policyIds,
+            ParamTypes.STR,
+            ParamTypes.ADDR,
+            trackerKeys,
+            trackerValues,
+            2,
+            uint256(keccak256(abi.encodePacked("This is a string to test")))
+        );
+        _createForeignCallUsingMappedTrackerValueHelper(rule, policyIds, fc, EffectTypes.REVERT, false);
+        // validate tracker exists
+        Trackers memory returnedTracker = RulesEngineComponentFacet(address(red)).getTracker(policyIds[0], 1);
+        assertTrue(returnedTracker.mapped);
+
+        bytes memory value = RulesEngineComponentFacet(address(red)).getMappedTrackerValue(policyIds[0], 1, abi.encode(address(0x7654321)));
+        assertEq(value, abi.encode("This is a string to test"));
+
+        vm.expectRevert();
+        userContract.transferFromString(address(0x7654321), 1000000000, "This is a string to test");
+        assertEq(testContract.getInternalValue(), 0);
+
+        userContract.transferFromString(address(0x7654322), 2000000000, "This is a long string but not the same.");
+
+        assertEq(
+            testContract.getInternalValue(),
+            uint256(keccak256(abi.encodePacked("This is a string to test"))),
+            "The internal value should be updated to the string above"
+        );
+    }
+
     function testRulesEngine_Unit_ForeignCall_ValidateMappedTrackerKeyLengths_Positive() public ifDeploymentTestsEnabled endWithStopPrank {
         // start test as address 0x55556666
         uint256 policyId = _createBlankPolicy();
