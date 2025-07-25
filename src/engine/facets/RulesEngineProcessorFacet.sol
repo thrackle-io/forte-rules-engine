@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import "src/engine/facets/FacetCommonImports.sol";
 import {RulesEngineProcessorLib as ProcessorLib} from "src/engine/facets/RulesEngineProcessorLib.sol";
+
 /**
  * @title Rules Engine Processor Facet
  * @dev This contract serves as the core processor for evaluating rules and executing effects in the Rules Engine.
@@ -21,9 +22,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
     uint8 constant GLOBAL_TX_ORIGIN = 5;
 
     string public constant version = "v1.0.0";
-
-    event Log(uint counter, uint data);
-    event Log(uint counter, bytes data);
 
     //-------------------------------------------------------------------------------------------------------------------------------------------------------
     // Rule Evaluation Functions
@@ -134,7 +132,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         bytes memory callData = bytes.concat(encodedCall, dynamicData);
         // Place the foreign call
         (bool response, bytes memory data) = fc.foreignCallAddress.call(callData);
-
         // Verify that the foreign call was successful
         if (response) {
             // Decode the return value based on the specified return value parameter type in the foreign call structure
@@ -194,7 +191,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
                 mappedTrackerKey = uint256(bytes32(functionArguments[mappedTrackerKeyEI.index * 32:(mappedTrackerKeyEI.index + 1) * 32]));
             }
             (mappedTrackerValue, valueType) = _getMappedTrackerValue(policyId, trackerIndex, mappedTrackerKey);
-            emit Log(2, mappedTrackerValue);
         } else {
             if (typ == ParamTypes.STR || typ == ParamTypes.BYTES) {
                 mappedTrackerKey = uint256(keccak256(retVals[mappedTrackerKeyEI.index]));
@@ -233,7 +229,6 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
             // Add offset to head
             uint256 dynamicOffset = 32 * (fc.parameterTypes.length) + lengthToAppend;
             encodedCall = bytes.concat(encodedCall, bytes32(dynamicOffset));
-
             // Get the dynamic data - and bounds checking
             require(uint(value) < functionArguments.length, DYNDATA_OFFSET);
             require(uint(value) + 32 <= functionArguments.length, DYNDATA_OUTBNDS);
