@@ -4,13 +4,13 @@ pragma solidity ^0.8.24;
 import "test/utils/RulesEngineCommon.t.sol";
 import "src/example/ExampleERC721.sol";
 
-abstract contract NonCustodialMarketplaceTest is RulesEngineCommon {
+contract NonCustodialMarketplaceTest is RulesEngineCommon {
     ExampleERC721 userContractFC;
     address marketplace = address(0x3a723491ace);
     string[3] tradeAddresses = ["from", "to", "operator"];
     mapping(string => uint) tradeAddressToIndex;
 
-    function setUp() public override {
+    function setUp() public {
         red = createRulesEngineDiamond(address(0xb0b));
         vm.startPrank(policyAdmin);
         userContractFC = new ExampleERC721("Token Name", "SYMB");
