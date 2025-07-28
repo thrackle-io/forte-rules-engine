@@ -75,7 +75,7 @@ Create a rule in the policy. This can be done multiple times to create multiple 
 
      ---
 
-    `PLH` stands for Place Holder. This tells the rules engine the next element in the instruction set contains the the index where a value within the placeHolders array, below, exists. For instance, the following code would tell the rules engine to retrieve element ```0``` from the placeHolders array.
+    `PLH` stands for Place Holder. This tells the rules engine the next element in the instruction set contains the index where a value within the placeHolders array, below, exists. For instance, the following code would tell the rules engine to retrieve element ```0``` from the placeHolders array.
    ```
     instructionSet[0] = uint(LogicalOp.PLH);
     instructionSet[1] = 0;
