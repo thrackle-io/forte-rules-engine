@@ -1,0 +1,103 @@
+name: Slither Analysis
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      CONFIG:
+        type: string
+        description: Path to slither config file
+        required: false
+        default: ./slither.config.json
+  pull_request:
+    types: [ opened, synchronize, reopened, edited, ready_for_review ]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.2.1
+      - name: Install dependencies
+        run: |
+          git config user.email "cloudops@thrackle.io"
+          git config user.name "CloudOps Thrackle"
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+          pip3 install -r requirements.txt
+          forge soldeer install
+
+      ## Prevent `crytic/slither-action` from re-installing Foundry:<latest>. 
+      ## See https://github.com/crytic/slither-action/issues/44#issuecomment-1338183656
+      - run: rm foundry.toml
+
+      - name: Slither Analyze
+        uses: crytic/slither-action@v0.3.1
+        if: github.event_name != 'pull_request'
+        id: slither
+        with:
+          slither-config: ${{ inputs.CONFIG }}
+          fail-on: low
+          sarif: results.sarif
+
+      - name: Upload SARIF file
+        uses: actions/upload-artifact@v4
+        if: always() && (github.event_name != 'pull_request')
+        with:
+          name: results.sarif
+          path: ${{ steps.slither.outputs.sarif }}
+          retention-days: 5
+
+      - name: Slither Analyze Pull Request
+        uses: crytic/slither-action@v0.3.1
+        if: always() && (github.event_name == 'pull_request')
+        id: slither-pull
+        with:
+          fail-on: none
+          slither-args: --checklist --checklist-limit 50 --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/
+
+      - name: Create/update checklist as PR comment
+        uses: actions/github-script@v7
+        if: always() && (github.event_name == 'pull_request')
+        env:
+          REPORT: ${{ steps.slither-pull.outputs.stdout }}
+        with:
+          script: |
+            const script = require('.github/scripts/slither-comment.js')
+            const header = '<details><summary>Slither report</summary>\n'
+            const body = process.env.REPORT + '</details>'
+            await script({ github, context, header, body })
+
+  upgradeability-check:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.2.1
+      - name: Install dependencies
+        run: |
+          git config user.email "cloudops@thrackle.io"
+          git config user.name "CloudOps Thrackle"
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+          pip3 install -r requirements.txt
+          forge soldeer install
+
+      - name: Install Slither
+        run: |
+          pip3 install slither-analyzer
+
+      - name: Check Upgradeability
+        run: |
+          bash .github/scripts/slither-check-upgradeability.sh

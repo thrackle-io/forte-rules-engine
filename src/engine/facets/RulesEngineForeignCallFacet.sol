@@ -22,6 +22,7 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
      * @dev Builds a foreign call structure and maps it to the associated policy ID.
      * @param _policyId The policy ID the foreign call will be mapped to.
      * @param _foreignCall The definition of the foreign call to create.
+     * @param foreignCallName The name of the foreign call
      * @return The index of the created foreign call.
      */
     function createForeignCall(
