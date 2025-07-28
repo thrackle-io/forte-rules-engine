@@ -31,10 +31,5 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/thrackle-io/forte-rules-engine.git"
-  },
-  "devDependencies": {
-    "@nomicfoundation/hardhat-foundry": "^1.1.3",
-    "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
-    "hardhat": "^2.22.16"
   }
 }
