@@ -4,7 +4,7 @@
 #   workflow_dispatch:
 #   push:
 #     branches:
-#       - RL-206-Gas-Report-Generation
+#       - main
 
 # jobs:
 #   gas-report:
