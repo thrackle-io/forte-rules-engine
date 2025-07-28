@@ -4,13 +4,13 @@ pragma solidity ^0.8.24;
 import "test/utils/RulesEngineCommon.t.sol";
 import "src/example/ExampleERC721.sol";
 
-contract NonCustodialMarketplaceTest is RulesEngineCommon {
+abstract contract NonCustodialMarketplaceTest is RulesEngineCommon {
     ExampleERC721 userContractFC;
     address marketplace = address(0x3a723491ace);
     string[3] tradeAddresses = ["from", "to", "operator"];
     mapping(string => uint) tradeAddressToIndex;
 
-    function setUp() public {
+    function setUp() public override {
         red = createRulesEngineDiamond(address(0xb0b));
         vm.startPrank(policyAdmin);
         userContractFC = new ExampleERC721("Token Name", "SYMB");
@@ -27,7 +27,7 @@ contract NonCustodialMarketplaceTest is RulesEngineCommon {
     function test_nonCustodialMarketplace_allowlist(
         bool isBadMarketplace,
         bool isBadSender,
-        bool isBadReciever,
+        bool isBadRecipient,
         uint256 tradeAddressToCheckIndex
     ) public {
         testContract2 = new ForeignCallTestContractOFAC();
@@ -37,7 +37,7 @@ contract NonCustodialMarketplaceTest is RulesEngineCommon {
         _setupNaughtyListRuleForOperator(address(userContractFC), address(testContract2), tradeAddressToCheck); // we setup the rule with the fuzzed account to check
         if (isBadMarketplace) testContract2.addToNaughtyList(marketplace); // we fuzz if the marketplace is naughtylisted or not
         if (isBadSender) testContract2.addToNaughtyList(user1); // we fuzz if the sender is naughtylisted or not
-        if (isBadReciever) testContract2.addToNaughtyList(address(0xdead)); // we fuzz if the recipient is naughtylisted or not
+        if (isBadRecipient) testContract2.addToNaughtyList(address(0xdead)); // we fuzz if the recipient is naughtylisted or not
         uint tokenId = userContractFC.counter() - 1;
         // we simulate the non-custodial marketplace by simply transeferring the NFT throught the approval-for-all mechanism that they use
         vm.startPrank(user1);
@@ -46,7 +46,7 @@ contract NonCustodialMarketplaceTest is RulesEngineCommon {
         // we check that the transfer reverts depending on the fuzzed case
         bool willRevert = (isBadMarketplace && tradeAddressToCheckIndex == 2) || // we only expect a revert if the marketplace is a bad one and we are checking for the marketplace in the rule, or...
             (isBadSender && tradeAddressToCheckIndex == 0) || // ...if the sender is a bad one and we are checking for the sender in the rule, or...
-            (isBadReciever && tradeAddressToCheckIndex == 1); // ...if the recipient is a bad one and we are checking for the recipient in the rule.
+            (isBadRecipient && tradeAddressToCheckIndex == 1); // ...if the recipient is a bad one and we are checking for the recipient in the rule.
         if (willRevert) vm.expectRevert("Rules Engine Revert");
         userContractFC.transferFrom(user1, address(0xdead), tokenId); /// @notice the transfer here is executed by the marketplace and not the owner of the NFT
         /// we check that the transfer failed or happened correctly depending on the fuzzed case
