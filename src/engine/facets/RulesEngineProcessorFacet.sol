@@ -80,7 +80,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
     ) public returns (ForeignCallReturnValue memory retVal) {
         // First, calculate total size needed and positions of dynamic data
         bytes memory encodedCall = bytes.concat(bytes4(fc.signature));
-        bytes memory dynamicData;
+        bytes memory dynamicData = "";
 
         uint256 lengthToAppend = 0;
         uint256 mappedTrackerKeyIndex = 0;
@@ -775,7 +775,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
     ) internal {
         // retrieve the tracker
         Trackers storage trk = lib._getTrackerStorage().trackers[_policyId][_trackerId];
-        bytes memory encodedKey;
+        bytes memory encodedKey = "";
         // encode uint key to type
         if (trk.trackerKeyType == ParamTypes.UINT || trk.trackerKeyType == ParamTypes.ADDR || trk.trackerKeyType == ParamTypes.BOOL) {
             encodedKey = abi.encode(_mappedTrackerKey);

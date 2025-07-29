@@ -34,7 +34,6 @@ jobs:
 
       ## Prevent `crytic/slither-action` from re-installing Foundry:<latest>. 
       ## See https://github.com/crytic/slither-action/issues/44#issuecomment-1338183656
-      - run: rm foundry.toml
 
       - name: Slither Analyze
         uses: crytic/slither-action@v0.3.1
