@@ -1,14 +1,12 @@
 /// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.24;
 
-
 import {console} from "forge-std/src/console.sol";
 /**
  * @title Example contract for testing the Foreign Call Encoding
- * @author @mpetersoCode55 
+ * @author @mpetersoCode55
  */
 contract ForeignCallTestContract {
-
     uint256 decodedIntOne;
     uint256 decondedIntTwo;
     string decodedStrOne;
@@ -22,14 +20,19 @@ contract ForeignCallTestContract {
     string[] internalArrayStr;
     bytes[] internalArrayBytes;
 
-
-    function testSig(uint256 encodedIntOne, string memory encodedStrOne, uint256 encodedIntTwo, string memory encodedStrTwo, address encodedAddr) public returns (bool) {
+    function testSig(
+        uint256 encodedIntOne,
+        string memory encodedStrOne,
+        uint256 encodedIntTwo,
+        string memory encodedStrTwo,
+        address encodedAddr
+    ) public returns (bool) {
         decodedIntOne = encodedIntOne;
         decondedIntTwo = encodedIntTwo;
         decodedStrOne = encodedStrOne;
         decodedStrTwo = encodedStrTwo;
         decodedAddr = encodedAddr;
-        if(encodedIntOne == 1 && encodedIntTwo == 3 && keccak256(bytes(encodedStrOne)) == keccak256("two")) {
+        if (encodedIntOne == 1 && encodedIntTwo == 3 && keccak256(bytes(encodedStrOne)) == keccak256("two")) {
             return true;
         } else {
             return false;
@@ -76,48 +79,48 @@ contract ForeignCallTestContract {
     }
 
     function testSigWithArray(uint256[] memory encodedArray) public returns (bool) {
-        for(uint256 i = 0; i < encodedArray.length; i++) {
+        for (uint256 i = 0; i < encodedArray.length; i++) {
             internalArrayUint.push(encodedArray[i]);
         }
         return true;
     }
 
     function testSigWithArray(uint256[] memory encodedArray, uint256[] memory encodedArrayTwo) public returns (bool) {
-        for(uint256 i = 0; i < encodedArray.length; i++) {
+        for (uint256 i = 0; i < encodedArray.length; i++) {
             internalArrayUint.push(encodedArray[i]);
         }
-        for(uint256 i = 0; i < encodedArrayTwo.length; i++) {
+        for (uint256 i = 0; i < encodedArrayTwo.length; i++) {
             internalArrayUint.push(encodedArrayTwo[i]);
         }
         return true;
     }
 
     function testSigWithArray(address[] memory encodedArray) public returns (bool) {
-        for(uint256 i = 0; i < encodedArray.length; i++) {
+        for (uint256 i = 0; i < encodedArray.length; i++) {
             internalArrayAddr.push(encodedArray[i]);
         }
         return true;
     }
 
     function testSigWithArray(string[] memory encodedArray) public returns (bool) {
-        for(uint256 i = 0; i < encodedArray.length; i++) {
+        for (uint256 i = 0; i < encodedArray.length; i++) {
             internalArrayStr.push(encodedArray[i]);
         }
         return true;
     }
 
     function testSigWithArray(string[] memory encodedArray, string[] memory encodedArrayTwo) public returns (bool) {
-        for(uint256 i = 0; i < encodedArray.length; i++) {
+        for (uint256 i = 0; i < encodedArray.length; i++) {
             internalArrayStr.push(encodedArray[i]);
         }
-        for(uint256 i = 0; i < encodedArrayTwo.length; i++) {
+        for (uint256 i = 0; i < encodedArrayTwo.length; i++) {
             internalArrayStr.push(encodedArrayTwo[i]);
         }
         return true;
     }
 
     function testSigWithArray(bytes[] memory encodedArray) public returns (bool) {
-        for(uint256 i = 0; i < encodedArray.length; i++) {
+        for (uint256 i = 0; i < encodedArray.length; i++) {
             internalArrayBytes.push(encodedArray[i]);
         }
         return true;
@@ -130,46 +133,51 @@ contract ForeignCallTestContract {
 
     function testSigWithMultiArrays(string memory str, uint256[] memory uintArray, string[] memory strArray) public returns (bool) {
         decodedStrOne = str;
-        for(uint256 i = 0; i < uintArray.length; i++) {
+        for (uint256 i = 0; i < uintArray.length; i++) {
             internalArrayUint.push(uintArray[i]);
         }
-        for(uint256 i = 0; i < strArray.length; i++) {
+        for (uint256 i = 0; i < strArray.length; i++) {
             internalArrayStr.push(strArray[i]);
         }
         return true;
     }
 
-    function testSigWithMultiArrays(uint256[] memory encodedArrayUint, address[] memory encodedArrayAddr, string[] memory encodedArrayStr, bytes[] memory encodedArrayBytes) public returns (bool) {
-        for(uint256 i = 0; i < encodedArrayUint.length; i++) {
+    function testSigWithMultiArrays(
+        uint256[] memory encodedArrayUint,
+        address[] memory encodedArrayAddr,
+        string[] memory encodedArrayStr,
+        bytes[] memory encodedArrayBytes
+    ) public returns (bool) {
+        for (uint256 i = 0; i < encodedArrayUint.length; i++) {
             internalArrayUint.push(encodedArrayUint[i]);
         }
-        for(uint256 i = 0; i < encodedArrayAddr.length; i++) {
+        for (uint256 i = 0; i < encodedArrayAddr.length; i++) {
             internalArrayAddr.push(encodedArrayAddr[i]);
         }
-        for(uint256 i = 0; i < encodedArrayStr.length; i++) {
+        for (uint256 i = 0; i < encodedArrayStr.length; i++) {
             internalArrayStr.push(encodedArrayStr[i]);
         }
-        for(uint256 i = 0; i < encodedArrayBytes.length; i++) {
+        for (uint256 i = 0; i < encodedArrayBytes.length; i++) {
             internalArrayBytes.push(encodedArrayBytes[i]);
         }
         return true;
     }
 
     function testSigWithMultiArrays(uint256[] memory encodedArrayUint, string[] memory encodedArrayStr) public returns (bool) {
-        for (uint i = 0; i < encodedArrayUint.length; i++ ){
+        for (uint i = 0; i < encodedArrayUint.length; i++) {
             internalArrayUint.push(encodedArrayUint[i]);
         }
-        for (uint i = 0; i < encodedArrayStr.length; i++ ){
+        for (uint i = 0; i < encodedArrayStr.length; i++) {
             internalArrayStr.push(encodedArrayStr[i]);
         }
         return true;
     }
 
     function testSigWithMultiArrays(string[] memory encodedArrayStr, uint256[] memory encodedArrayUint) public returns (bool) {
-        for (uint i = 0; i < encodedArrayUint.length; i++ ){
+        for (uint i = 0; i < encodedArrayUint.length; i++) {
             internalArrayUint.push(encodedArrayUint[i]);
         }
-        for (uint i = 0; i < encodedArrayStr.length; i++ ){
+        for (uint i = 0; i < encodedArrayStr.length; i++) {
             internalArrayStr.push(encodedArrayStr[i]);
         }
         return true;
@@ -231,17 +239,23 @@ contract ForeignCallTestContract {
     function getDecodedAddrTwo() public view returns (address) {
         return decodedAddrTwo;
     }
-
 }
 
 contract ForeignCallTestContractOFAC {
     mapping(address => bool) public onTheNaughtyList;
-    mapping(address => bool) public approvedList; 
+    mapping(uint => bool) public onTheNaughtyIdList;
+    mapping(address => bool) public approvedList;
+    mapping(uint => bool) public approvedIdList;
+
     function addToNaughtyList(address addr) public {
         onTheNaughtyList[addr] = true;
     }
 
-    function getNaughty(address addr) public view returns(bool) {
+    function addToNaughtyIdList(uint tokenId) public {
+        onTheNaughtyIdList[tokenId] = true;
+    }
+
+    function getNaughty(address addr) public view returns (bool) {
         return onTheNaughtyList[addr];
     }
 
@@ -249,7 +263,11 @@ contract ForeignCallTestContractOFAC {
         approvedList[addr] = true;
     }
 
-    function getApproved(address addr) public view returns(bool) {
+    function addToApprovedIdList(uint tokenId) public {
+        approvedIdList[tokenId] = true;
+    }
+
+    function getApproved(address addr) public view returns (bool) {
         return approvedList[addr];
     }
 }
