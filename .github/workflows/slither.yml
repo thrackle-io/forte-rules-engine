@@ -30,6 +30,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y python3-pip
           pip3 install -r requirements.txt
+          forge install
+          npm install
           forge soldeer install
 
       ## Prevent `crytic/slither-action` from re-installing Foundry:<latest>. 
@@ -87,6 +89,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y python3-pip
           pip3 install -r requirements.txt
+          forge install
+          npm install
           forge soldeer install
 
       - name: Install Slither
