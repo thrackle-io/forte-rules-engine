@@ -10,7 +10,7 @@ import "src/example/ExampleERC721.sol";
  *      marketplace scenario. The tests fuzz wether the marketplace, the sender, the recipient, or the specific tokenId are banned
  *      through the FRE, in which case the trade should revert.
  * @notice This contract emulates the marketplace trade by using the approval-for-all mechanism that all the marketplaces rely upon.
- * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220, @oscarsernaroser
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220, @oscarsernarosero
  */
 contract NonCustodialMarketplaceTestERC721 is RulesEngineCommon {
     ExampleERC721 userContractFC;
