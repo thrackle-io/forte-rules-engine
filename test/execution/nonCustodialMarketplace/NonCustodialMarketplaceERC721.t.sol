@@ -7,9 +7,10 @@ import "src/example/ExampleERC721.sol";
 /**
  * @title Non-Custodial Marketplace Test for ERC721
  * @dev These tests are designed to check the capabilities of the Forte Rules Engine with NFT constracts under a non-custodial
- *      marketplace scenario. The tests fuzz wether the marketplace, the sender, the recipient, or the specific tokenId are banned
- *      through the FRE, in which case the trade should revert.
- * @notice This contract emulates the marketplace trade by using the approval-for-all mechanism that all the marketplaces rely upon.
+ *      marketplace scenario. The tests fuzz whether the marketplace, the sender, the recipient, or the specific tokenId are
+ *      banned from transfers through the FRE or not, which determines if the trade should revert or succeed.
+ * @notice This test contract emulates the marketplace trade by using the set-approval-for-all mechanism that most of the
+ *      marketplaces (if not all) rely upon.
  * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220, @oscarsernarosero
  */
 contract NonCustodialMarketplaceTestERC721 is RulesEngineCommon {
