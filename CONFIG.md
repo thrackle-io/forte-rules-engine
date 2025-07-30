@@ -23,7 +23,7 @@ Create a rule in the policy. This can be done multiple times to create multiple 
 
      ---
 
-    `NUM` stands for number. This tells the rules engine the next element in the instruction set is a number. 
+    `NUM` stands for number. It is loading the static value into the next available memory register. This tells the rules engine the next element in the instruction set is a number. 
     ```
         instructionSet[0] = uint(LogicalOp.NUM);
         instructionSet[1] = 5;
@@ -31,17 +31,17 @@ Create a rule in the policy. This can be done multiple times to create multiple 
 
      ---
 
-    `ADD, SUB, MUL, DIV` stand for their respective mathematical operations. The operators signal the rules engine to perform the operation on the next two values in the subsequent elements. Here are examples:
+    `ADD, SUB, MUL, DIV` stand for their respective mathematical operations. The operators signal the rules engine to perform the operation on the next two values in the subsequent elements. Those values are retrieved from memory. Here are examples:
     ```
         instructionSet[0] = uint(LogicalOp.ADD);
         rule.instructionSet[1] = 0;
         rule.instructionSet[2] = 1;
     ```
-    In this example, the rules engine will add the value in register 0 with the value in register 1. 
+    In this example, the rules engine will add the value in register 0 with the value in register 1. The 0 and 1 represent the values currently held in those memory registers.
 
      ---
 
-    `GT, LT, GTEQL, LTEQL, EQ, NOTEQ` are true logical operators that represent their respective relationship. This tells the rules engine the next element in the instruction set is a number to be used for comparison. 
+    `GT, LT, GTEQL, LTEQL, EQ, NOTEQ` are true logical operators that represent their respective relationship. This tells the rules engine the next element in the instruction set is the memory register to be used for comparison. Those numbers are retrieved from memory. 
 
    ```
         rule.instructionSet[4] = uint(LogicalOp.GTEQL);
@@ -57,13 +57,12 @@ Create a rule in the policy. This can be done multiple times to create multiple 
         rule.instructionSet[0] = uint(LogicalOp.TRU);
         rule.instructionSet[1] = 1;
         rule.instructionSet[2] = 0; 
-        rule.instructionSet[3] = uint(TrackerTypes.PLACE_HOLDER); 
    ```
-    This example takes the tracker value from trackerId=1 and puts it in place holder 0.
+    This example takes the value from placeholder 0 and puts it in the tracker with id 1. 
 
      ---
 
-    `TRUM` stands for Tracker Update Mapped. It is a mapped tracker and requires a key to access the stored tracker value. An example would be:
+    `TRUM` stands for Tracker Update Mapped. It is a mapped tracker and requires a key to access the stored tracker value. Tracker values can be loaded into memory or placeholders. An example would be:
    ```
         effect.instructionSet[4] = uint(LogicalOp.TRUM);
         effect.instructionSet[5] = 1;
@@ -86,8 +85,8 @@ Create a rule in the policy. This can be done multiple times to create multiple 
         
    2. ```rawData```(RawData)
       1. The raw format string and addresses for values in the instruction set that have already been converted to uint256.
-   3. ```placeHolders```(Placeholder[]) List of all placeholders used in the rule in order. Needs to contain the type, and index (zero based) of the particular type in the calling function. For example if the argument in question is the 2nd address in the calling function the placeHolder would be: ```pType = parameterType.ADDR index = 1```
-   4. ```effectPlaceHolders```(Placeholder[])
+   3. ```placeHolders```(Placeholder[]) List of all placeholders used in the rule in order. Needs to contain the type, and index (zero based) of the particular type in the calling function. These placeholders only apply to the condition and not the effects. Here is an example if the argument in question is the 2nd address in the calling function the placeHolder would be: ```pType = parameterType.ADDR index = 1```
+   4. ```effectPlaceHolders```(Placeholder[]) This is the array of all placeholders used in the rules effects. 
    5. ```posEffects```(Effect[]) List of all positive effects
    6. ```negEffects```(Effect[]) List of all negitive effects
 3. ```ruleName```(string) The name of the rule
