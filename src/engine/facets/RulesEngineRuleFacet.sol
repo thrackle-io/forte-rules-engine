@@ -28,6 +28,8 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      * @dev Adds a new rule to the specified policy. Only accessible by policy admins.
      * @param policyId ID of the policy the rule will be added to.
      * @param rule The rule to create.
+     * @param ruleName The name of the rule
+     * @param ruleDescription The description of the rule
      * @return ruleId The generated rule ID.
      */
     function createRule(

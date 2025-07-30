@@ -331,7 +331,7 @@ struct Rule {
     Placeholder[] effectPlaceHolders;
     // List of all positive effects
     Effect[] posEffects;
-    // List of all positive effects
+    // List of all negative effects
     Effect[] negEffects;
 }
 
