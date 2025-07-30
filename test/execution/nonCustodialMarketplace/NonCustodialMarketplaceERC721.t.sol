@@ -4,6 +4,14 @@ pragma solidity ^0.8.24;
 import "test/utils/RulesEngineCommon.t.sol";
 import "src/example/ExampleERC721.sol";
 
+/**
+ * @title Non-Custodial Marketplace Test for ERC721
+ * @dev These tests are designed to check the capabilities of the Forte Rules Engine with NFT constracts under a non-custodial
+ *      marketplace scenario. The tests fuzz wether the marketplace, the sender, the recipient, or the specific tokenId are banned
+ *      through the FRE, in which case the trade should revert.
+ * @notice This contract emulates the marketplace trade by using the approval-for-all mechanism that all the marketplaces rely upon.
+ * @author @mpetersoCode55, @ShaneDuncan602, @TJ-Everett, @VoR0220, @oscarsernaroser
+ */
 contract NonCustodialMarketplaceTestERC721 is RulesEngineCommon {
     ExampleERC721 userContractFC;
     uint tokenId;
@@ -24,6 +32,7 @@ contract NonCustodialMarketplaceTestERC721 is RulesEngineCommon {
         userContractFC.safeMint(user1);
         userContractFC.setRulesEngineAddress(address(red));
         userContractFC.setCallingContractAdmin(callingContractAdmin);
+        testContract2 = new ForeignCallTestContractOFAC();
     }
 
     function test_nonCustodialMarketplace_addressAllowlist(
@@ -32,7 +41,6 @@ contract NonCustodialMarketplaceTestERC721 is RulesEngineCommon {
         bool isBadRecipient,
         uint256 ruleCheckTargetIndex
     ) public {
-        testContract2 = new ForeignCallTestContractOFAC();
         vm.startPrank(policyAdmin);
         ruleCheckTargetIndex = ruleCheckTargetIndex % calldataArgSize; // ensure the index is within bounds
         CalldataArgs ruleCheckTarget = CalldataArgs(ruleCheckTargetIndex);
@@ -55,7 +63,6 @@ contract NonCustodialMarketplaceTestERC721 is RulesEngineCommon {
     }
 
     function test_nonCustodialMarketplace_tokenIdAllowlist(bool isStolenNFT) public {
-        testContract2 = new ForeignCallTestContractOFAC();
         vm.startPrank(policyAdmin);
         _setupNaughtyListRuleForNFTTrade(address(userContractFC), address(testContract2), CalldataArgs.TOKEN_ID, false); // we setup the rule with the fuzzed account to check
         if (isStolenNFT) testContract2.addToNaughtyIdList(tokenId);
@@ -97,7 +104,11 @@ contract NonCustodialMarketplaceTestERC721 is RulesEngineCommon {
             fc.signature = sig;
             fc.returnType = ParamTypes.UINT;
             fc.foreignCallIndex = 1;
-            foreignCallId = RulesEngineForeignCallFacet(address(red)).createForeignCall(policyIds[0], fc, "getNaughty(address)");
+            foreignCallId = RulesEngineForeignCallFacet(address(red)).createForeignCall(
+                policyIds[0],
+                fc,
+                checkingAddress ? "getNaughty(address)" : "onTheNaughtyIdList(uint256)"
+            );
         }
 
         // we define the calling function that the policy will be attached to
