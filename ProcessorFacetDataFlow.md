@@ -4,7 +4,7 @@
 
 A calling contract will invoke `checkPolicies(bytes calldata arguments)` function as the primary entry point for the process of validating rules for the contract. The arguments parameter is all of the encoded data for the processing of the calling contract's applied policies. 
 
-This must include, at a minimum, the message signature of the calling function and any additional data to be used or passed to the Rules Engine. Data not included in the function signature may be encoded and passed to the Rules Engine. 
+This must include, at a minimum, the message signature of the calling function and any additional data to be used or passed to the Rules Engine. Data not included in the function signature may be encoded and passed to the Rules Engine. This encoded data must be defined in the calling function struct inside the associated policies.
 
 The engine will retrieve the policy associated storage and the `policyIdMap` for the msg.sender. 
 
@@ -64,7 +64,7 @@ _evaluateIndividualRule(
 
 The engine will call the `_buildArguments` and the `_run` functions. 
 
-While building the arguments the engine will load the values of each placeholder based on their types and locations into memory addresses. 
+While building the arguments the engine will load the values of each placeholder based on their types and locations into `placeHolders`. 
 
 The `_run` function will take the instruction set and the place holders array and process the logical operations of the instruction set with the conditionals and placeholder values. 
 
@@ -85,9 +85,9 @@ First the engine checks if this is an effect to determine which instruction set 
 
 Next, the engine creates a new array: bytes[] retVals for holding the return values from foreign calls.
 
-The engine loops through the placeholders from the `Rule` in order to replace the data values with their actual values based on the instruction set. Each placeholder is then placed into a memory address and its location placed into the placeholders[]. 
+The engine loops through the placeholders from the `Rule` in order to replace the data values with their actual values based on the instruction set. Each placeholder is then placed into the placeholders array. 
 
-This may be global variables (aka transaction data), foreign call return values, tracker values (trackers or mapped trackers), values from the encoded data or parameters from the calling function. 
+This may be global variables (aka transaction data), foreign call return values, tracker values (standard or mapped trackers), values from the encoded data or parameters from the calling function. 
  
 
 Example: This instruction set will check if the placeholder from the calling function (transfer(address to, uint256 value)) is Greater Than the number 100. In this case assume the placeholder is the value of the transfer function. 
@@ -105,7 +105,7 @@ _extractFlags(
     ) internal pure returns (bool isTrackerValue, bool isForeignCall, uint8 globalVarType)
 ```
 
-This function determines if the type of placeholder is a Foreign call, tracker, or global variable type. 
+This function determines if the type of placeholder is a Foreign call, tracker, encoded value or global variable type. 
 
 
 ```c
@@ -124,7 +124,7 @@ _handleForeignCall(
     ) internal returns (bytes memory, ParamTypes)
 ```
 
-This function will store the location of the return value of a foreign call in `placeholders`. 
+This function will store the return value of a foreign call in `placeholders`. 
 
 Note: The foreign call outside of the rules engine will take place at this time. Inside of `_handleForeignCall` are the helper functions `evaluateForeignCalls` which invokes `evaluateForeignCallForRule` 
 
@@ -143,7 +143,7 @@ This function will build the callData arguments for and call the address and sig
 _handleTrackerValue(uint256 _policyId, Placeholder memory placeholder) internal view returns (bytes memory)
 
 ```
-This function will store the location of the tracker in `placeholders`.
+This function will store the tracker value in `placeholders`.
 
 ```c
 _handleRegularParameter(
@@ -151,7 +151,7 @@ _handleRegularParameter(
         Placeholder memory placeholder
     ) internal pure returns (bytes memory)
 ```
-This function extracts the parameters from the callData of the calling function. Based on the type of the placeholder the return of this function will store the parameters location in memory in `placeholders`.
+This function extracts the parameters from the callData of the calling function. Based on the type of the placeholder the return of this function will store the parameters value in `placeholders`.
 
 
 ### Run 
@@ -172,7 +172,7 @@ This function performs the logical operations of the rule processing from the in
 - `_policyId` PolicyId for the current policy being evaluated 
 - `_arguments` Array of bytes containing 
 
-Entering the logical processing loop the engine will iterate through the instruction set (`_prog`) and retrieve the placeholder values from their memory position. Each logical operator in the instruction set will be evaluated to either true or false and continue iterating through the instruction set until all logical operations are complete. 
+Entering the logical processing loop the engine will iterate through the instruction set (`_prog`) and retrieve the placeholder values from their position in `placeHolders`. Each logical operator in the instruction set will be evaluated to either true or false and continue iterating through the instruction set until all logical operations are complete. 
 
 
 ## Effects 
