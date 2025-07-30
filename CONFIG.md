@@ -62,7 +62,7 @@ Create a rule in the policy. This can be done multiple times to create multiple 
 
      ---
 
-    `TRUM` stands for Tracker Update Mapped. It is a mapped tracker and requires a key to access the stored tracker value. Tracker values can be loaded into memory or placeholders. An example would be:
+    `TRUM` stands for Tracker Update Mapped. It is a mapped tracker and requires a key to access the stored tracker value. Tracker values can be loaded from memory or placeholders. An example would be:
    ```
         effect.instructionSet[4] = uint(LogicalOp.TRUM);
         effect.instructionSet[5] = 1;
@@ -70,7 +70,7 @@ Create a rule in the policy. This can be done multiple times to create multiple 
         effect.instructionSet[7] = 1; 
         effect.instructionSet[8] = uint(TrackerTypes.MEMORY) 
    ```
-    This example takes the tracker value from trackerId=1 and puts it in place holder 0. The third index down is the key. In this case, 1 is the key. 
+    This example takes the tracker value from trackerId=1 and updates the tracker to be what's in placeholder 0  The third index down is the key. In this case, 1 is the key. 
 
      ---
 
