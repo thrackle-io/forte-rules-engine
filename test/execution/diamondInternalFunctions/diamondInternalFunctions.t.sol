@@ -17,7 +17,6 @@ abstract contract diamondInternalFunctions is RulesEngineCommon {
     IDiamondLoupe.Facet[] originalFacets;
     mapping(address => bytes4[]) facetToSelectors;
     address newfacetAddress = address(0xaaaaa);
-    uint256 amountOfFacetCutActions = 3;
 
     modifier recordDiamondBeforeTest() {
         assertEq(ERC173Facet(address(red)).owner(), diamondOwner, "Rules Engine Diamond address mismatch");
