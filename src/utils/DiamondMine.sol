@@ -27,6 +27,7 @@ contract DiamondMine is Script {
     FacetCut[] _ruleProcessorFacetCuts;
     ForteRulesEngine red;
     address constant OWNER = address(0xB0b);
+    DiamondInit diamondInit;
 
     /**
      * @notice Deploy and set up the Rules Engine Diamond.
@@ -37,7 +38,7 @@ contract DiamondMine is Script {
     function createRulesEngineDiamond(address owner) public returns (ForteRulesEngine diamond) {
         delete _ruleProcessorFacetCuts;
         // Start by deploying the DiamonInit contract.
-        DiamondInit diamondInit = new DiamondInit();
+        diamondInit = new DiamondInit();
 
         // Build the DiamondArgs.
         RulesEngineDiamondArgs memory diamondArgs = RulesEngineDiamondArgs({
@@ -226,7 +227,7 @@ contract DiamondMine is Script {
     function createRulesEngineDiamondNoCheatcodes(address owner) internal returns (ForteRulesEngine diamond) {
         delete _ruleProcessorFacetCuts;
         // Start by deploying the DiamonInit contract.
-        DiamondInit diamondInit = new DiamondInit();
+        diamondInit = new DiamondInit();
 
         // Build the DiamondArgs.
         RulesEngineDiamondArgs memory diamondArgs = RulesEngineDiamondArgs({
