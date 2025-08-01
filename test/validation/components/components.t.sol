@@ -769,4 +769,27 @@ abstract contract components is RulesEngineCommon {
         assertEq(data.ruleName, ruleName);
         assertEq(data.ruleDescription, ruleDescription);
     }
+
+    function testRulesEngine_Unit_FC_PolicyAdmin_Interactions() public ifDeploymentTestsEnabled {
+        // Tests that deleting a foreign call from one policy does not affect another policy's foreign calls
+        // policy Admin 1 creates a policy with a foreign call
+        uint256 policy1 = _createBlankPolicy();
+        _setUpForeignCallSimpleReturnID(policy1);
+
+        // Policy Admin 2 creates a policy with two foreign calls
+        vm.stopPrank();
+        vm.startPrank(address(0x12345678)); // Policy Admin 2
+        uint256 policy2 = _createBlankPolicy();
+        _setUpForeignCallSimpleReturnID(policy2);
+        _setUpForeignCallSimpleReturnID(policy2);
+
+        // Policy Admin 1 deletes FC
+        vm.stopPrank();
+        vm.startPrank(policyAdmin); // Policy Admin 1
+        RulesEngineForeignCallFacet(address(red)).deleteForeignCall(policy1, 1);
+
+        // ensure only that policy 1 is the only one deleted
+        ForeignCall[] memory foreignCalls = RulesEngineForeignCallFacet(address(red)).getAllForeignCalls(policy2);
+        assertEq(foreignCalls.length, 2);
+    }
 }
