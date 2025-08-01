@@ -294,7 +294,7 @@ abstract contract rules is RulesEngineCommon {
         rule.placeHolders[0].typeSpecificIndex = 1;
         rule.posEffects = new Effect[](1);
         rule.posEffects[0] = effectId_event;
-        
+
         // Save the rule
         uint256 ruleId = RulesEngineRuleFacet(address(red)).updateRule(policyId, 0, rule, ruleName, ruleDescription);
 
@@ -1494,5 +1494,87 @@ abstract contract rules is RulesEngineCommon {
         Trackers memory updatedTracker = RulesEngineComponentFacet(address(red)).getTracker(policyId, trackerId);
         uint256 trackerTimestamp = abi.decode(updatedTracker.trackerValue, (uint256));
         assertEq(trackerTimestamp, testTimestamp, "Tracker should be updated with current block.timestamp");
+    }
+
+    function testRulesEngine_Unit_RulesValidationCreateRule_PolicyIdCannotBeZero() public ifDeploymentTestsEnabled resetsGlobalVariables {
+        vm.startPrank(policyAdmin);
+        // Create a blank policy
+        uint256 policyId = _createBlankPolicy();
+
+        // Create a rule with a zero policyId - should fail
+        Rule memory rule;
+
+        vm.expectRevert("Policy ID cannot be 0. Create policy before updating");
+        RulesEngineRuleFacet(address(red)).createRule(0, rule, ruleName, ruleDescription);
+        vm.stopPrank();
+    }
+
+    function testRulesEngine_Unit_RulesValidationUpdateRule_PolicyIdCannotBeZero() public ifDeploymentTestsEnabled resetsGlobalVariables {
+        vm.startPrank(policyAdmin);
+        // Create a blank policy
+        uint256 policyId = _createBlankPolicy();
+
+        // Create a rule with a zero policyId - should fail
+        Rule memory rule;
+        rule.instructionSet = new uint256[](2);
+        rule.instructionSet[0] = 0;
+        rule.instructionSet[1] = 0;
+        rule.posEffects = new Effect[](1);
+        rule.posEffects[0] = effectId_event;
+
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(1, rule, ruleName, ruleDescription);
+
+        vm.expectRevert("Policy ID cannot be 0. Create policy before updating");
+        RulesEngineRuleFacet(address(red)).updateRule(0, ruleId, rule, ruleName, ruleDescription);
+
+        vm.stopPrank();
+    }
+
+    function testRulesEngine_Unit_RulesValidationDeleteRule_PolicyIdCannotBeZero() public ifDeploymentTestsEnabled resetsGlobalVariables {
+        vm.startPrank(policyAdmin);
+        // Create a blank policy
+        uint256 policyId = _createBlankPolicy();
+
+        // Create a rule with a zero policyId - should fail
+        Rule memory rule;
+        rule.instructionSet = new uint256[](2);
+        rule.instructionSet[0] = 0;
+        rule.instructionSet[1] = 0;
+        rule.posEffects = new Effect[](1);
+        rule.posEffects[0] = effectId_event;
+
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(1, rule, ruleName, ruleDescription);
+
+        vm.expectRevert("Policy ID cannot be 0. Create policy before updating");
+        RulesEngineRuleFacet(address(red)).deleteRule(0, ruleId);
+
+        vm.stopPrank();
+    }
+
+    function testRulesEngine_Unit_RulesValidationRuleGetters_PolicyIdCannotBeZero() public ifDeploymentTestsEnabled resetsGlobalVariables {
+        vm.startPrank(policyAdmin);
+        // Create a blank policy
+        uint256 policyId = _createBlankPolicy();
+
+        // Create a rule with a zero policyId - should fail
+        Rule memory rule;
+        rule.instructionSet = new uint256[](2);
+        rule.instructionSet[0] = 0;
+        rule.instructionSet[1] = 0;
+        rule.posEffects = new Effect[](1);
+        rule.posEffects[0] = effectId_event;
+
+        uint256 ruleId = RulesEngineRuleFacet(address(red)).createRule(1, rule, ruleName, ruleDescription);
+
+        vm.expectRevert("Policy ID cannot be 0. Create policy before updating");
+        RulesEngineRuleFacet(address(red)).getRule(0, ruleId);
+
+        vm.expectRevert("Policy ID cannot be 0. Create policy before updating");
+        RulesEngineRuleFacet(address(red)).getAllRules(0);
+
+        vm.expectRevert("Policy ID cannot be 0. Create policy before updating");
+        RulesEngineRuleFacet(address(red)).getRuleMetadata(0, ruleId);
+
+        vm.stopPrank();
     }
 }
