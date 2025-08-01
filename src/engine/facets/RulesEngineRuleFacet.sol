@@ -38,6 +38,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         string calldata ruleName,
         string calldata ruleDescription
     ) external returns (uint256) {
+        if (policyId == 0) revert(POLICY_ID_0);
         _policyAdminOnly(policyId, msg.sender);
         _validateRule(rule);
         StorageLib._notCemented(policyId);
@@ -63,6 +64,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
         string calldata ruleName,
         string calldata ruleDescription
     ) external returns (uint256) {
+        if (policyId == 0) revert(POLICY_ID_0);
         _policyAdminOnly(policyId, msg.sender);
         _validateRule(rule);
         StorageLib._notCemented(policyId);
@@ -79,6 +81,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      * @return rules A two-dimensional array of rules grouped by calling functions.
      */
     function getAllRules(uint256 policyId) external view returns (Rule[][] memory) {
+        if (policyId == 0) revert(POLICY_ID_0);
         // Load the policy data from storage
         Policy storage data = lib._getPolicyStorage().policyStorageSets[policyId].policy;
         bytes4[] memory callingFunctions = data.callingFunctions;
@@ -104,6 +107,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      * @return RuleMetadata The metadata of the specified rule.
      */
     function getRuleMetadata(uint256 policyId, uint256 ruleId) external view returns (RuleMetadata memory) {
+        if (policyId == 0) revert(POLICY_ID_0);
         return (lib._getRulesMetadataStorage().ruleMetadata[policyId][ruleId]);
     }
 
@@ -112,7 +116,10 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      * @param policyId The ID of the policy the rule belongs to.
      * @param ruleId The ID of the rule to delete.
      */
-    function deleteRule(uint256 policyId, uint256 ruleId) public policyAdminOnly(policyId, msg.sender) {
+    function deleteRule(uint256 policyId, uint256 ruleId) public {
+        if (policyId == 0) revert(POLICY_ID_0);
+        if (!lib._getRuleStorage().ruleStorageSets[policyId][ruleId].set) revert(INVALID_RULE);
+        _policyAdminOnly(policyId, msg.sender);
         StorageLib._notCemented(policyId);
         delete lib._getRuleStorage().ruleStorageSets[policyId][ruleId];
         emit RuleDeleted(policyId, ruleId);
@@ -125,6 +132,7 @@ contract RulesEngineRuleFacet is FacetCommonImports {
      * @return ruleStorageSets The rule data.
      */
     function getRule(uint256 policyId, uint256 ruleId) public view returns (RuleStorageSet memory) {
+        if (policyId == 0) revert(POLICY_ID_0);
         // Load the rule data from storage
         return lib._getRuleStorage().ruleStorageSets[policyId][ruleId];
     }
