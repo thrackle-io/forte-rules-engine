@@ -18,13 +18,15 @@ string constant INVALID_INSTRUCTION_SET = "Invalid Instruction Set";
 string constant MEMORY_OVERFLOW = "Memory Overflow";
 string constant EMPTY_INSTRUCTION_SET = "Empty Instruction Set";
 string constant ZERO_ADDRESS_NOT_ALLOWED = "Zero Address Is Not Allowed";
-string constant INVALID_TRACKER_TYPE = "Invalid tracker type";
+string constant INVALID_TYPE = "Invalid type";
 string constant INVALID_TRACKER_KEY_TYPE = "Invalid tracker key type";
 string constant KEY_AND_VALUE_SAME = "Tracker keys and values must have the same length";
 string constant CALLING_FUNCTION_EXISTS = "Delete calling function before updating to a new one";
 string constant PARM_GT_EQ = "New parameter types must be of greater or equal length to the original";
 string constant PARM_NOT_SAME_TYPE = "New parameter types must be of the same type as the original";
 string constant NOT_ALLOWED_CEMENTED_POLICY = "Not allowed for cemented policy";
+string constant SIG_REQ = "Function signature is required";
+string constant NAME_REQ = "Name is required";
 
 string constant MAX_FC = "Max foreign calls reached";
 string constant MAX_FC_PT = "Max foreign parameter types reached.";

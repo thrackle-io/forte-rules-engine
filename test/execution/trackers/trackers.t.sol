@@ -61,6 +61,30 @@ abstract contract trackers is RulesEngineCommon {
         assertEq(tracker.trackerValue, abi.encode(bool(true)));
     }
 
+    function testRulesEngine_Unit_Tracker_Name_Validation_Negative() public ifDeploymentTestsEnabled endWithStopPrank {
+        uint256 policyId = _createBlankPolicy();
+        Rule memory rule;
+        // Instruction set: LogicalOp.PLH, 0, LogicalOp.NUM, 4, LogicalOp.GT, 0, 1
+        // Build the instruction set for the rule (including placeholders)
+        rule.instructionSet = _createInstructionSet(4);
+        // Build the calling function argument placeholder
+        rule.placeHolders = new Placeholder[](1);
+        rule.placeHolders[0].pType = ParamTypes.UINT;
+        rule.placeHolders[0].typeSpecificIndex = 1;
+        rule.negEffects = new Effect[](1);
+        rule.negEffects[0] = effectId_revert;
+        uint256 ruleId;
+        // Save the rule
+        ruleId = RulesEngineRuleFacet(address(red)).createRule(policyId, rule, ruleName, ruleDescription);
+        Trackers memory tracker;
+        /// build the members of the struct:
+        tracker.pType = ParamTypes.BOOL;
+        tracker.set = true;
+        tracker.trackerValue = abi.encode(bool(false));
+        vm.expectRevert(abi.encodePacked(NAME_REQ));
+        RulesEngineComponentFacet(address(red)).createTracker(policyId, tracker, "");
+    }
+
     function testRulesEngine_Unit_CheckRules_Explicit_WithTrackerUpdateEffectUint() public ifDeploymentTestsEnabled endWithStopPrank {
         // create a blank policy
         uint256 policyId = _createBlankPolicy();

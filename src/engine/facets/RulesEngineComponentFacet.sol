@@ -80,7 +80,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
                 _tracker.pType == ParamTypes.BOOL ||
                 _tracker.pType == ParamTypes.BYTES ||
                 _tracker.pType == ParamTypes.ADDR,
-            INVALID_TRACKER_TYPE
+            INVALID_TYPE
         );
         // Ensure the tracker key is of a valid type
         if (_tracker.mapped) {
@@ -91,6 +91,23 @@ contract RulesEngineComponentFacet is FacetCommonImports {
                     _tracker.trackerKeyType == ParamTypes.BYTES ||
                     _tracker.trackerKeyType == ParamTypes.ADDR,
                 INVALID_TRACKER_KEY_TYPE
+            );
+        }
+    }
+
+    function _validateCallingFunctionPType(ParamTypes[] memory types) internal pure {
+        for (uint256 i = 0; i < types.length; i++) {
+            // Ensure tracker value pType is a valid type
+            require(
+                types[i] == ParamTypes.STR ||
+                    types[i] == ParamTypes.UINT ||
+                    types[i] == ParamTypes.STATIC_TYPE_ARRAY ||
+                    types[i] == ParamTypes.DYNAMIC_TYPE_ARRAY ||
+                    types[i] == ParamTypes.VOID ||
+                    types[i] == ParamTypes.BOOL ||
+                    types[i] == ParamTypes.BYTES ||
+                    types[i] == ParamTypes.ADDR,
+                INVALID_TYPE
             );
         }
     }
@@ -130,6 +147,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
      * @param _trackerName Name of the tracker
      */
     function _storeTrackerMetadata(uint256 _policyId, uint256 _trackerIndex, string calldata _trackerName) internal {
+        require(keccak256(bytes(_trackerName)) != keccak256(bytes("")), NAME_REQ);
         lib._getTrackerMetadataStorage().trackerMetadata[_policyId][_trackerIndex] = _trackerName;
     }
 
@@ -480,6 +498,8 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         bytes4 _functionSignature,
         ParamTypes[] memory _pTypes
     ) private {
+        if (bytes4(keccak256(bytes(""))) == _functionSignature) revert (SIG_REQ);
+        _validateCallingFunctionPType(_pTypes);
         CallingFunctionStruct storage data = lib._getCallingFunctionStorage();
         data.callingFunctionStorageSets[_policyId][_functionId].set = true;
         data.callingFunctionStorageSets[_policyId][_functionId].signature = _functionSignature;
@@ -501,6 +521,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         string memory _callingFunctionName,
         string memory _encodedValues
     ) private {
+        if (keccak256(bytes(_callingFunctionName)) == keccak256(bytes(""))) revert (NAME_REQ);
         CallingFunctionMetadataStruct storage metaData = lib._getCallingFunctioneMetadataStorage();
         metaData.callingFunctionMetadata[_policyId][_functionId].callingFunction = _callingFunctionName;
         metaData.callingFunctionMetadata[_policyId][_functionId].signature = _functionSignature;

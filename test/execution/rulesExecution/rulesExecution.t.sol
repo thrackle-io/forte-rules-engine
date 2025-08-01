@@ -1021,6 +1021,42 @@ abstract contract rulesExecution is RulesEngineCommon {
         encodingContract.transferDynamicArray(address(0x1234567), 99);
     }
 
+    function testRulesEngine_Unit_Calling_Function_Validate_Name_Negative() public {
+        uint256[] memory policyIds = new uint256[](1);
+        ParamTypes[] memory pTypes = new ParamTypes[](6);
+        pTypes[0] = ParamTypes.ADDR;
+        pTypes[1] = ParamTypes.UINT;
+        pTypes[2] = ParamTypes.ADDR;
+        pTypes[3] = ParamTypes.UINT;
+        pTypes[4] = ParamTypes.UINT;
+        pTypes[5] = ParamTypes.UINT;
+        policyIds[0] = _createBlankPolicy();
+        vm.expectRevert(abi.encodePacked(NAME_REQ));
+        uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
+            policyIds[0],
+            bytes4(keccak256(bytes("transfer()"))),
+            pTypes,
+            "",//name
+            "address,uint256"
+        );
+    }
+
+    function testRulesEngine_Unit_Calling_Function_Validate_Signature_Negative() public {
+        uint256[] memory policyIds = new uint256[](1);
+        ParamTypes[] memory pTypes = new ParamTypes[](1);
+        pTypes[0] = ParamTypes.ADDR;
+        policyIds[0] = _createBlankPolicy();
+        vm.expectRevert(abi.encodePacked(SIG_REQ));
+        uint256 callingFunctionId = RulesEngineComponentFacet(address(red)).createCallingFunction(
+            policyIds[0],
+            bytes4(keccak256(bytes(""))),// function signature
+            pTypes,
+            "transfer(address,uint256)",
+            "address,uint256"
+        );
+    }
+    
+
     function testRulesEngine_Unit_PauseRuleRecreation() public ifDeploymentTestsEnabled resetsGlobalVariables {
         exampleERC20 = new ExampleERC20("Token Name", "SYMB");
         exampleERC20.mint(callingContractAdmin, 1_000_000 * ATTO);
