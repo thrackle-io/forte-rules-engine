@@ -20,7 +20,6 @@ string constant EMPTY_INSTRUCTION_SET = "Empty Instruction Set";
 string constant ZERO_ADDRESS_NOT_ALLOWED = "Zero Address Is Not Allowed";
 string constant INVALID_TRACKER_TYPE = "Invalid tracker type";
 string constant INVALID_TRACKER_KEY_TYPE = "Invalid tracker key type";
-string constant KEY_AND_VALUE_REQUIRED = "Tracker keys and values cannot be empty";
 string constant KEY_AND_VALUE_SAME = "Tracker keys and values must have the same length";
 string constant CALLING_FUNCTION_EXISTS = "Delete calling function before updating to a new one";
 string constant PARM_GT_EQ = "New parameter types must be of greater or equal length to the original";

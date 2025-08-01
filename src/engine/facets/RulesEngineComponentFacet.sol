@@ -59,7 +59,6 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         _policyAdminOnly(policyId, msg.sender);
         _notCemented(policyId);
         _validateTrackerType(tracker);
-        if (trackerKeys.length == 0 || trackerValues.length == 0) revert(KEY_AND_VALUE_REQUIRED);
         if (trackerKeys.length != trackerValues.length) revert(KEY_AND_VALUE_SAME);
         uint256 trackerIndex = lib._getTrackerStorage().trackerIndexCounter[policyId];
         trackerIndex = _incrementTrackerIndex(policyId);
@@ -364,10 +363,7 @@ contract RulesEngineComponentFacet is FacetCommonImports {
         // increment the callingFunctionId if necessary
         CallingFunctionStorageSet storage callingFunction = data.callingFunctionStorageSets[policyId][callingFunctionID];
         require(callingFunction.signature == functionSignature, CALLING_FUNCTION_EXISTS);
-        require(
-            callingFunction.parameterTypes.length <= pTypes.length,
-            PARM_GT_EQ
-        );
+        require(callingFunction.parameterTypes.length <= pTypes.length, PARM_GT_EQ);
         for (uint256 i = 0; i < callingFunction.parameterTypes.length; i++) {
             require(pTypes[i] == callingFunction.parameterTypes[i], PARM_NOT_SAME_TYPE);
         }
