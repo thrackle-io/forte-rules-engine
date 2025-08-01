@@ -702,7 +702,7 @@ contract RulesEngineProcessorFacet is FacetCommonImports {
         } else if (trk.pType == ParamTypes.BYTES || trk.pType == ParamTypes.STR) {
             trk.trackerValue = ProcessorLib._uintToBytes(_trackerValue);
         } else {
-            revert(INVALID_TRACKER_TYPE);
+            revert(INVALID_TYPE);
         }
     }
 

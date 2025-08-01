@@ -2551,7 +2551,6 @@ contract RulesEngineCommon is DiamondMine, Test {
         fc.foreignCallAddress = address(testContract);
         fc.signature = bytes4(keccak256(bytes("simpleCheck(uint256)")));
         fc.returnType = ParamTypes.UINT;
-        // fc.foreignCallIndex = 1;
         RulesEngineForeignCallFacet(address(red)).createForeignCall(policyIds[0], fc, "simpleCheck(uint256)");
 
         // Rule: FC:simpleCheck(amount) > 4 -> revert -> transfer(address _to, uint256 amount) returns (bool)"

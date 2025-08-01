@@ -33,7 +33,6 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
         _policyAdminOnly(_policyId, msg.sender);
         _notCemented(_policyId);
         _isForeignCallPermissioned(_foreignCall.foreignCallAddress, _foreignCall.signature);
-        if (_foreignCall.foreignCallAddress == address(0)) revert(ZERO_ADDRESS);
 
         // Step 1: Generate the foreign call index
         uint256 foreignCallIndex = _incrementForeignCallIndex(_policyId);
@@ -64,7 +63,6 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
         _notCemented(policyId);
         _isForeignCallPermissioned(foreignCall.foreignCallAddress, foreignCall.signature);
         fc = foreignCall;
-        if (fc.foreignCallAddress == address(0)) revert(ZERO_ADDRESS);
         fc.foreignCallIndex = foreignCallId;
         _storeForeignCallData(policyId, foreignCall, foreignCallId);
         emit ForeignCallUpdated(policyId, foreignCallId);
@@ -130,6 +128,8 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
      */
     function _storeForeignCall(uint256 _policyId, ForeignCall calldata _foreignCall, uint256 _foreignCallIndex) internal {
         assert(_foreignCall.parameterTypes.length == _foreignCall.encodedIndices.length);
+        if (_foreignCall.foreignCallAddress == address(0)) revert(ZERO_ADDRESS_NOT_ALLOWED);
+        if (_foreignCall.signature == bytes4(keccak256(bytes("")))) revert (SIG_REQ);
         require(_foreignCall.foreignCallIndex < MAX_LOOP, MAX_FC);
         require(_foreignCall.parameterTypes.length < MAX_LOOP, MAX_FC_PT);
         uint mappedTrackerKeyIndexCounter = 0;
@@ -176,6 +176,7 @@ contract RulesEngineForeignCallFacet is FacetCommonImports {
      * @param _foreignCallName The name of the foreign call.
      */
     function _storeForeignCallMetadata(uint256 _policyId, uint256 _foreignCallIndex, string calldata _foreignCallName) private {
+        require(keccak256(bytes(_foreignCallName)) != keccak256(bytes("")), NAME_REQ);
         lib._getForeignCallMetadataStorage().foreignCallMetadata[_policyId][_foreignCallIndex] = _foreignCallName;
     }
 
