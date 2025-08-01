@@ -17,3 +17,5 @@ node_modules
 
 # Soldeer
 /dependencies
+
+.DS_Store
