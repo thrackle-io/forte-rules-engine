@@ -17,6 +17,7 @@ import "test/execution/rulesExecution/rulesExecution.t.sol";
 import "test/execution/instructionSet/instructionSet.t.sol";
 import "test/execution/foreignCalls/foreignCalls.t.sol";
 import "test/execution/trackers/trackers.t.sol";
+import "test/execution/storage/storage.t.sol";
 
 contract RulesEngineUnitTests is
     adminRoles,
@@ -32,7 +33,8 @@ contract RulesEngineUnitTests is
     rulesExecution,
     instructionSet,
     foreignCalls,
-    trackers
+    trackers,
+    storageTest
 {
     function setUp() public {
         // Start test as the policyAdmin account

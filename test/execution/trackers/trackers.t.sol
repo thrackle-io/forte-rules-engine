@@ -1225,8 +1225,6 @@ abstract contract trackers is RulesEngineCommon {
         tracker.pType = ParamTypes.ADDR;
         tracker.trackerKeyType = ParamTypes.STR;
 
-        ParamTypes ruleParamType = ParamTypes.ADDR;
-
         /// create tracker key arrays
         bytes[] memory trackerKeys = new bytes[](2);
         trackerKeys[0] = abi.encode(string("trackerValue1")); // key 1
