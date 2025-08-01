@@ -34,4 +34,8 @@ abstract contract adminRolesFuzz is RulesEngineCommon {
             RulesEngineAdminRolesFacet(address(red)).proposeNewPolicyAdmin(newPolicyAdmin, policyID);
         }
     }
+
+    function testRulesEngine_Fuzz_createForeignCallAdmin(uint8 addrIndex) public {
+        // For a given Foreign contract and selector pair, the Foreign Call Admin is the only one who can configure which Policy Admins may leverage the Foreign Call in their policies
+    }
 }
