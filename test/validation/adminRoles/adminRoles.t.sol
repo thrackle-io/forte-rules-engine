@@ -467,4 +467,59 @@ abstract contract adminRoles is RulesEngineCommon {
         vm.expectRevert("Zero Address Cannot Be Admin");
         RulesEngineAdminRolesFacet(address(red)).grantForeignCallAdminRole(pfcContractAddress, address(0x00), foreignCallSelector);
     }
+
+    function testRulesEngine_Unit_ForeignCallAdmin_ListMagangement() public ifDeploymentTestsEnabled {
+        /**
+        // For a given Foreign contract and selector pair, the Foreign Call Admin 
+        is the only one who can configure which Policy Admins may leverage the Foreign Call in their policies
+        */
+
+        // start test as address 0x55556666
+        vm.startPrank(address(0x55556666));
+        // set the selector from the permissioned foreign call contract
+        bytes4 foreignCallSelector = PermissionedForeignCallTestContract.simpleCheck.selector;
+        permissionedForeignCallContract.setForeignCallAdmin(address(0x55556666), foreignCallSelector);
+        assertTrue(
+            RulesEngineAdminRolesFacet(address(red)).isForeignCallAdmin(
+                address(permissionedForeignCallContract),
+                address(0x55556666),
+                foreignCallSelector
+            )
+        );
+
+        // add second foreign call admin with different sig
+        vm.stopPrank();
+        vm.startPrank(address(0x66667777));
+        bytes4 foreignCallSelector2 = PermissionedForeignCallTestContract.square.selector;
+        permissionedForeignCallContract.setForeignCallAdmin(address(0x66667777), foreignCallSelector2);
+        assertTrue(
+            RulesEngineAdminRolesFacet(address(red)).isForeignCallAdmin(
+                address(permissionedForeignCallContract),
+                address(0x66667777),
+                foreignCallSelector2
+            )
+        );
+
+        // ensure only the FC admin can congifure list of policy admins
+        vm.stopPrank();
+        vm.startPrank(address(0x55556666));
+        vm.expectRevert("Not An Authorized Foreign Call Admin");
+        RulesEngineForeignCallFacet(address(red)).addAdminToPermissionList(pfcContractAddress, address(0x66666666), foreignCallSelector2);
+
+        // check that the other admin cannot apply to the first foreign call selector
+        vm.stopPrank();
+        vm.startPrank(address(0x66667777));
+        vm.expectRevert("Not An Authorized Foreign Call Admin");
+        RulesEngineForeignCallFacet(address(red)).addAdminToPermissionList(pfcContractAddress, address(0x66666666), foreignCallSelector);
+
+        // add policy admin to the permission list for the first foreign call selector
+        vm.stopPrank();
+        vm.startPrank(address(0x55556666));
+        RulesEngineForeignCallFacet(address(red)).addAdminToPermissionList(pfcContractAddress, address(0x66666666), foreignCallSelector);
+        // check that they cannot add another admin to the permission list
+        vm.stopPrank();
+        vm.startPrank(address(0x66666666));
+        vm.expectRevert("Not An Authorized Foreign Call Admin");
+        RulesEngineForeignCallFacet(address(red)).addAdminToPermissionList(pfcContractAddress, address(0x66667777), foreignCallSelector);
+    }
 }
