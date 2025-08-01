@@ -345,7 +345,7 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
         string calldata _policyDescription
     ) internal returns (uint256) {
         require(uint8(_policyType) < 3, POLICY_TYPE_INV);
-        require(_policyId >  0, POLICY_ID_INV);
+        require(_policyId > 0, POLICY_ID_INV);
         // Load the policy data from storage
         Policy storage data = lib._getPolicyStorage().policyStorageSets[_policyId].policy;
 
@@ -513,8 +513,6 @@ contract RulesEnginePolicyFacet is FacetCommonImports {
                 assembly {
                     returnBool := mload(add(res, 32))
                 }
-            } else {
-                returnBool = false;
             }
             // returned false so revert with error
             if (!returnBool) revert(NOT_AUTH_POLICY);
