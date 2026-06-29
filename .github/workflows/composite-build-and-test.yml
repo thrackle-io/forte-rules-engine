@@ -9,5 +9,5 @@ permissions:
 
 jobs:
   test:
-    uses: Forte-Service-Company-Ltd/infrastructure-tooling/.github/workflows/onchain-build-test-report.yaml@v0.0.16-rc1
+    uses: Forte-Service-Company-Ltd/infrastructure-tooling/.github/workflows/onchain-build-test-report.yaml@v0.0.7
     secrets: inherit
